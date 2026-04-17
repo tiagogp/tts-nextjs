@@ -1,36 +1,81 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# English Text to Speech
 
-## Getting Started
+Convert English text into natural speech and download the audio file. Runs 100% locally — no API keys required.
 
-First, run the development server:
+## Stack
+
+- **Frontend** — Next.js + TypeScript + Tailwind CSS
+- **Backend** — FastAPI + [Coqui TTS](https://github.com/coqui-ai/TTS) (VCTK VITS multi-speaker model)
+
+## Requirements
+
+- Node.js 20+
+- Python 3.11 (`brew install python@3.11`)
+- espeak-ng (`brew install espeak-ng`)
+
+## Setup
+
+**1. Install frontend dependencies**
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+**2. Create the Python virtualenv and install backend dependencies**
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+cd backend
+python3.11 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The Coqui TTS model (~200 MB) is downloaded automatically on first run.
 
-## Learn More
+## Running
 
-To learn more about Next.js, take a look at the following resources:
+Start both services with a single command:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+./start.sh
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Or manually in two terminals:
 
-## Deploy on Vercel
+```bash
+# Terminal 1 — backend (port 5002)
+cd backend
+.venv/bin/uvicorn tts_server:app --port 5002
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# Terminal 2 — frontend (port 3000)
+npm run dev
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Open [http://localhost:3000](http://localhost:3000).
+
+## Features
+
+- Type or paste English text (up to 4096 characters)
+- Choose from 5 voices (female, male, neutral)
+- Adjust playback speed (0.5x – 2.0x)
+- Play audio in the browser with scrubable progress bar
+- Download as WAV
+- History of last 10 generations with restore and download
+- Dark mode
+
+## Project Structure
+
+```
+.
+├── backend/
+│   ├── tts_server.py      # FastAPI server wrapping Coqui TTS
+│   └── requirements.txt
+├── src/
+│   ├── app/
+│   │   ├── page.tsx       # Main UI
+│   │   └── api/tts/       # Next.js proxy route → backend
+│   ├── components/
+│   │   ├── AudioPlayer.tsx
+│   │   └── HistoryPanel.tsx
+│   └── types/
+└── start.sh               # Starts both services
+```
