@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from "react";
 import AudioPlayer from "@/components/AudioPlayer";
 import HistoryPanel from "@/components/HistoryPanel";
+import BatchGenerator from "@/components/BatchGenerator";
 import { HistoryEntry } from "@/types/history";
 
 const VOICES = [
@@ -245,6 +246,9 @@ export default function Home() {
           onRestore={restoreEntry}
           onClear={() => setHistory([])}
         />
+
+        {/* Batch */}
+        <BatchGenerator />
       </main>
     </div>
   );
