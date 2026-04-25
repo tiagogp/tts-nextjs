@@ -25,7 +25,7 @@ if [ "$ROOT/backend/requirements.txt" -nt "$ROOT/backend/.venv/.last_install" ];
   touch .venv/.last_install
 fi
 
-echo "  [backend] Starting TTS server on :5002 (VITS loads now; XTTS v2 / Kokoro load on first use)"
+echo "  [backend] Starting TTS server on :5002 (VITS loads now; Kokoro load on first use)"
 .venv/bin/uvicorn tts_server:app --port 5002 --log-level warning &
 BACKEND_PID=$!
 

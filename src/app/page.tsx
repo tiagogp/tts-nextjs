@@ -46,12 +46,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const pollRef = useRef<{ timer: ReturnType<typeof setTimeout>; interval?: ReturnType<typeof setInterval> } | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const [dark, setDark] = useState(() => {
-    const saved = localStorage.getItem("theme");
-    const isDark = saved ? saved === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
-    document.documentElement.classList.toggle("dark", isDark);
-    return isDark;
-  });
+  const [dark, setDark] = useState(false);
 
   const toggleDark = () => {
     const next = !dark;

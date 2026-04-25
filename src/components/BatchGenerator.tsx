@@ -44,7 +44,8 @@ function sanitizeFilename(text: string): string {
     .trim()
     .replace(/[/\\:*?"<>|]/g, "_")
     .replace(/\s+/g, " ")
-    .slice(0, 80);
+    .slice(0, 80)
+    .replace(/\.+$/, "");
 }
 
 export default function BatchGenerator() {
@@ -406,12 +407,12 @@ export default function BatchGenerator() {
           {hasResults && !running && (
             <button
               onClick={downloadZip}
-              className="w-full py-2.5 px-4 text-sm font-medium transition-colors flex items-center justify-center gap-2"
+              className="w-full py-2.5 px-4 text-sm font-medium transition-colors flex items-center justify-center gap-2 border"
               style={{
-                border: "1px solid #111111",
-                color: "#111111",
                 borderRadius: "4px",
                 backgroundColor: "transparent",
+                color: "var(--text-secondary)",
+                borderColor: "var(--border)",
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = "#111111";
@@ -419,7 +420,7 @@ export default function BatchGenerator() {
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = "transparent";
-                e.currentTarget.style.color = "#111111";
+                e.currentTarget.style.color = "var(--text-secondary)";
               }}
             >
               <svg
