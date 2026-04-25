@@ -1,10 +1,48 @@
 @import "tailwindcss";
 @variant dark (&:where(.dark, .dark *));
 
+@theme {
+  --color-cream: #faf9f6;
+  --color-off-black: #111111;
+  --color-fin: #ff5600;
+  --color-oat: #dedbd6;
+  --color-muted: #7b7b78;
+  --color-black-80: #313130;
+  --color-black-60: #626260;
+  --color-sand: #d3cec6;
+}
+
 :root {
-  --font-sans: var(--font-geist-sans);
+  --surface:       #faf9f6;
+  --surface-card:  #ffffff;
+  --surface-input: #ffffff;
+  --text-primary:  #111111;
+  --text-secondary:#313130;
+  --text-muted:    #7b7b78;
+  --border:        #dedbd6;
+  --border-strong: #c8c4be;
+  --accent:        #ff5600;
+}
+
+.dark {
+  --surface:       #1a1918;
+  --surface-card:  #242220;
+  --surface-input: #1e1d1b;
+  --text-primary:  #f0ede8;
+  --text-secondary:#d0cdc8;
+  --text-muted:    #8a8680;
+  --border:        #353330;
+  --border-strong: #4a4744;
+  --accent:        #ff5600;
 }
 
 body {
-  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  background-color: var(--surface);
+  color: var(--text-primary);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+input[type="range"] {
+  accent-color: var(--accent);
 }

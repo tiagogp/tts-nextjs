@@ -9,11 +9,33 @@ interface HistoryPanelProps {
 }
 
 const VOICE_LABELS: Record<string, string> = {
-  "female-1": "Emma (Female)",
-  "female-2": "Aria (Female)",
-  "male-1": "Marcus (Male)",
-  "male-2": "Liam (Male)",
-  "neutral": "Alex (Neutral)",
+  "female-1": "Emma",
+  "female-2": "Aria",
+  "male-1":   "Marcus",
+  "male-2":   "Liam",
+  "neutral":  "Alex",
+  "Claribel Dervla":  "Claribel",
+  "Daisy Studious":   "Daisy",
+  "Sofia Hellen":     "Sofia",
+  "Tammy Grit":       "Tammy",
+  "Andrew Chipper":   "Andrew",
+  "Badr Odhiambo":    "Badr",
+  "Craig Gutsy":      "Craig",
+  "Torcull Diarmuid": "Torcull",
+  "af_heart":   "Heart",
+  "af_bella":   "Bella",
+  "af_sarah":   "Sarah",
+  "af_nicole":  "Nicole",
+  "am_adam":    "Adam",
+  "am_michael": "Michael",
+  "bf_emma":    "Emma",
+  "bm_george":  "George",
+};
+
+const ENGINE_LABELS: Record<string, string> = {
+  "vits":    "VITS",
+  "xtts-v2": "XTTS v2",
+  "kokoro":  "Kokoro",
 };
 
 export default function HistoryPanel({ history, onRestore, onClear }: HistoryPanelProps) {
@@ -22,33 +44,50 @@ export default function HistoryPanel({ history, onRestore, onClear }: HistoryPan
   return (
     <div className="mt-8">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-base font-semibold text-gray-700 dark:text-gray-300">Recent Generations</h2>
+        <h2
+          className="text-sm font-medium uppercase tracking-widest"
+          style={{ color: "var(--text-muted)", letterSpacing: "0.8px" }}
+        >
+          Recent
+        </h2>
         <button
           onClick={onClear}
-          className="text-xs text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+          className="text-xs transition-colors"
+          style={{ color: "var(--text-muted)" }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = "#c41c1c")}
+          onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-muted)")}
         >
           Clear all
         </button>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         {history.map((entry) => (
           <div
             key={entry.id}
-            className="flex items-center gap-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-3 hover:border-blue-300 dark:hover:border-blue-600 transition-colors group"
+            className="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors group"
+            style={{
+              backgroundColor: "var(--surface-card)",
+              border: "1px solid var(--border)",
+              borderRadius: "8px",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--border-strong)")}
+            onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
           >
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-gray-800 dark:text-gray-200 truncate">{entry.text}</p>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                {VOICE_LABELS[entry.voice] ?? entry.voice} · {entry.speed}x ·{" "}
-                {new Date(entry.createdAt).toLocaleTimeString()}
+              <p className="text-sm truncate" style={{ color: "var(--text-primary)" }}>
+                {entry.text}
+              </p>
+              <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
+                {ENGINE_LABELS[entry.engine] ?? entry.engine} · {VOICE_LABELS[entry.voice] ?? entry.voice} · {entry.speed}× · {new Date(entry.createdAt).toLocaleTimeString()}
               </p>
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
               <button
                 onClick={() => onRestore(entry)}
-                className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 font-medium opacity-0 group-hover:opacity-100 transition-opacity"
+                className="text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity"
+                style={{ color: "#ff5600" }}
               >
                 Restore
               </button>
@@ -56,7 +95,10 @@ export default function HistoryPanel({ history, onRestore, onClear }: HistoryPan
               <a
                 href={entry.audioUrl}
                 download="speech.wav"
-                className="text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors"
+                className="transition-colors"
+                style={{ color: "var(--text-muted)" }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "#111111")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-muted)")}
                 aria-label="Download"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">

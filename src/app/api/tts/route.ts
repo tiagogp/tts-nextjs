@@ -4,7 +4,7 @@ const TTS_SERVER = "http://localhost:5002";
 
 export async function POST(req: NextRequest) {
   try {
-    const { text, voice, speed } = await req.json();
+    const { text, voice, speed, engine } = await req.json();
 
     if (!text || typeof text !== "string" || text.trim().length === 0) {
       return NextResponse.json({ error: "Text is required." }, { status: 400 });
@@ -23,6 +23,7 @@ export async function POST(req: NextRequest) {
         text: text.trim(),
         voice: voice ?? "female-1",
         speed: Math.min(Math.max(Number(speed) || 1.0, 0.5), 2.0),
+        engine: engine ?? "vits",
       }),
       signal: AbortSignal.timeout(60_000),
     });

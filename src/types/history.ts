@@ -3,6 +3,7 @@ export interface HistoryEntry {
   text: string;
   voice: string;
   speed: number;
+  engine: string;
   audioUrl: string;
   createdAt: number;
 }
