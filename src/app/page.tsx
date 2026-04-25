@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useRef } from "react";
 import AudioPlayer from "@/components/AudioPlayer";
 import HistoryPanel from "@/components/HistoryPanel";
 import BatchGenerator from "@/components/BatchGenerator";
@@ -42,17 +42,16 @@ export default function Home() {
   const [speed, setSpeed] = useState(1.25);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [downloadingModel, setDownloadingModel] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const pollRef = useRef<{ timer: ReturnType<typeof setTimeout>; interval?: ReturnType<typeof setInterval> } | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const [dark, setDark] = useState(false);
-
-  useEffect(() => {
+  const [dark, setDark] = useState(() => {
     const saved = localStorage.getItem("theme");
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const isDark = saved ? saved === "dark" : prefersDark;
-    setDark(isDark);
+    const isDark = saved ? saved === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
     document.documentElement.classList.toggle("dark", isDark);
-  }, []);
+    return isDark;
+  });
 
   const toggleDark = () => {
     const next = !dark;
@@ -72,7 +71,23 @@ export default function Home() {
   const generate = useCallback(async () => {
     if (!text.trim()) return;
     setLoading(true);
+    setDownloadingModel(false);
     setError(null);
+
+    // after 1.5s start polling to detect model download
+    const timer = setTimeout(() => {
+      const poll = async () => {
+        try {
+          const res = await fetch("/api/status");
+          const data = await res.json();
+          if (data.downloading_model) setDownloadingModel(true);
+        } catch {}
+      };
+      poll();
+      const interval = setInterval(poll, 2000);
+      if (pollRef.current) pollRef.current.interval = interval;
+    }, 1500);
+    pollRef.current = { timer };
 
     try {
       const res = await fetch("/api/tts", {
@@ -109,7 +124,13 @@ export default function Home() {
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
+      if (pollRef.current) {
+        clearTimeout(pollRef.current.timer);
+        clearInterval(pollRef.current.interval);
+        pollRef.current = null;
+      }
       setLoading(false);
+      setDownloadingModel(false);
     }
   }, [text, voice, speed, engine]);
 
@@ -344,6 +365,25 @@ export default function Home() {
                   </>
                 )}
               </button>
+
+              {/* Model download notice */}
+              {downloadingModel && (
+                <div
+                  className="rounded px-3 py-2.5 text-xs flex items-center gap-2"
+                  style={{
+                    backgroundColor: "var(--surface)",
+                    border: "1px solid var(--border)",
+                    color: "var(--text-secondary)",
+                    borderRadius: "4px",
+                  }}
+                >
+                  <svg className="w-3 h-3 animate-spin shrink-0" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                  </svg>
+                  Downloading Kokoro model for the first time… this may take a minute.
+                </div>
+              )}
 
               {/* Error */}
               {error && (

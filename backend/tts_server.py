@@ -40,18 +40,27 @@ VITS_SPEAKERS: dict[str, str] = {
 # ── Kokoro-82M (lazy-loaded on first request) ─────────────────────────────────
 _kokoro_a = None  # American English (af_*, am_*)
 _kokoro_b = None  # British English  (bf_*, bm_*)
+_kokoro_downloading = False
 
 def _get_kokoro(lang_code: str):
-    global _kokoro_a, _kokoro_b
+    global _kokoro_a, _kokoro_b, _kokoro_downloading
     if lang_code == "b":
         if _kokoro_b is None:
-            from kokoro import KPipeline
-            _kokoro_b = KPipeline(lang_code="b")
+            _kokoro_downloading = True
+            try:
+                from kokoro import KPipeline
+                _kokoro_b = KPipeline(lang_code="b")
+            finally:
+                _kokoro_downloading = False
         return _kokoro_b
     else:
         if _kokoro_a is None:
-            from kokoro import KPipeline
-            _kokoro_a = KPipeline(lang_code="a")
+            _kokoro_downloading = True
+            try:
+                from kokoro import KPipeline
+                _kokoro_a = KPipeline(lang_code="a")
+            finally:
+                _kokoro_downloading = False
         return _kokoro_a
 
 
@@ -106,3 +115,8 @@ def _synth_kokoro(text: str, voice: str, speed: float):
 @app.get("/health")
 def health() -> dict:
     return {"status": "ok"}
+
+
+@app.get("/status")
+def status() -> dict:
+    return {"downloading_model": _kokoro_downloading}
