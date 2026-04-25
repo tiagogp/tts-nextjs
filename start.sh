@@ -10,18 +10,36 @@ echo ""
 # ── Backend ───────────────────────────────────────────────────────────────────
 cd "$ROOT/backend"
 
-if [ ! -d .venv ]; then
-  echo "  [backend] ERROR: .venv not found."
-  echo "            Create it with Python 3.9–3.11 and install dependencies:"
-  echo "            python3.11 -m venv .venv"
-  echo "            .venv/bin/pip install -r requirements.txt"
+# Find a suitable Python (prefer 3.11, accept 3.9–3.12)
+PYTHON=""
+for candidate in python3.11 python3.10 python3.9; do
+  if command -v "$candidate" >/dev/null 2>&1; then
+    if "$candidate" -c 'import sys; assert (3,9) <= sys.version_info < (3,12)' 2>/dev/null; then
+      PYTHON="$candidate"
+      break
+    fi
+  fi
+done
+
+if [ -z "$PYTHON" ]; then
+  echo "  [backend] ERROR: no compatible Python (3.9–3.11) found."
+  echo "            TTS requires Python <3.12. Install one and re-run:"
+  echo "              sudo dnf install python3.11"
   exit 1
 fi
 
+if [ ! -d .venv ]; then
+  echo "  [backend] Creating virtual environment with $($PYTHON --version)…"
+  "$PYTHON" -m venv .venv
+  echo "  [backend] Installing dependencies…"
+  .venv/bin/pip install -r requirements.txt || { echo "  [backend] ERROR: pip install failed. See output above."; exit 1; }
+  touch .venv/.last_install
+fi
+
 # Sync deps only if requirements.txt is newer than the last install marker
-if [ "$ROOT/backend/requirements.txt" -nt "$ROOT/backend/.venv/.last_install" ]; then
+if [ "requirements.txt" -nt ".venv/.last_install" ]; then
   echo "  [backend] requirements.txt changed — syncing dependencies…"
-  .venv/bin/pip install -q -r requirements.txt
+  .venv/bin/pip install -r requirements.txt || { echo "  [backend] ERROR: pip install failed. See output above."; exit 1; }
   touch .venv/.last_install
 fi
 
@@ -41,6 +59,12 @@ done
 
 # ── Frontend ──────────────────────────────────────────────────────────────────
 cd "$ROOT"
+
+if [ ! -d node_modules ]; then
+  echo "  [frontend] node_modules not found — running npm install…"
+  npm install || { echo "  [frontend] ERROR: npm install failed."; exit 1; }
+fi
+
 echo "  [frontend] Starting Next.js on :3000"
 npm run dev &
 FRONTEND_PID=$!

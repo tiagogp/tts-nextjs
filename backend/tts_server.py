@@ -8,21 +8,25 @@ Start:
 """
 
 import io
+import shutil
+from pathlib import Path
 
 import numpy as np
 import soundfile as sf
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from TTS.api import TTS
+
+VOICE_REF_PATH = Path(__file__).parent / "voice_reference.wav"
 
 app = FastAPI(title="Multi-Engine TTS Server")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],
-    allow_methods=["POST"],
+    allow_methods=["POST", "GET", "DELETE"],
     allow_headers=["Content-Type"],
 )
 
@@ -82,8 +86,11 @@ def _get_chatterbox():
         try:
             import torch
             from chatterbox.tts import ChatterboxTTS
-            device = "mps" if torch.backends.mps.is_available() else "cpu"
-            _chatterbox = ChatterboxTTS.from_pretrained(device=device)
+            device = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
+            model = ChatterboxTTS.from_pretrained(device=device)
+            if VOICE_REF_PATH.exists():
+                model.prepare_conditionals(str(VOICE_REF_PATH))
+            _chatterbox = model
         finally:
             _chatterbox_downloading = False
     return _chatterbox
@@ -145,6 +152,29 @@ def _synth_chatterbox(text: str, voice: str):
     wav = model.generate(text, **params)
     audio = wav.squeeze(0).cpu().numpy().astype(np.float32)
     return audio, model.sr
+
+
+@app.get("/voice-upload")
+def voice_status() -> dict:
+    return {"name": "my-voice" if VOICE_REF_PATH.exists() else None}
+
+
+@app.post("/voice-upload")
+async def upload_voice(file: UploadFile = File(...)) -> dict:
+    global _chatterbox
+    with VOICE_REF_PATH.open("wb") as f:
+        shutil.copyfileobj(file.file, f)
+    _chatterbox = None  # force re-load with new voice reference
+    return {"name": "my-voice"}
+
+
+@app.delete("/voice-upload")
+def delete_voice() -> dict:
+    global _chatterbox
+    if VOICE_REF_PATH.exists():
+        VOICE_REF_PATH.unlink()
+    _chatterbox = None
+    return {"status": "ok"}
 
 
 @app.get("/health")
