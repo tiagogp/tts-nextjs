@@ -1,7 +1,7 @@
 """
-Multi-engine TTS server — supports VITS and Kokoro-82M.
+Multi-engine TTS server — supports VITS, Kokoro-82M, and Chatterbox.
 
-VITS loads at startup. Kokoro is lazy-loaded on first request.
+VITS loads at startup. Kokoro and Chatterbox are lazy-loaded on first request.
 
 Start:
     uvicorn tts_server:app --port 5002 --reload
@@ -64,12 +64,37 @@ def _get_kokoro(lang_code: str):
         return _kokoro_a
 
 
+# ── Chatterbox (lazy-loaded on first request) ─────────────────────────────────
+_chatterbox = None
+_chatterbox_downloading = False
+
+# Emotion presets via exaggeration parameter
+CHATTERBOX_VOICES: dict[str, dict] = {
+    "neutral":    {"exaggeration": 0.3, "cfg_weight": 0.5},
+    "expressive": {"exaggeration": 0.5, "cfg_weight": 0.5},
+    "dramatic":   {"exaggeration": 0.8, "cfg_weight": 0.5},
+}
+
+def _get_chatterbox():
+    global _chatterbox, _chatterbox_downloading
+    if _chatterbox is None:
+        _chatterbox_downloading = True
+        try:
+            import torch
+            from chatterbox.tts import ChatterboxTTS
+            device = "mps" if torch.backends.mps.is_available() else "cpu"
+            _chatterbox = ChatterboxTTS.from_pretrained(device=device)
+        finally:
+            _chatterbox_downloading = False
+    return _chatterbox
+
+
 # ── Request schema ────────────────────────────────────────────────────────────
 class TTSRequest(BaseModel):
     text: str
     voice: str = "female-1"
     speed: float = Field(default=1.0, ge=0.5, le=2.0)
-    engine: str = "vits"  # "vits" | "kokoro"
+    engine: str = "vits"  # "vits" | "kokoro" | "chatterbox"
 
 
 # ── Endpoint ──────────────────────────────────────────────────────────────────
@@ -83,6 +108,8 @@ def synthesize(req: TTSRequest) -> StreamingResponse:
 
     if req.engine == "kokoro":
         audio, sample_rate = _synth_kokoro(text, req.voice, req.speed)
+    elif req.engine == "chatterbox":
+        audio, sample_rate = _synth_chatterbox(text, req.voice)
     else:
         audio, sample_rate = _synth_vits(text, req.voice, req.speed)
 
@@ -112,6 +139,14 @@ def _synth_kokoro(text: str, voice: str, speed: float):
     return combined.astype(np.float32), 24000
 
 
+def _synth_chatterbox(text: str, voice: str):
+    model = _get_chatterbox()
+    params = CHATTERBOX_VOICES.get(voice, CHATTERBOX_VOICES["expressive"])
+    wav = model.generate(text, **params)
+    audio = wav.squeeze(0).cpu().numpy().astype(np.float32)
+    return audio, model.sr
+
+
 @app.get("/health")
 def health() -> dict:
     return {"status": "ok"}
@@ -119,4 +154,8 @@ def health() -> dict:
 
 @app.get("/status")
 def status() -> dict:
-    return {"downloading_model": _kokoro_downloading}
+    return {
+        "downloading_model": _kokoro_downloading or _chatterbox_downloading,
+        "downloading_kokoro": _kokoro_downloading,
+        "downloading_chatterbox": _chatterbox_downloading,
+    }

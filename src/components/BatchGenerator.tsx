@@ -5,8 +5,9 @@ import JSZip from "jszip";
 import Select from "@/components/Select";
 
 const ENGINES = [
-  { value: "vits", label: "VITS" },
-  { value: "kokoro", label: "Kokoro" },
+  { value: "vits",       label: "VITS" },
+  { value: "kokoro",     label: "Kokoro" },
+  { value: "chatterbox", label: "Chatterbox" },
 ];
 
 const VOICES_BY_ENGINE: Record<string, { value: string; label: string }[]> = {
@@ -26,6 +27,11 @@ const VOICES_BY_ENGINE: Record<string, { value: string; label: string }[]> = {
     { value: "am_michael", label: "Michael (US Male)" },
     { value: "bf_emma", label: "Emma (UK Female)" },
     { value: "bm_george", label: "George (UK Male)" },
+  ],
+  chatterbox: [
+    { value: "neutral",    label: "Neutral" },
+    { value: "expressive", label: "Expressive" },
+    { value: "dramatic",   label: "Dramatic" },
   ],
 };
 

@@ -8,8 +8,9 @@ import Select from "@/components/Select";
 import { HistoryEntry } from "@/types/history";
 
 const ENGINES = [
-  { value: "vits",   label: "VITS" },
-  { value: "kokoro", label: "Kokoro" },
+  { value: "vits",        label: "VITS" },
+  { value: "kokoro",      label: "Kokoro" },
+  { value: "chatterbox",  label: "Chatterbox" },
 ];
 
 const VOICES_BY_ENGINE: Record<string, { value: string; label: string }[]> = {
@@ -29,6 +30,11 @@ const VOICES_BY_ENGINE: Record<string, { value: string; label: string }[]> = {
     { value: "am_michael", label: "Michael (US Male)" },
     { value: "bf_emma",    label: "Emma (UK Female)" },
     { value: "bm_george",  label: "George (UK Male)" },
+  ],
+  "chatterbox": [
+    { value: "neutral",    label: "Neutral" },
+    { value: "expressive", label: "Expressive" },
+    { value: "dramatic",   label: "Dramatic" },
   ],
 };
 
@@ -376,7 +382,7 @@ export default function Home() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
                   </svg>
-                  Downloading Kokoro model for the first time… this may take a minute.
+                  Downloading model for the first time… this may take a minute.
                 </div>
               )}
 

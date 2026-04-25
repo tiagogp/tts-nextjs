@@ -4,8 +4,8 @@ Convert English text into natural speech and download the audio file. Runs 100% 
 
 ## Stack
 
-- **Frontend** — Next.js + TypeScript + Tailwind CSS
-- **Backend** — FastAPI + [Coqui TTS](https://github.com/coqui-ai/TTS) (VCTK VITS multi-speaker model)
+- **Frontend** — Next.js + TypeScript + Tailwind CSS + next-themes
+- **Backend** — FastAPI + [Coqui TTS](https://github.com/coqui-ai/TTS) (VITS) + [Kokoro](https://github.com/hexgrad/kokoro) + [Chatterbox](https://github.com/resemble-ai/chatterbox)
 
 ## Requirements
 
@@ -29,7 +29,7 @@ python3.11 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 ```
 
-The Coqui TTS model (~200 MB) is downloaded automatically on first run.
+Models are downloaded automatically on first run (~200 MB for VITS, ~80 MB for Kokoro, ~1 GB for Chatterbox).
 
 ## Running
 
@@ -54,28 +54,33 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Features
 
-- Type or paste English text (up to 4096 characters)
-- Choose from 5 voices (female, male, neutral)
-- Adjust playback speed (0.5x – 2.0x)
+- Three TTS engines: **VITS** (Coqui), **Kokoro**, and **Chatterbox**
+- 5 VITS voices, 8 Kokoro voices (US/UK, male/female), and 3 Chatterbox emotion presets
+- Adjust playback speed (0.5× – 2.0×)
 - Play audio in the browser with scrubable progress bar
 - Download as WAV
 - History of last 10 generations with restore and download
-- Dark mode
+- **Batch generation** — one sentence per line, download all as ZIP
+- Dark / light / system theme
 
 ## Project Structure
 
 ```
 .
 ├── backend/
-│   ├── tts_server.py      # FastAPI server wrapping Coqui TTS
+│   ├── tts_server.py      # FastAPI server wrapping Coqui VITS + Kokoro
 │   └── requirements.txt
 ├── src/
 │   ├── app/
-│   │   ├── page.tsx       # Main UI
-│   │   └── api/tts/       # Next.js proxy route → backend
+│   │   ├── page.tsx           # Main UI
+│   │   ├── layout.tsx
+│   │   └── api/tts/           # Next.js proxy route → backend
 │   ├── components/
 │   │   ├── AudioPlayer.tsx
-│   │   └── HistoryPanel.tsx
+│   │   ├── BatchGenerator.tsx
+│   │   ├── HistoryPanel.tsx
+│   │   ├── Select.tsx
+│   │   └── ThemeProvider.tsx
 │   └── types/
 └── start.sh               # Starts both services
 ```
