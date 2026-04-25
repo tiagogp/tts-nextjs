@@ -4,12 +4,12 @@ import { useState, useCallback, useEffect } from "react";
 import AudioPlayer from "@/components/AudioPlayer";
 import HistoryPanel from "@/components/HistoryPanel";
 import BatchGenerator from "@/components/BatchGenerator";
+import Select from "@/components/Select";
 import { HistoryEntry } from "@/types/history";
 
 const ENGINES = [
-  { value: "vits",    label: "VITS" },
-  { value: "xtts-v2", label: "XTTS v2" },
-  { value: "kokoro",  label: "Kokoro" },
+  { value: "vits",   label: "VITS" },
+  { value: "kokoro", label: "Kokoro" },
 ];
 
 const VOICES_BY_ENGINE: Record<string, { value: string; label: string }[]> = {
@@ -19,16 +19,6 @@ const VOICES_BY_ENGINE: Record<string, { value: string; label: string }[]> = {
     { value: "male-1",   label: "Marcus (Male)" },
     { value: "male-2",   label: "Liam (Male)" },
     { value: "neutral",  label: "Alex (Neutral)" },
-  ],
-  "xtts-v2": [
-    { value: "Claribel Dervla",  label: "Claribel (Female)" },
-    { value: "Daisy Studious",   label: "Daisy (Female)" },
-    { value: "Sofia Hellen",     label: "Sofia (Female)" },
-    { value: "Tammy Grit",       label: "Tammy (Female)" },
-    { value: "Andrew Chipper",   label: "Andrew (Male)" },
-    { value: "Badr Odhiambo",    label: "Badr (Male)" },
-    { value: "Craig Gutsy",      label: "Craig (Male)" },
-    { value: "Torcull Diarmuid", label: "Torcull (Male)" },
   ],
   "kokoro": [
     { value: "af_heart",   label: "Heart (US Female)" },
@@ -47,9 +37,9 @@ const MAX_CHARS = 4096;
 
 export default function Home() {
   const [text, setText] = useState(EXAMPLE_TEXT);
-  const [engine, setEngine] = useState("vits");
-  const [voice, setVoice] = useState("female-1");
-  const [speed, setSpeed] = useState(1.0);
+  const [engine, setEngine] = useState("kokoro");
+  const [voice, setVoice] = useState("af_heart");
+  const [speed, setSpeed] = useState(1.25);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -99,10 +89,7 @@ export default function Home() {
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
 
-      setAudioUrl((prev) => {
-        if (prev) URL.revokeObjectURL(prev);
-        return url;
-      });
+      setAudioUrl(url);
 
       setHistory((prev) => {
         const entry: HistoryEntry = {
@@ -114,7 +101,10 @@ export default function Home() {
           audioUrl: url,
           createdAt: Date.now(),
         };
-        return [entry, ...prev].slice(0, 10);
+        const next = [entry, ...prev].slice(0, 10);
+        // revoke URLs that fell off the end
+        prev.slice(9).forEach((e) => URL.revokeObjectURL(e.audioUrl));
+        return next;
       });
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
@@ -290,23 +280,7 @@ export default function Home() {
                 <label className="block text-xs font-medium uppercase tracking-widest" style={{ color: "var(--text-muted)", letterSpacing: "0.8px" }}>
                   Voice
                 </label>
-                <select
-                  value={voice}
-                  onChange={(e) => setVoice(e.target.value)}
-                  className="w-full rounded px-3 py-2 text-sm outline-none transition-colors"
-                  style={{
-                    backgroundColor: "var(--surface-input)",
-                    color: "var(--text-primary)",
-                    border: "1px solid var(--border)",
-                    borderRadius: "4px",
-                  }}
-                  onFocus={(e) => (e.currentTarget.style.borderColor = "#ff5600")}
-                  onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
-                >
-                  {voices.map((v) => (
-                    <option key={v.value} value={v.value}>{v.label}</option>
-                  ))}
-                </select>
+                <Select value={voice} onChange={setVoice} options={voices} />
               </div>
 
               {/* Speed */}
@@ -398,7 +372,12 @@ export default function Home() {
         <HistoryPanel
           history={history}
           onRestore={restoreEntry}
-          onClear={() => setHistory([])}
+          onClear={() => {
+            setHistory((prev) => {
+              prev.forEach((e) => URL.revokeObjectURL(e.audioUrl));
+              return [];
+            });
+          }}
         />
 
         {/* Batch */}

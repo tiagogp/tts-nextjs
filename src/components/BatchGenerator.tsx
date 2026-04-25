@@ -2,10 +2,10 @@
 
 import { useState, useRef } from "react";
 import JSZip from "jszip";
+import Select from "@/components/Select";
 
 const ENGINES = [
   { value: "vits", label: "VITS" },
-  { value: "xtts-v2", label: "XTTS v2" },
   { value: "kokoro", label: "Kokoro" },
 ];
 
@@ -16,16 +16,6 @@ const VOICES_BY_ENGINE: Record<string, { value: string; label: string }[]> = {
     { value: "male-1", label: "Marcus (Male)" },
     { value: "male-2", label: "Liam (Male)" },
     { value: "neutral", label: "Alex (Neutral)" },
-  ],
-  "xtts-v2": [
-    { value: "Claribel Dervla", label: "Claribel (Female)" },
-    { value: "Daisy Studious", label: "Daisy (Female)" },
-    { value: "Sofia Hellen", label: "Sofia (Female)" },
-    { value: "Tammy Grit", label: "Tammy (Female)" },
-    { value: "Andrew Chipper", label: "Andrew (Male)" },
-    { value: "Badr Odhiambo", label: "Badr (Male)" },
-    { value: "Craig Gutsy", label: "Craig (Male)" },
-    { value: "Torcull Diarmuid", label: "Torcull (Male)" },
   ],
   kokoro: [
     { value: "af_heart", label: "Heart (US Female)" },
@@ -59,9 +49,9 @@ function sanitizeFilename(text: string): string {
 
 export default function BatchGenerator() {
   const [rawText, setRawText] = useState("");
-  const [engine, setEngine] = useState("vits");
-  const [voice, setVoice] = useState("female-1");
-  const [speed, setSpeed] = useState(1.0);
+  const [engine, setEngine] = useState("kokoro");
+  const [voice, setVoice] = useState("af_heart");
+  const [speed, setSpeed] = useState(1.25);
   const [items, setItems] = useState<BatchItem[]>([]);
   const [running, setRunning] = useState(false);
   const abortRef = useRef(false);
@@ -240,7 +230,7 @@ export default function BatchGenerator() {
             }
             rows={8}
             disabled={running}
-            className="w-full resize-none rounded-lg focus:placeholder:text-[var(--text-muted)] placeholder:text-[var(--text-muted)]/20 px-4 py-3 text-sm leading-relaxed outline-none transition-colors disabled:opacity-50"
+            className="w-full resize-none rounded-lg focus:placeholder:text-(--text-muted) placeholder:text-(--text-muted)/50 px-4 py-3 text-sm leading-relaxed outline-none transition-colors disabled:opacity-50"
             style={{
               backgroundColor: "var(--surface-input)",
               color: "var(--text-primary)",
@@ -326,28 +316,12 @@ export default function BatchGenerator() {
             >
               Voice
             </label>
-            <select
+            <Select
               value={voice}
-              onChange={(e) => setVoice(e.target.value)}
+              onChange={setVoice}
+              options={voices}
               disabled={running}
-              className="w-full rounded px-3 py-2 text-sm outline-none transition-colors disabled:opacity-50"
-              style={{
-                backgroundColor: "var(--surface-input)",
-                color: "var(--text-primary)",
-                border: "1px solid var(--border)",
-                borderRadius: "4px",
-              }}
-              onFocus={(e) => (e.currentTarget.style.borderColor = "#ff5600")}
-              onBlur={(e) =>
-                (e.currentTarget.style.borderColor = "var(--border)")
-              }
-            >
-              {voices.map((v) => (
-                <option key={v.value} value={v.value}>
-                  {v.label}
-                </option>
-              ))}
-            </select>
+            />
           </div>
 
           {/* Speed */}
