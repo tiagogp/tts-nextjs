@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import JSZip from "jszip";
 import Select from "@/components/Select";
 
@@ -62,6 +62,59 @@ export default function BatchGenerator() {
   const [items, setItems] = useState<BatchItem[]>([]);
   const [running, setRunning] = useState(false);
   const abortRef = useRef(false);
+  const [voiceRefName, setVoiceRefName] = useState<string | null>(null);
+  const [recording, setRecording] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordingChunksRef = useRef<Blob[]>([]);
+
+  useEffect(() => {
+    fetch("/api/voice-upload")
+      .then((r) => r.json())
+      .then((d) => { if (d.name) setVoiceRefName(d.name); })
+      .catch(() => {});
+  }, []);
+
+  const uploadVoice = async (blob: Blob, name: string) => {
+    const form = new FormData();
+    form.append("file", blob, name);
+    const res = await fetch("/api/voice-upload", { method: "POST", body: form });
+    if (res.ok) setVoiceRefName(name);
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream);
+      recordingChunksRef.current = [];
+      mr.ondataavailable = (e) => { if (e.data.size > 0) recordingChunksRef.current.push(e.data); };
+      mr.onstop = () => {
+        const blob = new Blob(recordingChunksRef.current, { type: mr.mimeType });
+        uploadVoice(blob, "my-voice.webm");
+        stream.getTracks().forEach((t) => t.stop());
+      };
+      mediaRecorderRef.current = mr;
+      mr.start();
+      setRecording(true);
+    } catch {
+      // microphone permission denied
+    }
+  };
+
+  const stopRecording = () => {
+    mediaRecorderRef.current?.stop();
+    setRecording(false);
+  };
+
+  const clearVoiceRef = async () => {
+    await fetch("/api/voice-upload", { method: "DELETE" });
+    setVoiceRefName(null);
+  };
+
+  const handleVoiceFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) uploadVoice(file, file.name);
+    e.target.value = "";
+  };
 
   const lines = rawText
     .split("\n")
@@ -330,6 +383,67 @@ export default function BatchGenerator() {
               disabled={running}
             />
           </div>
+
+          {/* Voice Reference (Chatterbox only) */}
+          {engine === "chatterbox" && (
+            <div className="space-y-1.5">
+              <label
+                className="block text-xs font-medium uppercase tracking-widest"
+                style={{ color: "var(--text-muted)", letterSpacing: "0.8px" }}
+              >
+                Voice Reference
+              </label>
+              {voiceRefName ? (
+                <div
+                  className="flex items-center justify-between rounded px-3 py-2 text-xs"
+                  style={{ backgroundColor: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
+                >
+                  <span className="truncate">{voiceRefName}</span>
+                  <button
+                    onClick={clearVoiceRef}
+                    className="ml-2 shrink-0 text-base leading-none"
+                    style={{ color: "var(--text-muted)" }}
+                    title="Remove"
+                  >
+                    ×
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <button
+                    onClick={recording ? stopRecording : startRecording}
+                    disabled={running}
+                    className="flex-1 py-2 text-xs rounded flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
+                    style={{
+                      border: `1px solid ${recording ? "#ff5600" : "var(--border)"}`,
+                      color: recording ? "#ff5600" : "var(--text-secondary)",
+                      backgroundColor: "var(--surface-card)",
+                    }}
+                  >
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm-2 4a1 1 0 10-2 0 7 7 0 0014 0 1 1 0 10-2 0 5 5 0 01-10 0z" />
+                    </svg>
+                    {recording ? "Stop" : "Record"}
+                  </button>
+                  <label
+                    className="flex-1 py-2 text-xs rounded flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                    style={{ border: "1px solid var(--border)", color: "var(--text-secondary)", backgroundColor: "var(--surface-card)" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--surface)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "var(--surface-card)")}
+                  >
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M2 6a2 2 0 012-2h4l2 2h4a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+                    </svg>
+                    Upload
+                    <input type="file" accept="audio/*" onChange={handleVoiceFile} className="hidden" />
+                  </label>
+                </div>
+              )}
+              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                {voiceRefName ? "Chatterbox will clone this voice." : "Record or upload 5–30s of clear speech."}
+              </p>
+            </div>
+          )}
 
           {/* Speed */}
           <div className="space-y-2">

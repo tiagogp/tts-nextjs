@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
         speed: Math.min(Math.max(Number(speed) || 1.0, 0.5), 2.0),
         engine: engine ?? "vits",
       }),
-      signal: AbortSignal.timeout(60_000),
+      signal: AbortSignal.timeout(300_000),
     });
 
     if (!ttsRes.ok) {
