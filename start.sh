@@ -66,6 +66,7 @@ if [ ! -d node_modules ]; then
 fi
 
 echo "  [frontend] Starting Next.js on :3000"
+export BACKEND_PYTHON="$ROOT/backend/.venv/bin/python"
 npm run dev &
 FRONTEND_PID=$!
 

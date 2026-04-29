@@ -63,6 +63,63 @@ Open [http://localhost:3000](http://localhost:3000).
 - **Batch generation** — one sentence per line, download all as ZIP
 - Dark / light / system theme
 
+## Anki (CSV → Audio → Notes)
+
+If you want to generate audio for your own cards, you have two options:
+
+- **Export a `.apkg`** (import later / move to another computer)
+- **Send directly to Anki** (requires Anki Desktop + AnkiConnect running)
+
+### Export `.apkg` (recommended)
+
+```bash
+backend/.venv/bin/python backend/apkg_from_csv.py \
+  --csv cards.csv \
+  --deck "My Deck" \
+  --pt-col pt \
+  --en-col en \
+  --out my-deck.apkg
+```
+
+Import the generated `.apkg` in Anki: `File → Import`.
+
+### Export from the web UI
+
+Open the app and use the **Anki Export** section to upload your CSV and download a `.apkg`.
+
+### Send directly to Anki (AnkiConnect)
+
+**Requirements**
+
+- Anki Desktop running
+- [AnkiConnect](https://foosoft.net/projects/anki-connect/) installed (default port `8765`)
+
+**CSV format**
+
+By default the script expects a header row with columns named `pt` and `en`, e.g.:
+
+```csv
+pt,en
+"Olá, tudo bem?","Hello, how are you?"
+```
+
+**Run**
+
+```bash
+backend/.venv/bin/python backend/anki_csv_import.py \
+  --csv cards.csv \
+  --deck "My Deck" \
+  --pt-col pt \
+  --en-col en
+```
+
+This creates `Basic` notes with:
+
+- `Front`: Portuguese text + Portuguese audio
+- `Back`: English text + English audio
+
+Use `--front-field` / `--back-field` if your note type uses different field names.
+
 ## Project Structure
 
 ```

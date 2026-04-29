@@ -1,50 +1,25 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef } from "react";
 import AudioPlayer from "@/components/AudioPlayer";
 import HistoryPanel from "@/components/HistoryPanel";
 import BatchGenerator from "@/components/BatchGenerator";
-import Select from "@/components/Select";
+import AnkiExporter from "@/components/AnkiExporter";
 import { HistoryEntry } from "@/types/history";
-
-const ENGINES = [
-  { value: "vits",        label: "VITS" },
-  { value: "kokoro",      label: "Kokoro" },
-  { value: "chatterbox",  label: "Chatterbox" },
-];
-
-const VOICES_BY_ENGINE: Record<string, { value: string; label: string }[]> = {
-  "vits": [
-    { value: "female-1", label: "Emma (Female)" },
-    { value: "female-2", label: "Aria (Female)" },
-    { value: "male-1",   label: "Marcus (Male)" },
-    { value: "male-2",   label: "Liam (Male)" },
-    { value: "neutral",  label: "Alex (Neutral)" },
-  ],
-  "kokoro": [
-    { value: "af_heart",   label: "Heart (US Female)" },
-    { value: "af_bella",   label: "Bella (US Female)" },
-    { value: "af_sarah",   label: "Sarah (US Female)" },
-    { value: "af_nicole",  label: "Nicole (US Female)" },
-    { value: "am_adam",    label: "Adam (US Male)" },
-    { value: "am_michael", label: "Michael (US Male)" },
-    { value: "bf_emma",    label: "Emma (UK Female)" },
-    { value: "bm_george",  label: "George (UK Male)" },
-  ],
-  "chatterbox": [
-    { value: "neutral",    label: "Neutral" },
-    { value: "expressive", label: "Expressive" },
-    { value: "dramatic",   label: "Dramatic" },
-  ],
-};
+import Select from "@/components/Select";
+import {
+  KOKORO_VOICE_OPTIONS,
+  TtsSettingsProvider,
+  toKokoroVoice,
+  useTtsSettings,
+} from "@/components/TtsSettingsContext";
 
 const EXAMPLE_TEXT = "I'm willing to work hard because the payoff will come later.";
 const MAX_CHARS = 4096;
 
-export default function Home() {
+function HomeInner() {
+  const { voice, setVoice } = useTtsSettings();
   const [text, setText] = useState(EXAMPLE_TEXT);
-  const [engine, setEngine] = useState("kokoro");
-  const [voice, setVoice] = useState("af_heart");
   const [speed, setSpeed] = useState(1.25);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -53,59 +28,6 @@ export default function Home() {
   const pollRef = useRef<{ timer: ReturnType<typeof setTimeout>; interval?: ReturnType<typeof setInterval> } | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [dark, setDark] = useState(false);
-  const [voiceRefName, setVoiceRefName] = useState<string | null>(null);
-  const [recording, setRecording] = useState(false);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const recordingChunksRef = useRef<Blob[]>([]);
-
-  useEffect(() => {
-    fetch("/api/voice-upload")
-      .then((r) => r.json())
-      .then((d) => { if (d.name) setVoiceRefName(d.name); })
-      .catch(() => {});
-  }, []);
-
-  const uploadVoice = async (blob: Blob, name: string) => {
-    const form = new FormData();
-    form.append("file", blob, name);
-    const res = await fetch("/api/voice-upload", { method: "POST", body: form });
-    if (res.ok) setVoiceRefName(name);
-  };
-
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mr = new MediaRecorder(stream);
-      recordingChunksRef.current = [];
-      mr.ondataavailable = (e) => { if (e.data.size > 0) recordingChunksRef.current.push(e.data); };
-      mr.onstop = () => {
-        const blob = new Blob(recordingChunksRef.current, { type: mr.mimeType });
-        uploadVoice(blob, "my-voice.webm");
-        stream.getTracks().forEach((t) => t.stop());
-      };
-      mediaRecorderRef.current = mr;
-      mr.start();
-      setRecording(true);
-    } catch {
-      // microphone permission denied
-    }
-  };
-
-  const stopRecording = () => {
-    mediaRecorderRef.current?.stop();
-    setRecording(false);
-  };
-
-  const clearVoiceRef = async () => {
-    await fetch("/api/voice-upload", { method: "DELETE" });
-    setVoiceRefName(null);
-  };
-
-  const handleVoiceFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) uploadVoice(file, file.name);
-    e.target.value = "";
-  };
 
   const toggleDark = () => {
     const next = !dark;
@@ -113,14 +35,6 @@ export default function Home() {
     document.documentElement.classList.toggle("dark", next);
     localStorage.setItem("theme", next ? "dark" : "light");
   };
-
-  const switchEngine = (eng: string) => {
-    setEngine(eng);
-    setVoice(VOICES_BY_ENGINE[eng][0].value);
-  };
-
-  const voices = VOICES_BY_ENGINE[engine];
-  const voiceLabel = voices.find((v) => v.value === voice)?.label ?? voice;
 
   const generate = useCallback(async () => {
     if (!text.trim()) return;
@@ -147,7 +61,7 @@ export default function Home() {
       const res = await fetch("/api/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, voice, speed, engine }),
+        body: JSON.stringify({ text, speed, voice }),
       });
 
       if (!res.ok) {
@@ -166,7 +80,7 @@ export default function Home() {
           text,
           voice,
           speed,
-          engine,
+          engine: "kokoro",
           audioUrl: url,
           createdAt: Date.now(),
         };
@@ -186,12 +100,11 @@ export default function Home() {
       setLoading(false);
       setDownloadingModel(false);
     }
-  }, [text, voice, speed, engine]);
+  }, [text, speed]);
 
   const restoreEntry = (entry: HistoryEntry) => {
     setText(entry.text);
-    setEngine(entry.engine);
-    setVoice(entry.voice);
+    setVoice(toKokoroVoice(entry.voice));
     setSpeed(entry.speed);
     setAudioUrl(entry.audioUrl);
   };
@@ -316,104 +229,21 @@ export default function Home() {
               }}
             >
 
-              {/* Engine toggle */}
+              {/* Voice (locked) */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-medium uppercase tracking-widest" style={{ color: "var(--text-muted)", letterSpacing: "0.8px" }}>
-                  Engine
-                </label>
-                <div
-                  className="flex rounded overflow-hidden"
-                  style={{ border: "1px solid var(--border)" }}
+                <label
+                  className="block text-xs font-medium uppercase tracking-widest"
+                  style={{ color: "var(--text-muted)", letterSpacing: "0.8px" }}
                 >
-                  {ENGINES.map((eng) => (
-                    <button
-                      key={eng.value}
-                      onClick={() => switchEngine(eng.value)}
-                      className="flex-1 py-2 text-xs font-medium transition-colors"
-                      style={
-                        engine === eng.value
-                          ? { backgroundColor: "#111111", color: "#ffffff" }
-                          : { backgroundColor: "var(--surface-card)", color: "var(--text-secondary)" }
-                      }
-                      onMouseEnter={(e) => {
-                        if (engine !== eng.value)
-                          e.currentTarget.style.backgroundColor = "var(--surface)";
-                      }}
-                      onMouseLeave={(e) => {
-                        if (engine !== eng.value)
-                          e.currentTarget.style.backgroundColor = "var(--surface-card)";
-                      }}
-                    >
-                      {eng.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Voice */}
-              <div className="space-y-1.5">
-                <label className="block text-xs font-medium uppercase tracking-widest" style={{ color: "var(--text-muted)", letterSpacing: "0.8px" }}>
                   Voice
                 </label>
-                <Select value={voice} onChange={setVoice} options={voices} />
+                <Select
+                  value={voice}
+                  onChange={(v) => setVoice(toKokoroVoice(v))}
+                  options={KOKORO_VOICE_OPTIONS}
+                  disabled={loading}
+                />
               </div>
-
-              {/* Voice Reference (Chatterbox only) */}
-              {engine === "chatterbox" && (
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-medium uppercase tracking-widest" style={{ color: "var(--text-muted)", letterSpacing: "0.8px" }}>
-                    Voice Reference
-                  </label>
-                  {voiceRefName ? (
-                    <div
-                      className="flex items-center justify-between rounded px-3 py-2 text-xs"
-                      style={{ backgroundColor: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
-                    >
-                      <span className="truncate">{voiceRefName}</span>
-                      <button
-                        onClick={clearVoiceRef}
-                        className="ml-2 shrink-0 text-base leading-none"
-                        style={{ color: "var(--text-muted)" }}
-                        title="Remove"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex gap-2">
-                      <button
-                        onClick={recording ? stopRecording : startRecording}
-                        className="flex-1 py-2 text-xs rounded flex items-center justify-center gap-1.5 transition-colors"
-                        style={{
-                          border: `1px solid ${recording ? "#ff5600" : "var(--border)"}`,
-                          color: recording ? "#ff5600" : "var(--text-secondary)",
-                          backgroundColor: "var(--surface-card)",
-                        }}
-                      >
-                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm-2 4a1 1 0 10-2 0 7 7 0 0014 0 1 1 0 10-2 0 5 5 0 01-10 0z" />
-                        </svg>
-                        {recording ? "Stop" : "Record"}
-                      </button>
-                      <label
-                        className="flex-1 py-2 text-xs rounded flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
-                        style={{ border: "1px solid var(--border)", color: "var(--text-secondary)", backgroundColor: "var(--surface-card)" }}
-                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--surface)")}
-                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "var(--surface-card)")}
-                      >
-                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M2 6a2 2 0 012-2h4l2 2h4a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
-                        </svg>
-                        Upload
-                        <input type="file" accept="audio/*" onChange={handleVoiceFile} className="hidden" />
-                      </label>
-                    </div>
-                  )}
-                  <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                    {voiceRefName ? "Chatterbox will clone this voice." : "Record or upload 5–30s of clear speech."}
-                  </p>
-                </div>
-              )}
 
               {/* Speed */}
               <div className="space-y-2">
@@ -513,7 +343,10 @@ export default function Home() {
 
               {/* Player */}
               {audioUrl && (
-                <AudioPlayer audioUrl={audioUrl} voiceLabel={voiceLabel} />
+                <AudioPlayer
+                  audioUrl={audioUrl}
+                  voiceLabel={`Kokoro · ${voice}`}
+                />
               )}
             </div>
           </div>
@@ -533,7 +366,18 @@ export default function Home() {
 
         {/* Batch */}
         <BatchGenerator />
+
+        {/* Anki */}
+        <AnkiExporter />
       </main>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <TtsSettingsProvider>
+      <HomeInner />
+    </TtsSettingsProvider>
   );
 }

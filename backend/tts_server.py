@@ -99,9 +99,9 @@ def _get_chatterbox():
 # ── Request schema ────────────────────────────────────────────────────────────
 class TTSRequest(BaseModel):
     text: str
-    voice: str = "female-1"
-    speed: float = Field(default=1.0, ge=0.5, le=2.0)
-    engine: str = "vits"  # "vits" | "kokoro" | "chatterbox"
+    voice: str = "af_heart"
+    speed: float = Field(default=1.15, ge=0.5, le=2.0)
+    engine: str = "kokoro"  # "vits" | "kokoro" | "chatterbox"
 
 
 # ── Endpoint ──────────────────────────────────────────────────────────────────
