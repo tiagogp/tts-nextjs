@@ -3,17 +3,12 @@ import { spawn } from "node:child_process";
 import { promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { isPlainObject } from "@/lib/isObject";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
 
 const MAX_INPUT_BYTES = 5 * 1024 * 1024; // 5MB
-
-type JsonObject = Record<string, unknown>;
-
-function isObject(value: unknown): value is JsonObject {
-  return typeof value === "object" && value !== null;
-}
 
 function asciiFallbackFilename(raw: string): string {
   const normalized = raw.normalize("NFKD");
@@ -142,7 +137,7 @@ function jsonToCsvBytesFromParsed(
 ): Buffer {
   const cards: unknown = Array.isArray(parsed)
     ? parsed
-    : isObject(parsed)
+    : isPlainObject(parsed)
       ? parsed.cards
       : null;
   if (!Array.isArray(cards)) {
@@ -177,7 +172,7 @@ function jsonToCsvBytesFromParsed(
       const e = enIdx ?? 1;
       pt = toCellText(card[p]);
       en = toCellText(card[e]);
-    } else if (isObject(card)) {
+    } else if (isPlainObject(card)) {
       if (!hasHeader) {
         throw new Error(
           'JSON inválido: quando usar --noHeader com JSON, cada card precisa ser um array (ex: ["pt", "en"]).',
@@ -267,7 +262,7 @@ export async function POST(req: NextRequest) {
 
     if (contentType.includes("application/json")) {
       const body = (await req.json()) as unknown;
-      const obj = isObject(body) ? body : null;
+      const obj = isPlainObject(body) ? body : null;
 
       deck = safeTrimmedString(obj?.deck, deck, 200);
       ptCol = safeTrimmedString(obj?.ptCol, ptCol, 64);

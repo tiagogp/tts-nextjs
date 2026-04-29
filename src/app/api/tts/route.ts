@@ -1,22 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import JSZip from "jszip";
+import { isPlainObject } from "@/lib/isObject";
+import { sanitizeFilename } from "@/lib/sanitizeFilename";
+import { getTtsServerUrl } from "@/server/ttsServer";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
 
-const TTS_SERVER = "http://localhost:5002";
+const TTS_SERVER = getTtsServerUrl();
 
 const MAX_TEXT_CHARS = 4096;
 const MAX_ITEMS = 250;
 const MAX_TOTAL_CHARS = 80_000;
 const DEFAULT_SPEED = 1.15;
 const DEFAULT_VOICE = "af_heart";
-
-type JsonObject = Record<string, unknown>;
-
-function isObject(value: unknown): value is JsonObject {
-  return typeof value === "object" && value !== null;
-}
 
 function clamp(n: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, n));
@@ -40,15 +37,6 @@ function safeVoice(v: unknown): string {
   return s.slice(0, 64);
 }
 
-function sanitizeFilename(text: string): string {
-  return text
-    .trim()
-    .replace(/[/\\:*?"<>|]/g, "_")
-    .replace(/\s+/g, " ")
-    .slice(0, 80)
-    .replace(/\.+$/, "") || "audio";
-}
-
 function normalizeLines(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   const out: string[] = [];
@@ -69,14 +57,14 @@ function extractLinesFromJson(value: unknown, textKey: string): string[] {
     const out: string[] = [];
     for (const item of value) {
       if (typeof item === "string") continue;
-      if (!isObject(item)) continue;
+      if (!isPlainObject(item)) continue;
       const v = item[textKey];
       if (typeof v === "string" && v.trim()) out.push(v.trim());
     }
     return out;
   }
 
-  if (isObject(value)) {
+  if (isPlainObject(value)) {
     const items = value.items ?? value.lines ?? value.texts;
     if (Array.isArray(items)) return extractLinesFromJson(items, textKey);
   }
@@ -115,7 +103,7 @@ async function synthOne(text: string, speed: number, voice: string): Promise<Buf
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json().catch(() => null)) as unknown;
-    const bodyObj = isObject(body) ? body : null;
+    const bodyObj = isPlainObject(body) ? body : null;
     const speed = safeSpeed(bodyObj?.speed);
     const voice = safeVoice(bodyObj?.voice);
 

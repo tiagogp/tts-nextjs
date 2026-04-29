@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
+import { getTtsServerUrl } from "@/server/ttsServer";
 
-const TTS_SERVER = "http://localhost:5002";
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+const TTS_SERVER = getTtsServerUrl();
 
 export async function GET() {
   try {

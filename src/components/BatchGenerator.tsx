@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import JSZip from "jszip";
 import { useTtsSettings } from "@/components/TtsSettingsContext";
+import { sanitizeFilename } from "@/lib/sanitizeFilename";
 
 type ItemStatus = "pending" | "generating" | "done" | "error";
 
@@ -14,15 +15,6 @@ interface BatchItem {
   error?: string;
 }
 
-function sanitizeFilename(text: string): string {
-  return text
-    .trim()
-    .replace(/[/\\:*?"<>|]/g, "_")
-    .replace(/\s+/g, " ")
-    .slice(0, 80)
-    .replace(/\.+$/, "");
-}
-
 export default function BatchGenerator() {
   const { voice } = useTtsSettings();
   const [rawText, setRawText] = useState("");
@@ -30,6 +22,13 @@ export default function BatchGenerator() {
   const [items, setItems] = useState<BatchItem[]>([]);
   const [running, setRunning] = useState(false);
   const abortRef = useRef(false);
+  const controllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    return () => {
+      controllerRef.current?.abort();
+    };
+  }, []);
 
   const lines = rawText
     .split("\n")
@@ -64,10 +63,14 @@ export default function BatchGenerator() {
       );
 
       try {
+        const controller = new AbortController();
+        controllerRef.current = controller;
+
         const res = await fetch("/api/tts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ text: item.text, speed, voice }),
+          signal: controller.signal,
         });
 
         if (!res.ok) {
@@ -80,10 +83,19 @@ export default function BatchGenerator() {
         const blob = await res.blob();
         updateItem(item.id, { status: "done", blob });
       } catch (err) {
+        const isAbort =
+          abortRef.current ||
+          (err instanceof Error && err.name === "AbortError");
+        if (isAbort) {
+          updateItem(item.id, { status: "pending" });
+          break;
+        }
         updateItem(item.id, {
           status: "error",
           error: err instanceof Error ? err.message : "Failed",
         });
+      } finally {
+        controllerRef.current = null;
       }
     }
 
@@ -92,6 +104,7 @@ export default function BatchGenerator() {
 
   const stop = () => {
     abortRef.current = true;
+    controllerRef.current?.abort();
   };
 
   const downloadZip = async () => {
@@ -100,7 +113,7 @@ export default function BatchGenerator() {
 
     for (const item of items) {
       if (!item.blob) continue;
-      const base = sanitizeFilename(item.text) || "audio";
+      const base = sanitizeFilename(item.text);
       const count = counts[base] ?? 0;
       counts[base] = count + 1;
       const filename = count === 0 ? `${base}.wav` : `${base} (${count}).wav`;
