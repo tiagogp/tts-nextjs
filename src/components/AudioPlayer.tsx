@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 
 interface AudioPlayerProps {
   audioUrl: string;
@@ -12,12 +12,6 @@ export default function AudioPlayer({ audioUrl, voiceLabel }: AudioPlayerProps) 
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-
-  useEffect(() => {
-    setIsPlaying(false);
-    setCurrentTime(0);
-    setDuration(0);
-  }, [audioUrl]);
 
   const togglePlay = () => {
     if (!audioRef.current) return;

@@ -12,6 +12,12 @@ const MAX_TOTAL_CHARS = 80_000;
 const DEFAULT_SPEED = 1.15;
 const DEFAULT_VOICE = "af_heart";
 
+type JsonObject = Record<string, unknown>;
+
+function isObject(value: unknown): value is JsonObject {
+  return typeof value === "object" && value !== null;
+}
+
 function clamp(n: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, n));
 }
@@ -63,15 +69,15 @@ function extractLinesFromJson(value: unknown, textKey: string): string[] {
     const out: string[] = [];
     for (const item of value) {
       if (typeof item === "string") continue;
-      if (!item || typeof item !== "object") continue;
-      const v = (item as any)[textKey];
+      if (!isObject(item)) continue;
+      const v = item[textKey];
       if (typeof v === "string" && v.trim()) out.push(v.trim());
     }
     return out;
   }
 
-  if (value && typeof value === "object") {
-    const items = (value as any).items ?? (value as any).lines ?? (value as any).texts;
+  if (isObject(value)) {
+    const items = value.items ?? value.lines ?? value.texts;
     if (Array.isArray(items)) return extractLinesFromJson(items, textKey);
   }
 
@@ -108,17 +114,18 @@ async function synthOne(text: string, speed: number, voice: string): Promise<Buf
 
 export async function POST(req: NextRequest) {
   try {
-    const body = (await req.json().catch(() => null)) as any;
-    const speed = safeSpeed(body?.speed);
-    const voice = safeVoice(body?.voice);
+    const body = (await req.json().catch(() => null)) as unknown;
+    const bodyObj = isObject(body) ? body : null;
+    const speed = safeSpeed(bodyObj?.speed);
+    const voice = safeVoice(bodyObj?.voice);
 
     const lines =
       Array.isArray(body)
         ? extractLinesFromJson(body, "text")
-        : Array.isArray(body?.lines)
-          ? normalizeLines(body.lines)
-          : body?.json !== undefined
-            ? extractLinesFromJson(body.json, String(body?.textKey ?? "text"))
+        : Array.isArray(bodyObj?.lines)
+          ? normalizeLines(bodyObj.lines)
+          : bodyObj?.json !== undefined
+            ? extractLinesFromJson(bodyObj.json, String(bodyObj.textKey ?? "text"))
             : [];
 
     if (lines.length > 0) {
@@ -167,7 +174,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const text = body?.text;
+    const text = bodyObj?.text;
     if (!text || typeof text !== "string" || text.trim().length === 0) {
       return NextResponse.json(
         {

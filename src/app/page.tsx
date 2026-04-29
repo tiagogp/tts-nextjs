@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
+import { useTheme } from "next-themes";
 import AudioPlayer from "@/components/AudioPlayer";
 import HistoryPanel from "@/components/HistoryPanel";
 import BatchGenerator from "@/components/BatchGenerator";
@@ -19,6 +20,7 @@ const MAX_CHARS = 4096;
 
 function HomeInner() {
   const { voice, setVoice } = useTtsSettings();
+  const { resolvedTheme, setTheme } = useTheme();
   const [text, setText] = useState(EXAMPLE_TEXT);
   const [speed, setSpeed] = useState(1.25);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -27,14 +29,9 @@ function HomeInner() {
   const [error, setError] = useState<string | null>(null);
   const pollRef = useRef<{ timer: ReturnType<typeof setTimeout>; interval?: ReturnType<typeof setInterval> } | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const [dark, setDark] = useState(false);
 
-  const toggleDark = () => {
-    const next = !dark;
-    setDark(next);
-    document.documentElement.classList.toggle("dark", next);
-    localStorage.setItem("theme", next ? "dark" : "light");
-  };
+  const isDark = resolvedTheme === "dark";
+  const toggleDark = () => setTheme(isDark ? "light" : "dark");
 
   const generate = useCallback(async () => {
     if (!text.trim()) return;
@@ -100,7 +97,7 @@ function HomeInner() {
       setLoading(false);
       setDownloadingModel(false);
     }
-  }, [text, speed]);
+  }, [text, speed, voice]);
 
   const restoreEntry = (entry: HistoryEntry) => {
     setText(entry.text);
@@ -149,7 +146,7 @@ function HomeInner() {
             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
             aria-label="Toggle dark mode"
           >
-            {dark ? (
+            {isDark ? (
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" />
               </svg>
@@ -344,6 +341,7 @@ function HomeInner() {
               {/* Player */}
               {audioUrl && (
                 <AudioPlayer
+                  key={audioUrl}
                   audioUrl={audioUrl}
                   voiceLabel={`Kokoro · ${voice}`}
                 />

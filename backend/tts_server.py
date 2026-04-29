@@ -147,7 +147,6 @@ def _synth_kokoro(text: str, voice: str, speed: float):
 
 
 def _synth_chatterbox(text: str, voice: str, speed: float = 1.0):
-    import librosa
     model = _get_chatterbox()
     params = CHATTERBOX_VOICES.get(voice, CHATTERBOX_VOICES["expressive"])
     wav = model.generate(text, **params)

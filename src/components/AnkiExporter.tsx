@@ -51,9 +51,8 @@ export default function AnkiExporter() {
   const [file, setFile] = useState<File | null>(null);
   const [jsonText, setJsonText] = useState("");
   const [deckName, setDeckName] = useState("English - new method");
-  const enEngine: "kokoro" = "kokoro";
+  const enEngine = "kokoro" as const;
   const [enKokoroSpeed, setEnKokoroSpeed] = useState("1.15");
-  const [enKokoroLang, setEnKokoroLang] = useState("");
   const [status, setStatus] = useState<ExportStatus>("idle");
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -99,7 +98,6 @@ export default function AnkiExporter() {
       form.append("enEngine", enEngine);
       form.append("enKokoroVoice", voice);
       form.append("enKokoroSpeed", enKokoroSpeed);
-      if (enKokoroLang.trim()) form.append("enKokoroLang", enKokoroLang.trim());
 
       const res = await fetch("/api/anki/apkg", { method: "POST", body: form });
       if (!res.ok) {

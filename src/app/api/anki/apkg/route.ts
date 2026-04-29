@@ -9,6 +9,12 @@ export const maxDuration = 300;
 
 const MAX_INPUT_BYTES = 5 * 1024 * 1024; // 5MB
 
+type JsonObject = Record<string, unknown>;
+
+function isObject(value: unknown): value is JsonObject {
+  return typeof value === "object" && value !== null;
+}
+
 function asciiFallbackFilename(raw: string): string {
   const normalized = raw.normalize("NFKD");
   const asciiOnly = normalized.replaceAll(/[^\x20-\x7E]/g, "_");
@@ -103,18 +109,6 @@ function safeFloat(
   return Math.min(opts.max, Math.max(opts.min, n));
 }
 
-function safeChoice<T extends string>(
-  v: unknown,
-  choices: readonly T[],
-  fallback: T,
-): T {
-  const s =
-    typeof v === "string"
-      ? v.trim().toLowerCase()
-      : String(v ?? "").trim().toLowerCase();
-  return (choices as readonly string[]).includes(s) ? (s as T) : fallback;
-}
-
 function isProbablyJsonUpload(file: File, head: Buffer): boolean {
   const name = (file.name ?? "").toLowerCase();
   const type = (file.type ?? "").toLowerCase();
@@ -148,7 +142,9 @@ function jsonToCsvBytesFromParsed(
 ): Buffer {
   const cards: unknown = Array.isArray(parsed)
     ? parsed
-    : ((parsed as any)?.cards ?? null);
+    : isObject(parsed)
+      ? parsed.cards
+      : null;
   if (!Array.isArray(cards)) {
     throw new Error(
       'JSON inválido: esperado um array (ex: [{"pt":"...","en":"..."}]) ou um objeto com a chave "cards".',
@@ -181,14 +177,14 @@ function jsonToCsvBytesFromParsed(
       const e = enIdx ?? 1;
       pt = toCellText(card[p]);
       en = toCellText(card[e]);
-    } else if (card && typeof card === "object") {
+    } else if (isObject(card)) {
       if (!hasHeader) {
         throw new Error(
           'JSON inválido: quando usar --noHeader com JSON, cada card precisa ser um array (ex: ["pt", "en"]).',
         );
       }
-      pt = toCellText((card as any)[ptKey as string]);
-      en = toCellText((card as any)[enKey as string]);
+      pt = toCellText(card[ptKey as string]);
+      en = toCellText(card[enKey as string]);
     } else {
       throw new Error(
         "JSON inválido: cada item deve ser um objeto (ex: {pt,en}) ou um array (ex: [pt,en]).",
@@ -270,19 +266,21 @@ export async function POST(req: NextRequest) {
     let csvBytes: Buffer;
 
     if (contentType.includes("application/json")) {
-      const body = (await req.json()) as any;
-      deck = safeTrimmedString(body?.deck, deck, 200);
-      ptCol = safeTrimmedString(body?.ptCol, ptCol, 64);
-      enCol = safeTrimmedString(body?.enCol, enCol, 64);
-      delimiter = safeDelimiter(String(body?.delimiter ?? delimiter));
-      noHeader = parseNoHeaderValue(body?.noHeader ?? noHeader);
-      enKokoroVoice = safeTrimmedString(body?.enKokoroVoice, enKokoroVoice, 64);
-      enKokoroSpeed = safeFloat(body?.enKokoroSpeed, enKokoroSpeed, {
+      const body = (await req.json()) as unknown;
+      const obj = isObject(body) ? body : null;
+
+      deck = safeTrimmedString(obj?.deck, deck, 200);
+      ptCol = safeTrimmedString(obj?.ptCol, ptCol, 64);
+      enCol = safeTrimmedString(obj?.enCol, enCol, 64);
+      delimiter = safeDelimiter(String(obj?.delimiter ?? delimiter));
+      noHeader = parseNoHeaderValue(obj?.noHeader ?? noHeader);
+      enKokoroVoice = safeTrimmedString(obj?.enKokoroVoice, enKokoroVoice, 64);
+      enKokoroSpeed = safeFloat(obj?.enKokoroSpeed, enKokoroSpeed, {
         min: 0.25,
         max: 3.0,
       });
-      enKokoroLang = body?.enKokoroLang
-        ? safeTrimmedString(body?.enKokoroLang, "", 16) || null
+      enKokoroLang = obj?.enKokoroLang
+        ? safeTrimmedString(obj?.enKokoroLang, "", 16) || null
         : null;
 
       try {

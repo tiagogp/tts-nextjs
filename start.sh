@@ -10,7 +10,7 @@ echo ""
 # ── Backend ───────────────────────────────────────────────────────────────────
 cd "$ROOT/backend"
 
-# Find a suitable Python (prefer 3.11, accept 3.9–3.12)
+# Find a suitable Python (prefer 3.11, accept 3.9–3.11)
 PYTHON=""
 for candidate in python3.11 python3.10 python3.9; do
   if command -v "$candidate" >/dev/null 2>&1; then
@@ -49,13 +49,20 @@ BACKEND_PID=$!
 
 # Wait until the backend is accepting connections (up to 30 s)
 echo "  [backend] Waiting for server to be ready…"
+BACKEND_READY=0
 for i in $(seq 1 30); do
   if curl -sf http://localhost:5002/health >/dev/null 2>&1; then
     echo "  [backend] Ready ✓"
+    BACKEND_READY=1
     break
   fi
   sleep 1
 done
+if [ "$BACKEND_READY" -ne 1 ]; then
+  echo "  [backend] ERROR: server did not become ready within 30 seconds."
+  kill "$BACKEND_PID" 2>/dev/null || true
+  exit 1
+fi
 
 # ── Frontend ──────────────────────────────────────────────────────────────────
 cd "$ROOT"
