@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
 import AudioPlayer from "@/components/AudioPlayer";
 import HistoryPanel from "@/components/HistoryPanel";
@@ -17,10 +17,20 @@ import {
 
 const EXAMPLE_TEXT = "I'm willing to work hard because the payoff will come later.";
 const MAX_CHARS = 4096;
+const emptySubscribe = () => () => {};
+
+function useIsClient() {
+  return useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false,
+  );
+}
 
 function HomeInner() {
   const { voice, setVoice } = useTtsSettings();
   const { resolvedTheme, setTheme } = useTheme();
+  const isClient = useIsClient();
   const [text, setText] = useState(EXAMPLE_TEXT);
   const [speed, setSpeed] = useState(1.25);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -30,7 +40,7 @@ function HomeInner() {
   const pollRef = useRef<{ timer: ReturnType<typeof setTimeout>; interval?: ReturnType<typeof setInterval> } | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
 
-  const isDark = resolvedTheme === "dark";
+  const isDark = isClient && resolvedTheme === "dark";
   const toggleDark = () => setTheme(isDark ? "light" : "dark");
 
   const generate = useCallback(async () => {
