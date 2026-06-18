@@ -43,6 +43,44 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+.brand-wordmark {
+  font-family: var(--font-brand), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: 0;
+}
+
+html[data-electron="true"] header {
+  -webkit-app-region: drag;
+}
+
+html[data-electron="true"] header button,
+html[data-electron="true"] header a,
+html[data-electron="true"] header input,
+html[data-electron="true"] header select,
+html[data-electron="true"] header textarea,
+html[data-electron="true"] header [role="button"],
+html[data-electron="true"] header [data-no-window-drag="true"] {
+  -webkit-app-region: no-drag;
+}
+
+html[data-electron="true"] header > div:first-child {
+  min-height: 64px;
+}
+
+.app-tab {
+  color: var(--text-muted);
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+
+.app-tab:hover,
+.app-tab[data-active="true"] {
+  color: var(--text-primary);
+}
+
+.app-tab:hover {
+  background-color: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
 input[type="range"] {
   accent-color: var(--accent);
 }

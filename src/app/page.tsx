@@ -1,6 +1,12 @@
 "use client";
 
-import { useState, useCallback, useRef, useSyncExternalStore } from "react";
+import {
+  useState,
+  useCallback,
+  useRef,
+  useSyncExternalStore,
+  type MouseEvent,
+} from "react";
 import { useTheme } from "next-themes";
 import AudioPlayer from "@/components/AudioPlayer";
 import HistoryPanel from "@/components/HistoryPanel";
@@ -18,9 +24,24 @@ import {
   useTtsSettings,
 } from "@/components/TtsSettingsContext";
 
-const EXAMPLE_TEXT = "I'm willing to work hard because the payoff will come later.";
+const EXAMPLE_TEXT =
+  "I'm willing to work hard because the payoff will come later.";
 const MAX_CHARS = 4096;
 const emptySubscribe = () => () => {};
+const TABS = [
+  { id: "speech", label: "Speech" },
+  { id: "discover", label: "Discover" },
+  { id: "correct", label: "Correct" },
+  { id: "study", label: "Study" },
+] as const;
+
+declare global {
+  interface Window {
+    phraseLoop?: {
+      toggleFullscreen: () => void;
+    };
+  }
+}
 
 function useIsClient() {
   return useSyncExternalStore(
@@ -34,18 +55,39 @@ function HomeInner() {
   const { voice, setVoice } = useTtsSettings();
   const { resolvedTheme, setTheme } = useTheme();
   const isClient = useIsClient();
-  const [tab, setTab] = useState<"speech" | "discover" | "correct" | "study">("speech");
+  const [tab, setTab] = useState<"speech" | "discover" | "correct" | "study">(
+    "speech",
+  );
   const [text, setText] = useState(EXAMPLE_TEXT);
   const [speed, setSpeed] = useState(1.25);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [downloadingModel, setDownloadingModel] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const pollRef = useRef<{ timer: ReturnType<typeof setTimeout>; interval?: ReturnType<typeof setInterval> } | null>(null);
+  const pollRef = useRef<{
+    timer: ReturnType<typeof setTimeout>;
+    interval?: ReturnType<typeof setInterval>;
+  } | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
 
   const isDark = isClient && resolvedTheme === "dark";
   const toggleDark = () => setTheme(isDark ? "light" : "dark");
+  const activeTabIndex = Math.max(
+    0,
+    TABS.findIndex((t) => t.id === tab),
+  );
+
+  const toggleWindowFullscreen = (event: MouseEvent<HTMLElement>) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    if (
+      target.closest(
+        "button,a,input,select,textarea,[role='button'],[data-ignore-window-double-click='true']",
+      )
+    )
+      return;
+    window.phraseLoop?.toggleFullscreen();
+  };
 
   const generate = useCallback(async () => {
     if (!text.trim()) return;
@@ -122,42 +164,46 @@ function HomeInner() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "var(--surface)" }}>
-
-      {/* Header */}
       <header
-        className="sticky top-0 z-10"
-        style={{ backgroundColor: "var(--surface-card)", borderBottom: "1px solid var(--border)" }}
+        className="sticky top-0 z-20"
+        style={{
+          backgroundColor: "var(--surface-card)",
+          borderBottom: "1px solid var(--border)",
+        }}
+        onDoubleClick={toggleWindowFullscreen}
       >
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-3">
-          {/* Logo */}
-          <div
-            className="w-8 h-8 rounded flex items-center justify-center shrink-0"
-            style={{ backgroundColor: "#ff5600" }}
-          >
-            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z" />
-            </svg>
+          <div className="min-w-0" data-no-window-drag="true">
+            <div className="flex items-center min-w-0">
+              <h1
+                className="brand-wordmark text-[1.35rem] font-normal leading-none"
+                style={{ color: "var(--text-primary)" }}
+              >
+                PhraseLoop
+              </h1>
+              <h1
+                className="brand-wordmark text-[1.35rem] font-normal leading-none"
+                style={{ color: "var(--color-fin)" }}
+              >
+                .
+              </h1>
+            </div>
           </div>
 
-          <div className="flex-1">
-            <h1
-              className="text-base font-medium leading-none"
-              style={{ color: "var(--text-primary)", letterSpacing: "-0.3px" }}
-            >
-              Text to Speech
-            </h1>
-            <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-              Convert text into natural speech · download the audio
-            </p>
-          </div>
+          <div className="flex-1 self-stretch" aria-hidden="true" />
 
           {/* Dark mode toggle */}
           <button
             onClick={toggleDark}
-            className="w-8 h-8 flex items-center justify-center rounded transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded transition-colors cursor-pointer"
             style={{ color: "var(--text-muted)" }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--surface-raised, #f0ede8)")}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.backgroundColor =
+                "var(--surface-raised, #f0ede8)")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.backgroundColor = "transparent")
+            }
             aria-label="Toggle dark mode"
           >
             {isDark ? (
@@ -171,37 +217,40 @@ function HomeInner() {
             )}
           </button>
         </div>
+
+        <div className="max-w-4xl mx-auto px-4">
+          <div
+            className="relative grid grid-cols-4"
+            data-no-window-drag="true"
+            data-ignore-window-double-click="true"
+          >
+            <span
+              className="absolute bottom-0 left-0 h-0.5 w-1/4 rounded-full transition-transform duration-300 ease-out"
+              style={{
+                backgroundColor: "var(--accent)",
+                transform: `translateX(${activeTabIndex * 100}%)`,
+              }}
+              aria-hidden="true"
+            />
+            {TABS.map((t) => {
+              const active = tab === t.id;
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => setTab(t.id)}
+                  className="app-tab relative py-3 text-sm font-medium transition-colors duration-200"
+                  data-active={active}
+                  type="button"
+                >
+                  {t.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-8">
-        {/* Tabs */}
-        <div className="flex gap-6 mb-6" style={{ borderBottom: "1px solid var(--border)" }}>
-          {([
-            { id: "speech", label: "Speech" },
-            { id: "discover", label: "Discover" },
-            { id: "correct", label: "Correct" },
-            { id: "study", label: "Study" },
-          ] as const).map((t) => {
-            const active = tab === t.id;
-            return (
-              <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
-                className="relative pb-3 text-sm font-medium transition-colors"
-                style={{ color: active ? "var(--text-primary)" : "var(--text-muted)" }}
-              >
-                {t.label}
-                {active && (
-                  <span
-                    className="absolute left-0 right-0 -bottom-px h-0.5"
-                    style={{ backgroundColor: "#ff5600" }}
-                  />
-                )}
-              </button>
-            );
-          })}
-        </div>
-
         {tab === "discover" && <DiscoverTab />}
 
         {tab === "correct" && <CorrectTab />}
@@ -209,215 +258,289 @@ function HomeInner() {
         {tab === "study" && <StudyTab />}
 
         {tab === "speech" && (
-        <>
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-
-          {/* Left: Text input */}
-          <div className="lg:col-span-3 space-y-2">
-            <label
-              className="block text-sm font-medium"
-              style={{ color: "var(--text-secondary)" }}
-            >
-              Your text
-            </label>
-            <div className="relative">
-              <textarea
-                value={text}
-                onChange={(e) => setText(e.target.value.slice(0, MAX_CHARS))}
-                placeholder="Type or paste English text here…"
-                rows={12}
-                className="w-full resize-none rounded-lg px-4 py-3 text-sm leading-relaxed transition-colors outline-none"
-                style={{
-                  backgroundColor: "var(--surface-card)",
-                  color: "var(--text-primary)",
-                  border: "1px solid var(--border)",
-                  caretColor: "#ff5600",
-                }}
-                onFocus={(e) => (e.currentTarget.style.borderColor = "#ff5600")}
-                onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
-              />
-              <span
-                className="absolute bottom-3 right-3 text-xs"
-                style={{ color: text.length > MAX_CHARS * 0.9 ? "#ff5600" : "var(--text-muted)" }}
-              >
-                {text.length} / {MAX_CHARS}
-              </span>
-            </div>
-
-            <div className="flex gap-1">
-              <button
-                onClick={() => setText("")}
-                className="text-xs px-2 py-1 rounded transition-colors"
-                style={{ color: "var(--text-muted)" }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text-primary)")}
-                onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-muted)")}
-              >
-                Clear
-              </button>
-              <button
-                onClick={() => setText(EXAMPLE_TEXT)}
-                className="text-xs px-2 py-1 rounded transition-colors"
-                style={{ color: "var(--text-muted)" }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text-primary)")}
-                onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-muted)")}
-              >
-                Load example
-              </button>
-            </div>
-          </div>
-
-          {/* Right: Controls card */}
-          <div className="lg:col-span-2">
-            <div
-              className="rounded-lg p-5 space-y-5"
-              style={{
-                backgroundColor: "var(--surface-card)",
-                border: "1px solid var(--border)",
-              }}
-            >
-
-              {/* Voice (locked) */}
-              <div className="space-y-1.5">
+          <>
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+              {/* Left: Text input */}
+              <div className="lg:col-span-3 space-y-2">
                 <label
-                  className="block text-xs font-medium uppercase tracking-widest"
-                  style={{ color: "var(--text-muted)", letterSpacing: "0.8px" }}
+                  className="block text-sm font-medium"
+                  style={{ color: "var(--text-secondary)" }}
                 >
-                  Voice
+                  Your text
                 </label>
-                <Select
-                  value={voice}
-                  onChange={(v) => setVoice(toKokoroVoice(v))}
-                  options={KOKORO_VOICE_OPTIONS}
-                  disabled={loading}
-                />
-              </div>
-
-              {/* Speed */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <label className="text-xs font-medium uppercase tracking-widest" style={{ color: "var(--text-muted)", letterSpacing: "0.8px" }}>
-                    Speed
-                  </label>
-                  <span className="text-sm font-semibold tabular-nums" style={{ color: "#ff5600" }}>
-                    {speed.toFixed(2)}×
+                <div className="relative">
+                  <textarea
+                    value={text}
+                    onChange={(e) =>
+                      setText(e.target.value.slice(0, MAX_CHARS))
+                    }
+                    placeholder="Type or paste English text here…"
+                    rows={12}
+                    className="w-full resize-none rounded-lg px-4 py-3 text-sm leading-relaxed transition-colors outline-none"
+                    style={{
+                      backgroundColor: "var(--surface-card)",
+                      color: "var(--text-primary)",
+                      border: "1px solid var(--border)",
+                      caretColor: "#ff5600",
+                    }}
+                    onFocus={(e) =>
+                      (e.currentTarget.style.borderColor = "#ff5600")
+                    }
+                    onBlur={(e) =>
+                      (e.currentTarget.style.borderColor = "var(--border)")
+                    }
+                  />
+                  <span
+                    className="absolute bottom-3 right-3 text-xs"
+                    style={{
+                      color:
+                        text.length > MAX_CHARS * 0.9
+                          ? "#ff5600"
+                          : "var(--text-muted)",
+                    }}
+                  >
+                    {text.length} / {MAX_CHARS}
                   </span>
                 </div>
-                <input
-                  type="range"
-                  min={0.5}
-                  max={2.0}
-                  step={0.05}
-                  value={speed}
-                  onChange={(e) => setSpeed(parseFloat(e.target.value))}
-                  className="w-full"
-                />
-                <div className="flex justify-between text-xs" style={{ color: "var(--text-muted)" }}>
-                  <span>0.5× Slow</span>
-                  <span>1× Normal</span>
-                  <span>2× Fast</span>
+
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => setText("")}
+                    className="text-xs px-2 py-1 rounded transition-colors"
+                    style={{ color: "var(--text-muted)" }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.color = "var(--text-primary)")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.color = "var(--text-muted)")
+                    }
+                  >
+                    Clear
+                  </button>
+                  <button
+                    onClick={() => setText(EXAMPLE_TEXT)}
+                    className="text-xs px-2 py-1 rounded transition-colors"
+                    style={{ color: "var(--text-muted)" }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.color = "var(--text-primary)")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.color = "var(--text-muted)")
+                    }
+                  >
+                    Load example
+                  </button>
                 </div>
               </div>
 
-              {/* Generate */}
-              <button
-                onClick={generate}
-                disabled={loading || !text.trim()}
-                className="w-full py-2.5 px-4 text-sm font-medium transition-all flex items-center justify-center gap-2"
-                style={{
-                  backgroundColor: loading || !text.trim() ? "var(--border)" : "#111111",
-                  color: loading || !text.trim() ? "var(--text-muted)" : "#ffffff",
-                  borderRadius: "4px",
-                  cursor: loading || !text.trim() ? "not-allowed" : "pointer",
-                }}
-                onMouseEnter={(e) => {
-                  if (!loading && text.trim()) e.currentTarget.style.backgroundColor = "#333333";
-                }}
-                onMouseLeave={(e) => {
-                  if (!loading && text.trim()) e.currentTarget.style.backgroundColor = "#111111";
-                }}
-              >
-                {loading ? (
-                  <>
-                    <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                    </svg>
-                    Generating…
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217z" />
-                    </svg>
-                    Generate Audio
-                  </>
-                )}
-              </button>
-
-              {/* Model download notice */}
-              {downloadingModel && (
+              {/* Right: Controls card */}
+              <div className="lg:col-span-2">
                 <div
-                  className="rounded px-3 py-2.5 text-xs flex items-center gap-2"
+                  className="rounded-lg p-5 space-y-5"
                   style={{
-                    backgroundColor: "var(--surface)",
+                    backgroundColor: "var(--surface-card)",
                     border: "1px solid var(--border)",
-                    color: "var(--text-secondary)",
-                    borderRadius: "4px",
                   }}
                 >
-                  <svg className="w-3 h-3 animate-spin shrink-0" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                  </svg>
-                  Downloading model for the first time… this may take a minute.
-                </div>
-              )}
+                  {/* Voice (locked) */}
+                  <div className="space-y-1.5">
+                    <label
+                      className="block text-xs font-medium uppercase tracking-widest"
+                      style={{
+                        color: "var(--text-muted)",
+                        letterSpacing: "0.8px",
+                      }}
+                    >
+                      Voice
+                    </label>
+                    <Select
+                      value={voice}
+                      onChange={(v) => setVoice(toKokoroVoice(v))}
+                      options={KOKORO_VOICE_OPTIONS}
+                      disabled={loading}
+                    />
+                  </div>
 
-              {/* Error */}
-              {error && (
-                <div
-                  className="rounded px-3 py-2.5 text-xs"
-                  style={{
-                    backgroundColor: "#fff1f0",
-                    border: "1px solid #ffccc7",
-                    color: "#c41c1c",
-                    borderRadius: "4px",
-                  }}
-                >
-                  {error}
-                </div>
-              )}
+                  {/* Speed */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <label
+                        className="text-xs font-medium uppercase tracking-widest"
+                        style={{
+                          color: "var(--text-muted)",
+                          letterSpacing: "0.8px",
+                        }}
+                      >
+                        Speed
+                      </label>
+                      <span
+                        className="text-sm font-semibold tabular-nums"
+                        style={{ color: "#ff5600" }}
+                      >
+                        {speed.toFixed(2)}×
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0.5}
+                      max={2.0}
+                      step={0.05}
+                      value={speed}
+                      onChange={(e) => setSpeed(parseFloat(e.target.value))}
+                      className="w-full"
+                    />
+                    <div
+                      className="flex justify-between text-xs"
+                      style={{ color: "var(--text-muted)" }}
+                    >
+                      <span>0.5× Slow</span>
+                      <span>1× Normal</span>
+                      <span>2× Fast</span>
+                    </div>
+                  </div>
 
-              {/* Player */}
-              {audioUrl && (
-                <AudioPlayer
-                  key={audioUrl}
-                  audioUrl={audioUrl}
-                  voiceLabel={`Kokoro · ${voice}`}
-                />
-              )}
+                  {/* Generate */}
+                  <button
+                    onClick={generate}
+                    disabled={loading || !text.trim()}
+                    className="w-full py-2.5 px-4 text-sm font-medium transition-all flex items-center justify-center gap-2"
+                    style={{
+                      backgroundColor:
+                        loading || !text.trim() ? "var(--border)" : "#111111",
+                      color:
+                        loading || !text.trim()
+                          ? "var(--text-muted)"
+                          : "#ffffff",
+                      borderRadius: "4px",
+                      cursor:
+                        loading || !text.trim() ? "not-allowed" : "pointer",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!loading && text.trim())
+                        e.currentTarget.style.backgroundColor = "#333333";
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!loading && text.trim())
+                        e.currentTarget.style.backgroundColor = "#111111";
+                    }}
+                  >
+                    {loading ? (
+                      <>
+                        <svg
+                          className="w-3.5 h-3.5 animate-spin"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                          />
+                        </svg>
+                        Generating…
+                      </>
+                    ) : (
+                      <>
+                        <svg
+                          className="w-3.5 h-3.5"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217z" />
+                        </svg>
+                        Generate Audio
+                      </>
+                    )}
+                  </button>
+
+                  {/* Model download notice */}
+                  {downloadingModel && (
+                    <div
+                      className="rounded px-3 py-2.5 text-xs flex items-center gap-2"
+                      style={{
+                        backgroundColor: "var(--surface)",
+                        border: "1px solid var(--border)",
+                        color: "var(--text-secondary)",
+                        borderRadius: "4px",
+                      }}
+                    >
+                      <svg
+                        className="w-3 h-3 animate-spin shrink-0"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                        />
+                      </svg>
+                      Preparing voices for the first time… this may take a
+                      minute.
+                    </div>
+                  )}
+
+                  {/* Error */}
+                  {error && (
+                    <div
+                      className="rounded px-3 py-2.5 text-xs"
+                      style={{
+                        backgroundColor: "#fff1f0",
+                        border: "1px solid #ffccc7",
+                        color: "#c41c1c",
+                        borderRadius: "4px",
+                      }}
+                    >
+                      {error}
+                    </div>
+                  )}
+
+                  {/* Player */}
+                  {audioUrl && (
+                    <AudioPlayer
+                      key={audioUrl}
+                      audioUrl={audioUrl}
+                      voiceLabel={`Kokoro · ${voice}`}
+                    />
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
 
-        {/* History */}
-        <HistoryPanel
-          history={history}
-          onRestore={restoreEntry}
-          onClear={() => {
-            setHistory((prev) => {
-              prev.forEach((e) => URL.revokeObjectURL(e.audioUrl));
-              return [];
-            });
-          }}
-        />
+            {/* History */}
+            <HistoryPanel
+              history={history}
+              onRestore={restoreEntry}
+              onClear={() => {
+                setHistory((prev) => {
+                  prev.forEach((e) => URL.revokeObjectURL(e.audioUrl));
+                  return [];
+                });
+              }}
+            />
 
-        {/* Batch */}
-        <BatchGenerator />
+            {/* Batch */}
+            <BatchGenerator />
 
-        {/* Anki */}
-        <AnkiExporter />
-        </>
+            {/* Anki */}
+            <AnkiExporter />
+          </>
         )}
       </main>
     </div>

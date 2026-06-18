@@ -4,7 +4,7 @@ set -e
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 
 echo ""
-echo "  Text to Speech — starting services"
+echo "  PhraseLoop — starting services"
 echo ""
 
 # ── Backend ───────────────────────────────────────────────────────────────────
