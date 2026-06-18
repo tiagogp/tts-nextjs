@@ -5,7 +5,7 @@
  * the Discover/Correct tabs already use.
  *
  * The local provider has no `correct()` — it can't judge open text — so a 422 tells the
- * client to pick Claude or GPT.
+ * client to pick Claude, GPT, or Ollama.
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -19,6 +19,8 @@ export const maxDuration = 120;
 
 /** Cap input so one paste can't blow the model's context or the request timeout. */
 const MAX_TEXT = 8000;
+const PUBLIC_CORRECTION_ERROR =
+  "Couldn't evaluate the text right now. Try again in a moment.";
 
 function isProviderKind(v: unknown): v is ProviderKind {
   return v === "local" || v === "ollama" || v === "claude" || v === "openai";
@@ -40,7 +42,7 @@ export async function POST(req: NextRequest) {
     const kind: ProviderKind = isProviderKind(obj.provider) ? obj.provider : "claude";
     if (!isProviderAvailable(kind)) {
       return NextResponse.json(
-        { error: `${kind} provider has no API key configured. Set the key in .env.local.` },
+        { error: `${kind} provider is not configured. Set the key in .env.local or pick Ollama.` },
         { status: 400 },
       );
     }
@@ -54,7 +56,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           error:
-            "The Local provider can't evaluate free text. Pick Claude or GPT to have the AI find your mistakes.",
+            "The Local provider can't evaluate free text. Pick Ollama, Claude, or GPT to have the AI find your mistakes.",
         },
         { status: 422 },
       );
@@ -65,7 +67,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ events, count: events.length });
   } catch (err: unknown) {
     console.error("Correction error:", err);
-    const message = err instanceof Error ? err.message : "Failed to evaluate the text.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: PUBLIC_CORRECTION_ERROR }, { status: 500 });
   }
 }

@@ -6,6 +6,8 @@ export const runtime = "nodejs";
 export const maxDuration = 120;
 
 const TTS_SERVER = getTtsServerUrl();
+const PUBLIC_ARTICLE_ERROR =
+  "Couldn't extract this article right now. Try another link or try again later.";
 
 function safeUrl(v: unknown): string | null {
   if (typeof v !== "string") return null;
@@ -41,22 +43,16 @@ export async function POST(req: NextRequest) {
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      const msg =
-        (data as { detail?: string }).detail ?? `Extraction error (${res.status})`;
-      return NextResponse.json({ error: msg }, { status: res.status });
+      console.error("Article backend error:", res.status, data);
+      return NextResponse.json(
+        { error: PUBLIC_ARTICLE_ERROR },
+        { status: res.status },
+      );
     }
 
     return NextResponse.json(await res.json());
   } catch (err: unknown) {
     console.error("Article proxy error:", err);
-    const isConnRefused =
-      err instanceof Error &&
-      (err.message.includes("ECONNREFUSED") || err.message.includes("fetch failed"));
-    const message = isConnRefused
-      ? "The backend is not running. Run: uvicorn tts_server:app --port 5002"
-      : err instanceof Error
-        ? err.message
-        : "Failed to extract the article.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: PUBLIC_ARTICLE_ERROR }, { status: 500 });
   }
 }

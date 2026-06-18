@@ -6,6 +6,8 @@ export const maxDuration = 120;
 
 const TTS_SERVER = getTtsServerUrl();
 const MAX_BYTES = 25 * 1024 * 1024;
+const PUBLIC_PDF_ERROR =
+  "Couldn't extract this PDF right now. Try another file or try again later.";
 
 export async function POST(req: NextRequest) {
   try {
@@ -30,22 +32,16 @@ export async function POST(req: NextRequest) {
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      const msg =
-        (data as { detail?: string }).detail ?? `Extraction error (${res.status})`;
-      return NextResponse.json({ error: msg }, { status: res.status });
+      console.error("PDF backend error:", res.status, data);
+      return NextResponse.json(
+        { error: PUBLIC_PDF_ERROR },
+        { status: res.status },
+      );
     }
 
     return NextResponse.json(await res.json());
   } catch (err: unknown) {
     console.error("PDF proxy error:", err);
-    const isConnRefused =
-      err instanceof Error &&
-      (err.message.includes("ECONNREFUSED") || err.message.includes("fetch failed"));
-    const message = isConnRefused
-      ? "The backend is not running. Run: uvicorn tts_server:app --port 5002"
-      : err instanceof Error
-        ? err.message
-        : "Failed to extract the PDF.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: PUBLIC_PDF_ERROR }, { status: 500 });
   }
 }

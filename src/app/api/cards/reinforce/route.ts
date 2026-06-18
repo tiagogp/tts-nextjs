@@ -27,6 +27,8 @@ export const runtime = "nodejs";
 export const maxDuration = 300;
 
 const MAX_SOURCES = 50;
+const PUBLIC_REINFORCE_ERROR =
+  "Couldn't generate reinforcement cards right now. Try again in a moment.";
 
 function isProviderKind(v: unknown): v is ProviderKind {
   return v === "local" || v === "ollama" || v === "claude" || v === "openai";
@@ -91,7 +93,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ cards, count: cards.length, failed: failures });
   } catch (err: unknown) {
     console.error("Reinforcement generation error:", err);
-    const message = err instanceof Error ? err.message : "Failed to generate reinforcement.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json(
+      { error: PUBLIC_REINFORCE_ERROR },
+      { status: 500 },
+    );
   }
 }

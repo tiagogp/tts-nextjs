@@ -14,6 +14,19 @@ const MAX_ITEMS = 250;
 const MAX_TOTAL_CHARS = 80_000;
 const DEFAULT_SPEED = 1.15;
 const DEFAULT_VOICE = "af_heart";
+const PUBLIC_TTS_ERROR =
+  "Couldn't generate audio right now. Try again in a moment.";
+const PUBLIC_TTS_TIMEOUT =
+  "Audio generation is taking longer than expected. Try again with a shorter text.";
+
+class PublicRouteError extends Error {
+  constructor(
+    message: string,
+    readonly status = 500,
+  ) {
+    super(message);
+  }
+}
 
 function clamp(n: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, n));
@@ -74,7 +87,7 @@ function extractLinesFromJson(value: unknown, textKey: string): string[] {
 
 async function synthOne(text: string, speed: number, voice: string): Promise<Buffer> {
   if (text.length > MAX_TEXT_CHARS) {
-    throw new Error(`Text exceeds ${MAX_TEXT_CHARS} characters.`);
+    throw new PublicRouteError(`Text exceeds ${MAX_TEXT_CHARS} characters.`, 400);
   }
 
   const ttsRes = await fetch(`${TTS_SERVER}/tts`, {
@@ -91,10 +104,8 @@ async function synthOne(text: string, speed: number, voice: string): Promise<Buf
 
   if (!ttsRes.ok) {
     const data = await ttsRes.json().catch(() => ({}));
-    const msg =
-      (data as { detail?: string }).detail ??
-      `TTS server error (${ttsRes.status})`;
-    throw new Error(msg);
+    console.error("TTS backend error:", ttsRes.status, data);
+    throw new PublicRouteError(PUBLIC_TTS_ERROR, 502);
   }
 
   return Buffer.from(await ttsRes.arrayBuffer());
@@ -188,17 +199,13 @@ export async function POST(req: NextRequest) {
     });
   } catch (err: unknown) {
     console.error("TTS proxy error:", err);
-    const isConnRefused =
-      err instanceof Error &&
-      (err.message.includes("ECONNREFUSED") ||
-        err.message.includes("fetch failed"));
-    const message = isConnRefused
-      ? "The TTS server is not running. Run: uvicorn tts_server:app --port 5002"
-      : err instanceof Error && err.name === "TimeoutError"
-        ? "The TTS server took too long. Check that backend/tts_server.py is running."
-        : err instanceof Error
-          ? err.message
-          : "Failed to generate audio.";
+    if (err instanceof PublicRouteError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
+    const message =
+      err instanceof Error && err.name === "TimeoutError"
+        ? PUBLIC_TTS_TIMEOUT
+        : PUBLIC_TTS_ERROR;
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

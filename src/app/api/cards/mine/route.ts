@@ -16,6 +16,8 @@ export const runtime = "nodejs";
 export const maxDuration = 120;
 
 const MAX_SEGMENTS = 400;
+const PUBLIC_MINE_ERROR =
+  "Couldn't preselect segments right now. You can still choose them manually.";
 
 function isProviderKind(v: unknown): v is ProviderKind {
   return v === "local" || v === "ollama" || v === "claude" || v === "openai";
@@ -115,7 +117,6 @@ export async function POST(req: NextRequest) {
     });
   } catch (err: unknown) {
     console.error("Card mining error:", err);
-    const message = err instanceof Error ? err.message : "Failed to curate transcript.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: PUBLIC_MINE_ERROR }, { status: 500 });
   }
 }

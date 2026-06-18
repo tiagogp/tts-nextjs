@@ -12,6 +12,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
 const TTS_SERVER = getTtsServerUrl();
+const PUBLIC_TRANSCRIBE_ERROR =
+  "Couldn't transcribe this audio right now. Try again with a shorter or clearer recording.";
 
 export async function POST(req: NextRequest) {
   try {
@@ -22,15 +24,22 @@ export async function POST(req: NextRequest) {
     });
     const data = (await res.json().catch(() => ({}))) as { text?: string; detail?: string };
     if (!res.ok) {
+      console.error("Transcription backend error:", res.status, data);
       return NextResponse.json(
-        { error: data.detail ?? "Transcription failed." },
+        {
+          error:
+            res.status === 413
+              ? "Audio too large (max 25 MB)."
+              : PUBLIC_TRANSCRIBE_ERROR,
+        },
         { status: res.status === 413 ? 413 : 502 },
       );
     }
     return NextResponse.json({ text: data.text ?? "" });
-  } catch {
+  } catch (err: unknown) {
+    console.error("Transcription proxy error:", err);
     return NextResponse.json(
-      { error: "Couldn't reach the transcription server. Is the backend running?" },
+      { error: PUBLIC_TRANSCRIBE_ERROR },
       { status: 502 },
     );
   }

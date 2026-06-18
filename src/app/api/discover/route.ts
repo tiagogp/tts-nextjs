@@ -6,6 +6,10 @@ export const runtime = "nodejs";
 export const maxDuration = 300;
 
 const TTS_SERVER = getTtsServerUrl();
+const PUBLIC_DISCOVER_ERROR =
+  "Couldn't process this source right now. Try again in a moment.";
+const PUBLIC_DISCOVER_TIMEOUT =
+  "Processing is taking longer than expected. Try a shorter source.";
 
 function safeUrl(v: unknown): string | null {
   if (typeof v !== "string") return null;
@@ -50,24 +54,20 @@ export async function POST(req: NextRequest) {
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      const msg =
-        (data as { detail?: string }).detail ?? `Discovery error (${res.status})`;
-      return NextResponse.json({ error: msg }, { status: 502 });
+      console.error("Discover backend error:", res.status, data);
+      return NextResponse.json(
+        { error: PUBLIC_DISCOVER_ERROR },
+        { status: 502 },
+      );
     }
 
     return NextResponse.json(await res.json());
   } catch (err: unknown) {
     console.error("Discover proxy error:", err);
-    const isConnRefused =
-      err instanceof Error &&
-      (err.message.includes("ECONNREFUSED") || err.message.includes("fetch failed"));
-    const message = isConnRefused
-      ? "The backend is not running. Run: uvicorn tts_server:app --port 5002"
-      : err instanceof Error && err.name === "TimeoutError"
-        ? "Transcription took too long. Try a shorter video."
-        : err instanceof Error
-          ? err.message
-          : "Failed to process the video.";
+    const message =
+      err instanceof Error && err.name === "TimeoutError"
+        ? PUBLIC_DISCOVER_TIMEOUT
+        : PUBLIC_DISCOVER_ERROR;
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

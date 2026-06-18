@@ -13,6 +13,8 @@ export const runtime = "nodejs";
 export const maxDuration = 300;
 
 const MAX_INPUT_BYTES = 5 * 1024 * 1024; // 5MB
+const PUBLIC_APKG_ERROR =
+  "Não foi possível gerar o deck agora. Tente novamente em instantes.";
 
 function parseBool(v: string | null): boolean {
   if (!v) return false;
@@ -352,10 +354,11 @@ export async function POST(req: NextRequest) {
       cwd: repoRoot,
     });
     if (code !== 0) {
-      const msg =
-        stderr.trim() ||
-        "Falha ao gerar o .apkg. Verifique se as dependências Python estão instaladas em backend/.venv.";
-      return NextResponse.json({ error: msg }, { status: 500 });
+      console.error("Anki export process failed:", {
+        code,
+        stderr: stderr.trim(),
+      });
+      return NextResponse.json({ error: PUBLIC_APKG_ERROR }, { status: 500 });
     }
 
     const apkg = await fs.readFile(outPath);
@@ -372,9 +375,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (err: unknown) {
     console.error("Anki export error:", err);
-    const message =
-      err instanceof Error ? err.message : "Falha ao exportar o deck.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: PUBLIC_APKG_ERROR }, { status: 500 });
   } finally {
     await cleanup();
   }

@@ -4,6 +4,7 @@ import { getTtsServerUrl } from "@/server/ttsServer";
 export const runtime = "nodejs";
 
 const TTS_SERVER = getTtsServerUrl();
+const PUBLIC_AUDIO_ERROR = "Audio is not available right now.";
 
 export async function GET(
   req: NextRequest,
@@ -11,7 +12,7 @@ export async function GET(
 ) {
   const { sourceId } = await params;
   if (!/^[a-z0-9]{12}$/.test(sourceId)) {
-    return NextResponse.json({ error: "invalid source id" }, { status: 400 });
+    return NextResponse.json({ error: PUBLIC_AUDIO_ERROR }, { status: 400 });
   }
 
   try {
@@ -21,8 +22,9 @@ export async function GET(
       signal: AbortSignal.timeout(60_000),
     });
     if (!res.ok) {
+      console.error("Discover audio backend error:", res.status);
       return NextResponse.json(
-        { error: `audio not available (${res.status})` },
+        { error: PUBLIC_AUDIO_ERROR },
         { status: res.status },
       );
     }
@@ -39,9 +41,10 @@ export async function GET(
       status: res.status,
       headers,
     });
-  } catch {
+  } catch (err: unknown) {
+    console.error("Discover audio proxy error:", err);
     return NextResponse.json(
-      { error: "The backend is not running." },
+      { error: PUBLIC_AUDIO_ERROR },
       { status: 500 },
     );
   }

@@ -32,6 +32,10 @@ export const maxDuration = 300;
 
 const MAX_CANDIDATES = 200;
 const MAX_ERRORS = 200;
+const PUBLIC_CARD_EXPORT_ERROR =
+  "Couldn't export the deck right now. Try again in a moment.";
+const PUBLIC_CARD_GENERATION_ERROR =
+  "Couldn't generate cards right now. Try again in a moment.";
 
 function isProviderKind(v: unknown): v is ProviderKind {
   return v === "local" || v === "ollama" || v === "claude" || v === "openai";
@@ -168,10 +172,14 @@ export async function POST(req: NextRequest) {
 
     const { code, stderr } = await spawnCapture(python, args, { cwd: repoRoot });
     if (code !== 0) {
-      const msg =
-        stderr.trim() ||
-        "Failed to build the .apkg. Check that backend/.venv has the Python dependencies.";
-      return NextResponse.json({ error: msg }, { status: 500 });
+      console.error("Card export process failed:", {
+        code,
+        stderr: stderr.trim(),
+      });
+      return NextResponse.json(
+        { error: PUBLIC_CARD_EXPORT_ERROR },
+        { status: 500 },
+      );
     }
 
     const apkg = await fs.readFile(outPath);
@@ -201,8 +209,10 @@ export async function POST(req: NextRequest) {
     });
   } catch (err: unknown) {
     console.error("Card generation error:", err);
-    const message = err instanceof Error ? err.message : "Failed to generate cards.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json(
+      { error: PUBLIC_CARD_GENERATION_ERROR },
+      { status: 500 },
+    );
   } finally {
     await cleanup();
   }
