@@ -6,6 +6,9 @@ import AudioPlayer from "@/components/AudioPlayer";
 import HistoryPanel from "@/components/HistoryPanel";
 import BatchGenerator from "@/components/BatchGenerator";
 import AnkiExporter from "@/components/AnkiExporter";
+import DiscoverTab from "@/components/DiscoverTab";
+import CorrectTab from "@/components/CorrectTab";
+import StudyTab from "@/components/StudyTab";
 import { HistoryEntry } from "@/types/history";
 import Select from "@/components/Select";
 import {
@@ -31,6 +34,7 @@ function HomeInner() {
   const { voice, setVoice } = useTtsSettings();
   const { resolvedTheme, setTheme } = useTheme();
   const isClient = useIsClient();
+  const [tab, setTab] = useState<"speech" | "discover" | "correct" | "study">("speech");
   const [text, setText] = useState(EXAMPLE_TEXT);
   const [speed, setSpeed] = useState(1.25);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -170,6 +174,42 @@ function HomeInner() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-8">
+        {/* Tabs */}
+        <div className="flex gap-6 mb-6" style={{ borderBottom: "1px solid var(--border)" }}>
+          {([
+            { id: "speech", label: "Speech" },
+            { id: "discover", label: "Discover" },
+            { id: "correct", label: "Correct" },
+            { id: "study", label: "Study" },
+          ] as const).map((t) => {
+            const active = tab === t.id;
+            return (
+              <button
+                key={t.id}
+                onClick={() => setTab(t.id)}
+                className="relative pb-3 text-sm font-medium transition-colors"
+                style={{ color: active ? "var(--text-primary)" : "var(--text-muted)" }}
+              >
+                {t.label}
+                {active && (
+                  <span
+                    className="absolute left-0 right-0 -bottom-px h-0.5"
+                    style={{ backgroundColor: "#ff5600" }}
+                  />
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {tab === "discover" && <DiscoverTab />}
+
+        {tab === "correct" && <CorrectTab />}
+
+        {tab === "study" && <StudyTab />}
+
+        {tab === "speech" && (
+        <>
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
 
           {/* Left: Text input */}
@@ -377,6 +417,8 @@ function HomeInner() {
 
         {/* Anki */}
         <AnkiExporter />
+        </>
+        )}
       </main>
     </div>
   );

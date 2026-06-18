@@ -1,64 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { spawn } from "node:child_process";
 import { promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { isPlainObject } from "@/lib/isObject";
+import {
+  contentDispositionAttachment,
+  resolveBackendPython,
+  spawnCapture,
+} from "@/server/anki";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
 
 const MAX_INPUT_BYTES = 5 * 1024 * 1024; // 5MB
-
-function asciiFallbackFilename(raw: string): string {
-  const normalized = raw.normalize("NFKD");
-  const asciiOnly = normalized.replaceAll(/[^\x20-\x7E]/g, "_");
-  const noBadChars = asciiOnly
-    .replaceAll(/[\\/:*?"<>|]+/g, "_")
-    .replaceAll(/["\\]/g, "_");
-  const collapsed = noBadChars.replaceAll(/\s+/g, " ").trim();
-  return collapsed || "anki-deck";
-}
-
-function encodeRFC5987ValueChars(raw: string): string {
-  // RFC 5987 (used by RFC 6266 filename*): percent-encode UTF-8 bytes.
-  return encodeURIComponent(raw)
-    .replaceAll(
-      /['()]/g,
-      (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`,
-    )
-    .replaceAll(/\*/g, "%2A");
-}
-
-function contentDispositionAttachment(filenameUtf8: string): string {
-  const fallback = asciiFallbackFilename(filenameUtf8);
-  const fallbackQuoted = fallback.replaceAll(/"/g, "_");
-  const encoded = encodeRFC5987ValueChars(filenameUtf8);
-  return `attachment; filename="${fallbackQuoted}"; filename*=UTF-8''${encoded}`;
-}
-
-function spawnCapture(
-  cmd: string,
-  args: string[],
-  opts: { cwd: string },
-): Promise<{ code: number; stdout: string; stderr: string }> {
-  return new Promise((resolve, reject) => {
-    const child = spawn(cmd, args, { cwd: opts.cwd });
-    let stdout = "";
-    let stderr = "";
-
-    child.stdout.on("data", (d) => {
-      stdout += d.toString();
-    });
-    child.stderr.on("data", (d) => {
-      stderr += d.toString();
-    });
-    child.on("error", reject);
-    child.on("close", (code) => {
-      resolve({ code: code ?? 0, stdout, stderr });
-    });
-  });
-}
 
 function parseBool(v: string | null): boolean {
   if (!v) return false;
@@ -210,23 +164,6 @@ function jsonToCsvBytes(opts: {
     ptCol: opts.ptCol,
     enCol: opts.enCol,
   });
-}
-
-async function resolveBackendPython(repoRoot: string): Promise<string> {
-  if (process.env.BACKEND_PYTHON) return process.env.BACKEND_PYTHON;
-  const candidates = [
-    path.join(repoRoot, "backend", ".venv", "bin", "python"),
-    path.join(repoRoot, "backend", ".venv", "bin", "python3"),
-    "python3",
-    "python",
-  ];
-  for (const candidate of candidates) {
-    try {
-      await fs.access(candidate);
-      return candidate;
-    } catch {}
-  }
-  return "python3";
 }
 
 export async function POST(req: NextRequest) {

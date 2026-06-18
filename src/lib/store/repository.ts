@@ -1,0 +1,239 @@
+/**
+ * Typed access to the local-first store. Sources of truth (ErrorEvent /
+ * PhraseCandidate) and derived data (Card / SRS state / reviews) all flow through here.
+ */
+
+import type {
+  Card,
+  ErrorEvent,
+  ErrorType,
+  PhraseCandidate,
+} from "@/lib/cards/schema";
+import {
+  STORES,
+  get,
+  getAll,
+  getAllFromIndex,
+  put,
+  putMany,
+  del,
+  count,
+} from "@/lib/store/db";
+import { initialSrs, type Grade, type SrsRecord, type State } from "@/lib/srs/fsrs";
+import { applyGrade } from "@/lib/srs/fsrs";
+
+/** D3 — one graded answer, denormalized with the concept/errorType for fast analytics. */
+export interface ReviewRecord {
+  id: string;
+  cardId: string;
+  /** ts-fsrs Rating: 1 Again / 2 Hard / 3 Good / 4 Easy. */
+  grade: Grade;
+  reviewedAt: number;
+  /** Card state *before* this review — lets us distinguish lapses from first passes. */
+  previousState: State;
+  scheduledDays: number;
+  /** Denormalized so weakness detection survives card deletion. */
+  concept: string;
+  errorType?: ErrorType;
+}
+
+/* ──────────────────────────── sources ──────────────────────────── */
+
+export function saveErrorEvents(events: ErrorEvent[]): Promise<void> {
+  return putMany(STORES.errorEvents, events);
+}
+
+export function getErrorEvents(): Promise<ErrorEvent[]> {
+  return getAll<ErrorEvent>(STORES.errorEvents);
+}
+
+export function savePhraseCandidates(candidates: PhraseCandidate[]): Promise<void> {
+  return putMany(STORES.phraseCandidates, candidates);
+}
+
+export function getPhraseCandidates(): Promise<PhraseCandidate[]> {
+  return getAll<PhraseCandidate>(STORES.phraseCandidates);
+}
+
+/* ──────────────────────────── cards + SRS ──────────────────────────── */
+
+export function getCards(): Promise<Card[]> {
+  return getAll<Card>(STORES.cards);
+}
+
+export function getCard(id: string): Promise<Card | undefined> {
+  return get<Card>(STORES.cards, id);
+}
+
+export function getSrs(cardId: string): Promise<SrsRecord | undefined> {
+  return get<SrsRecord>(STORES.srs, cardId);
+}
+
+/** Write the cards and give each new one fresh SRS state (due immediately). Existing cards keep their state. */
+async function persistCardsWithSrs(cards: Card[]): Promise<{ added: number }> {
+  if (cards.length === 0) return { added: 0 };
+
+  await putMany(STORES.cards, cards);
+
+  const now = new Date();
+  const newSrs: SrsRecord[] = [];
+  for (const card of cards) {
+    const existing = await getSrs(card.id);
+    if (!existing) newSrs.push(initialSrs(card.id, now));
+  }
+  await putMany(STORES.srs, newSrs);
+  return { added: newSrs.length };
+}
+
+/**
+ * Persist a freshly generated discovery deck: the cards plus, optionally, the source
+ * PhraseCandidates they were mined from (the source of truth).
+ */
+export async function saveGeneratedDeck(
+  cards: Card[],
+  candidates: PhraseCandidate[] = [],
+): Promise<{ added: number }> {
+  if (candidates.length > 0) await savePhraseCandidates(candidates);
+  return persistCardsWithSrs(cards);
+}
+
+/**
+ * E1 — persist a freshly generated correction deck: the cards plus the source
+ * ErrorEvents (the source of truth) the native-correction tool produced. Mirrors
+ * `saveGeneratedDeck` so the error-driven path feeds the same store, Study tab,
+ * and weakness analysis the discovery path does.
+ */
+export async function saveCorrectionDeck(
+  cards: Card[],
+  events: ErrorEvent[] = [],
+): Promise<{ added: number }> {
+  if (events.length > 0) await saveErrorEvents(events);
+  return persistCardsWithSrs(cards);
+}
+
+/* ──────────────────────────── study session ──────────────────────────── */
+
+/** Cards whose SRS `due` is at or before `now`, oldest-due first. */
+export async function getDueCards(now: number = Date.now()): Promise<
+  { card: Card; srs: SrsRecord }[]
+> {
+  const due = await getAllFromIndex<SrsRecord>(
+    STORES.srs,
+    "due",
+    IDBKeyRange.upperBound(now),
+  );
+  due.sort((a, b) => a.due - b.due);
+  const out: { card: Card; srs: SrsRecord }[] = [];
+  for (const srs of due) {
+    const card = await getCard(srs.cardId);
+    if (card) out.push({ card, srs });
+  }
+  return out;
+}
+
+/** Grade a card: advance its SRS state and append a review-log entry. */
+export async function recordReview(
+  card: Card,
+  srs: SrsRecord,
+  grade: Grade,
+  now: Date = new Date(),
+): Promise<SrsRecord> {
+  const { next, scheduledDays, previousState } = applyGrade(srs, grade, now);
+  await put(STORES.srs, next);
+  const review: ReviewRecord = {
+    id: crypto.randomUUID(),
+    cardId: card.id,
+    grade,
+    reviewedAt: now.getTime(),
+    previousState,
+    scheduledDays,
+    concept: card.concept,
+    errorType: card.errorType,
+  };
+  await put(STORES.reviews, review);
+  return next;
+}
+
+export function getReviews(): Promise<ReviewRecord[]> {
+  return getAll<ReviewRecord>(STORES.reviews);
+}
+
+/**
+ * D5 — reinforcement: pull every card for a weak concept/error-type into a focused
+ * drill, regardless of FSRS due date. This is what closes the "tutor" loop — a
+ * `Weakness` from `detectWeaknesses` stops being a report and becomes an actionable
+ * session. Cards without SRS state (shouldn't happen, but be safe) are skipped.
+ */
+export async function getReinforcementCards(weakness: {
+  label: string;
+  kind: "concept" | "errorType";
+}): Promise<{ card: Card; srs: SrsRecord }[]> {
+  const cards = await getCards();
+  const matches = cards.filter((c) =>
+    weakness.kind === "concept"
+      ? c.concept === weakness.label
+      : c.errorType === weakness.label,
+  );
+  const out: { card: Card; srs: SrsRecord }[] = [];
+  for (const card of matches) {
+    const srs = await getSrs(card.id);
+    if (srs) out.push({ card, srs });
+  }
+  return out;
+}
+
+/**
+ * D5 (a) — the sources (PhraseCandidates / ErrorEvents) behind a weak concept/error-type.
+ * Feeding these back into generation produces fresh, still-grounded variant cards that
+ * drill the same weakness — directed generation without needing new material.
+ */
+export async function getReinforcementSources(weakness: {
+  label: string;
+  kind: "concept" | "errorType";
+}): Promise<{ candidates: PhraseCandidate[]; errors: ErrorEvent[] }> {
+  const cards = await getCards();
+  const matches = cards.filter((c) =>
+    weakness.kind === "concept"
+      ? c.concept === weakness.label
+      : c.errorType === weakness.label,
+  );
+  const phraseIds = new Set<string>();
+  const errorIds = new Set<string>();
+  for (const c of matches) {
+    if (c.source.kind === "phrase") phraseIds.add(c.source.id);
+    else errorIds.add(c.source.id);
+  }
+  const [allCandidates, allErrors] = await Promise.all([
+    getPhraseCandidates(),
+    getErrorEvents(),
+  ]);
+  return {
+    candidates: allCandidates.filter((p) => phraseIds.has(p.id)),
+    errors: allErrors.filter((e) => errorIds.has(e.id)),
+  };
+}
+
+/** Persist freshly generated cards (e.g. reinforcement variants) with fresh SRS state. */
+export function saveCards(cards: Card[]): Promise<{ added: number }> {
+  return persistCardsWithSrs(cards);
+}
+
+/* ──────────────────────────── counts / housekeeping ──────────────────────────── */
+
+export async function getCounts(): Promise<{
+  cards: number;
+  reviews: number;
+  due: number;
+}> {
+  const [cards, reviews, due] = await Promise.all([
+    count(STORES.cards),
+    count(STORES.reviews),
+    getDueCards().then((d) => d.length),
+  ]);
+  return { cards, reviews, due };
+}
+
+export async function deleteCard(cardId: string): Promise<void> {
+  await del(STORES.cards, cardId);
+  await del(STORES.srs, cardId);
+}

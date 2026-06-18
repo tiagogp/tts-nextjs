@@ -20,7 +20,9 @@ import argparse
 import csv
 import hashlib
 import io
+import json
 import re
+import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -223,9 +225,195 @@ hr#answer { margin: 12px 0; }
     )
 
 
+def _mk_card_model(model_name: str) -> genanki.Model:
+    """
+    Extended note type for the card pipeline (B2). Additive over the basic PT/EN
+    model: keeps Front/Back and adds the fields that let a card isolate the concept
+    it tests and link back to the source that produced it (grounding / traceability).
+    """
+    model_id = _stable_id_u31("anki_model", model_name)
+    return genanki.Model(
+        model_id,
+        model_name,
+        fields=[
+            {"name": "Front"},
+            {"name": "Back"},
+            {"name": "Audio"},
+            {"name": "Concept"},
+            {"name": "ErrorType"},
+            {"name": "Source"},
+        ],
+        templates=[
+            {
+                "name": "Card 1",
+                "qfmt": "{{Front}}",
+                "afmt": (
+                    "{{FrontSide}}<hr id=answer>{{Back}}<br>{{Audio}}"
+                    "{{#Concept}}<div class=\"concept\">🎯 {{Concept}}</div>{{/Concept}}"
+                    "{{#ErrorType}}<div class=\"errortype\">{{ErrorType}}</div>{{/ErrorType}}"
+                ),
+            }
+        ],
+        css="""
+.card { font-family: arial; font-size: 22px; text-align: left; color: black; background-color: white; }
+hr#answer { margin: 12px 0; }
+.concept { margin-top: 12px; font-size: 14px; color: #ff5600; }
+.errortype { margin-top: 4px; font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+""".strip(),
+    )
+
+
+def _slice_clip(src_mp3: Path, start_ms: int, end_ms: int, out_path: Path) -> bool:
+    """
+    Cut [start_ms, end_ms] out of the cached native audio with ffmpeg (B3).
+    Re-encodes so the cut is sample-accurate. Returns True on success.
+    """
+    if out_path.exists():
+        return True
+    start_s = max(0.0, start_ms / 1000.0)
+    duration_s = max(0.05, (end_ms - start_ms) / 1000.0)
+    cmd = [
+        "ffmpeg", "-y", "-loglevel", "error",
+        "-i", str(src_mp3),
+        "-ss", f"{start_s:.3f}",
+        "-t", f"{duration_s:.3f}",
+        "-acodec", "libmp3lame", "-q:a", "4",
+        str(out_path),
+    ]
+    try:
+        proc = subprocess.run(cmd, capture_output=True)
+    except FileNotFoundError:
+        _eprint("ffmpeg not found on PATH — falling back to TTS for native clips.")
+        return False
+    if proc.returncode != 0:
+        _eprint(f"ffmpeg slice failed: {proc.stderr.decode('utf-8', 'replace').strip()}")
+        return False
+    return out_path.exists()
+
+
+def build_cards_deck(args: argparse.Namespace) -> int:
+    """
+    Card-pipeline export (B1/B2/B3): read a JSON array of generated cards and build
+    a deck with the extended note type. Audio is the sliced native clip when the
+    card carries clip coordinates, otherwise Kokoro TTS of the answer.
+
+    Each card: { front, back, audioText?, concept?, errorType?, source?: {kind,id},
+                 clip?: { sourceId, startMs, endMs } }
+    """
+    cards_path = Path(args.cards_json)
+    if not cards_path.exists():
+        _eprint(f"cards JSON not found: {cards_path}")
+        return 2
+
+    out_path = Path(args.out)
+    if out_path.suffix.lower() != ".apkg":
+        _eprint("--out must end with .apkg")
+        return 2
+
+    try:
+        cards = json.loads(cards_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        _eprint(f"invalid cards JSON: {exc}")
+        return 2
+    if not isinstance(cards, list):
+        _eprint("cards JSON must be an array of card objects")
+        return 2
+
+    out_dir = Path(args.out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    discover_cache = Path(args.discover_cache) if args.discover_cache else None
+
+    synth_kokoro = KokoroSynth()
+    cfg_en_kokoro = KokoroConfig(
+        voice=str(args.en_kokoro_voice),
+        speed=float(args.en_kokoro_speed),
+        lang_code=str(args.en_kokoro_lang) if args.en_kokoro_lang else None,
+    )
+
+    model = _mk_card_model(str(args.model_name))
+    deck_name = str(args.deck)
+    deck = genanki.Deck(_stable_id_u31("anki_deck", deck_name), deck_name)
+
+    media_files: list[str] = []
+    added = 0
+    skipped = 0
+
+    for i, card in enumerate(cards, start=1):
+        if not isinstance(card, dict):
+            skipped += 1
+            continue
+        front = str(card.get("front") or "").strip()
+        back = str(card.get("back") or "").strip()
+        if not front or not back:
+            skipped += 1
+            continue
+        audio_text = str(card.get("audioText") or back).strip() or back
+
+        concept = str(card.get("concept") or "").strip()
+        error_type = str(card.get("errorType") or "").strip()
+        source = card.get("source") if isinstance(card.get("source"), dict) else None
+        source_str = f"{source.get('kind')}:{source.get('id')}" if source else ""
+
+        audio_tag = ""
+        clip = card.get("clip") if isinstance(card.get("clip"), dict) else None
+        clip_done = False
+        if clip and discover_cache:
+            src_id = str(clip.get("sourceId") or "")
+            start_ms = int(clip.get("startMs") or 0)
+            end_ms = int(clip.get("endMs") or 0)
+            src_mp3 = discover_cache / f"{src_id}.mp3"
+            if src_id and end_ms > start_ms and src_mp3.exists():
+                clip_filename = f"clip_{src_id}_{start_ms}_{end_ms}.mp3"
+                clip_path = out_dir / clip_filename
+                if _slice_clip(src_mp3, start_ms, end_ms, clip_path):
+                    media_files.append(str(clip_path))
+                    audio_tag = _sound_tag(clip_filename)
+                    clip_done = True
+
+        # Fallback: synthesize the source sentence for Discover cards, or Back otherwise.
+        if not clip_done:
+            tts_key = f"card|kokoro|{cfg_en_kokoro.lang_code}|{cfg_en_kokoro.voice}|{cfg_en_kokoro.speed}|{audio_text}"
+            tts_filename = f"anki_tts_en_{_sha1_12(tts_key)}.wav"
+            tts_path = out_dir / tts_filename
+            if not tts_path.exists():
+                tts_path.write_bytes(synth_kokoro.synth_wav_bytes(audio_text, cfg_en_kokoro))
+            media_files.append(str(tts_path))
+            audio_tag = _sound_tag(tts_filename)
+
+        guid = _sha1(f"{deck_name}|{front}|{back}|{source_str}")
+        note = genanki.Note(
+            model=model,
+            fields=[front, back, audio_tag, concept, error_type, source_str],
+            guid=guid,
+            tags=["card-pipeline"],
+        )
+        deck.add_note(note)
+        added += 1
+
+    media_files = list(dict.fromkeys(media_files))
+    pkg = genanki.Package(deck)
+    pkg.media_files = media_files
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    pkg.write_to_file(str(out_path))
+
+    _eprint(f"Done. Wrote {out_path} with {added} cards. Skipped {skipped} invalid.")
+    return 0
+
+
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description="Generate an Anki .apkg from a PT/EN CSV")
-    parser.add_argument("--csv", required=True, help="Path to CSV file")
+    parser.add_argument("--csv", help="Path to CSV file (PT/EN mode)")
+    parser.add_argument(
+        "--cards-json",
+        dest="cards_json",
+        help="Path to a JSON array of generated cards (card-pipeline mode; overrides --csv)",
+    )
+    parser.add_argument(
+        "--discover-cache",
+        dest="discover_cache",
+        default=None,
+        help="Directory holding cached source mp3s, for native-clip slicing (card-pipeline mode)",
+    )
     parser.add_argument("--delimiter", default=",", help="CSV delimiter (default: ,)")
     parser.add_argument("--no-header", action="store_true", help="Treat CSV as having no header row")
     parser.add_argument("--pt-col", default="pt", help='Portuguese column name or index (default: "pt")')
@@ -280,6 +468,14 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--gpu", action="store_true", help="Use GPU if available (Coqui TTS)")
 
     args = parser.parse_args(argv)
+
+    # Card-pipeline mode (B1/B2/B3): generated cards + native clips / extended note type.
+    if args.cards_json:
+        return build_cards_deck(args)
+
+    if not args.csv:
+        _eprint("--csv is required (or use --cards-json for the card pipeline)")
+        return 2
 
     csv_path = Path(args.csv)
     if not csv_path.exists():

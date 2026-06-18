@@ -63,6 +63,51 @@ Open [http://localhost:3000](http://localhost:3000).
 - **Batch generation** — one sentence per line, download all as ZIP
 - Dark / light / system theme
 
+## Discover (YouTube → transcript → phrases)
+
+The **Discover** tab turns native content into learning material. Paste a YouTube URL; the
+backend downloads the **audio only** (no video) with `yt-dlp` and transcribes it locally with
+[faster-whisper](https://github.com/SYSTRAN/faster-whisper), producing a timestamped
+transcript. Each segment can be played back as its **native audio clip** and marked to keep.
+
+Runs 100% locally — the speech-recognition model (`small`, ~480 MB) downloads on first use.
+Requires `ffmpeg` (`brew install ffmpeg`).
+
+> Next step (in progress): LLM curation biased by an optional **focus** field, a review pass,
+> and one-click card generation. See [ARCHITECTURE_CARDS.md](ARCHITECTURE_CARDS.md).
+
+## Card AI providers
+
+Card mining, generation, the quality critique, and free-text correction (the **Correct** tab's
+"Avaliar (IA)") run through a pluggable provider. You pick one at runtime; only the configured
+ones show up in the selector:
+
+| Provider | Evaluates free text? | How to enable |
+| --- | --- | --- |
+| **Local** (heuristic) | No | Always available. No model — cloze/keyword heuristics only. |
+| **Ollama** (local LLM) | Yes | Run [Ollama](https://ollama.com) and set `OLLAMA_BASE_URL` in `.env.local`. |
+| **Claude** | Yes | Set `ANTHROPIC_API_KEY` in `.env.local`. |
+| **GPT** | Yes | Set `OPENAI_API_KEY` in `.env.local`. |
+
+For a fully local-but-capable setup, run Ollama yourself and point the app at it:
+
+```bash
+# .env.local
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=llama3.1          # optional default; the UI lets you pick any installed model
+```
+
+```bash
+ollama pull llama3.1
+ollama serve                   # exposes the OpenAI-compatible API on :11434
+```
+
+Once `OLLAMA_BASE_URL` is set, the **Discover** and **Correct** tabs show a **model picker**
+populated from the models you've actually pulled (`ollama list`) — no need to hardcode
+`OLLAMA_MODEL`. It uses Ollama's OpenAI-compatible endpoint, so structured-output quality
+depends on the model: prefer an instruction-tuned one that handles JSON well (e.g. `llama3.1`,
+`qwen2.5`).
+
 ## Anki (CSV → Audio → Notes)
 
 If you want to generate audio for your own cards, you have two options:

@@ -15,9 +15,11 @@ import numpy as np
 import soundfile as sf
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel, Field
 from TTS.api import TTS
+
+import discovery
 
 VOICE_REF_PATH = Path(__file__).parent / "voice_reference.wav"
 
@@ -177,6 +179,85 @@ def delete_voice() -> dict:
     return {"status": "ok"}
 
 
+# ── Discovery (YouTube audio → transcript) ────────────────────────────────────
+class DiscoverRequest(BaseModel):
+    url: str
+    lang: str | None = None  # None = auto-detect
+
+
+@app.post("/discover")
+def discover(req: DiscoverRequest) -> dict:
+    url = req.url.strip()
+    if not url:
+        raise HTTPException(status_code=400, detail="url is required")
+    try:
+        result = discovery.discover(url, req.lang)
+    except Exception as exc:  # yt-dlp / whisper failures → surface a clean message
+        raise HTTPException(status_code=502, detail=f"discovery failed: {exc}") from exc
+    return result.to_dict()
+
+
+class ArticleRequest(BaseModel):
+    url: str
+
+
+@app.post("/discover/article")
+def discover_article(req: ArticleRequest) -> dict:
+    url = req.url.strip()
+    if not url:
+        raise HTTPException(status_code=400, detail="url is required")
+    try:
+        result = discovery.discover_article(url)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"article extraction failed: {exc}") from exc
+    return result.to_dict()
+
+
+@app.post("/discover/pdf")
+async def discover_pdf(file: UploadFile = File(...)) -> dict:
+    data = await file.read()
+    if not data:
+        raise HTTPException(status_code=400, detail="empty file")
+    if len(data) > 25 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="PDF too large (max 25 MB)")
+    try:
+        result = discovery.discover_pdf(data, file.filename)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"PDF extraction failed: {exc}") from exc
+    return result.to_dict()
+
+
+@app.get("/discover/audio/{source_id}")
+def discover_audio(source_id: str) -> FileResponse:
+    # source_id is a 12-char sha1 prefix; reject anything else to avoid path traversal.
+    if not source_id.isalnum() or len(source_id) != 12:
+        raise HTTPException(status_code=400, detail="invalid source id")
+    path = discovery.audio_path_for(source_id)
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="audio not found")
+    return FileResponse(str(path), media_type="audio/mpeg")
+
+
+@app.post("/transcribe")
+async def transcribe(file: UploadFile = File(...), lang: str | None = None) -> dict:
+    """E2 (speech): transcribe a recorded clip to text for the correction step."""
+    data = await file.read()
+    if not data:
+        raise HTTPException(status_code=400, detail="empty audio")
+    if len(data) > 25 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="audio too large (max 25 MB)")
+    suffix = Path(file.filename or "clip.webm").suffix or ".webm"
+    try:
+        text = discovery.transcribe_bytes(data, suffix, lang)
+    except Exception as exc:  # whisper / ffmpeg failures → clean message
+        raise HTTPException(status_code=502, detail=f"transcription failed: {exc}") from exc
+    return {"text": text}
+
+
 @app.get("/health")
 def health() -> dict:
     return {"status": "ok"}
@@ -185,7 +266,8 @@ def health() -> dict:
 @app.get("/status")
 def status() -> dict:
     return {
-        "downloading_model": _kokoro_downloading or _chatterbox_downloading,
+        "downloading_model": _kokoro_downloading or _chatterbox_downloading or discovery.is_loading_model(),
         "downloading_kokoro": _kokoro_downloading,
         "downloading_chatterbox": _chatterbox_downloading,
+        "downloading_whisper": discovery.is_loading_model(),
     }
