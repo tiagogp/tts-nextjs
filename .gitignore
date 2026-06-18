@@ -14,7 +14,7 @@ __pycache__
 .venv
 .discover_cache
 .anki_tts_out
-
+/dist
 # testing
 /coverage
 

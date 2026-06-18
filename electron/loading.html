@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>PhraseLoop</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #0a0a0a;
+        color: #ededed;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui,
+          sans-serif;
+      }
+      .wrap {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+      }
+      .title {
+        font-family:
+          "Archivo Black",
+          "SF Pro Display",
+          -apple-system,
+          BlinkMacSystemFont,
+          system-ui,
+          sans-serif;
+        font-size: 30px;
+        font-weight: 400;
+        letter-spacing: 0;
+      }
+      .spinner {
+        width: 38px;
+        height: 38px;
+        border: 3px solid rgba(255, 255, 255, 0.15);
+        border-top-color: #ededed;
+        border-radius: 50%;
+        animation: spin 0.9s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .status {
+        font-size: 14px;
+        color: #a1a1a1;
+        min-height: 20px;
+        text-align: center;
+        padding: 0 32px;
+      }
+      .hint {
+        font-size: 12px;
+        color: #6b6b6b;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="title">PhraseLoop</div>
+      <div class="status" id="status">Opening…</div>
+      <div class="spinner"></div>
+    </div>
+    <script>
+      const statusEl = document.getElementById("status");
+      const statusSets = {
+        preparing: [
+          "Preparing PhraseLoop…",
+          "Warming up voices…",
+          "Loading your workspace…",
+          "Almost ready…",
+        ],
+        opening: [
+          "Opening PhraseLoop…",
+          "Bringing the app forward…",
+          "Polishing the last bits…",
+          "Almost there…",
+        ],
+      };
+      let currentSet = statusSets.opening;
+      let currentIndex = 0;
+      let locked = false;
+
+      function renderNextStatus() {
+        if (locked) return;
+        statusEl.textContent = currentSet[currentIndex % currentSet.length];
+        currentIndex += 1;
+      }
+
+      window.setStatus = function (text) {
+        if (/couldn't|failed/i.test(text)) {
+          locked = true;
+          statusEl.textContent = text;
+          return;
+        }
+
+        currentSet = /opening/i.test(text)
+          ? statusSets.opening
+          : statusSets.preparing;
+        currentIndex = 0;
+        renderNextStatus();
+      };
+
+      renderNextStatus();
+      window.setInterval(renderNextStatus, 850);
+    </script>
+  </body>
+</html>

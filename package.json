@@ -6,7 +6,25 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "app": "electron electron/main.js",
+    "app:dist": "bash electron/build-app.sh"
+  },
+  "main": "electron/main.js",
+  "build": {
+    "appId": "com.tiago.texttospeech",
+    "productName": "PhraseLoop",
+    "files": [
+      "electron/**/*",
+      "package.json",
+      "!node_modules/**/*"
+    ],
+    "mac": {
+      "icon": "electron/assets/icon.icns",
+      "category": "public.app-category.education",
+      "target": "dir",
+      "identity": null
+    }
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.104.2",
@@ -25,6 +43,8 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "electron": "^42.4.1",
+    "electron-builder": "^26.15.3",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
     "tailwindcss": "^4",
