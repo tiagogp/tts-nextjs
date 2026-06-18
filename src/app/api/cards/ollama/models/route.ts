@@ -7,7 +7,6 @@
  */
 
 import { NextResponse } from "next/server";
-import { isProviderAvailable } from "@/lib/cards/registry";
 import { ollamaApiRoot } from "@/lib/cards/providers/ollama";
 
 export const runtime = "nodejs";
@@ -17,13 +16,6 @@ interface OllamaTag {
 }
 
 export async function GET() {
-  if (!isProviderAvailable("ollama")) {
-    return NextResponse.json({
-      models: [],
-      note: "Ollama não está configurado — defina OLLAMA_BASE_URL no .env.local.",
-    });
-  }
-
   try {
     const res = await fetch(`${ollamaApiRoot()}/api/tags`, {
       signal: AbortSignal.timeout(5000),
@@ -42,10 +34,10 @@ export async function GET() {
           : undefined,
     });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "erro desconhecido";
+    console.error("Ollama models error:", err);
     return NextResponse.json({
       models: [],
-      note: `Não foi possível conectar ao Ollama (${message}). Ele está rodando?`,
+      note: "Não foi possível carregar os modelos do Ollama agora.",
     });
   }
 }

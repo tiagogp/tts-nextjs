@@ -32,11 +32,79 @@ const ERROR_TYPES: ErrorType[] = [
   "other",
 ];
 const ERROR_TYPE_SET = new Set<string>(ERROR_TYPES);
+const AI_TOOLBAR_BUTTON_CLASS =
+  "h-10 shrink-0 rounded px-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 whitespace-nowrap";
+const AI_PRIMARY_BUTTON_CLASS =
+  "h-10 shrink-0 rounded px-4 text-sm font-medium transition-colors ml-auto whitespace-nowrap";
 
 interface ProviderInfo {
   kind: string;
   label: string;
   available: boolean;
+}
+
+function MicrophoneIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-4 w-4 shrink-0"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3Z" />
+      <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+      <path d="M12 19v3" />
+      <path d="M8 22h8" />
+    </svg>
+  );
+}
+
+function UploadIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-4 w-4 shrink-0"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M12 15V3" />
+      <path d="m7 8 5-5 5 5" />
+      <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+    </svg>
+  );
+}
+
+function SpinnerIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-4 w-4 shrink-0 animate-spin"
+      fill="none"
+      viewBox="0 0 24 24"
+    >
+      <circle
+        className="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4Z"
+      />
+    </svg>
+  );
 }
 
 function newDraft(): {
@@ -95,14 +163,14 @@ export default function CorrectTab() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [providers, setProviders] = useState<ProviderInfo[]>([]);
-  const [provider, setProvider] = useState("local");
+  const [provider, setProvider] = useState("ollama");
   const [ollamaModel, setOllamaModel] = useState("");
   const [generating, setGenerating] = useState(false);
   const [genError, setGenError] = useState<string | null>(null);
   const [genDone, setGenDone] = useState<string | null>(null);
 
-  // The heuristic Local provider can't judge open text; any other provider (cloud or a
-  // configured local Ollama) can. This gates the AI-evaluate affordance.
+  // The heuristic Local provider can't judge open text; any model-backed provider can.
+  // This gates the AI-evaluate affordance.
   const hasEvaluator = providers.some((p) => p.kind !== "local");
 
   // Visual model picker: list the user's installed Ollama models when Ollama is in play.
@@ -436,11 +504,13 @@ export default function CorrectTab() {
               <button
                 onClick={recording ? stopRecording : startRecording}
                 disabled={evaluating || transcribing}
-                className="text-xs font-medium px-3 py-1.5 rounded transition-colors flex items-center gap-1.5"
+                className={AI_TOOLBAR_BUTTON_CLASS}
                 style={{
                   border: `1px solid ${recording ? "#c41c1c" : "var(--border)"}`,
+                  backgroundColor: "var(--surface-input)",
                   color: recording ? "#c41c1c" : "var(--text-secondary)",
                   cursor: evaluating || transcribing ? "not-allowed" : "pointer",
+                  opacity: evaluating || transcribing ? 0.6 : 1,
                 }}
               >
                 {recording ? (
@@ -449,9 +519,15 @@ export default function CorrectTab() {
                     Parar gravação
                   </>
                 ) : transcribing ? (
-                  "Transcrevendo…"
+                  <>
+                    <SpinnerIcon />
+                    Transcrevendo…
+                  </>
                 ) : (
-                  "🎙 Gravar fala"
+                  <>
+                    <MicrophoneIcon />
+                    Gravar fala
+                  </>
                 )}
               </button>
               <input
@@ -464,14 +540,17 @@ export default function CorrectTab() {
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={recording || evaluating || transcribing}
-                className="text-xs font-medium px-3 py-1.5 rounded transition-colors flex items-center gap-1.5"
+                className={AI_TOOLBAR_BUTTON_CLASS}
                 style={{
                   border: "1px solid var(--border)",
+                  backgroundColor: "var(--surface-input)",
                   color: "var(--text-secondary)",
                   cursor: recording || evaluating || transcribing ? "not-allowed" : "pointer",
+                  opacity: recording || evaluating || transcribing ? 0.6 : 1,
                 }}
               >
-                ⬆ Enviar áudio
+                <UploadIcon />
+                Enviar áudio
               </button>
               {providers.length > 1 && (
                 <div className="w-40">
@@ -496,7 +575,7 @@ export default function CorrectTab() {
               <button
                 onClick={evaluate}
                 disabled={!aiText.trim() || evaluating || transcribing}
-                className="text-xs font-medium px-3 py-1.5 rounded transition-colors ml-auto"
+                className={AI_PRIMARY_BUTTON_CLASS}
                 style={{
                   backgroundColor: aiText.trim() && !evaluating ? "#ff5600" : "var(--border)",
                   color: aiText.trim() && !evaluating ? "#ffffff" : "var(--text-muted)",
@@ -508,8 +587,7 @@ export default function CorrectTab() {
             </div>
             {!hasEvaluator && (
               <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                A avaliação por IA precisa de um modelo: configure Claude ou GPT (chave no
-                .env.local), ou rode o Ollama localmente e aponte OLLAMA_BASE_URL para ele.
+                A avaliação por IA precisa de um modelo: escolha Ollama, Claude ou GPT.
                 O provedor Local (heurístico) não avalia texto livre.
               </p>
             )}

@@ -1,4 +1,4 @@
-# English Text to Speech
+# PhraseLoop
 
 Convert English text into natural speech and download the audio file. Runs 100% locally — no API keys required.
 
@@ -85,26 +85,20 @@ ones show up in the selector:
 | Provider | Evaluates free text? | How to enable |
 | --- | --- | --- |
 | **Local** (heuristic) | No | Always available. No model — cloze/keyword heuristics only. |
-| **Ollama** (local LLM) | Yes | Run [Ollama](https://ollama.com) and set `OLLAMA_BASE_URL` in `.env.local`. |
+| **Ollama** (local LLM) | Yes | Run [Ollama](https://ollama.com). Uses `http://localhost:11434` by default. |
 | **Claude** | Yes | Set `ANTHROPIC_API_KEY` in `.env.local`. |
 | **GPT** | Yes | Set `OPENAI_API_KEY` in `.env.local`. |
 
-For a fully local-but-capable setup, run Ollama yourself and point the app at it:
-
-```bash
-# .env.local
-OLLAMA_BASE_URL=http://localhost:11434
-OLLAMA_MODEL=llama3.1          # optional default; the UI lets you pick any installed model
-```
+For a fully local-but-capable setup, run Ollama yourself:
 
 ```bash
 ollama pull llama3.1
 ollama serve                   # exposes the OpenAI-compatible API on :11434
 ```
 
-Once `OLLAMA_BASE_URL` is set, the **Discover** and **Correct** tabs show a **model picker**
-populated from the models you've actually pulled (`ollama list`) — no need to hardcode
-`OLLAMA_MODEL`. It uses Ollama's OpenAI-compatible endpoint, so structured-output quality
+The **Discover** and **Correct** tabs show a **model picker** populated from the models you've
+actually pulled (`ollama list`) — no need to hardcode `OLLAMA_MODEL`. If your server runs
+somewhere else, set `OLLAMA_BASE_URL` in `.env.local`. It uses Ollama's OpenAI-compatible endpoint, so structured-output quality
 depends on the model: prefer an instruction-tuned one that handles JSON well (e.g. `llama3.1`,
 `qwen2.5`).
 

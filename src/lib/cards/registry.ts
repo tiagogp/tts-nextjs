@@ -3,8 +3,8 @@
  * keys from the environment, so never import this into client components.
  *
  * `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` are picked up by the SDKs automatically;
- * the local provider needs no key and is always available. Ollama is local too but only
- * appears once `OLLAMA_BASE_URL` points at a running server.
+ * the local provider needs no key and is always available. Ollama is local too and defaults
+ * to localhost; `OLLAMA_BASE_URL` only overrides that address.
  */
 
 import "server-only";
@@ -28,20 +28,19 @@ export const providerRegistry: ProviderRegistry = {
   local: () => new LocalProvider(),
 };
 
-/** True when the provider is usable here: a cloud key set, or Ollama pointed at a server. */
+/** True when the provider is usable here: a cloud key set, or a local provider. */
 export function isProviderAvailable(kind: ProviderKind): boolean {
   if (kind === "local") return true;
   if (kind === "claude") return Boolean(process.env.ANTHROPIC_API_KEY);
   if (kind === "openai") return Boolean(process.env.OPENAI_API_KEY);
-  if (kind === "ollama") return Boolean(process.env.OLLAMA_BASE_URL);
+  if (kind === "ollama") return true;
   return false;
 }
 
 /**
  * Best provider available without the user picking one — cloud quality first
- * (Claude → OpenAI), then a local LLM (Ollama) if configured, then the heuristic
- * local fallback. Used by reinforcement generation, which fires from the Study tab
- * where there's no provider selector.
+ * (Claude → OpenAI), then the local LLM path (Ollama), then the heuristic local fallback.
+ * Used by reinforcement generation, which fires from the Study tab where there's no provider selector.
  */
 export function bestAvailableProvider(): ProviderKind {
   if (isProviderAvailable("claude")) return "claude";
