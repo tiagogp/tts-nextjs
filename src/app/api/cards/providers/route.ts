@@ -5,6 +5,7 @@
 
 import { NextResponse } from "next/server";
 import { providerRegistry, isProviderAvailable } from "@/lib/cards/registry";
+import { isOllamaReachable } from "@/lib/cards/providers/ollama";
 import type { ProviderKind } from "@/lib/cards/provider";
 
 export const runtime = "nodejs";
@@ -18,9 +19,11 @@ const FALLBACK_LABELS: Record<ProviderKind, string> = {
   openai: "OpenAI (GPT)",
 };
 
-export function GET() {
+export async function GET() {
+  const ollamaReachable = await isOllamaReachable();
   const providers = (Object.keys(providerRegistry) as ProviderKind[]).map((kind) => {
-    const available = isProviderAvailable(kind);
+    const available =
+      kind === "ollama" ? ollamaReachable : isProviderAvailable(kind);
     const label = available ? providerRegistry[kind]().label : FALLBACK_LABELS[kind];
     return { kind, label, available };
   });

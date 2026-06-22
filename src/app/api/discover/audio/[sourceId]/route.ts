@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getTtsServerUrl } from "@/server/ttsServer";
+import { localRequest } from "@/server/localRuntime";
 
 export const runtime = "nodejs";
 
-const TTS_SERVER = getTtsServerUrl();
 const PUBLIC_AUDIO_ERROR = "Audio is not available right now.";
 
 export async function GET(
@@ -17,12 +16,12 @@ export async function GET(
 
   try {
     const range = req.headers.get("range");
-    const res = await fetch(`${TTS_SERVER}/discover/audio/${sourceId}`, {
+    const res = await localRequest(`/discover/audio/${sourceId}`, {
       headers: range ? { Range: range } : undefined,
-      signal: AbortSignal.timeout(60_000),
+      timeoutMs: 60_000,
     });
-    if (!res.ok) {
-      console.error("Discover audio backend error:", res.status);
+    if (res.status < 200 || res.status >= 300) {
+      console.error("Discover audio runtime error:", res.status);
       return NextResponse.json(
         { error: PUBLIC_AUDIO_ERROR },
         { status: res.status },
@@ -30,14 +29,15 @@ export async function GET(
     }
 
     const headers = new Headers();
-    headers.set("Content-Type", res.headers.get("content-type") ?? "audio/mpeg");
+    const contentType = res.headers["content-type"];
+    headers.set("Content-Type", typeof contentType === "string" ? contentType : "audio/mpeg");
     headers.set("Cache-Control", "private, max-age=3600");
     for (const name of ["accept-ranges", "content-range", "content-length"]) {
-      const value = res.headers.get(name);
-      if (value) headers.set(name, value);
+      const value = res.headers[name];
+      if (typeof value === "string") headers.set(name, value);
     }
 
-    return new NextResponse(res.body, {
+    return new NextResponse(new Uint8Array(res.body), {
       status: res.status,
       headers,
     });

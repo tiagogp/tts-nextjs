@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isPlainObject } from "@/lib/isObject";
-import { getTtsServerUrl } from "@/server/ttsServer";
+import { localJson } from "@/server/localRuntime";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
 
-const TTS_SERVER = getTtsServerUrl();
 const PUBLIC_ARTICLE_ERROR =
   "Couldn't extract this article right now. Try another link or try again later.";
 
@@ -34,23 +33,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const res = await fetch(`${TTS_SERVER}/discover/article`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url }),
-      signal: AbortSignal.timeout(120_000),
-    });
+    const res = await localJson("/discover/article", { url }, 120_000);
 
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      console.error("Article backend error:", res.status, data);
+    if (res.status < 200 || res.status >= 300) {
+      console.error("Article runtime error:", res.status, res.body.toString("utf8"));
       return NextResponse.json(
         { error: PUBLIC_ARTICLE_ERROR },
         { status: res.status },
       );
     }
 
-    return NextResponse.json(await res.json());
+    return NextResponse.json(res.json());
   } catch (err: unknown) {
     console.error("Article proxy error:", err);
     return NextResponse.json({ error: PUBLIC_ARTICLE_ERROR }, { status: 500 });

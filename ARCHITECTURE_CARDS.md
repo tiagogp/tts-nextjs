@@ -101,7 +101,7 @@ tutor. Status against that vision:
 
 ### ✅ Done — foundation
 - [x] **Contract / schema** — `schema.ts`, `provider.ts` (the interface every stage agrees on).
-- [x] **Discovery ingestion** — backend: yt-dlp audio-only + faster-whisper →
+- [x] **Discovery ingestion** — local TypeScript runtime: YouTube.js audio-only + whisper.cpp →
       `TranscriptSegment[]` with timestamps. Verified end-to-end.
 - [x] **`.apkg` export engine** with TTS audio (genanki).
 - [x] **Tabs UI** + transcript with native-clip playback + manual "Keep".
@@ -136,11 +136,11 @@ interchangeable. Cloud providers use structured outputs; the registry
       `generateDeck`) → extended `.apkg` engine → browser download. The Discover UI now has a
       provider selector (Local always; Claude/OpenAI when their key is set, listed by
       `GET /api/cards/providers`). Verified end-to-end with the local provider.
-- [x] **B2. Extend the genanki note type** — `apkg_from_csv.py --cards-json` builds a deck with
+- [x] **B2. Extend the Anki note type** — the TypeScript `ankipack` exporter builds a deck with
       an additive note type (`Front`, `Back`, `Audio`, `Concept`, `ErrorType`, `Source`); the
       PT/EN CSV path is untouched.
-- [x] **B3. Slice the native audio clip** — server-side ffmpeg cut of `[startMs, endMs]` from the
-      cached source mp3 (`backend/.discover_cache/{sourceId}.mp3`), embedded as the card's media.
+- [x] **B3. Slice the native audio clip** — in-process audio decoding cuts `[startMs, endMs]` from the
+      cached source audio (`Application Support/PhraseLoop/discover-cache`), embedded as card media.
       Falls back to Kokoro TTS of the answer when no clip is available.
 
 ### ✅ More material sources
@@ -148,13 +148,13 @@ All three converge on the same `DiscoverResult → PhraseCandidate → Card` pip
 Discover UI now has a **source-type selector** (YouTube / Article-URL / PDF). Text-only
 sources carry no timestamps (`hasAudio: false`), so their cards fall back to Kokoro TTS for
 the answer audio — the native-clip slicing is reserved for the audio path.
-- [x] **C1. PDF** parsing — `POST /discover/pdf` (multipart) → `pypdf` text extraction →
+- [x] **C1. PDF** parsing — `POST /discover/pdf` (multipart) → PDF.js text extraction →
       sentence segmentation. Next.js proxy at `src/app/api/discover/pdf/route.ts` (25 MB cap).
-- [x] **C2. Article / URL** text extraction — `POST /discover/article` → `trafilatura`
+- [x] **C2. Article / URL** text extraction — `POST /discover/article` → Mozilla Readability
       main-text + title extraction → sentence segmentation. Proxy at
       `src/app/api/discover/article/route.ts`.
-- [x] **C3. YouTube captions** fast path — `discovery.discover()` reads the caption tracks
-      yt-dlp already returns (manual subs preferred over auto-captions, `json3` format) and
+- [x] **C3. YouTube captions** fast path — the local discovery service reads caption tracks
+      returned by YouTube.js and
       builds timestamped segments directly, skipping Whisper. Falls back to `transcribe()`
       when no usable captions exist. Audio is still cached either way, so native clips work.
 

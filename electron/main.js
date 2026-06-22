@@ -1,38 +1,31 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 // Electron launcher for the PhraseLoop app.
 //
-// This is a thin native-window wrapper. It does NOT bundle the Next.js app or
-// the Python backend (the venv + ML models are GBs). Instead it boots the
-// existing services from the project directory and shows the UI in a window.
-//
-// Boot sequence: backend (uvicorn) -> wait /health -> frontend (next) ->
-// wait :3000 -> load in window. On quit, the whole process group is killed.
+// Boot sequence: native-capable Next server -> BrowserWindow.
 
-const { app, BrowserWindow, ipcMain, shell } = require("electron");
-const { spawn } = require("node:child_process");
+const { app, BrowserWindow, ipcMain, shell, utilityProcess } = require("electron");
+const { spawn, spawnSync } = require("node:child_process");
 const http = require("node:http");
 const path = require("node:path");
 const fs = require("node:fs");
 
-// Where the actual project lives. When running unpacked (npm run app) this is
-// the repo root. When packaged, the .app references the project on disk since
-// the venv/models can't be bundled. Override with TTS_PROJECT_ROOT if you move
-// the project.
-const PROJECT_ROOT =
-  process.env.TTS_PROJECT_ROOT ||
-  (app.isPackaged
-    ? "/Users/tiagogp/Documents/text-to-speech"
-    : path.resolve(__dirname, ".."));
+// In development, run from the repo. In the packaged app, run from resources
+// copied by electron-builder so the app does not depend on a source checkout.
+const DEV_PROJECT_ROOT = path.resolve(__dirname, "..");
+const PACKAGED_NEXT_ROOT = path.join(process.resourcesPath, "app-next");
+const PROJECT_ROOT = process.env.TTS_PROJECT_ROOT || DEV_PROJECT_ROOT;
+const NEXT_ROOT = app.isPackaged ? PACKAGED_NEXT_ROOT : PROJECT_ROOT;
 
-const BACKEND_PORT = 5002;
 const FRONTEND_PORT = 3000;
 const FRONTEND_URL = `http://localhost:${FRONTEND_PORT}`;
-const BACKEND_HEALTH = `http://localhost:${BACKEND_PORT}/health`;
 const APP_ICON_PNG = path.join(__dirname, "assets", "icon.png");
 const PRELOAD_JS = path.join(__dirname, "preload.js");
+const USER_ENV_FILE = path.join(app.getPath("userData"), "phraseloop.env");
 
 /** @type {import('node:child_process').ChildProcess[]} */
 const children = [];
+/** @type {import('electron').UtilityProcess[]} */
+const utilityChildren = [];
 let mainWindow = null;
 let shuttingDown = false;
 
@@ -72,10 +65,35 @@ function parseEnvFile(file) {
   return parsed;
 }
 
+function ensureUserEnvFile() {
+  if (fs.existsSync(USER_ENV_FILE)) return;
+  fs.mkdirSync(path.dirname(USER_ENV_FILE), { recursive: true });
+  fs.writeFileSync(
+    USER_ENV_FILE,
+    [
+      "# PhraseLoop provider configuration",
+      "# Ollama is used automatically when it is running on localhost:11434.",
+      "# Otherwise, set one of these keys and restart the app:",
+      "# ANTHROPIC_API_KEY=sk-ant-...",
+      "# OPENAI_API_KEY=sk-...",
+      "# Optional:",
+      "# OLLAMA_BASE_URL=http://localhost:11434",
+      "# OLLAMA_MODEL=llama3.1",
+      "",
+    ].join("\n"),
+  );
+}
+
 function projectEnv(nodeEnv) {
   // Mirrors Next's env lookup order. Existing process.env wins, then the first
-  // project .env file that defines a key wins.
+  // user/app/project .env file that defines a key wins.
   const env = { ...process.env };
+  ensureUserEnvFile();
+
+  for (const [key, value] of Object.entries(parseEnvFile(USER_ENV_FILE))) {
+    if (env[key] === undefined) env[key] = value;
+  }
+
   const files = [
     `.env.${nodeEnv}.local`,
     ...(nodeEnv === "test" ? [] : [".env.local"]),
@@ -93,27 +111,63 @@ function projectEnv(nodeEnv) {
   return env;
 }
 
-// Spawn through a login shell so PATH includes nvm/homebrew node, the venv, etc.
-// detached:true puts each child in its own process group so we can kill the
-// whole tree (shell + next/uvicorn + their workers) on quit.
-function spawnService(name, command, cwd, baseEnv) {
-  // ELECTRON_RUN_AS_NODE leaks in if the app was launched from an Electron-based
-  // parent (e.g. an editor terminal); strip it so npm/next/python run normally.
-  const env = { ...baseEnv, BACKEND_PYTHON: `${PROJECT_ROOT}/backend/.venv/bin/python` };
-  delete env.ELECTRON_RUN_AS_NODE;
-  const child = spawn("/bin/zsh", ["-lc", command], {
+function spawnService(name, command, args, cwd, baseEnv, options = {}) {
+  const env = {
+    ...baseEnv,
+    ...(options.env || {}),
+  };
+  if (!options.keepElectronRunAsNode) delete env.ELECTRON_RUN_AS_NODE;
+  const child = spawn(command, args, {
     cwd,
-    detached: true,
+    detached: options.detached !== false,
     env,
-    stdio: ["ignore", "pipe", "pipe"],
+    stdio: options.stdio || ["ignore", "pipe", "pipe"],
   });
   const tag = `[${name}]`;
-  child.stdout.on("data", (d) => process.stdout.write(`${tag} ${d}`));
-  child.stderr.on("data", (d) => process.stderr.write(`${tag} ${d}`));
+  child.stdout?.on("data", (d) => process.stdout.write(`${tag} ${d}`));
+  child.stderr?.on("data", (d) => process.stderr.write(`${tag} ${d}`));
   child.on("exit", (code) => {
-    if (!shuttingDown) console.error(`${tag} exited with code ${code}`);
+    if (!shuttingDown) {
+      console.error(`${tag} exited with code ${code}`);
+      if (name === "frontend" && mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.loadFile(path.join(__dirname, "loading.html")).then(() => {
+          setStatus("PhraseLoop stopped unexpectedly. Restart the app.");
+        }).catch(() => {});
+      }
+    }
   });
   children.push(child);
+  return child;
+}
+
+// Run the standalone Next backend as an Electron utility process instead of a
+// detached `process.execPath` child. A utility process runs a real Node
+// runtime (native ML addons load fine) but stays a background "utility" process
+// type: it never gets its own Dock icon — not even after loading GPU/Metal —
+// and it is reaped automatically when the app quits.
+function onBackendExit(code) {
+  if (shuttingDown) return;
+  console.error(`[frontend] exited with code ${code}`);
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.loadFile(path.join(__dirname, "loading.html")).then(() => {
+      setStatus("PhraseLoop stopped unexpectedly. Restart the app.");
+    }).catch(() => {});
+  }
+}
+
+function forkBackend(serverJs, cwd, env) {
+  const childEnv = { ...env };
+  delete childEnv.ELECTRON_RUN_AS_NODE;
+  const child = utilityProcess.fork(serverJs, [], {
+    cwd,
+    env: childEnv,
+    serviceName: "PhraseLoop backend",
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  child.stdout?.on("data", (d) => process.stdout.write(`[frontend] ${d}`));
+  child.stderr?.on("data", (d) => process.stderr.write(`[frontend] ${d}`));
+  child.on("exit", onBackendExit);
+  utilityChildren.push(child);
   return child;
 }
 
@@ -131,6 +185,13 @@ function killChildren() {
           /* already gone */
         }
       }
+    }
+  }
+  for (const child of utilityChildren) {
+    try {
+      child.kill();
+    } catch {
+      /* already gone */
     }
   }
 }
@@ -211,37 +272,62 @@ function setStatus(text) {
   }
 }
 
+// The app ships ad-hoc signed (no Developer ID / notarization). When the .dmg
+// is downloaded, macOS tags the bundle — including its native addons — with
+// com.apple.quarantine. Gatekeeper can then prevent the embedded Next runtime
+// from becoming ready,
+// the window loads forever. Once the user has approved the app, the main
+// process can clear the quarantine from its own resources so the embedded Next
+// runtime and signed native addons can load.
+function clearOwnQuarantine() {
+  if (!app.isPackaged || process.platform !== "darwin") return;
+  // Resources/.. = Contents, /.. = the .app bundle root. Strip recursively.
+  const appBundle = path.resolve(process.resourcesPath, "..", "..");
+  for (const target of [process.resourcesPath, appBundle]) {
+    try {
+      spawnSync("/usr/bin/xattr", ["-dr", "com.apple.quarantine", target], {
+        stdio: "ignore",
+        timeout: 30000,
+      });
+    } catch {
+      /* best-effort; nothing to do if it fails */
+    }
+  }
+}
+
 async function boot() {
-  if (!fs.existsSync(PROJECT_ROOT)) {
-    console.error(`Project not found at ${PROJECT_ROOT}. Set TTS_PROJECT_ROOT.`);
+  clearOwnQuarantine();
+
+  if (!fs.existsSync(NEXT_ROOT)) {
+    console.error(`Next app not found at ${NEXT_ROOT}. Rebuild the app.`);
     setStatus("PhraseLoop couldn't open. Check the app logs for details.");
     return;
   }
+  const standaloneServer = path.join(NEXT_ROOT, "server.js");
+  const built = app.isPackaged || fs.existsSync(path.join(PROJECT_ROOT, ".next", "BUILD_ID"));
+  const dataDir = app.getPath("userData");
+  fs.mkdirSync(path.join(dataDir, "logs"), { recursive: true });
+  const serviceEnv = {
+    ...projectEnv(process.env.NODE_ENV || (built ? "production" : "development")),
+    PHRASELOOP_DATA_DIR: dataDir,
+  };
 
-  const built = fs.existsSync(path.join(PROJECT_ROOT, ".next", "BUILD_ID"));
-  const serviceEnv = projectEnv(process.env.NODE_ENV || (built ? "production" : "development"));
-
-  // 1. Backend
-  setStatus("Preparing PhraseLoop…");
-  spawnService(
-    "backend",
-    `exec .venv/bin/uvicorn tts_server:app --port ${BACKEND_PORT} --log-level warning`,
-    path.join(PROJECT_ROOT, "backend"),
-    serviceEnv
-  );
-  await waitFor(BACKEND_HEALTH, "Backend");
-
-  // 2. Frontend — prod if built, else dev.
+  // Frontend and all local ML services live in the standalone Node server.
+  // Native addons execute expensive work asynchronously; models download on demand.
   setStatus("Opening PhraseLoop…");
-  spawnService(
-    "frontend",
-    built ? "exec npm run start" : "exec npm run dev",
-    PROJECT_ROOT,
-    serviceEnv
-  );
+  if (app.isPackaged || fs.existsSync(standaloneServer)) {
+    forkBackend(standaloneServer, NEXT_ROOT, {
+      ...serviceEnv,
+      HOSTNAME: "127.0.0.1",
+      NODE_ENV: "production",
+      PORT: String(FRONTEND_PORT),
+    });
+  } else {
+    spawnService("frontend", "npm", ["run", "dev"], PROJECT_ROOT, serviceEnv, {});
+  }
   await waitFor(FRONTEND_URL, "Frontend");
 
-  // 3. Show it
+  // Show it.
   if (mainWindow && !mainWindow.isDestroyed()) {
     await mainWindow.loadURL(FRONTEND_URL);
   }

@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getTtsServerUrl } from "@/server/ttsServer";
+import { localRequest } from "@/server/localRuntime";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
 
-const TTS_SERVER = getTtsServerUrl();
 const MAX_BYTES = 25 * 1024 * 1024;
 const PUBLIC_PDF_ERROR =
   "Couldn't extract this PDF right now. Try another file or try again later.";
@@ -20,26 +19,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "PDF too large (max 25 MB)." }, { status: 413 });
     }
 
-    // Re-wrap into a fresh FormData so we forward exactly the file the backend expects.
-    const forward = new FormData();
-    forward.append("file", file, file.name || "upload.pdf");
-
-    const res = await fetch(`${TTS_SERVER}/discover/pdf`, {
+    const res = await localRequest("/discover/pdf", {
       method: "POST",
-      body: forward,
-      signal: AbortSignal.timeout(120_000),
+      body: Buffer.from(await file.arrayBuffer()),
+      headers: {
+        "Content-Type": file.type || "application/pdf",
+        "X-File-Name": encodeURIComponent(file.name || "upload.pdf"),
+      },
+      timeoutMs: 120_000,
     });
 
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      console.error("PDF backend error:", res.status, data);
+    if (res.status < 200 || res.status >= 300) {
+      console.error("PDF runtime error:", res.status, res.body.toString("utf8"));
       return NextResponse.json(
         { error: PUBLIC_PDF_ERROR },
         { status: res.status },
       );
     }
 
-    return NextResponse.json(await res.json());
+    return NextResponse.json(res.json());
   } catch (err: unknown) {
     console.error("PDF proxy error:", err);
     return NextResponse.json({ error: PUBLIC_PDF_ERROR }, { status: 500 });

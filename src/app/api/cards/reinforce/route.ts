@@ -16,7 +16,7 @@ import { isPlainObject } from "@/lib/isObject";
 import { generateDeck } from "@/lib/cards/provider";
 import type { ProviderKind } from "@/lib/cards/provider";
 import {
-  bestAvailableProvider,
+  bestAvailableProviderAsync,
   isProviderAvailable,
   resolveProvider,
 } from "@/lib/cards/registry";
@@ -45,7 +45,9 @@ export async function POST(req: NextRequest) {
     // Pick the explicit choice if usable, else the best key-backed provider available.
     const requested = isProviderKind(obj.provider) ? obj.provider : null;
     const kind: ProviderKind =
-      requested && isProviderAvailable(requested) ? requested : bestAvailableProvider();
+      requested && isProviderAvailable(requested)
+        ? requested
+        : await bestAvailableProviderAsync();
 
     const rawCandidates = Array.isArray(obj.candidates) ? obj.candidates : [];
     const rawErrors = Array.isArray(obj.errors) ? obj.errors : [];

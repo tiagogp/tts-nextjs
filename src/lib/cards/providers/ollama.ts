@@ -60,6 +60,17 @@ export function ollamaBaseUrl(explicit?: string): string {
   return `${ollamaApiRoot(explicit)}/v1`;
 }
 
+export async function isOllamaReachable(timeoutMs = 1500): Promise<boolean> {
+  try {
+    const res = await fetch(`${ollamaApiRoot()}/api/tags`, {
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Pull the first JSON object out of a model response. Local models often wrap JSON in
  * markdown fences or add a sentence of preamble, so we strip fences and, failing a clean

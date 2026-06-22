@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isPlainObject } from "@/lib/isObject";
-import { getTtsServerUrl } from "@/server/ttsServer";
+import { localJson } from "@/server/localRuntime";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
 
-const TTS_SERVER = getTtsServerUrl();
 const PUBLIC_DISCOVER_ERROR =
   "Couldn't process this source right now. Try again in a moment.";
 const PUBLIC_DISCOVER_TIMEOUT =
@@ -44,24 +43,17 @@ export async function POST(req: NextRequest) {
     }
     const lang = safeLang(bodyObj?.lang);
 
-    const res = await fetch(`${TTS_SERVER}/discover`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url, lang }),
-      // Whisper transcription can take a while on long videos.
-      signal: AbortSignal.timeout(300_000),
-    });
+    const res = await localJson("/discover", { url, lang }, 300_000);
 
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      console.error("Discover backend error:", res.status, data);
+    if (res.status < 200 || res.status >= 300) {
+      console.error("Discover runtime error:", res.status, res.body.toString("utf8"));
       return NextResponse.json(
         { error: PUBLIC_DISCOVER_ERROR },
         { status: 502 },
       );
     }
 
-    return NextResponse.json(await res.json());
+    return NextResponse.json(res.json());
   } catch (err: unknown) {
     console.error("Discover proxy error:", err);
     const message =

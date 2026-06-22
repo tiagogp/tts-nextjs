@@ -1,13 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { promises as fs } from "node:fs";
-import os from "node:os";
-import path from "node:path";
 import { isPlainObject } from "@/lib/isObject";
-import {
-  contentDispositionAttachment,
-  resolveBackendPython,
-  spawnCapture,
-} from "@/server/anki";
+import { contentDispositionAttachment } from "@/server/anki";
+import { localJson } from "@/server/localRuntime";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -169,13 +163,6 @@ function jsonToCsvBytes(opts: {
 }
 
 export async function POST(req: NextRequest) {
-  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "anki-tts-"));
-  const cleanup = async () => {
-    try {
-      await fs.rm(tempDir, { recursive: true, force: true });
-    } catch {}
-  };
-
   try {
     const contentType = (req.headers.get("content-type") ?? "").toLowerCase();
     const contentLength = Number(req.headers.get("content-length") ?? "0") || 0;
@@ -185,9 +172,6 @@ export async function POST(req: NextRequest) {
         { status: 413 },
       );
     }
-
-    const csvPath = path.join(tempDir, "cards.csv");
-    const outPath = path.join(tempDir, "deck.apkg");
 
     let deck = "English - new method";
     let ptCol = "pt";
@@ -318,54 +302,20 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    await fs.writeFile(csvPath, csvBytes);
-
-    const repoRoot = process.cwd();
-    const python = await resolveBackendPython(repoRoot);
-
-    const scriptPath = path.join(repoRoot, "backend", "apkg_from_csv.py");
-    const args = [
-      scriptPath,
-      "--csv",
-      csvPath,
-      "--deck",
-      deck,
-      "--pt-col",
-      ptCol,
-      "--en-col",
-      enCol,
-      "--delimiter",
-      delimiter,
-      "--out",
-      outPath,
-    ];
-    if (noHeader) args.push("--no-header");
-    args.push(
-      "--en-engine",
-      "kokoro",
-      "--en-kokoro-voice",
-      enKokoroVoice,
-      "--en-kokoro-speed",
-      String(enKokoroSpeed),
-    );
-    if (enKokoroLang) args.push("--en-kokoro-lang", enKokoroLang);
-
-    const { code, stderr } = await spawnCapture(python, args, {
-      cwd: repoRoot,
-    });
-    if (code !== 0) {
-      console.error("Anki export process failed:", {
-        code,
-        stderr: stderr.trim(),
-      });
+    const exported = await localJson("/anki/apkg", {
+      csvBase64: csvBytes.toString("base64"), deck, ptCol, enCol, delimiter,
+      noHeader, voice: enKokoroVoice, speed: enKokoroSpeed, lang: enKokoroLang,
+    }, 300_000);
+    if (exported.status < 200 || exported.status >= 300) {
+      console.error("Anki runtime failed:", exported.status, exported.body.toString("utf8"));
       return NextResponse.json({ error: PUBLIC_APKG_ERROR }, { status: 500 });
     }
 
-    const apkg = await fs.readFile(outPath);
+    const apkg = exported.body;
     const filenameUtf8 = `${deck.trim() || "anki-deck"}.apkg`;
     const disposition = contentDispositionAttachment(filenameUtf8);
 
-    return new NextResponse(apkg, {
+    return new NextResponse(new Uint8Array(apkg), {
       status: 200,
       headers: {
         "Content-Type": "application/octet-stream",
@@ -376,7 +326,5 @@ export async function POST(req: NextRequest) {
   } catch (err: unknown) {
     console.error("Anki export error:", err);
     return NextResponse.json({ error: PUBLIC_APKG_ERROR }, { status: 500 });
-  } finally {
-    await cleanup();
   }
 }

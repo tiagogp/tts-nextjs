@@ -1,30 +1,42 @@
 /**
- * E2 (speech) — proxy a recorded audio clip to the Python TTS/Whisper server's
- * /transcribe endpoint and hand back the plain text. The client then feeds that text
+ * E2 (speech) — pass a recorded audio clip to the local whisper.cpp runtime and
+ * hand back plain text. The client then feeds that text
  * to /api/cards/correct, so speech and typing share the exact same correction path.
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getTtsServerUrl } from "@/server/ttsServer";
+import path from "node:path";
+import { localRequest } from "@/server/localRuntime";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
-const TTS_SERVER = getTtsServerUrl();
 const PUBLIC_TRANSCRIBE_ERROR =
   "Couldn't transcribe this audio right now. Try again with a shorter or clearer recording.";
 
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
-    const res = await fetch(`${TTS_SERVER}/transcribe`, {
+    const file = formData.get("file");
+    if (!(file instanceof File) || file.size === 0) {
+      return NextResponse.json({ error: "Attach an audio file." }, { status: 400 });
+    }
+    if (file.size > 25 * 1024 * 1024) {
+      return NextResponse.json({ error: "Audio too large (max 25 MB)." }, { status: 413 });
+    }
+    const res = await localRequest("/transcribe", {
       method: "POST",
-      body: formData,
+      body: Buffer.from(await file.arrayBuffer()),
+      headers: {
+        "Content-Type": file.type || "application/octet-stream",
+        "X-File-Suffix": path.extname(file.name || "clip.webm") || ".webm",
+      },
+      timeoutMs: 120_000,
     });
-    const data = (await res.json().catch(() => ({}))) as { text?: string; detail?: string };
-    if (!res.ok) {
-      console.error("Transcription backend error:", res.status, data);
+    const data = res.json<{ text?: string; detail?: string }>();
+    if (res.status < 200 || res.status >= 300) {
+      console.error("Transcription runtime error:", res.status, data);
       return NextResponse.json(
         {
           error:

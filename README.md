@@ -5,57 +5,93 @@ Convert English text into natural speech and download the audio file. Runs 100% 
 ## Stack
 
 - **Frontend** — Next.js + TypeScript + Tailwind CSS + next-themes
-- **Backend** — FastAPI + [Coqui TTS](https://github.com/coqui-ai/TTS) (VITS) + [Kokoro](https://github.com/hexgrad/kokoro) + [Chatterbox](https://github.com/resemble-ai/chatterbox)
+- **Local speech runtime** — Kokoro 1.0 via sherpa-onnx and whisper.cpp/Metal, loaded directly by Node
 
 ## Requirements
 
-- Node.js 20+
-- Python 3.11 (`brew install python@3.11`)
-- espeak-ng (`brew install espeak-ng`)
+- Apple Silicon Mac running macOS 14+
+- Node.js 22.13+
 
 ## Setup
 
-**1. Install frontend dependencies**
+Install dependencies:
 
 ```bash
 npm install
 ```
 
-**2. Create the Python virtualenv and install backend dependencies**
-
-```bash
-cd backend
-python3.11 -m venv .venv
-.venv/bin/pip install -r requirements.txt
-```
-
-Models are downloaded automatically on first run (~200 MB for VITS, ~80 MB for Kokoro, ~1 GB for Chatterbox).
+Kokoro and Whisper models are downloaded automatically on first use and stored
+under `~/Library/Application Support/PhraseLoop/models/native`. Downloads are
+verified by SHA-256 and installed atomically.
 
 ## Running
 
-Start both services with a single command:
+Start the Electron app and its standalone Next server with a single command:
 
 ```bash
 ./start.sh
 ```
 
-Or manually in two terminals:
+Speech inference runs inside the Next Node process through native addons. No
+Python, ffmpeg executable, helper app, or auxiliary Dock icon is used.
+
+## Building the macOS app
+
+Generate the native app:
 
 ```bash
-# Terminal 1 — backend (port 5002)
-cd backend
-.venv/bin/uvicorn tts_server:app --port 5002
-
-# Terminal 2 — frontend (port 3000)
-npm run dev
+npm run app:dist
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+The app is written to:
+
+```bash
+dist/mac-arm64/PhraseLoop.app
+```
+
+The package includes standalone Next.js and signed arm64 native libraries. It
+also creates a user config file on first launch:
+
+```bash
+~/Library/Application Support/PhraseLoop/phraseloop.env
+```
+
+### Distributing the app
+
+Build a shareable disk image:
+
+```bash
+npm run app:download
+```
+
+This packages the native runtime and writes a drag-to-Applications disk image
+to `dist/PhraseLoop-mac-arm64.dmg`. Share that file: the recipient
+opens the `.dmg`, drags **PhraseLoop** to **Applications**, and opens it once
+(right-click → Open the first time, since the app is ad-hoc signed). No Terminal
+window and no install script — the app clears its own download quarantine on
+first launch.
+
+Provider setup for card generation/correction:
+
+- If Ollama is running locally, PhraseLoop detects it automatically (`http://localhost:11434`).
+- If Ollama is not available, add one of these keys to `phraseloop.env`, then restart the app:
+
+```bash
+ANTHROPIC_API_KEY=sk-ant-...
+OPENAI_API_KEY=sk-...
+```
+
+Optional Ollama overrides:
+
+```bash
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=llama3.1
+```
 
 ## Features
 
-- Three TTS engines: **VITS** (Coqui), **Kokoro**, and **Chatterbox**
-- 5 VITS voices, 8 Kokoro voices (US/UK, male/female), and 3 Chatterbox emotion presets
+- Local **Kokoro 1.0** text-to-speech and whisper.cpp transcription
+- 8 Kokoro voices (US/UK, male/female)
 - Adjust playback speed (0.5× – 2.0×)
 - Play audio in the browser with scrubable progress bar
 - Download as WAV
@@ -66,12 +102,12 @@ Open [http://localhost:3000](http://localhost:3000).
 ## Discover (YouTube → transcript → phrases)
 
 The **Discover** tab turns native content into learning material. Paste a YouTube URL; the
-backend downloads the **audio only** (no video) with `yt-dlp` and transcribes it locally with
-[faster-whisper](https://github.com/SYSTRAN/faster-whisper), producing a timestamped
+app downloads the **audio only** (no video) with YouTube.js and transcribes it locally with
+[whisper.cpp](https://github.com/ggml-org/whisper.cpp), producing a timestamped
 transcript. Each segment can be played back as its **native audio clip** and marked to keep.
 
 Runs 100% locally — the speech-recognition model (`small`, ~480 MB) downloads on first use.
-Requires `ffmpeg` (`brew install ffmpeg`).
+Audio decoding uses in-process WebAssembly; Homebrew and ffmpeg are not required.
 
 > Next step (in progress): LLM curation biased by an optional **focus** field, a review pass,
 > and one-click card generation. See [ARCHITECTURE_CARDS.md](ARCHITECTURE_CARDS.md).
@@ -104,79 +140,33 @@ depends on the model: prefer an instruction-tuned one that handles JSON well (e.
 
 ## Anki (CSV → Audio → Notes)
 
-If you want to generate audio for your own cards, you have two options:
-
-- **Export a `.apkg`** (import later / move to another computer)
-- **Send directly to Anki** (requires Anki Desktop + AnkiConnect running)
-
-### Export `.apkg` (recommended)
-
-```bash
-backend/.venv/bin/python backend/apkg_from_csv.py \
-  --csv cards.csv \
-  --deck "My Deck" \
-  --pt-col pt \
-  --en-col en \
-  --out my-deck.apkg
-```
-
-Import the generated `.apkg` in Anki: `File → Import`.
-
-### Export from the web UI
-
-Open the app and use the **Anki Export** section to upload your CSV and download a `.apkg`.
-
-### Send directly to Anki (AnkiConnect)
-
-**Requirements**
-
-- Anki Desktop running
-- [AnkiConnect](https://foosoft.net/projects/anki-connect/) installed (default port `8765`)
-
-**CSV format**
-
-By default the script expects a header row with columns named `pt` and `en`, e.g.:
+Open the app and use **Anki Export** to upload CSV/JSON and download a modern
+`.apkg` containing Kokoro audio. CSV defaults to columns named `pt` and `en`:
 
 ```csv
 pt,en
 "Olá, tudo bem?","Hello, how are you?"
 ```
 
-**Run**
-
-```bash
-backend/.venv/bin/python backend/anki_csv_import.py \
-  --csv cards.csv \
-  --deck "My Deck" \
-  --pt-col pt \
-  --en-col en
-```
-
-This creates `Basic` notes with:
-
-- `Front`: Portuguese text + Portuguese audio
-- `Back`: English text + English audio
-
-Use `--front-field` / `--back-field` if your note type uses different field names.
+Discover exports retain native timestamped clips when available and fall back
+to Kokoro audio otherwise. Import the result with Anki's `File → Import`.
 
 ## Project Structure
 
 ```
 .
-├── backend/
-│   ├── tts_server.py      # FastAPI server wrapping Coqui VITS + Kokoro
-│   └── requirements.txt
 ├── src/
 │   ├── app/
 │   │   ├── page.tsx           # Main UI
 │   │   ├── layout.tsx
-│   │   └── api/tts/           # Next.js proxy route → backend
+│   │   └── api/tts/           # Node Route Handler → local native runtime
 │   ├── components/
 │   │   ├── AudioPlayer.tsx
 │   │   ├── BatchGenerator.tsx
 │   │   ├── HistoryPanel.tsx
 │   │   ├── Select.tsx
 │   │   └── ThemeProvider.tsx
+│   ├── server/native/          # models, speech, discovery, audio, APKG
 │   └── types/
-└── start.sh               # Starts both services
+└── start.sh                   # Starts Electron and standalone Next
 ```

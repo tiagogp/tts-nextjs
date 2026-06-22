@@ -12,15 +12,9 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { promises as fs } from "node:fs";
-import os from "node:os";
-import path from "node:path";
 import { isPlainObject } from "@/lib/isObject";
-import {
-  contentDispositionAttachment,
-  resolveBackendPython,
-  spawnCapture,
-} from "@/server/anki";
+import { contentDispositionAttachment } from "@/server/anki";
+import { localJson } from "@/server/localRuntime";
 import { generateDeck } from "@/lib/cards/provider";
 import { isProviderAvailable, resolveProvider } from "@/lib/cards/registry";
 import type { ProviderKind } from "@/lib/cards/provider";
@@ -42,13 +36,6 @@ function isProviderKind(v: unknown): v is ProviderKind {
 }
 
 export async function POST(req: NextRequest) {
-  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "anki-cards-"));
-  const cleanup = async () => {
-    try {
-      await fs.rm(tempDir, { recursive: true, force: true });
-    } catch {}
-  };
-
   try {
     const body = (await req.json().catch(() => null)) as unknown;
     const obj = isPlainObject(body) ? body : null;
@@ -147,42 +134,18 @@ export async function POST(req: NextRequest) {
           : undefined,
     }));
 
-    const cardsPath = path.join(tempDir, "cards.json");
-    const outPath = path.join(tempDir, "deck.apkg");
-    await fs.writeFile(cardsPath, JSON.stringify(exportCards), "utf8");
-
-    const repoRoot = process.cwd();
-    const python = await resolveBackendPython(repoRoot);
-    const scriptPath = path.join(repoRoot, "backend", "apkg_from_csv.py");
-    const discoverCache = path.join(repoRoot, "backend", ".discover_cache");
-
-    const args = [
-      scriptPath,
-      "--cards-json",
-      cardsPath,
-      "--deck",
-      deck,
-      "--out",
-      outPath,
-      "--discover-cache",
-      discoverCache,
-      "--en-kokoro-voice",
-      enKokoroVoice,
-    ];
-
-    const { code, stderr } = await spawnCapture(python, args, { cwd: repoRoot });
-    if (code !== 0) {
-      console.error("Card export process failed:", {
-        code,
-        stderr: stderr.trim(),
-      });
+    const exported = await localJson("/cards/apkg", {
+      cards: exportCards, deck, voice: enKokoroVoice,
+    }, 300_000);
+    if (exported.status < 200 || exported.status >= 300) {
+      console.error("Card export runtime failed:", exported.status, exported.body.toString("utf8"));
       return NextResponse.json(
         { error: PUBLIC_CARD_EXPORT_ERROR },
         { status: 500 },
       );
     }
 
-    const apkg = await fs.readFile(outPath);
+    const apkg = exported.body;
     const filenameUtf8 = `${deck.trim() || "anki-deck"}.apkg`;
 
     if (wantCards) {
@@ -197,7 +160,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    return new NextResponse(apkg, {
+    return new NextResponse(new Uint8Array(apkg), {
       status: 200,
       headers: {
         "Content-Type": "application/octet-stream",
@@ -213,7 +176,5 @@ export async function POST(req: NextRequest) {
       { error: PUBLIC_CARD_GENERATION_ERROR },
       { status: 500 },
     );
-  } finally {
-    await cleanup();
   }
 }

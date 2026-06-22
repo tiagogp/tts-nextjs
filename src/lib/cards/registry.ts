@@ -11,7 +11,7 @@ import "server-only";
 import type { CardGenerationProvider, ProviderKind, ProviderRegistry } from "./provider";
 import { ClaudeProvider } from "./providers/claude";
 import { OpenAIProvider } from "./providers/openai";
-import { OllamaProvider } from "./providers/ollama";
+import { isOllamaReachable, OllamaProvider } from "./providers/ollama";
 import { LocalProvider } from "./providers/local";
 
 export interface ResolveOptions {
@@ -45,7 +45,13 @@ export function isProviderAvailable(kind: ProviderKind): boolean {
 export function bestAvailableProvider(): ProviderKind {
   if (isProviderAvailable("claude")) return "claude";
   if (isProviderAvailable("openai")) return "openai";
-  if (isProviderAvailable("ollama")) return "ollama";
+  return "local";
+}
+
+export async function bestAvailableProviderAsync(): Promise<ProviderKind> {
+  if (isProviderAvailable("claude")) return "claude";
+  if (isProviderAvailable("openai")) return "openai";
+  if (await isOllamaReachable()) return "ollama";
   return "local";
 }
 

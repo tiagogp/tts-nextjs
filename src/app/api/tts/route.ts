@@ -2,12 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import JSZip from "jszip";
 import { isPlainObject } from "@/lib/isObject";
 import { sanitizeFilename } from "@/lib/sanitizeFilename";
-import { getTtsServerUrl } from "@/server/ttsServer";
+import { localJson } from "@/server/localRuntime";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
-
-const TTS_SERVER = getTtsServerUrl();
 
 const MAX_TEXT_CHARS = 4096;
 const MAX_ITEMS = 250;
@@ -90,25 +88,18 @@ async function synthOne(text: string, speed: number, voice: string): Promise<Buf
     throw new PublicRouteError(`Text exceeds ${MAX_TEXT_CHARS} characters.`, 400);
   }
 
-  const ttsRes = await fetch(`${TTS_SERVER}/tts`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      text: text.trim(),
-      voice,
-      speed,
-      engine: "kokoro",
-    }),
-    signal: AbortSignal.timeout(300_000),
-  });
+  const ttsRes = await localJson(
+    "/tts",
+    { text: text.trim(), voice, speed, engine: "kokoro" },
+    300_000,
+  );
 
-  if (!ttsRes.ok) {
-    const data = await ttsRes.json().catch(() => ({}));
-    console.error("TTS backend error:", ttsRes.status, data);
+  if (ttsRes.status < 200 || ttsRes.status >= 300) {
+    console.error("TTS runtime error:", ttsRes.status, ttsRes.body.toString("utf8"));
     throw new PublicRouteError(PUBLIC_TTS_ERROR, 502);
   }
 
-  return Buffer.from(await ttsRes.arrayBuffer());
+  return ttsRes.body;
 }
 
 export async function POST(req: NextRequest) {
