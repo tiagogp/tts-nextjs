@@ -1,18 +1,28 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Select from "@/components/ui/Select";
-import { saveCorrectionDeck } from "@/lib/store/repository";
-import { isStoreAvailable } from "@/lib/store/db";
-import { useAiSettings } from "@/features/settings/context/AiSettingsContext";
-import type { ProviderKind } from "@/lib/cards/provider";
+import { AnimatePresence, motion } from "motion/react";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Segmented } from "@/components/ui/Segmented";
 import ProviderBadge from "@/components/ui/ProviderBadge";
 import Disclosure from "@/components/ui/Disclosure";
+import { cn } from "@/lib/cn";
+import { fadeRise } from "@/lib/motion";
+import { saveCorrectionDeck } from "@/lib/store/repository";
 import type { ErrorEvent, ErrorType } from "@/lib/cards/schema";
 import { DECK_GENERATION_TIMEOUT_MS } from "@/features/cards/constants";
-import { saveApkg } from "@/features/cards/downloadApkg";
-import { ERROR_TYPES, newDraft, parseErrorsJson, type CorrectionInputMode } from "@/features/correct/model";
-import { evaluateCorrectionText, generateCorrectionDeck, transcribeAudio } from "@/features/correct/api";
+import { useProviderSelection } from "@/features/cards/hooks/useProviderSelection";
+import { useDeckGeneration } from "@/features/cards/hooks/useDeckGeneration";
+import { exportAndSaveDeck } from "@/features/cards/exportDeck";
+import { ProviderPicker } from "@/features/cards/components/ProviderPicker";
+import { useKokoroModel } from "@/features/speech/hooks/useKokoroModel";
+import { MAX_UPLOAD_BYTES, newDraft, parseErrorsJson, type CorrectionInputMode } from "@/features/correct/model";
+import { DeckGenerationError, evaluateCorrectionText, generateCorrectionDeck, transcribeAudio } from "@/features/correct/api";
+import { AiEvaluateForm } from "@/features/correct/components/AiEvaluateForm";
+import { ManualEntryForm } from "@/features/correct/components/ManualEntryForm";
+import { JsonImportForm } from "@/features/correct/components/JsonImportForm";
+import { CorrectionList } from "@/features/correct/components/CorrectionList";
 
 /**
  * E1/E2 — the correction ingestion surface. Turns mistakes into ErrorEvents, then runs
@@ -25,78 +35,10 @@ import { evaluateCorrectionText, generateCorrectionDeck, transcribeAudio } from 
  *   • Paste JSON — import a correction tool's JSON output.
  */
 
-const AI_TOOLBAR_BUTTON_CLASS =
-  "h-10 shrink-0 rounded px-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 whitespace-nowrap";
-const AI_PRIMARY_BUTTON_CLASS =
-  "h-10 shrink-0 rounded px-4 text-sm font-medium transition-colors ml-auto whitespace-nowrap";
-const GENERATION_TIMEOUT_MS = DECK_GENERATION_TIMEOUT_MS;
-
-function MicrophoneIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="h-4 w-4 shrink-0"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3Z" />
-      <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-      <path d="M12 19v3" />
-      <path d="M8 22h8" />
-    </svg>
-  );
-}
-
-function UploadIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="h-4 w-4 shrink-0"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M12 15V3" />
-      <path d="m7 8 5-5 5 5" />
-      <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
-    </svg>
-  );
-}
-
-function SpinnerIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="h-4 w-4 shrink-0 animate-spin"
-      fill="none"
-      viewBox="0 0 24 24"
-    >
-      <circle
-        className="opacity-25"
-        cx="12"
-        cy="12"
-        r="10"
-        stroke="currentColor"
-        strokeWidth="4"
-      />
-      <path
-        className="opacity-75"
-        fill="currentColor"
-        d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4Z"
-      />
-    </svg>
-  );
-}
-
 export default function CorrectTab() {
-  const { settings } = useAiSettings();
+  // The deck export synthesizes audio locally, so it needs the Kokoro model on
+  // disk. Surface its download state here too — not just in the Anki Export tab.
+  const kokoro = useKokoroModel();
   const [events, setEvents] = useState<ErrorEvent[]>([]);
   const [mode, setMode] = useState<CorrectionInputMode>("ai");
   const [draft, setDraft] = useState(newDraft());
@@ -112,53 +54,45 @@ export default function CorrectTab() {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const generationAbortRef = useRef<AbortController | null>(null);
-  const generationTimedOutRef = useRef(false);
 
-  const [providerOverride, setProviderOverride] = useState<ProviderKind | null>(null);
-  const [ollamaModel, setOllamaModel] = useState("");
-  const [generating, setGenerating] = useState(false);
-  const [generationSeconds, setGenerationSeconds] = useState(0);
-  const [genError, setGenError] = useState<string | null>(null);
-  const [genDone, setGenDone] = useState<string | null>(null);
+  // The heuristic Local provider can't judge open text; any model-backed provider can —
+  // `fallbackToEvaluator` makes the hook fall back to one and expose `hasEvaluator`, which
+  // gates the AI-evaluate affordance.
+  const selection = useProviderSelection({ fallbackToEvaluator: true });
+  const { provider, activeProvider, providerReady, hasEvaluator, ollamaModels, selectedModel } = selection;
 
-  // The heuristic Local provider can't judge open text; any model-backed provider can.
-  // This gates the AI-evaluate affordance.
-  const providers = settings.providers;
-  const requestedProvider = providerOverride ?? settings.defaultProvider;
-  const fallbackEvaluator = providers.find(
-    (item) => item.kind !== "local" && item.available,
-  )?.kind;
-  const provider =
-    requestedProvider === "local" && providerOverride == null
-      ? (fallbackEvaluator ?? requestedProvider)
-      : requestedProvider;
-  const activeProvider = providers.find((item) => item.kind === provider);
-  const providerReady = activeProvider?.available === true;
-  const hasEvaluator = provider !== "local" && providerReady;
-
-  // Visual model picker: list the user's installed Ollama models when Ollama is in play.
-  const ollamaModels = settings.ollama.models;
-  // Effective choice: the user's pick if still installed, else default to the first model.
-  // Derived (not stored) so we never sync state in an effect.
-  const selectedModel =
-    ollamaModel && ollamaModels.includes(ollamaModel)
-      ? ollamaModel
-      : settings.ollama.model || ollamaModels[0] || "";
-  const showModelPicker = provider === "ollama" && ollamaModels.length > 0;
-
-  useEffect(() => {
-    if (!generating) return;
-    const startedAt = Date.now();
-    const interval = window.setInterval(() => {
-      setGenerationSeconds(Math.floor((Date.now() - startedAt) / 1000));
-    }, 1000);
-    return () => window.clearInterval(interval);
-  }, [generating]);
+  const generation = useDeckGeneration({
+    timeoutMs: DECK_GENERATION_TIMEOUT_MS,
+    timeoutMessage:
+      "Generation took too long and was stopped. Try fewer corrections or another provider.",
+    cancelMessage: "Generation cancelled. Your corrections are still here.",
+    stages: [
+      { untilSeconds: 10, label: "Creating focused cards…" },
+      { untilSeconds: 40, label: "Reviewing card quality…" },
+      { untilSeconds: 90, label: "Preparing audio and the Anki deck…" },
+      { untilSeconds: Infinity, label: "Still working — local models are slow with several corrections. Hang tight…" },
+    ],
+    // The voice model wasn't ready: the server just kicked off the download, so start
+    // tracking progress (the notice below shows the live bar).
+    onError: (err) => {
+      if (err instanceof DeckGenerationError && err.code === "model_not_ready") {
+        void kokoro.refresh();
+      }
+    },
+  });
+  const {
+    generating,
+    genError,
+    genDone,
+    generationSeconds,
+    generationStage,
+    run,
+    cancelGeneration,
+    setGenDone,
+  } = generation;
 
   useEffect(
     () => () => {
-      generationAbortRef.current?.abort();
       recorderRef.current?.stream.getTracks().forEach((track) => track.stop());
     },
     [],
@@ -216,79 +150,19 @@ export default function CorrectTab() {
   };
 
   const generateCards = useCallback(async () => {
-    if (events.length === 0 || !providerReady || generationAbortRef.current) return;
-    const controller = new AbortController();
+    if (events.length === 0 || !providerReady) return;
     const sourceEvents = [...events];
-    generationAbortRef.current = controller;
-    generationTimedOutRef.current = false;
-    setGenerationSeconds(0);
-    setGenerating(true);
-    setGenError(null);
-    setGenDone(null);
-
-    const timeout = window.setTimeout(() => {
-      generationTimedOutRef.current = true;
-      controller.abort();
-    }, GENERATION_TIMEOUT_MS);
-
-    try {
-      const data = await generateCorrectionDeck({
-        provider,
-        selectedModel,
-        events: sourceEvents,
-        signal: controller.signal,
-      });
-
+    const ok = await run(async (signal) => {
+      const data = await generateCorrectionDeck({ provider, selectedModel, events: sourceEvents, signal });
       // Persist the ErrorEvents (source of truth) + cards so the Study tab and
       // weakness analysis pick them up alongside the discovery path.
-      let savedNote = "";
-      if (isStoreAvailable() && data.cards) {
-        try {
-          await saveCorrectionDeck(data.cards, sourceEvents);
-          savedNote = " · saved for study";
-        } catch {
-          savedNote = " · couldn't save locally";
-        }
-      }
-
-      if (!data.apkg) throw new Error("Cards were generated, but the Anki package was missing.");
-      const fileNote = await saveApkg(data.filename || "English - Corrections.apkg", data.apkg);
-
-      const count = data.count ?? data.cards?.length ?? 0;
-      setGenDone(
-        `${count} card${count === 1 ? "" : "s"} exported — ${fileNote}${savedNote}.`,
-      );
-      setEvents([]);
-    } catch (err: unknown) {
-      if (controller.signal.aborted) {
-        setGenError(
-          generationTimedOutRef.current
-            ? "Generation took too long and was stopped. Try fewer corrections or another provider."
-            : "Generation cancelled. Your corrections are still here.",
-        );
-      } else {
-        setGenError(err instanceof Error ? err.message : "Failed to generate cards.");
-      }
-    } finally {
-      window.clearTimeout(timeout);
-      if (generationAbortRef.current === controller) generationAbortRef.current = null;
-      setGenerating(false);
-    }
-  }, [events, provider, providerReady, selectedModel]);
-
-  const cancelGeneration = useCallback(() => {
-    generationTimedOutRef.current = false;
-    generationAbortRef.current?.abort();
-  }, []);
-
-  const generationStage =
-    generationSeconds < 10
-      ? "Creating focused cards…"
-      : generationSeconds < 40
-        ? "Reviewing card quality…"
-        : generationSeconds < 90
-          ? "Preparing audio and the Anki deck…"
-          : "Still working — local models are slow with several corrections. Hang tight…";
+      return exportAndSaveDeck(data, {
+        defaultFilename: "English - Corrections.apkg",
+        persist: (cards) => saveCorrectionDeck(cards, sourceEvents),
+      });
+    });
+    if (ok) setEvents([]);
+  }, [events, provider, providerReady, selectedModel, run]);
 
   // E2 — hand the text to the LLM and append the mistakes it finds.
   const evaluate = useCallback(async () => {
@@ -310,7 +184,7 @@ export default function CorrectTab() {
     } finally {
       setEvaluating(false);
     }
-  }, [aiText, evaluating, hasEvaluator, provider, selectedModel]);
+  }, [aiText, evaluating, hasEvaluator, provider, selectedModel, setGenDone]);
 
   // E2 (speech) — send a recorded clip to Whisper, then drop the text into the box so
   // the learner can review/edit before it's evaluated (human-in-the-loop, like Discover).
@@ -365,7 +239,7 @@ export default function CorrectTab() {
       const file = e.target.files?.[0];
       e.target.value = ""; // allow re-picking the same file
       if (!file) return;
-      if (file.size > 25 * 1024 * 1024) {
+      if (file.size > MAX_UPLOAD_BYTES) {
         setAiNote("Áudio muito grande (máx. 25 MB).");
         return;
       }
@@ -374,267 +248,70 @@ export default function CorrectTab() {
     [transcribeBlob],
   );
 
-  const fieldStyle = {
-    backgroundColor: "var(--surface)",
-    color: "var(--text-primary)",
-    border: "1px solid var(--border)",
-    caretColor: "#ff5600",
-  } as const;
-  const labelStyle = { color: "var(--text-muted)", letterSpacing: "0.8px" } as const;
+  const evaluatorHint = !hasEvaluator
+    ? provider === "local"
+      ? "The Local heuristic cannot evaluate free-form text. Choose Ollama, Claude, or OpenAI."
+      : `${activeProvider?.label ?? "This provider"} is unavailable. Open Settings with the gear button to connect it.`
+    : null;
+  const ollamaOffline = provider === "ollama" && ollamaModels.length === 0;
+
+  const switchMode = (next: CorrectionInputMode) => {
+    setMode(next);
+    setImportNote(null);
+    setAiNote(null);
+  };
 
   return (
-    <div className="space-y-5 correct-tab-enter">
-      {/* Input card */}
-      <div
-        className="app-panel p-5 space-y-4"
-      >
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <p className="app-section-title">
-            Add a correction
-          </p>
-          <div className="app-segmented">
-            {(
-              [
-                ["ai", "Evaluate (AI)"],
-                ["manual", "Write manually"],
-              ] as [CorrectionInputMode, string][]
-            ).map(([m, label]) => {
-              const active = mode === m;
-              return (
-                <button
-                  key={m}
-                  onClick={() => {
-                    setMode(m);
-                    setImportNote(null);
-                    setAiNote(null);
-                  }}
-                  data-active={active}
-                >
-                  {label}
-                </button>
-              );
-            })}
-          </div>
+    <div className="space-y-5">
+      <Card className="space-y-4 p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm font-semibold tracking-[-0.01em] text-ink">Add a correction</p>
+          <Segmented<CorrectionInputMode>
+            label="Correction input mode"
+            value={mode}
+            onChange={switchMode}
+            options={[
+              { value: "ai", label: "Evaluate (AI)" },
+              { value: "manual", label: "Write manually" },
+            ]}
+          />
         </div>
 
-        {mode === "ai" ? (
-          <div className="space-y-2 correct-mode-enter" key="ai-mode">
-            <textarea
-              value={aiText}
-              onChange={(e) => setAiText(e.target.value)}
-              placeholder="Write — or record — a few sentences in English. The AI finds what a native would say differently."
-              rows={6}
-              disabled={evaluating}
-              className="w-full resize-none rounded-lg px-4 py-3 text-sm leading-relaxed outline-none transition-colors"
-              style={fieldStyle}
-              onFocus={(e) => (e.currentTarget.style.borderColor = "#ff5600")}
-              onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
-            />
-            {aiNote && (
-              <p
-                className="text-xs"
-                style={{ color: aiNote.includes("🎉") ? "var(--text-secondary)" : "#c41c1c" }}
-              >
-                {aiNote}
-              </p>
-            )}
-            <div className="flex items-center gap-2 flex-wrap">
-              <button
-                onClick={recording ? stopRecording : startRecording}
-                disabled={evaluating || transcribing}
-                className={AI_TOOLBAR_BUTTON_CLASS}
-                style={{
-                  border: `1px solid ${recording ? "#c41c1c" : "var(--border)"}`,
-                  backgroundColor: "var(--surface-input)",
-                  color: recording ? "#c41c1c" : "var(--text-secondary)",
-                  cursor: evaluating || transcribing ? "not-allowed" : "pointer",
-                  opacity: evaluating || transcribing ? 0.6 : 1,
-                }}
-              >
-                {recording ? (
-                  <>
-                    <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: "#c41c1c" }} />
-                    Stop recording
-                  </>
-                ) : transcribing ? (
-                  <>
-                    <SpinnerIcon />
-                    Transcribing…
-                  </>
-                ) : (
-                  <>
-                    <MicrophoneIcon />
-                    Record speech
-                  </>
-                )}
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="audio/*"
-                className="hidden"
-                onChange={onPickFile}
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={mode}
+            variants={fadeRise}
+            initial="hidden"
+            animate="show"
+            exit="exit"
+          >
+            {mode === "ai" ? (
+              <AiEvaluateForm
+                value={aiText}
+                onChange={setAiText}
+                evaluating={evaluating}
+                transcribing={transcribing}
+                recording={recording}
+                note={aiNote}
+                evaluatorHint={evaluatorHint}
+                ollamaOffline={ollamaOffline}
+                fileInputRef={fileInputRef}
+                onToggleRecord={recording ? stopRecording : startRecording}
+                onPickFile={onPickFile}
+                onEvaluate={evaluate}
               />
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={recording || evaluating || transcribing}
-                className={AI_TOOLBAR_BUTTON_CLASS}
-                style={{
-                  border: "1px solid var(--border)",
-                  backgroundColor: "var(--surface-input)",
-                  color: "var(--text-secondary)",
-                  cursor: recording || evaluating || transcribing ? "not-allowed" : "pointer",
-                  opacity: recording || evaluating || transcribing ? 0.6 : 1,
-                }}
-              >
-                <UploadIcon />
-                Upload audio
-              </button>
-              <button
-                onClick={evaluate}
-                disabled={!aiText.trim() || evaluating || transcribing || !hasEvaluator}
-                className={`${AI_PRIMARY_BUTTON_CLASS} primary-button`}
-                style={{
-                  cursor: aiText.trim() && !evaluating && hasEvaluator ? "pointer" : "not-allowed",
-                }}
-              >
-                {evaluating ? "Evaluating…" : "Evaluate with AI →"}
-              </button>
-            </div>
-            {!hasEvaluator && (
-              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                {provider === "local"
-                  ? "The Local heuristic cannot evaluate free-form text. Choose Ollama, Claude, or OpenAI."
-                  : `${activeProvider?.label ?? "This provider"} is unavailable. Open Settings with the gear button to connect it.`}
-              </p>
-            )}
-            {provider === "ollama" && ollamaModels.length === 0 && (
-              <p className="text-xs" style={{ color: "#c41c1c" }}>
-                Ollama is offline or has no installed models. Open Settings to check the connection.
-              </p>
-            )}
-          </div>
-        ) : mode === "json" ? (
-          <div className="space-y-2 correct-mode-enter" key="json-mode">
-            <textarea
-              value={json}
-              onChange={(e) => setJson(e.target.value)}
-              placeholder={`Paste the correction tool's output, e.g.\n[{ "original": "I have 25 years", "corrected": "I'm 25 years old", "errorTypes": ["collocation"], "rationale": "age uses 'be', not 'have'" }]`}
-              rows={7}
-              className="w-full resize-none rounded-lg px-4 py-3 text-sm font-mono leading-relaxed outline-none transition-colors"
-              style={fieldStyle}
-              onFocus={(e) => (e.currentTarget.style.borderColor = "#ff5600")}
-              onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
-            />
-            {importNote && (
-              <p className="text-xs" style={{ color: "#c41c1c" }}>
-                {importNote}
-              </p>
-            )}
-            <button
-              onClick={importJson}
-              disabled={!json.trim()}
-              className="text-xs font-medium px-3 py-1.5 rounded transition-colors"
-              style={{
-                border: "1px solid var(--border)",
-                color: json.trim() ? "#ff5600" : "var(--text-muted)",
-                cursor: json.trim() ? "pointer" : "not-allowed",
-              }}
-            >
-              Import corrections
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-3 correct-mode-enter" key="manual-mode">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <label className="block text-xs font-medium uppercase tracking-widest" style={labelStyle}>
-                  What you said
-                </label>
-                <textarea
-                  value={draft.original}
-                  onChange={(e) => setDraft((d) => ({ ...d, original: e.target.value }))}
-                  placeholder="I have 25 years"
-                  rows={2}
-                  className="w-full resize-none rounded-lg px-3 py-2 text-sm outline-none transition-colors"
-                  style={fieldStyle}
-                  onFocus={(e) => (e.currentTarget.style.borderColor = "#ff5600")}
-                  onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="block text-xs font-medium uppercase tracking-widest" style={labelStyle}>
-                  Native-correct version
-                </label>
-                <textarea
-                  value={draft.corrected}
-                  onChange={(e) => setDraft((d) => ({ ...d, corrected: e.target.value }))}
-                  placeholder="I'm 25 years old"
-                  rows={2}
-                  className="w-full resize-none rounded-lg px-3 py-2 text-sm outline-none transition-colors"
-                  style={fieldStyle}
-                  onFocus={(e) => (e.currentTarget.style.borderColor = "#ff5600")}
-                  onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="block text-xs font-medium uppercase tracking-widest" style={labelStyle}>
-                Error type <span className="normal-case tracking-normal opacity-70">— optional</span>
-              </label>
-              <div className="flex flex-wrap gap-1.5">
-                {ERROR_TYPES.map((t) => {
-                  const active = draft.errorTypes.includes(t);
-                  return (
-                    <button
-                      key={t}
-                      onClick={() => toggleType(t)}
-                      className="text-xs font-medium px-2.5 py-1 transition-colors"
-                      style={{
-                        borderRadius: "4px",
-                        border: `1px solid ${active ? "#ff5600" : "var(--border)"}`,
-                        color: active ? "#ff5600" : "var(--text-muted)",
-                        backgroundColor: "transparent",
-                      }}
-                    >
-                      {t}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="block text-xs font-medium uppercase tracking-widest" style={labelStyle}>
-                Why it was wrong <span className="normal-case tracking-normal opacity-70">— optional</span>
-              </label>
-              <input
-                type="text"
-                value={draft.rationale}
-                onChange={(e) => setDraft((d) => ({ ...d, rationale: e.target.value }))}
-                placeholder="age uses 'be', not 'have'"
-                className="w-full rounded-lg px-3 py-2 text-sm outline-none transition-colors"
-                style={fieldStyle}
-                onFocus={(e) => (e.currentTarget.style.borderColor = "#ff5600")}
-                onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
+            ) : mode === "json" ? (
+              <JsonImportForm value={json} onChange={setJson} importNote={importNote} onImport={importJson} />
+            ) : (
+              <ManualEntryForm
+                draft={draft}
+                onChange={(patch) => setDraft((current) => ({ ...current, ...patch }))}
+                onToggleType={toggleType}
+                onAdd={addDraft}
               />
-            </div>
-
-            <button
-              onClick={addDraft}
-              disabled={!draft.original.trim() || !draft.corrected.trim()}
-              className="text-xs font-medium px-3 py-1.5 rounded transition-colors"
-              style={{
-                border: "1px solid var(--border)",
-                color: draft.original.trim() && draft.corrected.trim() ? "#ff5600" : "var(--text-muted)",
-                cursor: draft.original.trim() && draft.corrected.trim() ? "pointer" : "not-allowed",
-              }}
-            >
-              + Add to list
-            </button>
-          </div>
-        )}
+            )}
+          </motion.div>
+        </AnimatePresence>
 
         <Disclosure
           title="Advanced options"
@@ -643,174 +320,36 @@ export default function CorrectTab() {
           nested
         >
           <div className="space-y-4">
-            <button
-              type="button"
-              className="secondary-button"
-              data-active={mode === "json"}
-              onClick={() => {
-                setMode("json");
-                setImportNote(null);
-                setAiNote(null);
-              }}
+            <Button
+              variant="secondary"
+              className={cn(mode === "json" && "border-accent text-accent")}
+              onClick={() => switchMode("json")}
             >
               {mode === "json" ? "JSON import selected" : "Paste correction JSON"}
-            </button>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {providers.length > 1 && (
-                <div className="space-y-1.5">
-                  <label className="field-label">AI provider</label>
-                  <Select
-                    value={provider}
-                    onChange={(value) => setProviderOverride(value as ProviderKind)}
-                    options={providers.map((p) => ({
-                      value: p.kind,
-                      label: `${p.label}${p.available ? "" : " — unavailable"}`,
-                    }))}
-                    disabled={evaluating || generating}
-                  />
-                </div>
-              )}
-              {showModelPicker && (
-                <div className="space-y-1.5">
-                  <label className="field-label">Ollama model</label>
-                  <Select
-                    value={selectedModel}
-                    onChange={setOllamaModel}
-                    options={ollamaModels.map((m) => ({ value: m, label: m }))}
-                    disabled={evaluating || generating}
-                  />
-                </div>
-              )}
-            </div>
+            </Button>
+            <ProviderPicker selection={selection} disabled={evaluating || generating} />
           </div>
         </Disclosure>
-      </div>
+      </Card>
 
-      {/* Collected corrections / generate */}
       {events.length > 0 && (
-        <div className="app-panel overflow-hidden correct-list-enter">
-          <div className="sticky top-0 z-10 px-5 py-3 flex flex-wrap items-center justify-between gap-3" style={{ borderBottom: "1px solid var(--border)", backgroundColor: "var(--surface-card)" }}>
-            <div className="min-w-0">
-              <p className="text-sm font-medium truncate" style={{ color: "var(--text-primary)" }}>
-                Corrections to drill
-              </p>
-              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                {events.length} correction{events.length === 1 ? "" : "s"} ready
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
-              <button
-                onClick={generating ? cancelGeneration : generateCards}
-                disabled={!generating && !providerReady}
-                className="text-xs font-medium px-3 py-1.5 transition-all shrink-0 flex items-center gap-1.5 correct-action-button"
-                style={{
-                  backgroundColor: !generating && !providerReady ? "var(--border)" : generating ? "var(--surface-input)" : "#ff5600",
-                  color: !generating && !providerReady ? "var(--text-muted)" : generating ? "#c41c1c" : "#ffffff",
-                  border: generating ? "1px solid #c41c1c" : "1px solid transparent",
-                  borderRadius: "4px",
-                  cursor: !generating && !providerReady ? "not-allowed" : "pointer",
-                }}
-              >
-                {generating ? (
-                  <>
-                    <span aria-hidden="true">×</span>
-                    Cancel
-                  </>
-                ) : (
-                  "Generate cards →"
-                )}
-              </button>
-            </div>
-          </div>
-
-          {generating && (
-            <div
-              className="px-5 py-3 generation-status"
-              style={{ borderBottom: "1px solid var(--border)" }}
-              role="status"
-              aria-live="polite"
-            >
-              <div className="flex items-center justify-between gap-3 text-xs">
-                <span style={{ color: "var(--text-secondary)" }}>{generationStage}</span>
-                <span className="tabular-nums" style={{ color: "var(--text-muted)" }}>
-                  {generationSeconds}s
-                </span>
-              </div>
-              <div className="generation-track" aria-hidden="true">
-                <span className="generation-bar" />
-              </div>
-              <p className="mt-1.5 text-[11px]" style={{ color: "var(--text-muted)" }}>
-                Larger decks can take a little longer while audio is created. You can cancel safely.
-              </p>
-            </div>
-          )}
-
-          {(genError || genDone) && (
-            <div
-              className="px-5 py-2.5 text-xs"
-              style={{
-                borderBottom: "1px solid var(--border)",
-                color: genError ? "#c41c1c" : "var(--text-secondary)",
-                backgroundColor: genError ? "#fff1f0" : "var(--surface)",
-              }}
-            >
-              {genError ?? genDone}
-            </div>
-          )}
-
-          <ul className="max-h-[28rem] overflow-y-auto">
-            {events.map((e) => (
-              <li
-                key={e.id}
-                className="px-5 py-3 flex items-start gap-3 correction-row"
-                style={{ borderBottom: "1px solid var(--border)" }}
-              >
-                <div className="flex-1 min-w-0 space-y-1">
-                  <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)", textDecoration: "line-through" }}>
-                    {e.original}
-                  </p>
-                  <p className="text-sm leading-relaxed font-medium" style={{ color: "var(--text-primary)" }}>
-                    {e.corrected}
-                  </p>
-                  <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                    {e.errorTypes.map((t) => (
-                      <span
-                        key={t}
-                        className="text-xs px-1.5 py-0.5 rounded"
-                        style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
-                      >
-                        {t}
-                      </span>
-                    ))}
-                    {e.rationale && (
-                      <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-                        {e.rationale}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <button
-                  onClick={() => removeEvent(e.id)}
-                  disabled={generating}
-                  className="shrink-0 text-xs font-medium px-2.5 py-1 rounded transition-colors mt-0.5"
-                  style={{ border: "1px solid var(--border)", color: "var(--text-muted)", opacity: generating ? 0.5 : 1 }}
-                  aria-label="Remove correction"
-                >
-                  Remove
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <CorrectionList
+          events={events}
+          generating={generating}
+          genError={genError}
+          genDone={genDone}
+          generationStage={generationStage}
+          generationSeconds={generationSeconds}
+          providerReady={providerReady}
+          kokoro={kokoro}
+          onGenerate={generateCards}
+          onCancel={cancelGeneration}
+          onRemove={removeEvent}
+        />
       )}
 
       {events.length === 0 && genDone && (
-        <div
-          className="rounded-lg px-4 py-3 text-xs"
-          style={{ backgroundColor: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
-        >
-          {genDone}
-        </div>
+        <div className="rounded-lg border border-line bg-surface px-4 py-3 text-xs text-ink-soft">{genDone}</div>
       )}
     </div>
   );

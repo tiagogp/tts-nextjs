@@ -1,6 +1,9 @@
 "use client";
 
 import { useId, useState, type ReactNode } from "react";
+import { motion } from "motion/react";
+import { cn } from "@/lib/cn";
+import { easeOut, tweenSmooth } from "@/lib/motion";
 
 export interface DisclosureProps {
   title: string;
@@ -26,39 +29,53 @@ export default function Disclosure({
 
   return (
     <section
-      className={`app-disclosure ${nested ? "app-disclosure-nested" : ""} ${className}`}
+      className={cn(
+        "overflow-hidden border border-line/75 bg-card transition-[border-color,box-shadow] duration-200",
+        nested ? "rounded-[0.55rem]" : "rounded-panel",
+        open && "border-line",
+        open && !nested && "shadow-(--shadow-soft)",
+        className,
+      )}
       data-open={open}
     >
       <button
         type="button"
-        className="app-disclosure-trigger"
+        className="flex w-full cursor-pointer items-center gap-4 px-4 py-3.5 text-left text-ink hover:bg-accent/3"
         aria-expanded={open}
         aria-controls={contentId}
         onClick={() => setOpen((value) => !value)}
       >
-        <span className="min-w-0 text-left">
-          <span className="app-disclosure-title">{title}</span>
-          {description && <span className="app-disclosure-description">{description}</span>}
+        <span className="min-w-0">
+          <span className="block text-sm font-semibold tracking-[-0.01em]">{title}</span>
+          {description && <span className="mt-0.5 block text-xs leading-snug text-ink-muted">{description}</span>}
         </span>
         <span className="ml-auto flex shrink-0 items-center gap-2">
           {badge}
-          <svg className="app-disclosure-chevron" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <motion.svg
+            width="14"
+            height="14"
+            viewBox="0 0 14 14"
+            fill="none"
+            aria-hidden="true"
+            className="text-ink-muted"
+            animate={{ rotate: open ? 180 : 0 }}
+            transition={{ duration: 0.25, ease: easeOut }}
+          >
             <path d="m3 5 4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+          </motion.svg>
         </span>
       </button>
-      <div className="app-disclosure-grid" data-open={open}>
-        <div>
-          <div
-            id={contentId}
-            className="app-disclosure-content"
-            aria-hidden={!open}
-            inert={!open}
-          >
-            {children}
-          </div>
+      {/* Children stay mounted (height animates) so their state survives collapse. */}
+      <motion.div
+        initial={false}
+        animate={{ height: open ? "auto" : 0, opacity: open ? 1 : 0 }}
+        transition={tweenSmooth}
+        className="overflow-hidden"
+      >
+        <div id={contentId} className="border-t border-line/65 px-4 pb-4 pt-4" aria-hidden={!open} inert={!open}>
+          {children}
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 }

@@ -4,11 +4,14 @@ import { contentDispositionAttachment } from "@/server/anki";
 import { localJson } from "@/server/localRuntime";
 
 export const runtime = "nodejs";
-export const maxDuration = 300;
+export const maxDuration = 600;
 
 const MAX_INPUT_BYTES = 5 * 1024 * 1024; // 5MB
+const APKG_EXPORT_TIMEOUT_MS = 540_000;
 const PUBLIC_APKG_ERROR =
   "PhraseLoop couldn't generate the deck right now. Try again in a moment.";
+const PUBLIC_APKG_TIMEOUT_ERROR =
+  "Deck export took too long. Try fewer cards or split the deck into smaller files.";
 
 interface ApkgErrorPayload {
   error?: string;
@@ -24,6 +27,14 @@ function readErrorPayload(body: Buffer): ApkgErrorPayload {
   } catch {
     return {};
   }
+}
+
+function ankiRouteLog(step: string, details: Record<string, unknown> = {}): void {
+  console.info("[api/anki/apkg]", step, details);
+}
+
+function isTimeoutOrAbort(error: unknown): boolean {
+  return error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError");
 }
 
 function parseBool(v: string | null): boolean {
@@ -179,6 +190,7 @@ function jsonToCsvBytes(opts: {
 }
 
 export async function POST(req: NextRequest) {
+  const startedAt = Date.now();
   try {
     const contentType = (req.headers.get("content-type") ?? "").toLowerCase();
     const contentLength = Number(req.headers.get("content-length") ?? "0") || 0;
@@ -198,6 +210,10 @@ export async function POST(req: NextRequest) {
     let enKokoroSpeed = 1.15;
     let enKokoroLang: string | null = null;
     let csvBytes: Buffer;
+    ankiRouteLog("request received", {
+      contentType,
+      contentLength,
+    });
 
     if (contentType.includes("application/json")) {
       const body = (await req.json()) as unknown;
@@ -318,10 +334,21 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    ankiRouteLog("runtime export requested", {
+      deck,
+      bytes: csvBytes.byteLength,
+      ptCol,
+      enCol,
+      delimiter,
+      noHeader,
+      voice: enKokoroVoice,
+      speed: enKokoroSpeed,
+    });
+
     const exported = await localJson("/anki/apkg", {
       csvBase64: csvBytes.toString("base64"), deck, ptCol, enCol, delimiter,
       noHeader, voice: enKokoroVoice, speed: enKokoroSpeed, lang: enKokoroLang,
-    }, 300_000);
+    }, { timeoutMs: APKG_EXPORT_TIMEOUT_MS, signal: req.signal });
     if (exported.status < 200 || exported.status >= 300) {
       const payload = readErrorPayload(exported.body);
       console.error("Anki runtime failed:", exported.status, payload);
@@ -339,6 +366,11 @@ export async function POST(req: NextRequest) {
     const apkg = exported.body;
     const filenameUtf8 = `${deck.trim() || "anki-deck"}.apkg`;
     const disposition = contentDispositionAttachment(filenameUtf8);
+    ankiRouteLog("response ready", {
+      deck,
+      bytes: apkg.byteLength,
+      durationMs: Date.now() - startedAt,
+    });
 
     return new NextResponse(new Uint8Array(apkg), {
       status: 200,
@@ -349,6 +381,10 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (err: unknown) {
+    if (isTimeoutOrAbort(err)) {
+      console.error("Anki export timed out or was aborted:", err);
+      return NextResponse.json({ error: PUBLIC_APKG_TIMEOUT_ERROR }, { status: 504 });
+    }
     console.error("Anki export error:", err);
     return NextResponse.json({ error: PUBLIC_APKG_ERROR }, { status: 500 });
   }

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useSyncExternalStore } from "react";
+import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
 
 const subscribe = () => () => {};
 const STORAGE_KEY = "phraseloop:onboarding:v1";
@@ -12,7 +14,7 @@ export default function OnboardingDialog({ onOpenSettings }: Readonly<{ onOpenSe
     () => window.localStorage.getItem(STORAGE_KEY) !== "done",
     () => false,
   );
-  if (!firstVisit || dismissed) return null;
+  const open = firstVisit && !dismissed;
 
   const finish = (openSettings: boolean) => {
     window.localStorage.setItem(STORAGE_KEY, "done");
@@ -21,20 +23,31 @@ export default function OnboardingDialog({ onOpenSettings }: Readonly<{ onOpenSe
   };
 
   return (
-    <div className="dialog-backdrop" role="presentation">
-      <section className="welcome-dialog" role="dialog" aria-modal="true" aria-labelledby="welcome-title">
-        <p className="text-xs uppercase tracking-widest text-(--accent)">Welcome</p>
-        <h2 id="welcome-title" className="text-xl font-semibold mt-1 text-(--text-primary)">Your first PhraseLoop</h2>
-        <ol className="mt-5 space-y-3 text-sm text-(--text-secondary)">
-          <li><strong>1. Pick a voice.</strong> Speech runs privately on your Mac.</li>
-          <li><strong>2. Connect Ollama.</strong> It is the default AI provider and keeps learning content local.</li>
-          <li><strong>3. Generate something.</strong> Start with Speech, or turn native material into study cards in Discover.</li>
-        </ol>
-        <div className="flex flex-wrap justify-end gap-2 mt-6">
-          <button className="secondary-button" onClick={() => finish(false)}>Explore first</button>
-          <button className="primary-button" onClick={() => finish(true)}>Set up AI</button>
-        </div>
-      </section>
-    </div>
+    <Modal open={open} onClose={() => finish(false)} labelledBy="welcome-title">
+      <p className="text-xs uppercase tracking-widest text-accent">Welcome</p>
+      <h2 id="welcome-title" className="mt-1 text-xl font-semibold text-ink">
+        Your first PhraseLoop
+      </h2>
+      <ol className="mt-5 space-y-3 text-sm text-ink-soft">
+        <li>
+          <strong>1. Pick a voice.</strong> Speech runs privately on your Mac.
+        </li>
+        <li>
+          <strong>2. Connect Ollama.</strong> It is the default AI provider and keeps learning content local.
+        </li>
+        <li>
+          <strong>3. Generate something.</strong> Start with Speech, or turn native material into study cards in
+          Discover.
+        </li>
+      </ol>
+      <div className="mt-6 flex flex-wrap justify-end gap-2">
+        <Button variant="secondary" onClick={() => finish(false)}>
+          Explore first
+        </Button>
+        <Button variant="primary" onClick={() => finish(true)}>
+          Set up AI
+        </Button>
+      </div>
+    </Modal>
   );
 }

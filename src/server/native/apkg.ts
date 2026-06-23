@@ -2,6 +2,7 @@ import "server-only";
 
 import { createHash } from "node:crypto";
 import { createRequire } from "node:module";
+import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { parse } from "csv-parse/sync";
@@ -14,9 +15,21 @@ import { synthesize } from "./speech";
 const require = createRequire(import.meta.url);
 let sqlPromise: Promise<SqlJsStatic> | null = null;
 
-function sql(): Promise<SqlJsStatic> {
+function sqlWasmPath(): string {
   const moduleEntry = require.resolve("sql.js");
-  sqlPromise ??= initSqlJs({ locateFile: () => path.join(path.dirname(moduleEntry), "sql-wasm.wasm") });
+  const candidates = [
+    path.join(path.dirname(moduleEntry), "sql-wasm.wasm"),
+    path.join(process.cwd(), "node_modules", "sql.js", "dist", "sql-wasm.wasm"),
+  ];
+  const resourcesPath = (process as NodeJS.Process & { resourcesPath?: string }).resourcesPath;
+  if (resourcesPath) {
+    candidates.push(path.join(resourcesPath, "native", "sql-wasm.wasm"));
+  }
+  return candidates.find((candidate) => existsSync(candidate)) ?? candidates[0];
+}
+
+function sql(): Promise<SqlJsStatic> {
+  sqlPromise ??= initSqlJs({ locateFile: () => sqlWasmPath() });
   return sqlPromise;
 }
 
@@ -26,6 +39,21 @@ function sha1(value: string): string {
 
 function stableId(namespace: string, name: string): number {
   return Number.parseInt(sha1(`${namespace}|${name}`).slice(0, 8), 16) & 0x7fffffff;
+}
+
+function logApkg(step: string, details: Record<string, unknown> = {}): void {
+  console.info("[apkg]", step, details);
+}
+
+function mediaFilenamePart(value: string): string {
+  return (
+    value
+      .trim()
+      .replace(/[\\/]/g, "_")
+      .replace(/[^A-Za-z0-9._-]+/g, "_")
+      .replace(/^_+|_+$/g, "")
+      .slice(0, 80) || "audio"
+  );
 }
 
 function basicModel(): Model {
@@ -57,7 +85,13 @@ function cardModel(): Model {
 }
 
 async function output(pkg: Package): Promise<Buffer> {
-  return Buffer.from(await pkg.toUint8Array(await sql()));
+  const start = Date.now();
+  const bytes = Buffer.from(await pkg.toUint8Array(await sql()));
+  logApkg("package finalized", {
+    bytes: bytes.byteLength,
+    durationMs: Date.now() - start,
+  });
+  return bytes;
 }
 
 function column(row: unknown, key: string, hasHeader: boolean): string {
@@ -91,6 +125,7 @@ export async function buildCsvDeck(options: {
   synthesizer?: typeof synthesize;
   signal?: AbortSignal;
 }): Promise<Buffer> {
+  const startedAt = Date.now();
   const text = options.csv.toString("utf8").replace(/^\uFEFF/, "");
   const rows = parse(text, {
     columns: options.noHeader ? false : true,
@@ -103,6 +138,13 @@ export async function buildCsvDeck(options: {
   const deck = new Deck({ id: stableId("anki_deck", options.deck), name: options.deck, config: null });
   const pkg = new Package();
   const media = new Set<string>();
+  let notes = 0;
+  logApkg("csv export started", {
+    deck: options.deck,
+    rows: rows.length,
+    voice: options.voice,
+    speed: options.speed,
+  });
   for (const row of rows) {
     throwIfAborted(options.signal);
     const pt = column(row, options.ptCol, !options.noHeader);
@@ -127,8 +169,18 @@ export async function buildCsvDeck(options: {
       guid: sha1(`${options.deck}|${front}|${pt}`),
       tags: ["tts-import"],
     }));
+    notes += 1;
+  }
+  if (notes === 0) {
+    throw new Error("No usable notes were found for the Anki deck.");
   }
   pkg.addDeck(deck);
+  logApkg("csv notes ready", {
+    deck: options.deck,
+    notes,
+    media: media.size,
+    durationMs: Date.now() - startedAt,
+  });
   return output(pkg);
 }
 
@@ -153,14 +205,22 @@ export async function buildCardsDeck(options: {
   synthesizer?: typeof synthesize;
   signal?: AbortSignal;
 }): Promise<Buffer> {
+  const startedAt = Date.now();
   const model = cardModel();
   const deck = new Deck({ id: stableId("anki_deck", options.deck), name: options.deck, config: null });
   const pkg = new Package();
   const media = new Set<string>();
   const decodedBySourceId = new Map<string, Promise<DecodedAudio | null>>();
+  let notes = 0;
   const resolveAudioPath = options.audioPathResolver ?? audioPathFor;
   const readAudio = options.audioReader ?? readFile;
   const decode = options.audioDecoder ?? decodeAudio;
+  logApkg("card export started", {
+    deck: options.deck,
+    cards: options.cards.length,
+    voice: options.voice,
+    speed: options.speed ?? 1.15,
+  });
   const getDecodedSource = (sourceId: string): Promise<DecodedAudio | null> => {
     let cached = decodedBySourceId.get(sourceId);
     if (!cached) {
@@ -194,7 +254,7 @@ export async function buildCardsDeck(options: {
       throwIfAborted(options.signal);
       if (decoded) {
         audio = sliceDecodedAudio(decoded, startMs, endMs);
-        filename = `clip_${sourceId}_${Math.round(startMs)}_${Math.round(endMs)}.wav`;
+        filename = `clip_${mediaFilenamePart(sourceId)}_${Math.round(startMs)}_${Math.round(endMs)}.wav`;
       }
     }
     if (!audio) {
@@ -225,7 +285,18 @@ export async function buildCardsDeck(options: {
       guid: sha1(`${options.deck}|${front}|${back}|${source}`),
       tags: ["card-pipeline"],
     }));
+    notes += 1;
+  }
+  if (notes === 0) {
+    throw new Error("No usable notes were found for the Anki deck.");
   }
   pkg.addDeck(deck);
+  logApkg("card notes ready", {
+    deck: options.deck,
+    notes,
+    media: media.size,
+    decodedSources: decodedBySourceId.size,
+    durationMs: Date.now() - startedAt,
+  });
   return output(pkg);
 }

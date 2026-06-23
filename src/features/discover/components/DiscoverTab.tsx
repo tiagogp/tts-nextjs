@@ -1,25 +1,25 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Select from "@/components/ui/Select";
-import { saveGeneratedDeck } from "@/lib/store/repository";
-import { isStoreAvailable } from "@/lib/store/db";
-import { useAiSettings } from "@/features/settings/context/AiSettingsContext";
-import type { ProviderKind } from "@/lib/cards/provider";
-import ProviderBadge from "@/components/ui/ProviderBadge";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Field, Input } from "@/components/ui/Field";
+import { Notice } from "@/components/ui/Notice";
+import { Spinner } from "@/components/ui/Spinner";
 import Disclosure from "@/components/ui/Disclosure";
+import { saveGeneratedDeck } from "@/lib/store/repository";
+import { useAiSettings } from "@/features/settings/context/AiSettingsContext";
 import type { PhraseCandidate } from "@/lib/cards/schema";
-import { saveApkg } from "@/features/cards/downloadApkg";
-import { ENGLISH_LEVELS, GENERATION_TIMEOUT_MS, SOURCE_KINDS } from "@/features/discover/constants";
+import { useProviderSelection } from "@/features/cards/hooks/useProviderSelection";
+import { useDeckGeneration } from "@/features/cards/hooks/useDeckGeneration";
+import { exportAndSaveDeck } from "@/features/cards/exportDeck";
+import { ProviderPicker } from "@/features/cards/components/ProviderPicker";
+import { SourcePicker } from "@/features/discover/components/SourcePicker";
+import { TranscriptReview } from "@/features/discover/components/TranscriptReview";
+import { ENGLISH_LEVELS, GENERATION_TIMEOUT_MS } from "@/features/discover/constants";
 import type { DiscoverResult, DiscoverSourceKind, EnglishLevel, TranscriptSegment } from "@/features/discover/types";
 import { curateDiscoverSegments, extractDiscoverSource, generateDiscoverDeck } from "@/features/discover/api";
-
-function formatTime(ms: number): string {
-  const total = Math.floor(ms / 1000);
-  const m = Math.floor(total / 60);
-  const s = total % 60;
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
 
 function waitForAudioEvent(
   audio: HTMLAudioElement,
@@ -43,7 +43,7 @@ function waitForAudioEvent(
 }
 
 export default function DiscoverTab() {
-  const { settings, loading: settingsLoading } = useAiSettings();
+  const { loading: settingsLoading } = useAiSettings();
   const [sourceKind, setSourceKind] = useState<DiscoverSourceKind>("youtube");
   const [url, setUrl] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -58,46 +58,40 @@ export default function DiscoverTab() {
   const [kept, setKept] = useState<Set<number>>(new Set());
   const [playing, setPlaying] = useState<number | null>(null);
 
-  const [providerOverride, setProviderOverride] = useState<ProviderKind | null>(null);
-  const [ollamaModel, setOllamaModel] = useState("");
-  const [generating, setGenerating] = useState(false);
-  const [generationSeconds, setGenerationSeconds] = useState(0);
-  const [genError, setGenError] = useState<string | null>(null);
-  const [genDone, setGenDone] = useState<string | null>(null);
+  const selection = useProviderSelection();
+  const { provider, activeProvider, providerReady, selectedModel } = selection;
 
-  // Visual model picker: list the user's installed Ollama models when Ollama is available.
-  const providers = settings.providers;
-  const provider = providerOverride ?? settings.defaultProvider;
-  const activeProvider = providers.find((item) => item.kind === provider);
-  const providerReady = activeProvider?.available === true;
-  const ollamaModels = settings.ollama.models;
-  // Effective choice: the user's pick if still installed, else default to the first model.
-  // Derived (not stored) so we never sync state in an effect.
-  const selectedModel =
-    ollamaModel && ollamaModels.includes(ollamaModel)
-      ? ollamaModel
-      : settings.ollama.model || ollamaModels[0] || "";
-  const showModelPicker = provider === "ollama" && ollamaModels.length > 0;
+  const generation = useDeckGeneration({
+    timeoutMs: GENERATION_TIMEOUT_MS,
+    timeoutMessage:
+      "Generation took too long and was stopped. Try fewer phrases or another provider.",
+    cancelMessage: "Generation cancelled. Your selected phrases are still here.",
+    stages: [
+      { untilSeconds: 8, label: "Creating focused cards…" },
+      { untilSeconds: 25, label: "Reviewing card quality…" },
+      { untilSeconds: 90, label: "Preparing audio and the Anki deck…" },
+      { untilSeconds: Infinity, label: "Still working — local models and audio clips can take a while…" },
+    ],
+  });
+  const {
+    generating,
+    genError,
+    genDone,
+    generationSeconds,
+    generationStage,
+    run,
+    cancelGeneration,
+    setGenError,
+    setGenDone,
+  } = generation;
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const stopAtRef = useRef<number | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const playRequestRef = useRef(0);
-  const generationAbortRef = useRef<AbortController | null>(null);
-  const generationTimedOutRef = useRef(false);
-
-  useEffect(() => {
-    if (!generating) return;
-    const startedAt = Date.now();
-    const interval = window.setInterval(() => {
-      setGenerationSeconds(Math.floor((Date.now() - startedAt) / 1000));
-    }, 1000);
-    return () => window.clearInterval(interval);
-  }, [generating]);
 
   useEffect(
     () => () => {
-      generationAbortRef.current?.abort();
       if (pollRef.current) window.clearInterval(pollRef.current);
       audioRef.current?.pause();
     },
@@ -230,7 +224,7 @@ export default function DiscoverTab() {
       setCurating(false);
       setDownloadingModel(false);
     }
-  }, [sourceKind, url, file, provider, selectedModel, focus, targetLevel]);
+  }, [sourceKind, url, file, provider, selectedModel, focus, targetLevel, setGenError, setGenDone]);
 
   const toggleKeep = (index: number) => {
     setKept((prev) => {
@@ -243,19 +237,7 @@ export default function DiscoverTab() {
   };
 
   const generateCards = useCallback(async () => {
-    if (!result || kept.size === 0 || !providerReady || generationAbortRef.current) return;
-    const controller = new AbortController();
-    generationAbortRef.current = controller;
-    generationTimedOutRef.current = false;
-    setGenerationSeconds(0);
-    setGenerating(true);
-    setGenError(null);
-    setGenDone(null);
-
-    const timeout = window.setTimeout(() => {
-      generationTimedOutRef.current = true;
-      controller.abort();
-    }, GENERATION_TIMEOUT_MS);
+    if (!result || kept.size === 0 || !providerReady) return;
 
     // Accepted phrases → PhraseCandidates (the source of truth we persist, D1).
     // Timestamps drive the native clip, so they only travel for audio sources;
@@ -274,166 +256,63 @@ export default function DiscoverTab() {
       };
     });
 
-    try {
-      const data = await generateDiscoverDeck({
-        provider,
-        selectedModel,
-        result,
-        candidates,
-        signal: controller.signal,
-      });
-
+    await run(async (signal) => {
+      const data = await generateDiscoverDeck({ provider, selectedModel, result, candidates, signal });
       // Persist sources + generated cards locally so they're ready for the Study tab.
-      let savedNote = "";
-      if (isStoreAvailable() && data.cards) {
-        try {
-          await saveGeneratedDeck(data.cards, candidates);
-          savedNote = " · saved for study";
-        } catch {
-          savedNote = " · couldn't save locally";
-        }
-      }
-
-      if (!data.apkg) throw new Error("Cards were generated, but the Anki package was missing.");
-      const fileNote = await saveApkg(data.filename || `${result.title || "deck"}.apkg`, data.apkg);
-
-      const count = data.count ?? data.cards?.length ?? 0;
-      setGenDone(
-        `${count} card${count === 1 ? "" : "s"} exported — ${fileNote}${savedNote}.`,
-      );
-    } catch (err: unknown) {
-      if (controller.signal.aborted) {
-        setGenError(
-          generationTimedOutRef.current
-            ? "Generation took too long and was stopped. Try fewer phrases or another provider."
-            : "Generation cancelled. Your selected phrases are still here.",
-        );
-      } else {
-        setGenError(
-          err instanceof Error ? err.message : "Failed to generate cards.",
-        );
-      }
-    } finally {
-      window.clearTimeout(timeout);
-      if (generationAbortRef.current === controller) generationAbortRef.current = null;
-      setGenerating(false);
-    }
-  }, [result, kept, provider, providerReady, selectedModel]);
-
-  const cancelGeneration = useCallback(() => {
-    generationTimedOutRef.current = false;
-    generationAbortRef.current?.abort();
-  }, []);
-
-  const generationStage =
-    generationSeconds < 8
-      ? "Creating focused cards…"
-      : generationSeconds < 25
-        ? "Reviewing card quality…"
-        : generationSeconds < 90
-          ? "Preparing audio and the Anki deck…"
-          : "Still working — local models and audio clips can take a while…";
+      return exportAndSaveDeck(data, {
+        defaultFilename: `${result.title || "deck"}.apkg`,
+        persist: (cards) => saveGeneratedDeck(cards, candidates),
+      });
+    });
+  }, [result, kept, provider, providerReady, selectedModel, run]);
 
   return (
-    <div className="space-y-5 correct-tab-enter">
-      {/* Input card */}
-      <div
-        className="app-panel p-5 space-y-4"
-        style={{
-          backgroundColor: "var(--surface-card)",
-          border: "1px solid var(--border)",
-        }}
-      >
-        {/* Source type */}
-        <div
-          className="app-segmented discover-source-picker"
-          role="radiogroup"
-          aria-label="Source type"
-          style={{ "--segment-index": SOURCE_KINDS.findIndex(({ kind }) => kind === sourceKind) } as CSSProperties}
-        >
-          <span className="discover-source-indicator" aria-hidden="true" />
-          {SOURCE_KINDS.map(({ kind, label }) => {
-            const active = sourceKind === kind;
-            return (
-              <button
-                type="button"
-                role="radio"
-                aria-checked={active}
-                key={kind}
-                onClick={() => {
-                  if (result && !window.confirm("Discard the current Discover results?")) return;
-                  setSourceKind(kind);
-                  setError(null);
-                  setResult(null);
-                  setCurationNote(null);
-                }}
-                disabled={loading}
-                data-active={active}
-                style={{ cursor: loading ? "not-allowed" : "pointer" }}
-              >
-                {label}
-              </button>
-            );
-          })}
-        </div>
+    <div className="space-y-5">
+      <Card className="space-y-4 p-5">
+        <SourcePicker
+          value={sourceKind}
+          disabled={loading}
+          onChange={(kind) => {
+            if (result && !window.confirm("Discard the current Discover results?")) return;
+            setSourceKind(kind);
+            setError(null);
+            setResult(null);
+            setCurationNote(null);
+          }}
+        />
 
         {sourceKind === "pdf" ? (
-          <div className="space-y-1.5">
-            <label
-              className="block text-xs font-medium uppercase tracking-widest"
-              style={{ color: "var(--text-muted)", letterSpacing: "0.8px" }}
-            >
-              PDF file
-            </label>
+          <Field label="PDF file" htmlFor="discover-pdf-input">
             <input
+              id="discover-pdf-input"
               type="file"
               accept="application/pdf,.pdf"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-              className="w-full text-sm file:mr-3 file:py-2 file:px-4 file:rounded file:border-0 file:text-xs file:font-medium file:cursor-pointer"
-              style={{ color: "var(--text-secondary)" }}
+              onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+              className="w-full text-sm text-ink-soft file:mr-3 file:cursor-pointer file:rounded file:border-0 file:px-4 file:py-2 file:text-xs file:font-medium"
             />
-          </div>
+          </Field>
         ) : (
-          <div className="space-y-1.5">
-            <label
-              className="block text-xs font-medium uppercase tracking-widest"
-              style={{ color: "var(--text-muted)", letterSpacing: "0.8px" }}
-            >
-              {sourceKind === "article" ? "Article URL" : "YouTube URL"}
-            </label>
-            <input
+          <Field label={sourceKind === "article" ? "Article URL" : "YouTube URL"} htmlFor="discover-url-input">
+            <Input
+              id="discover-url-input"
               type="url"
               value={url}
-              onChange={(e) => setUrl(e.target.value)}
+              onChange={(event) => setUrl(event.target.value)}
               placeholder={
-                sourceKind === "article"
-                  ? "https://example.com/some-article"
-                  : "https://www.youtube.com/watch?v=…"
-              }
-              className="w-full rounded-lg px-4 py-2.5 text-sm outline-none transition-colors"
-              style={{
-                backgroundColor: "var(--surface)",
-                color: "var(--text-primary)",
-                border: "1px solid var(--border)",
-                caretColor: "#ff5600",
-              }}
-              onFocus={(e) => (e.currentTarget.style.borderColor = "#ff5600")}
-              onBlur={(e) =>
-                (e.currentTarget.style.borderColor = "var(--border)")
+                sourceKind === "article" ? "https://example.com/some-article" : "https://www.youtube.com/watch?v=…"
               }
             />
-          </div>
+          </Field>
         )}
 
-        <div className="space-y-1.5 max-w-52">
-          <label className="field-label">English level</label>
+        <Field label="English level" className="max-w-52">
           <Select
             value={targetLevel}
             onChange={(value) => setTargetLevel(value as EnglishLevel)}
             options={ENGLISH_LEVELS}
             disabled={loading}
           />
-        </div>
+        </Field>
 
         <Disclosure
           title="Advanced options"
@@ -441,311 +320,82 @@ export default function DiscoverTab() {
           nested
         >
           <div className="space-y-4">
-            <div className="space-y-1.5">
-              <label className="field-label">Focus <span className="normal-case tracking-normal opacity-70">— optional</span></label>
-              <input
+            <Field
+              label={
+                <>
+                  Focus <span className="opacity-70">— optional</span>
+                </>
+              }
+            >
+              <Input
                 type="text"
                 value={focus}
-                onChange={(e) => setFocus(e.target.value)}
+                onChange={(event) => setFocus(event.target.value)}
                 placeholder="e.g. phrasal verbs, business vocabulary…"
-                className="app-field"
               />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 ai-picker-grid">
-          {providers.length > 1 && (
-            <div className="ai-picker-field">
-              <div className="ai-picker-label-row">
-                <label className="field-label mb-0">AI provider</label>
-                {activeProvider && <ProviderBadge isLocal={activeProvider.isLocal} available={activeProvider.available} />}
-              </div>
-              <Select
-                value={provider}
-                onChange={(value) => setProviderOverride(value as ProviderKind)}
-                options={providers.map((p) => ({
-                  value: p.kind,
-                  label: `${p.label}${p.available ? "" : " — unavailable"}`,
-                }))}
-                disabled={loading}
-              />
-            </div>
-          )}
-
-          {showModelPicker && (
-            <div className="ai-picker-field">
-              <div className="ai-picker-label-row">
-                <label className="field-label mb-0">Ollama model</label>
-              </div>
-              <Select
-                value={selectedModel}
-                onChange={setOllamaModel}
-                options={ollamaModels.map((m) => ({ value: m, label: m }))}
-                disabled={loading}
-              />
-            </div>
-          )}
-
-            </div>
+            </Field>
+            <ProviderPicker selection={selection} disabled={loading} />
           </div>
         </Disclosure>
 
         {!providerReady && !settingsLoading && (
-          <div className="app-notice" data-tone="error" role="status">
-            {activeProvider?.label ?? "The selected AI provider"} is unavailable. Open Settings with the gear button to connect it, or choose Local heuristic.
-          </div>
+          <Notice tone="error" role="status">
+            {activeProvider?.label ?? "The selected AI provider"} is unavailable. Open Settings with the gear button to
+            connect it, or choose Local heuristic.
+          </Notice>
         )}
 
-        <button
+        <Button
+          variant="primary"
+          size="lg"
+          className="flex min-h-10 items-center justify-center gap-2"
           onClick={extract}
           disabled={loading || !canRun}
-          className="primary-button w-full min-h-10 flex items-center justify-center gap-2"
         >
           {loading ? (
             <>
-              <svg
-                className="w-3.5 h-3.5 animate-spin"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                />
-              </svg>
-              {curating
-                ? "Curating…"
-                : sourceKind === "youtube"
-                  ? "Transcribing…"
-                  : "Extracting…"}
+              <Spinner className="h-3.5 w-3.5" />
+              {curating ? "Curating…" : sourceKind === "youtube" ? "Transcribing…" : "Extracting…"}
             </>
           ) : sourceKind === "youtube" ? (
             "Transcribe audio"
           ) : (
             "Extract text"
           )}
-        </button>
+        </Button>
 
         {downloadingModel && (
-          <div
-            className="rounded px-3 py-2.5 text-xs flex items-center gap-2"
-            style={{
-              backgroundColor: "var(--surface)",
-              border: "1px solid var(--border)",
-              color: "var(--text-secondary)",
-              borderRadius: "4px",
-            }}
-          >
-            <svg
-              className="w-3 h-3 animate-spin shrink-0"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-              />
-            </svg>
-            Preparing audio discovery for the first time… this may take a
-            minute.
+          <div className="flex items-center gap-2 rounded border border-line bg-surface px-3 py-2.5 text-xs text-ink-soft">
+            <Spinner className="h-3 w-3 shrink-0" />
+            Preparing audio discovery for the first time… this may take a minute.
           </div>
         )}
 
         {error && (
-          <div
-            className="rounded px-3 py-2.5 text-xs"
-            style={{
-              backgroundColor: "#fff1f0",
-              border: "1px solid #ffccc7",
-              color: "#c41c1c",
-              borderRadius: "4px",
-            }}
-          >
+          <Notice tone="error" className="text-xs">
             {error}
-          </div>
+          </Notice>
         )}
-      </div>
+      </Card>
 
-      {/* Transcript / review */}
       {result && (
-        <div
-          className="app-panel overflow-hidden"
-          style={{
-            backgroundColor: "var(--surface-card)",
-            border: "1px solid var(--border)",
-          }}
-        >
-          {result.hasAudio && (
-            <audio
-              key={result.sourceId}
-              ref={audioRef}
-              src={`/api/discover/audio/${result.sourceId}`}
-              preload="metadata"
-            />
-          )}
-
-          <div
-            className="sticky top-0 z-10 px-5 py-3 flex flex-wrap items-center justify-between gap-3"
-            style={{ borderBottom: "1px solid var(--border)", backgroundColor: "var(--surface-card)" }}
-          >
-            <div className="min-w-0">
-              <p
-                className="text-sm font-medium truncate"
-                style={{ color: "var(--text-primary)" }}
-              >
-                {result.title}
-              </p>
-              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                {result.segments.length} segments · {kept.size} kept
-                {curationNote ? ` · ${curationNote}` : ""}
-              </p>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                onClick={generating ? cancelGeneration : generateCards}
-                disabled={!generating && (kept.size === 0 || !providerReady)}
-                className="primary-button text-xs shrink-0 flex items-center gap-1.5"
-                style={{
-                  cursor:
-                    !generating && (kept.size === 0 || !providerReady) ? "not-allowed" : "pointer",
-                }}
-              >
-                {generating ? (
-                  <>
-                    <span aria-hidden="true">×</span>
-                    Cancel
-                  </>
-                ) : (
-                  "Generate cards →"
-                )}
-              </button>
-            </div>
-          </div>
-
-          {generating && (
-            <div
-              className="px-5 py-3 generation-status"
-              style={{ borderBottom: "1px solid var(--border)" }}
-              role="status"
-              aria-live="polite"
-            >
-              <div className="flex items-center justify-between gap-3 text-xs">
-                <span style={{ color: "var(--text-secondary)" }}>{generationStage}</span>
-                <span className="tabular-nums" style={{ color: "var(--text-muted)" }}>
-                  {generationSeconds}s
-                </span>
-              </div>
-              <div className="generation-track" aria-hidden="true">
-                <span className="generation-bar" />
-              </div>
-            </div>
-          )}
-
-          {(genError || genDone) && (
-            <div
-              className="px-5 py-2.5 text-xs"
-              style={{
-                borderBottom: "1px solid var(--border)",
-                color: genError ? "#c41c1c" : "var(--text-secondary)",
-                backgroundColor: genError ? "#fff1f0" : "var(--surface)",
-              }}
-            >
-              {genError ?? genDone}
-            </div>
-          )}
-
-          <ul className="max-h-[28rem] overflow-y-auto">
-            {result.segments.map((seg, i) => {
-              const isKept = kept.has(i);
-              const isPlaying = playing === i;
-              return (
-                <li
-                  key={i}
-                  className="px-5 py-2.5 flex items-start gap-3 transition-colors"
-                  style={{
-                    borderBottom: "1px solid var(--border)",
-                    backgroundColor: isKept ? "var(--surface)" : "transparent",
-                  }}
-                >
-                  {result.hasAudio && (
-                    <button
-                      onClick={() => playClip(i, seg)}
-                      className="shrink-0 w-7 h-7 rounded flex items-center justify-center mt-0.5"
-                      style={{
-                        border: "1px solid var(--border)",
-                        color: isPlaying ? "#ff5600" : "var(--text-muted)",
-                      }}
-                      aria-label={isPlaying ? "Pause clip" : "Play clip"}
-                    >
-                      {isPlaying ? (
-                        <svg
-                          className="w-3.5 h-3.5"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path d="M6 4h3v12H6zM11 4h3v12h-3z" />
-                        </svg>
-                      ) : (
-                        <svg
-                          className="w-3.5 h-3.5"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path d="M6 4l10 6-10 6z" />
-                        </svg>
-                      )}
-                    </button>
-                  )}
-
-                  <div className="flex-1 min-w-0">
-                    <p
-                      className="text-sm leading-relaxed"
-                      style={{ color: "var(--text-primary)" }}
-                    >
-                      {seg.text}
-                    </p>
-                    {result.hasAudio && (
-                      <span
-                        className="text-xs tabular-nums"
-                        style={{ color: "var(--text-muted)" }}
-                      >
-                        {formatTime(seg.startMs)}
-                      </span>
-                    )}
-                  </div>
-
-                  <button
-                    onClick={() => toggleKeep(i)}
-                    className="shrink-0 text-xs font-medium px-2.5 py-1 rounded transition-colors mt-0.5"
-                    style={{
-                      border: `1px solid ${isKept ? "#ff5600" : "var(--border)"}`,
-                      color: isKept ? "#ff5600" : "var(--text-muted)",
-                      backgroundColor: "transparent",
-                    }}
-                  >
-                    {isKept ? "Kept" : "Keep"}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
+        <TranscriptReview
+          result={result}
+          audioRef={audioRef}
+          kept={kept}
+          playing={playing}
+          curationNote={curationNote}
+          generating={generating}
+          genError={genError}
+          genDone={genDone}
+          generationStage={generationStage}
+          generationSeconds={generationSeconds}
+          providerReady={providerReady}
+          onGenerate={generateCards}
+          onCancel={cancelGeneration}
+          onToggleKeep={toggleKeep}
+          onPlay={(index, segment) => void playClip(index, segment)}
+        />
       )}
     </div>
   );

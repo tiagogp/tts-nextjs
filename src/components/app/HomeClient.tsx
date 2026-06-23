@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "motion/react";
+import { springSoft, TRAVEL } from "@/lib/motion";
 import AppHeader from "@/components/app/AppHeader";
 import { HOME_TABS, type HomeTab } from "@/components/app/homeTabs";
 import AppProviders from "@/components/app/AppProviders";
@@ -29,10 +31,7 @@ export default function HomeClient() {
 
   return (
     <AppProviders>
-        <div
-          className="h-dvh overflow-hidden flex flex-col"
-          style={{ backgroundColor: "var(--surface)" }}
-        >
+        <div className="h-dvh overflow-hidden flex flex-col bg-surface">
           <AppHeader
             activeTab={tab}
             onTabChange={changeTab}
@@ -46,21 +45,31 @@ export default function HomeClient() {
                 <SettingsScreen onBack={() => setSettingsOpen(false)} />
               </div>
             ) : (
-              HOME_TABS.map((item) => (
-                <section
-                  key={item.id}
-                  id={`panel-${item.id}`}
-                  hidden={tab !== item.id}
-                  aria-labelledby={`tab-${item.id}`}
-                  role="tabpanel"
-                  tabIndex={0}
-                  className={`h-full overflow-y-auto app-scroll-region ${tab === item.id ? "tab-panel-enter" : ""}`}
-                >
-                  <div className="max-w-5xl mx-auto px-4 py-5 sm:py-7">
-                    <TabContent tab={item.id} />
-                  </div>
-                </section>
-              ))
+              HOME_TABS.map((item) => {
+                const active = tab === item.id;
+                return (
+                  <section
+                    key={item.id}
+                    id={`panel-${item.id}`}
+                    hidden={!active}
+                    aria-labelledby={`tab-${item.id}`}
+                    role="tabpanel"
+                    tabIndex={0}
+                    className="h-full overflow-y-auto app-scroll-region"
+                  >
+                    {/* Mount stays alive across tab switches so each tab keeps its
+                        state; only the entrance animation replays on activation. */}
+                    <motion.div
+                      className="max-w-5xl mx-auto px-4 py-5 sm:py-7"
+                      initial={false}
+                      animate={active ? { opacity: 1, y: 0 } : { opacity: 0, y: TRAVEL }}
+                      transition={springSoft}
+                    >
+                      <TabContent tab={item.id} />
+                    </motion.div>
+                  </section>
+                );
+              })
             )}
           </main>
           <OnboardingDialog onOpenSettings={() => setSettingsOpen(true)} />

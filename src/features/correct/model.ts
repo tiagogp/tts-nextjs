@@ -2,6 +2,16 @@ import type { ErrorEvent, ErrorType } from "@/lib/cards/schema";
 
 export type CorrectionInputMode = "ai" | "manual" | "json";
 
+/** Max size for an uploaded audio clip handed to Whisper (25 MB). */
+export const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
+
+export interface CorrectionDraft {
+  original: string;
+  corrected: string;
+  errorTypes: ErrorType[];
+  rationale: string;
+}
+
 export const ERROR_TYPES: ErrorType[] = [
   "collocation",
   "preposition",
@@ -16,12 +26,7 @@ export const ERROR_TYPES: ErrorType[] = [
 
 const ERROR_TYPE_SET = new Set<string>(ERROR_TYPES);
 
-export function newDraft(): {
-  original: string;
-  corrected: string;
-  errorTypes: ErrorType[];
-  rationale: string;
-} {
+export function newDraft(): CorrectionDraft {
   return { original: "", corrected: "", errorTypes: [], rationale: "" };
 }
 

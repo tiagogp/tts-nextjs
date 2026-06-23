@@ -4,6 +4,10 @@ import { useEffect, useState, useRef } from "react";
 import JSZip from "jszip";
 import { useTtsSettings } from "@/features/speech/context/TtsSettingsContext";
 import { sanitizeFilename } from "@/lib/sanitizeFilename";
+import { Button } from "@/components/ui/Button";
+import { Label, Textarea } from "@/components/ui/Field";
+import { Spinner } from "@/components/ui/Spinner";
+import { cn } from "@/lib/cn";
 
 type ItemStatus = "pending" | "generating" | "done" | "error";
 
@@ -135,95 +139,45 @@ export default function BatchGenerator({ embedded = false }: { embedded?: boolea
   const statusBadge = (item: BatchItem) => {
     if (item.status === "generating")
       return (
-        <span
-          className="flex items-center gap-1 text-xs shrink-0"
-          style={{ color: "#ff5600" }}
-        >
-          <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-            />
-          </svg>
+        <span className="flex shrink-0 items-center gap-1 text-xs text-accent">
+          <Spinner className="h-3 w-3" />
           Generating…
         </span>
       );
-    if (item.status === "done")
-      return (
-        <span className="text-xs shrink-0" style={{ color: "#0bdf50" }}>
-          Done
-        </span>
-      );
+    if (item.status === "done") return <span className="shrink-0 text-xs text-success">Done</span>;
     if (item.status === "error")
       return (
-        <span
-          className="text-xs shrink-0 max-w-32 truncate"
-          title={item.error}
-          style={{ color: "#c41c1c" }}
-        >
+        <span className="max-w-32 shrink-0 truncate text-xs text-danger" title={item.error}>
           Error
         </span>
       );
-    return (
-      <span className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
-        Pending
-      </span>
-    );
+    return <span className="shrink-0 text-xs text-ink-muted">Pending</span>;
   };
 
   return (
-    <div
-      className={embedded ? "" : "mt-6 rounded-lg p-6"}
-      style={{
-        backgroundColor: embedded ? "transparent" : "var(--surface-card)",
-        border: embedded ? "none" : "1px solid var(--border)",
-        borderRadius: embedded ? "0" : "8px",
-      }}
-    >
-      {!embedded && <><h2
-        className="text-sm font-medium uppercase tracking-widest mb-1"
-        style={{ color: "var(--text-muted)", letterSpacing: "0.8px" }}
-      >
-        Batch Generation
-      </h2>
-      <p className="text-xs mb-5" style={{ color: "var(--text-muted)" }}>
-        One sentence per line · each file named after its text · download all as
-        ZIP
-      </p></>}
+    <div className={cn(!embedded && "mt-6 rounded-lg border border-line bg-card p-6")}>
+      {!embedded && (
+        <>
+          <h2 className="mb-1 text-sm font-medium uppercase tracking-[0.8px] text-ink-muted">Batch Generation</h2>
+          <p className="mb-5 text-xs text-ink-muted">
+            One sentence per line · each file named after its text · download all as ZIP
+          </p>
+        </>
+      )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 mb-4">
+      <div className="mb-4 grid grid-cols-1 gap-4 lg:grid-cols-5">
         {/* Textarea */}
         <div className="lg:col-span-3">
-          <textarea
+          <Textarea
             value={rawText}
-            onChange={(e) => setRawText(e.target.value)}
-            placeholder={
-              "Hello world\nThis is a second sentence\nAnd a third one…"
-            }
+            onChange={(event) => setRawText(event.target.value)}
+            placeholder={"Hello world\nThis is a second sentence\nAnd a third one…"}
             rows={8}
             disabled={running}
-            className="w-full resize-none rounded-lg focus:placeholder:text-(--text-muted) placeholder:text-(--text-muted)/50 px-4 py-3 text-sm leading-relaxed outline-none transition-colors disabled:opacity-50"
-            style={{
-              backgroundColor: "var(--surface-input)",
-              color: "var(--text-primary)",
-              border: "1px solid var(--border)",
-            }}
-            onFocus={(e) => (e.currentTarget.style.borderColor = "#ff5600")}
-            onBlur={(e) =>
-              (e.currentTarget.style.borderColor = "var(--border)")
-            }
+            className="px-4 py-3 leading-relaxed"
           />
-          <div className="flex items-center justify-between mt-1.5">
-            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+          <div className="mt-1.5 flex items-center justify-between">
+            <p className="text-xs text-ink-muted">
               {lines.length} {lines.length === 1 ? "sentence" : "sentences"}
             </p>
             <button
@@ -231,14 +185,7 @@ export default function BatchGenerator({ embedded = false }: { embedded?: boolea
                 setRawText("");
                 setItems([]);
               }}
-              className="text-xs px-2 py-1 transition-colors"
-              style={{ color: "var(--text-muted)" }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.color = "var(--text-primary)")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.color = "var(--text-muted)")
-              }
+              className="cursor-pointer px-2 py-1 text-xs text-ink-muted transition-colors hover:text-ink"
             >
               Clear
             </button>
@@ -246,43 +193,20 @@ export default function BatchGenerator({ embedded = false }: { embedded?: boolea
         </div>
 
         {/* Controls */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="space-y-4 lg:col-span-2">
           {/* Voice (locked) */}
           <div className="space-y-1.5">
-            <label
-              className="block text-xs font-medium uppercase tracking-widest"
-              style={{ color: "var(--text-muted)", letterSpacing: "0.8px" }}
-            >
-              Voice
-            </label>
-            <div
-              className="w-full rounded px-3 py-2 text-sm"
-              style={{
-                backgroundColor: "var(--surface-input)",
-                color: "var(--text-primary)",
-                border: "1px solid var(--border)",
-                borderRadius: "4px",
-              }}
-            >
+            <Label className="mb-0">Voice</Label>
+            <div className="w-full rounded border border-line bg-input px-3 py-2 text-sm text-ink">
               {`Kokoro · ${voice}`}
             </div>
           </div>
 
           {/* Speed */}
           <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <label
-                className="text-xs font-medium uppercase tracking-widest"
-                style={{ color: "var(--text-muted)", letterSpacing: "0.8px" }}
-              >
-                Speed
-              </label>
-              <span
-                className="text-sm font-semibold tabular-nums"
-                style={{ color: "#ff5600" }}
-              >
-                {speed.toFixed(2)}×
-              </span>
+            <div className="flex items-center justify-between">
+              <Label className="mb-0">Speed</Label>
+              <span className="text-sm font-semibold tabular-nums text-accent">{speed.toFixed(2)}×</span>
             </div>
             <input
               type="range"
@@ -290,14 +214,11 @@ export default function BatchGenerator({ embedded = false }: { embedded?: boolea
               max={2.0}
               step={0.05}
               value={speed}
-              onChange={(e) => setSpeed(parseFloat(e.target.value))}
+              onChange={(event) => setSpeed(parseFloat(event.target.value))}
               disabled={running}
               className="w-full disabled:opacity-50"
             />
-            <div
-              className="flex justify-between text-xs"
-              style={{ color: "var(--text-muted)" }}
-            >
+            <div className="flex justify-between text-xs text-ink-muted">
               <span>0.5×</span>
               <span>1×</span>
               <span>2×</span>
@@ -305,73 +226,24 @@ export default function BatchGenerator({ embedded = false }: { embedded?: boolea
           </div>
 
           {running ? (
-            <button
-              onClick={stop}
-              className="w-full py-2.5 px-4 text-sm font-medium transition-colors"
-              style={{
-                backgroundColor: "#c41c1c",
-                color: "#ffffff",
-                borderRadius: "4px",
-              }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.backgroundColor = "#a01616")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.backgroundColor = "#c41c1c")
-              }
-            >
+            <Button variant="primary" size="lg" className="bg-danger py-2.5 enabled:hover:brightness-90" onClick={stop}>
               Stop
-            </button>
+            </Button>
           ) : (
-            <button
-              onClick={generate}
-              disabled={!lines.length}
-              className="w-full py-2.5 px-4 text-sm font-medium transition-colors"
-              style={{
-                backgroundColor: lines.length ? "#111111" : "var(--border)",
-                color: lines.length ? "#ffffff" : "var(--text-muted)",
-                borderRadius: "4px",
-                cursor: lines.length ? "pointer" : "not-allowed",
-              }}
-              onMouseEnter={(e) => {
-                if (lines.length)
-                  e.currentTarget.style.backgroundColor = "#333333";
-              }}
-              onMouseLeave={(e) => {
-                if (lines.length)
-                  e.currentTarget.style.backgroundColor = "#111111";
-              }}
-            >
+            <Button variant="solid" size="lg" className="py-2.5" onClick={generate} disabled={!lines.length}>
               Generate {lines.length > 0 ? `${lines.length} ` : ""}
               Audio{lines.length !== 1 ? "s" : ""}
-            </button>
+            </Button>
           )}
 
           {hasResults && !running && (
-            <button
+            <Button
+              variant="secondary"
+              size="lg"
+              className="gap-2 py-2.5 enabled:hover:border-off-black enabled:hover:bg-off-black enabled:hover:text-white"
               onClick={downloadZip}
-              className="w-full py-2.5 px-4 text-sm font-medium transition-colors flex items-center justify-center gap-2 border"
-              style={{
-                borderRadius: "4px",
-                backgroundColor: "transparent",
-                color: "var(--text-secondary)",
-                borderColor: "var(--border)",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#111111";
-                e.currentTarget.style.color = "#ffffff";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "transparent";
-                e.currentTarget.style.color = "var(--text-secondary)";
-              }}
             >
-              <svg
-                className="w-3.5 h-3.5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -380,32 +252,18 @@ export default function BatchGenerator({ embedded = false }: { embedded?: boolea
                 />
               </svg>
               Download ZIP ({doneCount} file{doneCount !== 1 ? "s" : ""})
-            </button>
+            </Button>
           )}
         </div>
       </div>
 
       {/* Progress list */}
       {items.length > 0 && (
-        <div className="space-y-1 max-h-64 overflow-y-auto">
+        <div className="max-h-64 space-y-1 overflow-y-auto">
           {items.map((item, index) => (
-            <div
-              key={item.id}
-              className="flex items-center gap-3 text-sm px-3 py-2 rounded"
-              style={{ backgroundColor: "var(--surface)", borderRadius: "4px" }}
-            >
-              <span
-                className="text-xs w-5 text-right shrink-0"
-                style={{ color: "var(--text-muted)" }}
-              >
-                {index + 1}
-              </span>
-              <span
-                className="flex-1 truncate text-sm"
-                style={{ color: "var(--text-secondary)" }}
-              >
-                {item.text}
-              </span>
+            <div key={item.id} className="flex items-center gap-3 rounded bg-surface px-3 py-2 text-sm">
+              <span className="w-5 shrink-0 text-right text-xs text-ink-muted">{index + 1}</span>
+              <span className="flex-1 truncate text-sm text-ink-soft">{item.text}</span>
               {statusBadge(item)}
             </div>
           ))}

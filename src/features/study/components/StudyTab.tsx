@@ -19,35 +19,13 @@ import {
   type ReviewRecord,
 } from "@/lib/store/repository";
 import type { ErrorEvent } from "@/lib/cards/schema";
-import {
-  GRADES,
-  GRADE_LABELS,
-  previewInterval,
-  type Grade,
-  type SrsRecord,
-} from "@/lib/srs/fsrs";
-import { Rating } from "@/lib/srs/fsrs";
-import {
-  computePerformance,
-  detectWeaknesses,
-  type Weakness,
-  type WeaknessTrend,
-} from "@/lib/srs/analytics";
+import type { Grade } from "@/lib/srs/fsrs";
+import { computePerformance, detectWeaknesses, type Weakness } from "@/lib/srs/analytics";
 import type { Card } from "@/lib/cards/schema";
 import { useAiSettings } from "@/features/settings/context/AiSettingsContext";
-import Disclosure from "@/components/ui/Disclosure";
-
-interface DueCard {
-  card: Card;
-  srs: SrsRecord;
-}
-
-const GRADE_COLOR: Record<Grade, string> = {
-  [Rating.Again]: "#c41c1c",
-  [Rating.Hard]: "#b8860b",
-  [Rating.Good]: "#2e7d32",
-  [Rating.Easy]: "#1565c0",
-};
+import { StudyCard, type DueCard } from "./StudyCard";
+import { PerformanceStats } from "./PerformanceStats";
+import { WeaknessList } from "./WeaknessList";
 
 export default function StudyTab() {
   const { settings } = useAiSettings();
@@ -202,12 +180,12 @@ export default function StudyTab() {
   );
 
   if (loading) {
-    return <p className="text-sm" style={{ color: "var(--text-muted)" }}>Loading…</p>;
+    return <p className="text-sm text-ink-muted">Loading…</p>;
   }
 
   if (!available) {
     return (
-      <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+      <p className="text-sm text-ink-muted">
         Local storage isn’t available in this browser, so studying is disabled.
       </p>
     );
@@ -217,265 +195,44 @@ export default function StudyTab() {
   const weaknesses = detectWeaknesses(reviews, errorEvents);
 
   return (
-    <div className="space-y-5 correct-tab-enter">
+    <div className="space-y-5">
       {/* D5 — reinforcement drill banner */}
       {reinforcing && (
-        <div
-          className="rounded-lg px-4 py-2.5 flex items-center justify-between gap-3"
-          style={{ backgroundColor: "rgba(196, 28, 28, 0.08)", border: "1px solid #c41c1c" }}
-        >
-          <p className="text-xs" style={{ color: "var(--text-primary)" }}>
-            Reinforcing{" "}
-            <span className="font-medium">{reinforcing.label}</span>
-            {" "}· {queue.length} remaining
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-danger bg-danger/10 px-4 py-2.5">
+          <p className="text-xs text-ink">
+            Reinforcing <span className="font-medium">{reinforcing.label}</span> · {queue.length} remaining
           </p>
           <button
+            type="button"
             onClick={() => void exitReinforcement()}
-            className="text-xs font-medium shrink-0"
-            style={{ color: "#c41c1c" }}
+            className="shrink-0 cursor-pointer text-xs font-medium text-danger transition-opacity hover:opacity-80"
           >
             Exit
           </button>
         </div>
       )}
 
-      {/* Study card */}
-      <div
-        className="app-panel p-6 sm:p-8"
-      >
-        {counts.cards === 0 ? (
-          <div className="text-center py-8 space-y-1">
-            <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
-              No cards yet
-            </p>
-            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-              Generate some cards in the Discover tab — they’ll show up here for review.
-            </p>
-          </div>
-        ) : !current ? (
-          <div className="text-center py-8 space-y-1">
-            <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
-              All caught up 🎉
-            </p>
-            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-              {reviewedThisSession > 0
-                ? `${reviewedThisSession} reviewed this session. `
-                : ""}
-              Nothing due right now — come back later.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-5">
-            <div className="flex items-center justify-between">
-              <span
-                className="text-xs font-medium uppercase tracking-widest"
-                style={{ color: "var(--text-muted)", letterSpacing: "0.8px" }}
-              >
-                {current.card.concept || "Card"}
-              </span>
-              <span className="text-xs tabular-nums" style={{ color: "var(--text-muted)" }}>
-                {queue.length} due
-              </span>
-            </div>
+      <StudyCard
+        totalCards={counts.cards}
+        current={current}
+        queueLength={queue.length}
+        flipped={flipped}
+        reviewedThisSession={reviewedThisSession}
+        onFlip={() => setFlipped(true)}
+        onGrade={(g) => void grade(g)}
+      />
 
-            <div className="min-h-24 flex flex-col items-center justify-center text-center gap-3">
-              <p className="text-lg leading-relaxed" style={{ color: "var(--text-primary)" }}>
-                {current.card.front}
-              </p>
-              {flipped && (
-                <>
-                  <div className="w-full" style={{ borderTop: "1px solid var(--border)" }} />
-                  <p className="text-base leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-                    {current.card.back}
-                  </p>
-                  {current.card.errorType && (
-                    <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-                      {current.card.errorType}
-                    </span>
-                  )}
-                </>
-              )}
-            </div>
+      <PerformanceStats cardsCount={counts.cards} stats={stats} />
 
-            {!flipped ? (
-              <button
-                onClick={() => setFlipped(true)}
-                className="primary-button w-full py-2.5 px-4 text-sm"
-              >
-                Show answer
-              </button>
-            ) : (
-              <div className="grid grid-cols-4 gap-2">
-                {GRADES.map((g) => (
-                  <button
-                    key={g}
-                    onClick={() => void grade(g)}
-                    className="py-2 px-2 text-xs font-medium transition-all flex flex-col items-center gap-0.5"
-                    style={{
-                      border: `1px solid ${GRADE_COLOR[g]}`,
-                      color: GRADE_COLOR[g],
-                      backgroundColor: "transparent",
-                      borderRadius: "4px",
-                    }}
-                  >
-                    <span>{GRADE_LABELS[g]}</span>
-                    <span className="tabular-nums opacity-70">
-                      {previewInterval(current.srs, g)}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* D3 — performance */}
-      <div
-        className="app-panel p-5"
-      >
-        <p
-          className="app-section-title mb-4"
-        >
-          Performance
-        </p>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <Stat label="Cards" value={String(counts.cards)} />
-          <Stat label="Reviews" value={String(stats.totalReviews)} />
-          <Stat label="Accuracy" value={`${Math.round(stats.accuracy * 100)}%`} />
-          <Stat label="Streak" value={`${stats.streakDays}d`} />
-        </div>
-
-        {stats.totalReviews > 0 && (
-          <Disclosure
-            title="Review activity"
-            description={`Last 14 days · ${stats.reviewsToday} today`}
-            className="mt-5"
-            nested
-          >
-            <div className="flex items-end gap-1 h-16">
-              {stats.daily.map((d) => {
-                const max = Math.max(1, ...stats.daily.map((x) => x.count));
-                const h = d.count === 0 ? 2 : Math.round((d.count / max) * 56) + 4;
-                return (
-                  <div
-                    key={d.day}
-                    className="flex-1 rounded-sm"
-                    title={`${d.day}: ${d.count}`}
-                    style={{
-                      height: `${h}px`,
-                      backgroundColor: d.count === 0 ? "var(--border)" : "#ff5600",
-                    }}
-                  />
-                );
-              })}
-            </div>
-          </Disclosure>
-        )}
-      </div>
-
-      {/* D4 — weakness detection */}
       {weaknesses.length > 0 && (
-        <div
-          className="app-panel p-5"
-        >
-          <p
-            className="app-section-title mb-1"
-          >
-            Weak spots
-          </p>
-          <p className="text-xs mb-4" style={{ color: "var(--text-muted)" }}>
-            Concepts and error types you keep struggling with — worst first. ↓/↑ shows
-            whether that error is slowing down or piling up in your writing.
-          </p>
-          {genError && (
-            <p className="text-xs mb-3" style={{ color: "#c41c1c" }}>
-              {genError}
-            </p>
-          )}
-          <ul className="space-y-2">
-            {weaknesses.slice(0, 8).map((w) => (
-              <li key={`${w.kind}:${w.label}`} className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 py-1">
-                <div className="flex-1 basis-40 min-w-0">
-                  <p className="text-sm truncate" style={{ color: "var(--text-primary)" }}>
-                    {w.label}
-                  </p>
-                  <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                    {w.kind === "errorType" ? "error type" : "concept"} · {w.reviews} reviews
-                  </p>
-                </div>
-                <div className="hidden sm:block w-24 shrink-0">
-                  <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "var(--border)" }}>
-                    <div
-                      className="h-full rounded-full"
-                      style={{ width: `${Math.round(w.struggleRate * 100)}%`, backgroundColor: "#c41c1c" }}
-                    />
-                  </div>
-                </div>
-                <span className="text-xs tabular-nums w-9 text-right" style={{ color: "var(--text-secondary)" }}>
-                  {Math.round(w.struggleRate * 100)}%
-                </span>
-                <TrendBadge trend={w.trend} delta={w.trendDelta} />
-                <button
-                  onClick={() => void startReinforcement(w)}
-                  className="text-xs font-medium shrink-0 px-2 py-1 transition-all"
-                  style={{ border: "1px solid #c41c1c", color: "#c41c1c", borderRadius: "4px" }}
-                >
-                  Practice
-                </button>
-                <button
-                  onClick={() => void generateReinforcement(w)}
-                  disabled={generatingKey !== null}
-                  className="weakness-secondary text-xs font-medium shrink-0 px-2 py-1 transition-all disabled:opacity-50"
-                  style={{ color: "var(--text-muted)", borderRadius: "4px" }}
-                  title="Generate new cards for this concept from existing sources"
-                >
-                  {generatingKey === `${w.kind}:${w.label}` ? "Generating…" : "New cards"}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <WeaknessList
+          weaknesses={weaknesses}
+          genError={genError}
+          generatingKey={generatingKey}
+          onPractice={(w) => void startReinforcement(w)}
+          onGenerate={(w) => void generateReinforcement(w)}
+        />
       )}
-    </div>
-  );
-}
-
-/**
- * D4 (b) — shows where a weak spot is heading: ↓ green = improving, ↑ red = worsening.
- * Stable spots show nothing, so attention stays on what's actually moving.
- */
-function TrendBadge({ trend, delta }: { trend: WeaknessTrend; delta: number }) {
-  if (trend === "stable") {
-    return <span className="w-10 shrink-0" aria-hidden />;
-  }
-  const improving = trend === "improving";
-  const color = improving ? "#1c8c3c" : "#c41c1c";
-  const points = `${improving ? "−" : "+"}${Math.abs(Math.round(delta * 100))}`;
-  return (
-    <span
-      className="text-xs tabular-nums w-10 shrink-0 text-right font-medium"
-      style={{ color }}
-      title={
-        improving
-          ? "Fewer errors of this type in your writing over time"
-          : "More errors of this type in your writing over time"
-      }
-    >
-      {improving ? "↓" : "↑"} {points}
-    </span>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="text-2xl font-semibold tabular-nums" style={{ color: "var(--text-primary)" }}>
-        {value}
-      </p>
-      <p className="text-xs uppercase tracking-widest mt-0.5" style={{ color: "var(--text-muted)", letterSpacing: "0.8px" }}>
-        {label}
-      </p>
     </div>
   );
 }

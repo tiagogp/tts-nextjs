@@ -43,9 +43,7 @@ function HistoryItem({ entry, onRestore }: HistoryItemProps) {
     useAudioState(audioRef);
 
   return (
-    <div
-      className="px-4 py-3 rounded-lg transition-colors group bg-(--surface-card) border border-(--border) hover:border-(--border-strong)"
-    >
+    <div className="group rounded-lg border border-line bg-card px-4 py-3 transition-colors hover:border-line-strong">
       <audio
         ref={audioRef}
         src={entry.audioUrl}
@@ -54,27 +52,24 @@ function HistoryItem({ entry, onRestore }: HistoryItemProps) {
 
       {/* Top row: text + restore + download */}
       <div className="flex items-start gap-3">
-        <div className="flex-1 min-w-0">
-          <p className="text-sm truncate text-(--text-primary)">
-            {entry.text}
-          </p>
-          <p className="text-xs mt-0.5 text-(--text-muted)">
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm text-ink">{entry.text}</p>
+          <p className="mt-0.5 text-xs text-ink-muted">
             {ENGINE_LABELS[entry.engine] ?? entry.engine} · {VOICE_LABELS[entry.voice] ?? entry.voice} · {entry.speed}× · {new Date(entry.createdAt).toLocaleTimeString()}
           </p>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex shrink-0 items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">
           <button
             onClick={() => onRestore(entry)}
-            className="text-xs font-medium"
-            style={{ color: "#ff5600" }}
+            className="cursor-pointer text-xs font-medium text-accent transition-opacity hover:opacity-80"
           >
             Restore
           </button>
           <a
             href={entry.audioUrl}
             download="speech.wav"
-            className="text-(--text-muted) hover:text-(--text-primary)"
+            className="text-ink-muted hover:text-ink"
             aria-label="Download"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -85,10 +80,10 @@ function HistoryItem({ entry, onRestore }: HistoryItemProps) {
       </div>
 
       {/* Mini player */}
-      <div className="flex items-center gap-2 mt-2.5">
+      <div className="mt-2.5 flex items-center gap-2">
         <button
           onClick={togglePlay}
-          className="w-6 h-6 flex items-center justify-center rounded shrink-0 transition-colors bg-off-black text-white hover:bg-[#333333] focus-visible:outline focus-visible:outline-(--accent)"
+          className="flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded bg-off-black text-white transition hover:brightness-150 focus-visible:outline focus-visible:outline-accent"
           aria-label={state.isPlaying ? "Pause" : "Play"}
         >
           {state.isPlaying ? (
@@ -97,7 +92,7 @@ function HistoryItem({ entry, onRestore }: HistoryItemProps) {
               <rect x="12" y="3" width="4" height="14" rx="1" />
             </svg>
           ) : (
-            <svg className="w-2.5 h-2.5 ml-px" fill="currentColor" viewBox="0 0 20 20">
+            <svg className="ml-px w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
               <path d="M6 4l10 6-10 6V4z" />
             </svg>
           )}
@@ -105,24 +100,18 @@ function HistoryItem({ entry, onRestore }: HistoryItemProps) {
 
         {/* Progress bar */}
         <div
-          className="flex-1 h-1 rounded-full cursor-pointer"
-          style={{ backgroundColor: "var(--border)" }}
+          className="h-1 flex-1 cursor-pointer rounded-full bg-line"
           onClick={(e) => {
             const rect = e.currentTarget.getBoundingClientRect();
             const pct = rect.width > 0 ? (e.clientX - rect.left) / rect.width : 0;
             seekToPct(pct);
           }}
         >
-          <div
-            className="h-1 rounded-full transition-all"
-            style={{ width: `${progressPct}%`, backgroundColor: "#ff5600" }}
-          />
+          <div className="h-1 rounded-full bg-accent transition-all" style={{ width: `${progressPct}%` }} />
         </div>
 
-        <span className="text-xs tabular-nums shrink-0 text-(--text-muted)">
-          {state.duration > 0
-            ? `${formatTime(state.currentTime)} / ${formatTime(state.duration)}`
-            : "--:--"}
+        <span className="shrink-0 text-xs tabular-nums text-ink-muted">
+          {state.duration > 0 ? `${formatTime(state.currentTime)} / ${formatTime(state.duration)}` : "--:--"}
         </span>
       </div>
     </div>
@@ -134,18 +123,15 @@ export default function HistoryPanel({ history, onRestore, onClear, embedded = f
 
   return (
     <div className={embedded ? "" : "mt-8"}>
-      <div className="flex items-center justify-between mb-3">
-        {!embedded && <h2
-          className="text-sm font-medium uppercase tracking-widest"
-          style={{ color: "var(--text-muted)", letterSpacing: "0.8px" }}
-        >
-          Recent
-        </h2>}
+      <div className="mb-3 flex items-center justify-between">
+        {!embedded && (
+          <h2 className="text-sm font-medium uppercase tracking-[0.8px] text-ink-muted">Recent</h2>
+        )}
         <button
           onClick={() => {
             if (window.confirm("Clear all recent audio history?")) onClear();
           }}
-          className="text-xs transition-colors text-(--text-muted) hover:text-[#c41c1c]"
+          className="cursor-pointer text-xs text-ink-muted transition-colors hover:text-danger"
         >
           Clear all
         </button>

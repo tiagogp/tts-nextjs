@@ -3,6 +3,12 @@
 import { useCallback, useId, useRef, useState } from "react";
 import { useTtsSettings } from "@/features/speech/context/TtsSettingsContext";
 import { useKokoroModel } from "@/features/speech/hooks/useKokoroModel";
+import KokoroModelNotice from "@/features/speech/components/KokoroModelNotice";
+import { Button } from "@/components/ui/Button";
+import { Field, Input, Textarea } from "@/components/ui/Field";
+import { Notice } from "@/components/ui/Notice";
+import { Spinner } from "@/components/ui/Spinner";
+import { cn } from "@/lib/cn";
 
 type ExportStatus = "idle" | "exporting" | "done" | "error";
 
@@ -170,27 +176,25 @@ export default function AnkiExporter({ embedded = false }: { embedded?: boolean 
   }, [deckName, enKokoroSpeed, file, jsonText, voice, model]);
 
   return (
-    <div className={embedded ? "" : "mt-6 rounded-lg p-6 border bg-(--surface-card) border-(--border)"}>
-      {!embedded && <><h2
-        className="text-sm font-medium uppercase tracking-widest mb-1 text-(--text-muted)"
-      >
-        Anki Export
-      </h2>
-      <p className="text-xs mb-5 text-(--text-muted)">
-        Upload JSON (pt/en) or paste JSON · choose an English voice · generate
-        audio locally · download a deck package (.apkg)
-      </p></>}
+    <div className={cn(!embedded && "mt-6 rounded-lg border border-line bg-card p-6")}>
+      {!embedded && (
+        <>
+          <h2 className="mb-1 text-sm font-medium uppercase tracking-[0.8px] text-ink-muted">Anki Export</h2>
+          <p className="mb-5 text-xs text-ink-muted">
+            Upload JSON (pt/en) or paste JSON · choose an English voice · generate audio locally · download a deck
+            package (.apkg)
+          </p>
+        </>
+      )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 mb-4">
-        <div className="lg:col-span-3 space-y-4">
-          <div className="space-y-1.5">
-            <label
-              htmlFor={jsonTextId}
-              className="block text-xs font-medium uppercase tracking-widest text-(--text-muted)"
-            >
-              JSON Text (optional)
-            </label>
-            <textarea
+      <div className="mb-4 grid grid-cols-1 gap-4 lg:grid-cols-5">
+        <div className="space-y-4 lg:col-span-3">
+          <Field
+            label="JSON Text (optional)"
+            htmlFor={jsonTextId}
+            hint="If you paste JSON here, the file input is ignored."
+          >
+            <Textarea
               value={jsonText}
               onChange={(e) => {
                 const nextValue = e.currentTarget.value;
@@ -202,22 +206,13 @@ export default function AnkiExporter({ embedded = false }: { embedded?: boolean 
               rows={5}
               placeholder='Example: [{"pt":"Oi","en":"Hi"}]'
               id={jsonTextId}
-              className="w-full rounded-lg px-3 py-2 text-sm outline-none transition-colors resize-y bg-(--surface-input) text-(--text-primary) border border-(--border) focus:border-(--accent)"
+              className="resize-y"
             />
-            <p className="text-xs text-(--text-muted)">
-              If you paste JSON here, the file input is ignored.
-            </p>
-          </div>
+          </Field>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label
-                htmlFor={deckNameId}
-                className="block text-xs font-medium uppercase tracking-widest text-(--text-muted)"
-              >
-                Deck Name
-              </label>
-              <input
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field label="Deck Name" htmlFor={deckNameId}>
+              <Input
                 value={deckName}
                 onChange={(e) => {
                   setDeckName(e.currentTarget.value);
@@ -225,33 +220,19 @@ export default function AnkiExporter({ embedded = false }: { embedded?: boolean 
                 }}
                 disabled={status === "exporting"}
                 id={deckNameId}
-                className="w-full rounded-lg px-3 py-2 text-sm outline-none transition-colors bg-(--surface-input) text-(--text-primary) border border-(--border) focus:border-(--accent)"
               />
-            </div>
+            </Field>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label
-                className="block text-xs font-medium uppercase tracking-widest text-(--text-muted)"
-              >
-                English Voice
-              </label>
-              <div
-                className="w-full rounded-lg px-3 py-2 text-sm bg-(--surface-input) text-(--text-primary) border border-(--border)"
-              >
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field label="English Voice">
+              <div className="w-full rounded-md border border-line bg-input px-3 py-2 text-sm text-ink">
                 {`Kokoro · ${voice}`}
               </div>
-            </div>
+            </Field>
 
-            <div className="space-y-1.5">
-              <label
-                htmlFor={kokoroSpeedId}
-                className="block text-xs font-medium uppercase tracking-widest text-(--text-muted)"
-              >
-                Kokoro Speed
-              </label>
-              <input
+            <Field label="Kokoro Speed" htmlFor={kokoroSpeedId}>
+              <Input
                 value={enKokoroSpeed}
                 onChange={(e) => {
                   setEnKokoroSpeed(e.currentTarget.value);
@@ -260,20 +241,13 @@ export default function AnkiExporter({ embedded = false }: { embedded?: boolean 
                 disabled={status === "exporting"}
                 inputMode="decimal"
                 id={kokoroSpeedId}
-                className="w-full rounded-lg px-3 py-2 text-sm outline-none transition-colors bg-(--surface-input) text-(--text-primary) border border-(--border) focus:border-(--accent)"
               />
-            </div>
+            </Field>
           </div>
         </div>
 
-        <div className="lg:col-span-2 space-y-4">
-          <div className="space-y-1.5">
-            <label
-              htmlFor={jsonFileId}
-              className="block text-xs font-medium uppercase tracking-widest text-(--text-muted)"
-            >
-              JSON File (optional)
-            </label>
+        <div className="space-y-4 lg:col-span-2">
+          <Field label="JSON File (optional)" htmlFor={jsonFileId}>
             <input
               ref={fileInputRef}
               id={jsonFileId}
@@ -307,121 +281,58 @@ export default function AnkiExporter({ embedded = false }: { embedded?: boolean 
                 pickFirstFile(e.dataTransfer.files);
               }}
               disabled={status === "exporting"}
-              className={[
-                "w-full rounded-lg p-3 text-sm outline-none transition-colors text-left disabled:opacity-50",
-                "bg-(--surface-input) text-(--text-primary)",
-                "border",
-                isDragging
-                  ? "border-(--accent)"
-                  : "border-dashed border-(--border)",
-                "focus-visible:outline-2 focus-visible:outline-(--accent)",
-              ].join(" ")}
+              className={cn(
+                "w-full cursor-pointer rounded-md border bg-input p-3 text-left text-sm text-ink outline-none transition-colors focus-visible:outline-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50",
+                isDragging ? "border-accent" : "border-dashed border-line hover:border-line-strong",
+              )}
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="truncate">
-                    {file ? file.name : "Drag & drop a JSON file here"}
-                  </div>
-                  <div className="text-xs text-(--text-muted)">
+                  <div className="truncate">{file ? file.name : "Drag & drop a JSON file here"}</div>
+                  <div className="text-xs text-ink-muted">
                     {file ? `${Math.round(file.size / 1024)} KB` : "or click to select"}
                   </div>
                 </div>
               </div>
             </button>
-          </div>
-          {model.ready === false && (
-            <div className="rounded-lg px-3 py-3 text-xs border bg-(--surface-input) border-(--border) space-y-2">
-              <p className="text-(--text-muted)">
-                A voz local (modelo Kokoro, ≈349&nbsp;MB) precisa ser baixada uma
-                única vez antes de gerar áudio.
-              </p>
-              {model.downloading ? (
-                <>
-                  <div className="h-1.5 w-full overflow-hidden rounded bg-(--border)">
-                    <div
-                      className="h-full bg-(--accent) transition-[width] duration-500"
-                      style={{ width: `${Math.round((model.progress ?? 0) * 100)}%` }}
-                    />
-                  </div>
-                  <p className="text-(--text-muted)">
-                    Baixando… {Math.round((model.progress ?? 0) * 100)}%
-                  </p>
-                </>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => void model.ensure()}
-                  className="w-full py-2 rounded text-sm font-medium transition-colors bg-(--accent) text-white"
-                >
-                  Baixar modelo de voz
-                </button>
-              )}
-              {model.error && (
-                <p className="text-[#c41c1c]">{model.error}</p>
-              )}
-            </div>
-          )}
+          </Field>
+          <KokoroModelNotice model={model} />
 
-          <button
+          <Button
+            variant="primary"
+            size="lg"
+            className="flex items-center justify-center gap-2 py-2.5"
             onClick={exportApkg}
             disabled={!canExport}
-            className="w-full py-2.5 rounded flex items-center justify-center gap-2 text-sm font-medium transition-colors disabled:opacity-50 bg-(--accent) text-white"
           >
             {status === "exporting" ? (
               <>
-                <svg
-                  className="w-3.5 h-3.5 animate-spin"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                  />
-                </svg>
+                <Spinner className="h-3.5 w-3.5" />
                 Exporting…
               </>
             ) : (
               <>
-                <svg
-                  className="w-3.5 h-3.5"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
+                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M3 14a1 1 0 011-1h3a1 1 0 010 2H5v2h10v-2h-2a1 1 0 110-2h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1v-3z" />
                   <path d="M7 10a1 1 0 011.707-.707L10 10.586V3a1 1 0 112 0v7.586l1.293-1.293A1 1 0 0114.707 10.707l-3 3a1 1 0 01-1.414 0l-3-3A1 1 0 017 10z" />
                 </svg>
                 Download .apkg
               </>
             )}
-          </button>
+          </Button>
 
           {status === "done" && (
-            <p className="text-xs text-[#0bdf50]">
-              Export finished. If the download didn’t start, try again.
-            </p>
+            <p className="text-xs text-success">Export finished. If the download didn’t start, try again.</p>
           )}
 
           {status === "error" && error && (
-            <div
-              className="rounded px-3 py-2.5 text-xs border bg-[#fff1f0] border-[#ffccc7] text-[#c41c1c]"
-            >
+            <Notice tone="error" className="text-xs">
               {error}
-            </div>
+            </Notice>
           )}
 
-          <p className="text-xs text-(--text-muted)">
-            Tip: the first export may take a while because models need to
-            download.
+          <p className="text-xs text-ink-muted">
+            Tip: the first export may take a while because models need to download.
           </p>
         </div>
       </div>

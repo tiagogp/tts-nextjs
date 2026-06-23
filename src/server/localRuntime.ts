@@ -35,6 +35,10 @@ function response(status: number, body: Buffer | string | object = Buffer.alloc(
   };
 }
 
+function localLog(step: string, details: Record<string, unknown> = {}): void {
+  console.info("[local-runtime]", step, details);
+}
+
 function parseJson(body?: Buffer | string): Record<string, unknown> {
   const value = JSON.parse(Buffer.isBuffer(body) ? body.toString("utf8") : body || "{}");
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("JSON object required");
@@ -214,29 +218,71 @@ export async function localRequest(
       reject(error);
       return;
     }
+    const startedAt = Date.now();
+    const controller = new AbortController();
+    const requestOptions = { ...options, signal: controller.signal };
+    let settled = false;
+    const settle = (fn: () => void) => {
+      if (settled) return;
+      settled = true;
+      fn();
+    };
     const abort = () => {
       clearTimeout(timer);
+      if (!controller.signal.aborted) controller.abort(options.signal?.reason);
       const error = new Error("PhraseLoop local request aborted");
       error.name = "AbortError";
-      reject(error);
+      localLog("request aborted", {
+        path: requestPath,
+        method: options.method ?? "GET",
+        durationMs: Date.now() - startedAt,
+      });
+      settle(() => reject(error));
     };
     const timer = setTimeout(() => {
       options.signal?.removeEventListener("abort", abort);
       const error = new Error("PhraseLoop local request timed out");
       error.name = "TimeoutError";
-      reject(error);
+      if (!controller.signal.aborted) controller.abort(error);
+      localLog("request timed out", {
+        path: requestPath,
+        method: options.method ?? "GET",
+        timeoutMs,
+        durationMs: Date.now() - startedAt,
+      });
+      settle(() => reject(error));
     }, timeoutMs);
     options.signal?.addEventListener("abort", abort, { once: true });
-    dispatch(requestPath, options).then(
+    localLog("request started", {
+      path: requestPath,
+      method: options.method ?? "GET",
+      timeoutMs,
+    });
+    dispatch(requestPath, requestOptions).then(
       (value) => {
         clearTimeout(timer);
         options.signal?.removeEventListener("abort", abort);
-        resolve(value);
+        if (settled) return;
+        localLog("request finished", {
+          path: requestPath,
+          method: options.method ?? "GET",
+          status: value.status,
+          bytes: value.body.byteLength,
+          durationMs: Date.now() - startedAt,
+        });
+        settle(() => resolve(value));
       },
       (error) => {
         clearTimeout(timer);
         options.signal?.removeEventListener("abort", abort);
-        reject(error);
+        if (settled) return;
+        localLog("request failed", {
+          path: requestPath,
+          method: options.method ?? "GET",
+          error: error instanceof Error ? error.message : "unknown",
+          durationMs: Date.now() - startedAt,
+        });
+        settle(() => reject(error));
       },
     );
   });

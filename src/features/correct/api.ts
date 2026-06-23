@@ -7,6 +7,17 @@ export interface DeckGenerationResult {
   filename?: string;
   apkg?: string;
   error?: string;
+  code?: string;
+}
+
+/** Error carrying the server's machine-readable `code` (e.g. "model_not_ready"). */
+export class DeckGenerationError extends Error {
+  code?: string;
+  constructor(message: string, code?: string) {
+    super(message);
+    this.name = "DeckGenerationError";
+    this.code = code;
+  }
 }
 
 export async function generateCorrectionDeck(input: {
@@ -28,7 +39,12 @@ export async function generateCorrectionDeck(input: {
     signal: input.signal,
   });
   const data = (await response.json().catch(() => ({}))) as DeckGenerationResult;
-  if (!response.ok) throw new Error(data.error ?? `Request failed (${response.status})`);
+  if (!response.ok) {
+    throw new DeckGenerationError(
+      data.error ?? `Request failed (${response.status})`,
+      data.code,
+    );
+  }
   return data;
 }
 
