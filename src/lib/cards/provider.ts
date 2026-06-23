@@ -17,6 +17,11 @@ import type {
 } from "./schema";
 import { dedupeCards, type Embedder } from "./dedupe";
 
+export interface GenerationRunOptions {
+  signal?: AbortSignal;
+  timeoutMs?: number;
+}
+
 /** What `correct()` needs to tag the resulting ErrorEvents with the right language pair. */
 export interface CorrectOptions {
   /** Learner's first language, for the rationale. Default from the provider. */
@@ -33,22 +38,37 @@ export interface CardGenerationProvider {
   readonly label: string;
   /** True when generation happens on-device and no data leaves the machine. */
   readonly isLocal: boolean;
+  /**
+   * Skip the per-card critique() pass during vetting. Set for slow local LLMs (Ollama),
+   * where the extra round-trip per card multiplies wall time and the model's structured
+   * output isn't reliable enough to justify the cost — grounding + the per-source card cap
+   * are the only gates that remain. Cloud providers leave this unset and keep full vetting.
+   */
+  readonly skipCritique?: boolean;
 
   /**
    * Discovery path, step 2. Whisper already extracted the full transcript; pick the subset
    * worth learning, biased by request.focus. Output is "suggested" — the user reviews next.
    */
-  mine(transcript: TranscriptSegment[], request: DiscoveryRequest): Promise<PhraseCandidate[]>;
+  mine(
+    transcript: TranscriptSegment[],
+    request: DiscoveryRequest,
+    options?: GenerationRunOptions,
+  ): Promise<PhraseCandidate[]>;
 
   /** Turn one source (a mistake or an accepted phrase) into candidate cards (usually 1–3). */
-  generate(source: CardSource): Promise<Card[]>;
+  generate(source: CardSource, options?: GenerationRunOptions): Promise<Card[]>;
 
   /**
    * The quality gate. Decide whether a card tests understanding (keep), needs fixing
    * (rewrite), or is redundant/ungrounded/trivially answerable (drop).
    * This second pass is the core differentiator over "dump text, ask for 20 cards" tools.
    */
-  critique(card: Card, source: CardSource): Promise<Critique>;
+  critique(
+    card: Card,
+    source: CardSource,
+    options?: GenerationRunOptions,
+  ): Promise<Critique>;
 
   /**
    * E2 — correction ingestion. Evaluate free text the learner wrote or said and return
@@ -56,7 +76,11 @@ export interface CardGenerationProvider {
    * model-backed providers implement it — the local provider can't judge open text, so
    * callers must check for its presence and surface a "pick Claude/GPT" message.
    */
-  correct?(text: string, opts?: CorrectOptions): Promise<ErrorEvent[]>;
+  correct?(
+    text: string,
+    opts?: CorrectOptions,
+    options?: GenerationRunOptions,
+  ): Promise<ErrorEvent[]>;
 
   /**
    * Optional embedder for semantic dedup (A5). Providers with an embeddings backend
@@ -90,19 +114,50 @@ function isSourceGrounded(card: Card, source: CardSource): boolean {
  * card's `critique()` failing only drops *that* card, so one bad round-trip can't waste the
  * other cards we already paid to generate from this source.
  */
+/**
+ * Cap cards kept per source. Bounds both the critique round-trips and the per-card TTS
+ * synthesis in the .apkg step, so one verbose source can't blow the request timeout.
+ */
+const MAX_CARDS_PER_SOURCE = 2;
+
+function abortError(): Error {
+  const error = new Error("Operation aborted");
+  error.name = "AbortError";
+  return error;
+}
+
+export function isAbortError(error: unknown): boolean {
+  return error instanceof Error && error.name === "AbortError";
+}
+
+export function throwIfAborted(signal?: AbortSignal): void {
+  if (signal?.aborted) throw abortError();
+}
+
 export async function generateVettedCards(
   provider: CardGenerationProvider,
   source: CardSource,
+  options: GenerationRunOptions = {},
 ): Promise<Card[]> {
-  const candidates = await provider.generate(source);
+  throwIfAborted(options.signal);
+  const candidates = await provider.generate(source, options);
   const kept: Card[] = [];
   for (const card of candidates) {
+    throwIfAborted(options.signal);
+    if (kept.length >= MAX_CARDS_PER_SOURCE) break;
     // A6: drop anything not traceable to this exact source.
     if (!isSourceGrounded(card, source)) continue;
+    // Slow local LLMs opt out of the critique round-trip — grounding + the card cap are
+    // the only gates that remain (see CardGenerationProvider.skipCritique).
+    if (provider.skipCritique) {
+      kept.push(card);
+      continue;
+    }
     let critique: Critique;
     try {
-      critique = await provider.critique(card, source);
+      critique = await provider.critique(card, source, options);
     } catch (err) {
+      if (isAbortError(err)) throw err;
       // A transient critique failure (rate limit, refusal, malformed JSON) drops just
       // this card rather than failing the source — the quality gate erring toward "drop".
       console.error("Critique failed; dropping card:", err);
@@ -133,11 +188,13 @@ async function mapWithConcurrency<T, R>(
   items: T[],
   limit: number,
   fn: (item: T) => Promise<R>,
+  signal?: AbortSignal,
 ): Promise<R[]> {
   const results = new Array<R>(items.length);
   let cursor = 0;
   const worker = async () => {
     while (cursor < items.length) {
+      throwIfAborted(signal);
       const index = cursor++;
       results[index] = await fn(items[index]);
     }
@@ -160,17 +217,20 @@ async function mapWithConcurrency<T, R>(
 export async function generateDeck(
   provider: CardGenerationProvider,
   sources: CardSource[],
+  options: GenerationRunOptions = {},
 ): Promise<DeckResult> {
   let failures = 0;
   const perSource = await mapWithConcurrency(sources, GENERATE_CONCURRENCY, async (source) => {
     try {
-      return await generateVettedCards(provider, source);
+      return await generateVettedCards(provider, source, options);
     } catch (err) {
+      if (isAbortError(err)) throw err;
       failures++;
       console.error("Card generation failed for one source:", err);
       return [] as Card[];
     }
-  });
-  const cards = await dedupeCards(perSource.flat(), provider.embed?.bind(provider));
+  }, options.signal);
+  throwIfAborted(options.signal);
+  const cards = await dedupeCards(perSource.flat(), provider.embed?.bind(provider), options);
   return { cards, failures };
 }

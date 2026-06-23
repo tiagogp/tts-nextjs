@@ -10,12 +10,17 @@
  */
 
 import type { Card } from "./schema";
+import type { GenerationRunOptions } from "./provider";
 
 /** Optional embedder a provider can supply for true semantic dedup. */
-export type Embedder = (texts: string[]) => Promise<number[][]>;
+export type Embedder = (texts: string[], options?: GenerationRunOptions) => Promise<number[][]>;
 
 const EMBED_THRESHOLD = 0.9; // cosine on real embeddings — paraphrases land high
 const LEXICAL_THRESHOLD = 0.8; // cosine on token counts — needs surface overlap
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof Error && error.name === "AbortError";
+}
 
 /** What we compare: the concept + the prompt, since two cards can share a back. */
 function fingerprint(card: Card): string {
@@ -66,7 +71,11 @@ function lexicalVectors(texts: string[]): number[][] {
  * Drop near-duplicate cards, keeping the first of each cluster.
  * Pass the provider's `embed` to get semantic dedup; omit it for lexical.
  */
-export async function dedupeCards(cards: Card[], embed?: Embedder): Promise<Card[]> {
+export async function dedupeCards(
+  cards: Card[],
+  embed?: Embedder,
+  options?: GenerationRunOptions,
+): Promise<Card[]> {
   if (cards.length < 2) return cards;
 
   const fingerprints = cards.map(fingerprint);
@@ -75,9 +84,10 @@ export async function dedupeCards(cards: Card[], embed?: Embedder): Promise<Card
 
   if (embed) {
     try {
-      vectors = await embed(fingerprints);
+      vectors = await embed(fingerprints, options);
       threshold = EMBED_THRESHOLD;
-    } catch {
+    } catch (error) {
+      if (isAbortError(error)) throw error;
       vectors = lexicalVectors(fingerprints);
       threshold = LEXICAL_THRESHOLD;
     }

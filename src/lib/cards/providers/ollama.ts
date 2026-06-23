@@ -14,7 +14,14 @@
  */
 
 import OpenAI from "openai";
-import type { CardGenerationProvider, CorrectOptions, ProviderKind } from "../provider";
+import { getOllamaBaseUrl, getOllamaModel } from "@/server/aiSettings";
+import { ollamaRoot } from "@/server/integrations/ollama";
+import type {
+  CardGenerationProvider,
+  CorrectOptions,
+  GenerationRunOptions,
+  ProviderKind,
+} from "../provider";
 import type {
   Card,
   CardSource,
@@ -50,25 +57,12 @@ const DEFAULT_MODEL = "llama3.1";
 
 /** The Ollama server root (no `/v1`), for its native API like `/api/tags`. */
 export function ollamaApiRoot(explicit?: string): string {
-  return (explicit ?? process.env.OLLAMA_BASE_URL ?? DEFAULT_BASE_URL)
-    .replace(/\/+$/, "")
-    .replace(/\/v1$/, "");
+  return ollamaRoot(explicit ?? getOllamaBaseUrl() ?? DEFAULT_BASE_URL);
 }
 
 /** Where to reach Ollama, normalized to the OpenAI-compatible `/v1` root. */
 export function ollamaBaseUrl(explicit?: string): string {
   return `${ollamaApiRoot(explicit)}/v1`;
-}
-
-export async function isOllamaReachable(timeoutMs = 1500): Promise<boolean> {
-  try {
-    const res = await fetch(`${ollamaApiRoot()}/api/tags`, {
-      signal: AbortSignal.timeout(timeoutMs),
-    });
-    return res.ok;
-  } catch {
-    return false;
-  }
 }
 
 /**
@@ -90,10 +84,27 @@ function extractJson(text: string): string {
   }
 }
 
+function requestOptions(options: GenerationRunOptions): {
+  signal?: AbortSignal;
+  timeout?: number;
+  maxRetries: 0;
+} | undefined {
+  if (!options.signal && options.timeoutMs == null) return undefined;
+  return {
+    ...(options.signal ? { signal: options.signal } : {}),
+    ...(options.timeoutMs != null ? { timeout: options.timeoutMs } : {}),
+    maxRetries: 0,
+  };
+}
+
 export class OllamaProvider implements CardGenerationProvider {
   readonly kind: ProviderKind = "ollama";
   readonly label = "Ollama (local LLM)";
   readonly isLocal = true;
+  // Local models are slow; the per-card critique round-trip multiplies wall time and would
+  // push multi-correction decks past the request timeout. Grounding + the per-source card
+  // cap stand in for the quality gate here.
+  readonly skipCritique = true;
 
   private readonly client: OpenAI;
   private readonly model: string;
@@ -102,15 +113,18 @@ export class OllamaProvider implements CardGenerationProvider {
   constructor(opts: OllamaProviderOptions = {}) {
     // Ollama ignores the key but the SDK requires one; "ollama" is the conventional placeholder.
     this.client = new OpenAI({ baseURL: ollamaBaseUrl(opts.baseUrl), apiKey: "ollama" });
-    this.model = opts.model ?? process.env.OLLAMA_MODEL ?? DEFAULT_MODEL;
+    this.model = opts.model ?? getOllamaModel() ?? DEFAULT_MODEL;
     this.learnerLang = opts.learnerLang ?? DEFAULT_LEARNER_LANG;
   }
 
-  private async json<T>(req: JsonRequest<T>): Promise<T> {
+  private async json<T>(req: JsonRequest<T>, options: GenerationRunOptions = {}): Promise<T> {
     const res = await this.client.chat.completions.create({
       model: this.model,
       // Deterministic-ish output for a structured task; local models drift more at high temp.
       temperature: 0,
+      // Bound each call's wall time — a card/critique/correction payload fits comfortably,
+      // but an unbounded local model can ramble and blow the request timeout.
+      max_tokens: 1500,
       messages: [
         // Reinforce the contract in-band — not every Ollama build honors response_format.
         { role: "system", content: `${req.system}\n\nRespond with ONLY a single JSON object that satisfies the requested schema. No prose, no markdown fences.` },
@@ -120,7 +134,7 @@ export class OllamaProvider implements CardGenerationProvider {
         type: "json_schema",
         json_schema: { name: "result", schema: req.schema },
       },
-    });
+    }, requestOptions(options));
     const choice = res.choices[0];
     if (choice?.finish_reason === "length") {
       throw new Error("Ollama response was truncated before completing the JSON (length).");
@@ -137,25 +151,34 @@ export class OllamaProvider implements CardGenerationProvider {
   async mine(
     transcript: TranscriptSegment[],
     request: DiscoveryRequest,
+    options?: GenerationRunOptions,
   ): Promise<PhraseCandidate[]> {
-    const raw = await this.json(buildMineRequest(transcript, request, this.learnerLang));
+    const raw = await this.json(buildMineRequest(transcript, request, this.learnerLang), options);
     return normalizeMined(raw, transcript, request);
   }
 
-  async generate(source: CardSource): Promise<Card[]> {
-    const raw = await this.json(buildGenerateRequest(source, this.learnerLang));
+  async generate(source: CardSource, options?: GenerationRunOptions): Promise<Card[]> {
+    const raw = await this.json(buildGenerateRequest(source, this.learnerLang), options);
     return normalizeGenerated(raw, source);
   }
 
-  async critique(card: Card, source: CardSource): Promise<Critique> {
-    const raw = await this.json(buildCritiqueRequest(card, source));
+  async critique(
+    card: Card,
+    source: CardSource,
+    options?: GenerationRunOptions,
+  ): Promise<Critique> {
+    const raw = await this.json(buildCritiqueRequest(card, source), options);
     return normalizeCritique(raw, card);
   }
 
-  async correct(text: string, opts: CorrectOptions = {}): Promise<ErrorEvent[]> {
+  async correct(
+    text: string,
+    opts: CorrectOptions = {},
+    options?: GenerationRunOptions,
+  ): Promise<ErrorEvent[]> {
     const sourceLang = opts.sourceLang ?? this.learnerLang;
     const targetLang = opts.targetLang ?? "en";
-    const raw = await this.json(buildCorrectRequest(text, sourceLang, targetLang));
+    const raw = await this.json(buildCorrectRequest(text, sourceLang, targetLang), options);
     return normalizeCorrected(raw, sourceLang, targetLang);
   }
 }

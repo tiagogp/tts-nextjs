@@ -8,7 +8,7 @@
  * lexical fallback in dedup (A5), since it exposes no embedder.
  */
 
-import type { CardGenerationProvider, ProviderKind } from "../provider";
+import type { CardGenerationProvider, GenerationRunOptions, ProviderKind } from "../provider";
 import type {
   Card,
   CardSource,
@@ -65,6 +65,7 @@ export class LocalProvider implements CardGenerationProvider {
   async mine(
     transcript: TranscriptSegment[],
     request: DiscoveryRequest,
+    _options?: GenerationRunOptions,
   ): Promise<PhraseCandidate[]> {
     const focusTokens = new Set(words(request.focus ?? ""));
     const now = Date.now();
@@ -102,7 +103,7 @@ export class LocalProvider implements CardGenerationProvider {
       }));
   }
 
-  async generate(source: CardSource): Promise<Card[]> {
+  async generate(source: CardSource, _options?: GenerationRunOptions): Promise<Card[]> {
     const now = Date.now();
 
     if (source.kind === "phrase") {
@@ -149,7 +150,11 @@ export class LocalProvider implements CardGenerationProvider {
     ];
   }
 
-  async critique(card: Card, source: CardSource): Promise<Critique> {
+  async critique(
+    card: Card,
+    source: CardSource,
+    _options?: GenerationRunOptions,
+  ): Promise<Critique> {
     const front = card.front.trim();
     const back = card.back.trim();
 

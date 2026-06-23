@@ -5,4 +5,17 @@ contextBridge.exposeInMainWorld("phraseLoop", {
   toggleFullscreen() {
     ipcRenderer.send("phrase-loop:toggle-fullscreen");
   },
+  aiSettings: {
+    save(patch) {
+      return ipcRenderer.invoke("phrase-loop:ai-settings-save", patch);
+    },
+    test(provider, draft) {
+      return ipcRenderer.invoke("phrase-loop:ai-settings-test", provider, draft);
+    },
+  },
+  files: {
+    saveApkg(filename, base64) {
+      return ipcRenderer.invoke("phrase-loop:save-apkg", filename, base64);
+    },
+  },
 });

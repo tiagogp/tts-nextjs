@@ -1,16 +1,17 @@
 import "server-only";
 
+import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
-import { createWriteStream } from "node:fs";
-import { mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { Readable } from "node:stream";
-import { pipeline } from "node:stream/promises";
+import { promisify } from "node:util";
 import { JSDOM } from "jsdom";
 import { Readability } from "@mozilla/readability";
-import { Innertube, UniversalCache } from "youtubei.js";
 import { discoverCacheDir } from "./data";
 import { transcribe } from "./speech";
+
+const execFileAsync = promisify(execFile);
 
 export interface Segment {
   text: string;
@@ -65,9 +66,87 @@ export async function audioPathFor(id: string): Promise<string | null> {
   const root = discoverCacheDir();
   await mkdir(root, { recursive: true });
   const matches = (await readdir(root))
-    .filter((name) => name.startsWith(`${id}.`) && !name.endsWith(".json") && !name.endsWith(".partial"))
+    .filter((name) => name.startsWith(`${id}.`) && !/\.(json|vtt|title|partial)$/.test(name))
     .sort();
   return matches[0] ? path.join(root, matches[0]) : null;
+}
+
+/** Resolve a binary, preferring an env override, then common Homebrew/system paths, then PATH. */
+function findBinary(name: string, envVar: string, candidates: string[]): string {
+  const override = process.env[envVar];
+  if (override && existsSync(override)) return override;
+  for (const candidate of candidates) if (existsSync(candidate)) return candidate;
+  return name; // fall back to PATH lookup
+}
+
+function ytDlpBinary(): string {
+  return findBinary("yt-dlp", "YTDLP_PATH", [
+    "/opt/homebrew/bin/yt-dlp",
+    "/usr/local/bin/yt-dlp",
+    "/usr/bin/yt-dlp",
+  ]);
+}
+
+/** Directory holding ffmpeg, passed to yt-dlp via --ffmpeg-location (null = rely on PATH). */
+function ffmpegDir(): string | null {
+  for (const dir of ["/opt/homebrew/bin", "/usr/local/bin", "/usr/bin"]) {
+    if (existsSync(path.join(dir, "ffmpeg"))) return dir;
+  }
+  return null;
+}
+
+function vttTimestampMs(value: string): number {
+  const match = value.match(/(?:(\d{1,2}):)?(\d{1,2}):(\d{2})[.,](\d{3})/);
+  if (!match) return 0;
+  return (((Number(match[1] ?? 0) * 60 + Number(match[2])) * 60 + Number(match[3])) * 1000) + Number(match[4]);
+}
+
+/** Parse a WebVTT track into timed segments, stripping YouTube's inline word-timing tags. */
+export function parseVtt(content: string): Segment[] {
+  const segments: Segment[] = [];
+  for (const block of content.replace(/\r/g, "").split("\n\n")) {
+    const lines = block.split("\n");
+    const cue = lines.find((line) => line.includes("-->"));
+    if (!cue) continue;
+    const [rawStart, rawEnd] = cue.split("-->");
+    const text = lines
+      .slice(lines.indexOf(cue) + 1)
+      .join(" ")
+      .replace(/<[^>]+>/g, "") // <00:00:01.000>, <c>…</c> word timing
+      .replace(/&nbsp;/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (!text) continue;
+    segments.push({ text, startMs: vttTimestampMs(rawStart), endMs: vttTimestampMs(rawEnd) });
+  }
+  return segments;
+}
+
+/** Pick the best downloaded .vtt for `id`, preferring the requested language, and parse it. */
+async function readSubtitleSegments(
+  root: string,
+  id: string,
+  lang?: string | null,
+): Promise<Segment[]> {
+  const vtts = (await readdir(root)).filter(
+    (name) => name.startsWith(`${id}.`) && name.endsWith(".vtt"),
+  );
+  if (vtts.length === 0) return [];
+  const preferred =
+    (lang && vtts.find((name) => name.includes(`.${lang}`))) ||
+    vtts.find((name) => name.includes(".en")) ||
+    vtts[0];
+  return parseVtt(await readFile(path.join(root, preferred), "utf8"));
+}
+
+/** Locate the audio file yt-dlp produced for `id` (extension may vary if ffmpeg is absent). */
+async function downloadedAudio(root: string, id: string): Promise<string | null> {
+  const match = (await readdir(root)).find(
+    (name) =>
+      name.startsWith(`${id}.`) &&
+      !/\.(json|vtt|title|partial)$/.test(name),
+  );
+  return match ? path.join(root, match) : null;
 }
 
 export async function discoverYouTube(url: string, lang?: string | null): Promise<DiscoverResult> {
@@ -79,36 +158,56 @@ export async function discoverYouTube(url: string, lang?: string | null): Promis
     return JSON.parse(await readFile(cacheFile, "utf8")) as DiscoverResult;
   } catch {}
 
-  const youtube = await Innertube.create({ cache: new UniversalCache(false) });
-  const info = await youtube.getInfo(videoId(url));
-  const title = info.basic_info.title || "Untitled";
-  const audioFile = path.join(root, `${id}.m4a`);
+  // youtubei.js can no longer decipher stream URLs (YouTube cipher changes), so download
+  // with yt-dlp, which keeps its signature handling current. Audio is essential; subtitles
+  // are a best-effort optimization (a sub failure must not abort the audio we need).
+  const canonicalUrl = `https://www.youtube.com/watch?v=${videoId(url)}`;
+  const ffmpeg = ffmpegDir();
+  const bin = ytDlpBinary();
+  const run = async (extraArgs: string[]) => {
+    try {
+      await execFileAsync(bin, [
+        "--no-playlist", "--no-warnings", "--no-progress", "--quiet", "--no-abort-on-error",
+        "-o", path.join(root, `${id}.%(ext)s`), ...extraArgs, canonicalUrl,
+      ], { maxBuffer: 32 * 1024 * 1024, timeout: 270_000 });
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException)?.code === "ENOENT") {
+        throw new Error("yt-dlp is not installed. Install it (e.g. `brew install yt-dlp`) to import YouTube videos.");
+      }
+      throw error;
+    }
+  };
+
+  await run([
+    "-f", "bestaudio/best",
+    ...(ffmpeg ? ["--extract-audio", "--audio-format", "m4a", "--ffmpeg-location", ffmpeg] : []),
+    "--print-to-file", "%(title)s", path.join(root, `${id}.title`),
+  ]);
+  const audioFile = await downloadedAudio(root, id);
+  if (!audioFile) throw new Error("yt-dlp did not produce an audio file");
+
+  // Best-effort original captions (not auto-translations); failure just falls back to Whisper.
+  const subLangs = lang ? `${lang}-orig,${lang},en-orig,en` : "en-orig,en";
   try {
-    await stat(audioFile);
-  } catch {
-    const stream = await info.download({ type: "audio", quality: "best", format: "mp4" });
-    const partial = `${audioFile}.partial`;
-    await pipeline(Readable.fromWeb(stream as never), createWriteStream(partial));
-    await import("node:fs/promises").then(({ rename }) => rename(partial, audioFile));
+    await run([
+      "--skip-download", "--write-subs", "--write-auto-subs",
+      "--sub-langs", subLangs, "--convert-subs", "vtt",
+    ]);
+  } catch (error) {
+    console.error("Subtitle fetch failed; will transcribe instead:", error);
   }
 
-  let segments: Segment[] | null = null;
+  let title = "Untitled";
   try {
-    let transcript = await info.getTranscript();
-    if (lang) {
-      const candidate = transcript.languages.find((value) => value.toLowerCase().startsWith(lang));
-      if (candidate) transcript = await transcript.selectLanguage(candidate);
-    }
-    const items = transcript.transcript.content?.body?.initial_segments ?? [];
-    segments = items.flatMap((item) => {
-      const text = item.snippet?.toString?.().trim?.() || "";
-      if (!text) return [];
-      return [{ text, startMs: Number(item.start_ms) || 0, endMs: Number(item.end_ms) || 0 }];
-    });
+    title = (await readFile(path.join(root, `${id}.title`), "utf8")).trim() || title;
   } catch {}
-  if (!segments?.length) {
+
+  // Prefer subtitles (fast, real timestamps); fall back to Whisper for caption-less videos.
+  let segments = await readSubtitleSegments(root, id, lang);
+  if (!segments.length) {
     segments = (await transcribe({ audio: await readFile(audioFile), language: lang })).segments;
   }
+
   const result = { sourceId: id, title, segments: dedupeSegments(segments), hasAudio: true };
   await writeFile(cacheFile, JSON.stringify(result));
   return result;

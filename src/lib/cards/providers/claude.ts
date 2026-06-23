@@ -12,7 +12,12 @@
  */
 
 import Anthropic from "@anthropic-ai/sdk";
-import type { CardGenerationProvider, CorrectOptions, ProviderKind } from "../provider";
+import type {
+  CardGenerationProvider,
+  CorrectOptions,
+  GenerationRunOptions,
+  ProviderKind,
+} from "../provider";
 import type {
   Card,
   CardSource,
@@ -45,6 +50,19 @@ export interface ClaudeProviderOptions {
 
 const DEFAULT_MODEL = "claude-opus-4-8";
 
+function requestOptions(options: GenerationRunOptions): {
+  signal?: AbortSignal;
+  timeout?: number;
+  maxRetries: 0;
+} | undefined {
+  if (!options.signal && options.timeoutMs == null) return undefined;
+  return {
+    ...(options.signal ? { signal: options.signal } : {}),
+    ...(options.timeoutMs != null ? { timeout: options.timeoutMs } : {}),
+    maxRetries: 0,
+  };
+}
+
 export class ClaudeProvider implements CardGenerationProvider {
   readonly kind: ProviderKind = "claude";
   readonly label = "Claude (Anthropic)";
@@ -60,7 +78,7 @@ export class ClaudeProvider implements CardGenerationProvider {
     this.learnerLang = opts.learnerLang ?? DEFAULT_LEARNER_LANG;
   }
 
-  private async json<T>(req: JsonRequest<T>): Promise<T> {
+  private async json<T>(req: JsonRequest<T>, options: GenerationRunOptions = {}): Promise<T> {
     // Stream: adaptive thinking at high effort can run for many seconds, and a non-streaming
     // call risks the SDK's HTTP timeout. Streaming keeps the connection alive; `finalMessage`
     // collects the whole response. `max_tokens` is a streaming-safe ceiling (thinking tokens
@@ -72,7 +90,7 @@ export class ClaudeProvider implements CardGenerationProvider {
       output_config: { effort: "high", format: { type: "json_schema", schema: req.schema } },
       system: req.system,
       messages: [{ role: "user", content: req.user }],
-    });
+    }, requestOptions(options));
     const res = await stream.finalMessage();
     // Handle the API's terminal states before touching content, so a refusal or a truncated
     // response becomes a clean per-card drop upstream instead of an unhandled crash.
@@ -96,25 +114,34 @@ export class ClaudeProvider implements CardGenerationProvider {
   async mine(
     transcript: TranscriptSegment[],
     request: DiscoveryRequest,
+    options?: GenerationRunOptions,
   ): Promise<PhraseCandidate[]> {
-    const raw = await this.json(buildMineRequest(transcript, request, this.learnerLang));
+    const raw = await this.json(buildMineRequest(transcript, request, this.learnerLang), options);
     return normalizeMined(raw, transcript, request);
   }
 
-  async generate(source: CardSource): Promise<Card[]> {
-    const raw = await this.json(buildGenerateRequest(source, this.learnerLang));
+  async generate(source: CardSource, options?: GenerationRunOptions): Promise<Card[]> {
+    const raw = await this.json(buildGenerateRequest(source, this.learnerLang), options);
     return normalizeGenerated(raw, source);
   }
 
-  async critique(card: Card, source: CardSource): Promise<Critique> {
-    const raw = await this.json(buildCritiqueRequest(card, source));
+  async critique(
+    card: Card,
+    source: CardSource,
+    options?: GenerationRunOptions,
+  ): Promise<Critique> {
+    const raw = await this.json(buildCritiqueRequest(card, source), options);
     return normalizeCritique(raw, card);
   }
 
-  async correct(text: string, opts: CorrectOptions = {}): Promise<ErrorEvent[]> {
+  async correct(
+    text: string,
+    opts: CorrectOptions = {},
+    options?: GenerationRunOptions,
+  ): Promise<ErrorEvent[]> {
     const sourceLang = opts.sourceLang ?? this.learnerLang;
     const targetLang = opts.targetLang ?? "en";
-    const raw = await this.json(buildCorrectRequest(text, sourceLang, targetLang));
+    const raw = await this.json(buildCorrectRequest(text, sourceLang, targetLang), options);
     return normalizeCorrected(raw, sourceLang, targetLang);
   }
 }

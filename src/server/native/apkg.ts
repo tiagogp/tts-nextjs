@@ -8,7 +8,7 @@ import { parse } from "csv-parse/sync";
 import initSqlJs, { type SqlJsStatic } from "sql.js";
 import { Deck, Model, Note, Package } from "ankipack";
 import { audioPathFor } from "./discovery";
-import { sliceAudio } from "./audio";
+import { decodeAudio, sliceDecodedAudio, type DecodedAudio } from "./audio";
 import { synthesize } from "./speech";
 
 const require = createRequire(import.meta.url);
@@ -69,6 +69,16 @@ function column(row: unknown, key: string, hasHeader: boolean): string {
   return Array.isArray(row) && Number.isInteger(index) ? String(row[index] ?? "").trim() : "";
 }
 
+function abortError(): Error {
+  const error = new Error("Operation aborted");
+  error.name = "AbortError";
+  return error;
+}
+
+function throwIfAborted(signal?: AbortSignal): void {
+  if (signal?.aborted) throw abortError();
+}
+
 export async function buildCsvDeck(options: {
   csv: Buffer;
   deck: string;
@@ -79,6 +89,7 @@ export async function buildCsvDeck(options: {
   voice: string;
   speed: number;
   synthesizer?: typeof synthesize;
+  signal?: AbortSignal;
 }): Promise<Buffer> {
   const text = options.csv.toString("utf8").replace(/^\uFEFF/, "");
   const rows = parse(text, {
@@ -93,6 +104,7 @@ export async function buildCsvDeck(options: {
   const pkg = new Package();
   const media = new Set<string>();
   for (const row of rows) {
+    throwIfAborted(options.signal);
     const pt = column(row, options.ptCol, !options.noHeader);
     const en = column(row, options.enCol, !options.noHeader);
     if (!pt && !en) continue;
@@ -135,12 +147,37 @@ export async function buildCardsDeck(options: {
   deck: string;
   voice: string;
   speed?: number;
+  audioPathResolver?: typeof audioPathFor;
+  audioReader?: (path: string) => Promise<Buffer>;
+  audioDecoder?: typeof decodeAudio;
+  synthesizer?: typeof synthesize;
+  signal?: AbortSignal;
 }): Promise<Buffer> {
   const model = cardModel();
   const deck = new Deck({ id: stableId("anki_deck", options.deck), name: options.deck, config: null });
   const pkg = new Package();
   const media = new Set<string>();
+  const decodedBySourceId = new Map<string, Promise<DecodedAudio | null>>();
+  const resolveAudioPath = options.audioPathResolver ?? audioPathFor;
+  const readAudio = options.audioReader ?? readFile;
+  const decode = options.audioDecoder ?? decodeAudio;
+  const getDecodedSource = (sourceId: string): Promise<DecodedAudio | null> => {
+    let cached = decodedBySourceId.get(sourceId);
+    if (!cached) {
+      cached = (async () => {
+        const sourcePath = await resolveAudioPath(sourceId);
+        if (!sourcePath) return null;
+        return decode(await readAudio(sourcePath));
+      })().catch((error) => {
+        console.error("Failed to decode source audio for card clip:", error);
+        return null;
+      });
+      decodedBySourceId.set(sourceId, cached);
+    }
+    return cached;
+  };
   for (const card of options.cards) {
+    throwIfAborted(options.signal);
     const front = String(card.front ?? "").trim();
     const back = String(card.back ?? "").trim();
     if (!front || !back) continue;
@@ -153,16 +190,23 @@ export async function buildCardsDeck(options: {
     const startMs = Number(card.clip?.startMs);
     const endMs = Number(card.clip?.endMs);
     if (sourceId && Number.isFinite(startMs) && Number.isFinite(endMs) && endMs > startMs) {
-      const sourcePath = await audioPathFor(sourceId);
-      if (sourcePath) {
-        audio = await sliceAudio(await readFile(sourcePath), startMs, endMs);
+      const decoded = await getDecodedSource(sourceId);
+      throwIfAborted(options.signal);
+      if (decoded) {
+        audio = sliceDecodedAudio(decoded, startMs, endMs);
         filename = `clip_${sourceId}_${Math.round(startMs)}_${Math.round(endMs)}.wav`;
       }
     }
     if (!audio) {
+      throwIfAborted(options.signal);
       const text = String(card.audioText ?? back).trim() || back;
       filename = `anki_tts_en_${sha1(`${options.voice}|${options.speed ?? 1.15}|${text}`).slice(0, 12)}.wav`;
-      audio = await synthesize({ text, voice: options.voice, speed: options.speed ?? 1.15 });
+      audio = await (options.synthesizer ?? synthesize)({
+        text,
+        voice: options.voice,
+        speed: options.speed ?? 1.15,
+      });
+      throwIfAborted(options.signal);
     }
     if (!media.has(filename)) {
       pkg.addMedia(filename, audio);

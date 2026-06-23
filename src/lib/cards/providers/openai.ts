@@ -8,7 +8,12 @@
  */
 
 import OpenAI from "openai";
-import type { CardGenerationProvider, CorrectOptions, ProviderKind } from "../provider";
+import type {
+  CardGenerationProvider,
+  CorrectOptions,
+  GenerationRunOptions,
+  ProviderKind,
+} from "../provider";
 import type {
   Card,
   CardSource,
@@ -43,6 +48,19 @@ export interface OpenAIProviderOptions {
 const DEFAULT_MODEL = "gpt-4o";
 const DEFAULT_EMBED_MODEL = "text-embedding-3-small";
 
+function requestOptions(options: GenerationRunOptions): {
+  signal?: AbortSignal;
+  timeout?: number;
+  maxRetries: 0;
+} | undefined {
+  if (!options.signal && options.timeoutMs == null) return undefined;
+  return {
+    ...(options.signal ? { signal: options.signal } : {}),
+    ...(options.timeoutMs != null ? { timeout: options.timeoutMs } : {}),
+    maxRetries: 0,
+  };
+}
+
 export class OpenAIProvider implements CardGenerationProvider {
   readonly kind: ProviderKind = "openai";
   readonly label = "GPT (OpenAI)";
@@ -60,7 +78,7 @@ export class OpenAIProvider implements CardGenerationProvider {
     this.learnerLang = opts.learnerLang ?? DEFAULT_LEARNER_LANG;
   }
 
-  private async json<T>(req: JsonRequest<T>): Promise<T> {
+  private async json<T>(req: JsonRequest<T>, options: GenerationRunOptions = {}): Promise<T> {
     const res = await this.client.chat.completions.create({
       model: this.model,
       messages: [
@@ -71,7 +89,7 @@ export class OpenAIProvider implements CardGenerationProvider {
         type: "json_schema",
         json_schema: { name: "result", schema: req.schema, strict: true },
       },
-    });
+    }, requestOptions(options));
     const choice = res.choices[0];
     // A length finish means the JSON was cut off; a refusal means no usable content. Both
     // surface as a clean per-card drop upstream rather than a malformed-parse crash.
@@ -93,35 +111,44 @@ export class OpenAIProvider implements CardGenerationProvider {
   async mine(
     transcript: TranscriptSegment[],
     request: DiscoveryRequest,
+    options?: GenerationRunOptions,
   ): Promise<PhraseCandidate[]> {
-    const raw = await this.json(buildMineRequest(transcript, request, this.learnerLang));
+    const raw = await this.json(buildMineRequest(transcript, request, this.learnerLang), options);
     return normalizeMined(raw, transcript, request);
   }
 
-  async generate(source: CardSource): Promise<Card[]> {
-    const raw = await this.json(buildGenerateRequest(source, this.learnerLang));
+  async generate(source: CardSource, options?: GenerationRunOptions): Promise<Card[]> {
+    const raw = await this.json(buildGenerateRequest(source, this.learnerLang), options);
     return normalizeGenerated(raw, source);
   }
 
-  async critique(card: Card, source: CardSource): Promise<Critique> {
-    const raw = await this.json(buildCritiqueRequest(card, source));
+  async critique(
+    card: Card,
+    source: CardSource,
+    options?: GenerationRunOptions,
+  ): Promise<Critique> {
+    const raw = await this.json(buildCritiqueRequest(card, source), options);
     return normalizeCritique(raw, card);
   }
 
-  async correct(text: string, opts: CorrectOptions = {}): Promise<ErrorEvent[]> {
+  async correct(
+    text: string,
+    opts: CorrectOptions = {},
+    options?: GenerationRunOptions,
+  ): Promise<ErrorEvent[]> {
     const sourceLang = opts.sourceLang ?? this.learnerLang;
     const targetLang = opts.targetLang ?? "en";
-    const raw = await this.json(buildCorrectRequest(text, sourceLang, targetLang));
+    const raw = await this.json(buildCorrectRequest(text, sourceLang, targetLang), options);
     return normalizeCorrected(raw, sourceLang, targetLang);
   }
 
   /** Real semantic dedup (A5): one embedding per card fingerprint. */
-  async embed(texts: string[]): Promise<number[][]> {
+  async embed(texts: string[], options: GenerationRunOptions = {}): Promise<number[][]> {
     if (texts.length === 0) return [];
     const res = await this.client.embeddings.create({
       model: this.embedModel,
       input: texts,
-    });
+    }, requestOptions(options));
     return res.data.map((d) => d.embedding);
   }
 }

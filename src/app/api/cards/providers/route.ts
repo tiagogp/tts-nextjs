@@ -5,7 +5,7 @@
 
 import { NextResponse } from "next/server";
 import { providerRegistry, isProviderAvailable } from "@/lib/cards/registry";
-import { isOllamaReachable } from "@/lib/cards/providers/ollama";
+import { isOllamaReachable } from "@/server/integrations/ollama";
 import type { ProviderKind } from "@/lib/cards/provider";
 
 export const runtime = "nodejs";

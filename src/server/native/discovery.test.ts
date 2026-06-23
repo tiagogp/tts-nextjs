@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { PDFDocument } from "@napi-rs/canvas";
-import { dedupeSegments, discoverPdf, segmentText } from "./discovery";
+import { dedupeSegments, discoverPdf, parseVtt, segmentText } from "./discovery";
 
 describe("discovery text processing", () => {
   it("segments readable text and drops short fragments", () => {
@@ -13,6 +13,25 @@ describe("discovery text processing", () => {
       { text: "Hello, world!", startMs: 0, endMs: 1000 },
       { text: "hello world", startMs: 1000, endMs: 2000 },
     ])).toHaveLength(1);
+  });
+
+  it("parses WebVTT cues, stripping inline word-timing tags", () => {
+    const vtt = [
+      "WEBVTT",
+      "",
+      "00:00:01.360 --> 00:00:03.040",
+      "<00:00:01.360><c>Hello</c> <00:00:02.000><c>world</c>",
+      "",
+      "00:01:05.000 --> 00:01:07.500",
+      "Second line",
+      "",
+      "00:02:00.000 --> 00:02:01.000",
+      "&nbsp;",
+    ].join("\n");
+    expect(parseVtt(vtt)).toEqual([
+      { text: "Hello world", startMs: 1360, endMs: 3040 },
+      { text: "Second line", startMs: 65000, endMs: 67500 },
+    ]);
   });
 
   it("extracts text from a PDF using the Node runtime", async () => {

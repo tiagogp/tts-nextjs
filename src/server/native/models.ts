@@ -42,6 +42,8 @@ const SPECS: Record<ModelId, ModelSpec> = {
 
 export interface ModelStatus {
   ready: boolean;
+  kokoro_installed: boolean;
+  whisper_installed: boolean;
   loading_model: boolean;
   downloading_model: boolean;
   loading_kokoro: boolean;
@@ -103,17 +105,30 @@ async function findFile(root: string, filename: string): Promise<string | null> 
   return null;
 }
 
+// Resolve the on-disk location of an already-installed model, or null when it
+// is missing. A model counts as installed only when its `.ready.json` marker
+// AND its payload (the bin file, or the extracted model.onnx) are both present —
+// so a half-written or interrupted install never reads as ready.
+async function resolveInstalled(spec: ModelSpec): Promise<string | null> {
+  const finalDir = path.join(modelsDir(), spec.id);
+  const marker = path.join(finalDir, ".ready.json");
+  if (!(await exists(marker))) return null;
+  if (!spec.archive) {
+    const file = path.join(finalDir, spec.filename);
+    return (await exists(file)) ? file : null;
+  }
+  const model = await findFile(finalDir, "model.onnx");
+  return model ? path.dirname(model) : null;
+}
+
 async function ensure(spec: ModelSpec): Promise<string> {
   const root = modelsDir();
   await mkdir(root, { recursive: true });
+  const installed = await resolveInstalled(spec);
+  if (installed) return installed;
+
   const finalDir = path.join(root, spec.id);
   const marker = path.join(finalDir, ".ready.json");
-  if (await exists(marker)) {
-    if (!spec.archive) return path.join(finalDir, spec.filename);
-    const model = await findFile(finalDir, "model.onnx");
-    if (model) return path.dirname(model);
-  }
-
   const tempDir = `${finalDir}.partial`;
   const archive = path.join(root, `${spec.filename}.partial`);
   await rm(tempDir, { recursive: true, force: true });
@@ -167,11 +182,24 @@ function ensureOnce(id: ModelId): Promise<string> {
 export const ensureWhisperModel = () => ensureOnce("whisper-small");
 export const ensureKokoroModel = () => ensureOnce("kokoro-1.0");
 
-export function modelStatus(): ModelStatus {
+export const kokoroInstalled = (): Promise<boolean> =>
+  resolveInstalled(SPECS["kokoro-1.0"]).then((dir) => dir !== null);
+export const whisperInstalled = (): Promise<boolean> =>
+  resolveInstalled(SPECS["whisper-small"]).then((file) => file !== null);
+
+export async function modelStatus(): Promise<ModelStatus> {
   const whisper = active.has("whisper-small");
   const kokoro = active.has("kokoro-1.0");
+  const [kokoroReady, whisperReady] = await Promise.all([
+    kokoroInstalled(),
+    whisperInstalled(),
+  ]);
   return {
-    ready: true,
+    // `ready` reflects whether the TTS model needed for audio is on disk — the
+    // gate every apkg export depends on — not just "the runtime is up".
+    ready: kokoroReady,
+    kokoro_installed: kokoroReady,
+    whisper_installed: whisperReady,
     loading_model: whisper || kokoro,
     downloading_model: downloading.size > 0,
     loading_kokoro: kokoro,

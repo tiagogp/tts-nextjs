@@ -114,16 +114,17 @@ Audio decoding uses in-process WebAssembly; Homebrew and ffmpeg are not required
 
 ## Card AI providers
 
-Card mining, generation, the quality critique, and free-text correction (the **Correct** tab's
-"Avaliar (IA)") run through a pluggable provider. You pick one at runtime; only the configured
-ones show up in the selector:
+Card mining, generation, the quality critique, and free-text correction run through a
+pluggable provider. Open **Settings → AI Provider** to choose the global default, test a
+connection, or override the provider for one Discover/Correct task. Ollama is the default;
+PhraseLoop never sends content to a cloud provider unless you explicitly select it.
 
 | Provider | Evaluates free text? | How to enable |
 | --- | --- | --- |
 | **Local** (heuristic) | No | Always available. No model — cloze/keyword heuristics only. |
 | **Ollama** (local LLM) | Yes | Run [Ollama](https://ollama.com). Uses `http://localhost:11434` by default. |
-| **Claude** | Yes | Set `ANTHROPIC_API_KEY` in `.env.local`. |
-| **GPT** | Yes | Set `OPENAI_API_KEY` in `.env.local`. |
+| **Claude** | Yes | Save an Anthropic key in Settings, or set `ANTHROPIC_API_KEY` in `.env.local`. |
+| **GPT** | Yes | Save an OpenAI key in Settings, or set `OPENAI_API_KEY` in `.env.local`. |
 
 For a fully local-but-capable setup, run Ollama yourself:
 
@@ -132,9 +133,11 @@ ollama pull llama3.1
 ollama serve                   # exposes the OpenAI-compatible API on :11434
 ```
 
-The **Discover** and **Correct** tabs show a **model picker** populated from the models you've
+Settings, **Discover**, and **Correct** show a model picker populated from the models you've
 actually pulled (`ollama list`) — no need to hardcode `OLLAMA_MODEL`. If your server runs
-somewhere else, set `OLLAMA_BASE_URL` in `.env.local`. It uses Ollama's OpenAI-compatible endpoint, so structured-output quality
+somewhere else, change its address in Settings or set `OLLAMA_BASE_URL` in `.env.local`.
+Desktop credentials are encrypted with the operating system's secure storage and synchronized
+to the local backend without restarting PhraseLoop. Ollama uses its OpenAI-compatible endpoint, so structured-output quality
 depends on the model: prefer an instruction-tuned one that handles JSON well (e.g. `llama3.1`,
 `qwen2.5`).
 
@@ -157,16 +160,21 @@ to Kokoro audio otherwise. Import the result with Anki's `File → Import`.
 .
 ├── src/
 │   ├── app/
-│   │   ├── page.tsx           # Main UI
+│   │   ├── page.tsx           # Server entry that renders the desktop client shell
 │   │   ├── layout.tsx
-│   │   └── api/tts/           # Node Route Handler → local native runtime
+│   │   └── api/               # Stable BFF routes used by the desktop UI
 │   ├── components/
-│   │   ├── AudioPlayer.tsx
-│   │   ├── BatchGenerator.tsx
-│   │   ├── HistoryPanel.tsx
-│   │   ├── Select.tsx
-│   │   └── ThemeProvider.tsx
-│   ├── server/native/          # models, speech, discovery, audio, APKG
+│   │   ├── app/               # app shell, tabs, providers
+│   │   └── ui/                # shared presentational primitives
+│   ├── features/              # speech, discover, correct, study, settings, cards
+│   ├── platform/electron/     # typed client-side access to the preload bridge
+│   ├── server/                # server-only BFF helpers and native runtime
+│   │   └── native/            # models, speech, discovery, audio, APKG
+│   ├── lib/                   # shared pure/domain utilities
 │   └── types/
 └── start.sh                   # Starts Electron and standalone Next
 ```
+
+The UI is organized by feature rather than by tab-sized files. Next.js `app/` stays thin:
+route handlers keep their public URLs stable, while domain logic lives under `features/`
+or server-only modules under `server/`.

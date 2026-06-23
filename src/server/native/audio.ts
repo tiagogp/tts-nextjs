@@ -64,6 +64,14 @@ export async function sliceAudio(
   endMs: number,
 ): Promise<Buffer> {
   const decoded = await decodeAudio(data);
+  return sliceDecodedAudio(decoded, startMs, endMs);
+}
+
+export function sliceDecodedAudio(
+  decoded: DecodedAudio,
+  startMs: number,
+  endMs: number,
+): Buffer {
   const start = Math.max(0, Math.floor(startMs * decoded.sampleRate / 1000));
   const end = Math.min(
     decoded.samples.length,

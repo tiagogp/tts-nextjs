@@ -9,10 +9,11 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { isPlainObject } from "@/lib/isObject";
 import { safeStr } from "@/lib/cards/intake";
 import { isProviderAvailable, resolveProvider } from "@/lib/cards/registry";
 import type { ProviderKind } from "@/lib/cards/provider";
+import { getDefaultProvider } from "@/server/aiSettings";
+import { isProviderKind, readJsonObject } from "@/server/http/validation";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -22,14 +23,37 @@ const MAX_TEXT = 8000;
 const PUBLIC_CORRECTION_ERROR =
   "Couldn't evaluate the text right now. Try again in a moment.";
 
-function isProviderKind(v: unknown): v is ProviderKind {
-  return v === "local" || v === "ollama" || v === "claude" || v === "openai";
+function providerErrorMessage(error: unknown): string | null {
+  if (!(error instanceof Error)) return null;
+  const message = error.message.trim();
+  if (!message) return null;
+  if (
+    message.includes("Ollama") ||
+    message.includes("OpenAI") ||
+    message.includes("Claude") ||
+    message.includes("Anthropic") ||
+    message.includes("API key") ||
+    message.includes("timed out") ||
+    message.includes("timeout") ||
+    message.includes("connect") ||
+    message.includes("ECONNREFUSED")
+  ) {
+    return message;
+  }
+  return null;
+}
+
+function correctionProviderKind(raw: unknown): ProviderKind {
+  const requested = isProviderKind(raw) ? raw : getDefaultProvider();
+  if (requested !== "local") return requested;
+  if (isProviderAvailable("claude")) return "claude";
+  if (isProviderAvailable("openai")) return "openai";
+  return "ollama";
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const body = (await req.json().catch(() => null)) as unknown;
-    const obj = isPlainObject(body) ? body : null;
+    const obj = await readJsonObject(req);
     if (!obj) {
       return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
     }
@@ -39,7 +63,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Nothing to correct." }, { status: 400 });
     }
 
-    const kind: ProviderKind = isProviderKind(obj.provider) ? obj.provider : "claude";
+    const kind = correctionProviderKind(obj.provider);
     if (!isProviderAvailable(kind)) {
       return NextResponse.json(
         { error: `${kind} provider is not configured. Set the key in .env.local or pick Ollama.` },
@@ -67,6 +91,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ events, count: events.length });
   } catch (err: unknown) {
     console.error("Correction error:", err);
-    return NextResponse.json({ error: PUBLIC_CORRECTION_ERROR }, { status: 500 });
+    return NextResponse.json(
+      { error: providerErrorMessage(err) ?? PUBLIC_CORRECTION_ERROR },
+      { status: 500 },
+    );
   }
 }

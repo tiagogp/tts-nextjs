@@ -7,37 +7,23 @@
  */
 
 import { NextResponse } from "next/server";
-import { ollamaApiRoot } from "@/lib/cards/providers/ollama";
+import { getOllamaStatus } from "@/server/integrations/ollama";
 
 export const runtime = "nodejs";
 
-interface OllamaTag {
-  name?: string;
-}
-
 export async function GET() {
-  try {
-    const res = await fetch(`${ollamaApiRoot()}/api/tags`, {
-      signal: AbortSignal.timeout(5000),
-    });
-    if (!res.ok) throw new Error(`Ollama respondeu ${res.status}`);
-    const data = (await res.json()) as { models?: OllamaTag[] };
-    const models = (data.models ?? [])
-      .map((m) => m.name)
-      .filter((n): n is string => typeof n === "string" && n.length > 0)
-      .sort((a, b) => a.localeCompare(b));
+  const { online, models } = await getOllamaStatus({ timeoutMs: 5000 });
+  if (online) {
     return NextResponse.json({
       models,
       note:
         models.length === 0
-          ? "Nenhum modelo instalado — rode `ollama pull llama3.1`."
+          ? "No models installed — run `ollama pull llama3.1`."
           : undefined,
     });
-  } catch (err: unknown) {
-    console.error("Ollama models error:", err);
-    return NextResponse.json({
-      models: [],
-      note: "Não foi possível carregar os modelos do Ollama agora.",
-    });
   }
+  return NextResponse.json({
+    models: [],
+    note: "PhraseLoop couldn't load Ollama models right now.",
+  });
 }

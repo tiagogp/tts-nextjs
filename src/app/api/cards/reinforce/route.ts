@@ -16,12 +16,13 @@ import { isPlainObject } from "@/lib/isObject";
 import { generateDeck } from "@/lib/cards/provider";
 import type { ProviderKind } from "@/lib/cards/provider";
 import {
-  bestAvailableProviderAsync,
   isProviderAvailable,
   resolveProvider,
 } from "@/lib/cards/registry";
+import { getDefaultProvider } from "@/server/aiSettings";
 import { safeStr, toCandidate, toErrorEvent } from "@/lib/cards/intake";
 import type { CardSource, ErrorEvent, PhraseCandidate } from "@/lib/cards/schema";
+import { isProviderKind, readJsonObject } from "@/server/http/validation";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -30,24 +31,22 @@ const MAX_SOURCES = 50;
 const PUBLIC_REINFORCE_ERROR =
   "Couldn't generate reinforcement cards right now. Try again in a moment.";
 
-function isProviderKind(v: unknown): v is ProviderKind {
-  return v === "local" || v === "ollama" || v === "claude" || v === "openai";
-}
-
 export async function POST(req: NextRequest) {
   try {
-    const body = (await req.json().catch(() => null)) as unknown;
-    const obj = isPlainObject(body) ? body : null;
+    const obj = await readJsonObject(req);
     if (!obj) {
       return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
     }
 
-    // Pick the explicit choice if usable, else the best key-backed provider available.
+    // Respect the explicit/global choice. Never send content to a different provider.
     const requested = isProviderKind(obj.provider) ? obj.provider : null;
-    const kind: ProviderKind =
-      requested && isProviderAvailable(requested)
-        ? requested
-        : await bestAvailableProviderAsync();
+    const kind: ProviderKind = requested ?? getDefaultProvider();
+    if (!isProviderAvailable(kind)) {
+      return NextResponse.json(
+        { error: `${kind} is unavailable. Open Settings and connect it before generating.` },
+        { status: 400 },
+      );
+    }
 
     const rawCandidates = Array.isArray(obj.candidates) ? obj.candidates : [];
     const rawErrors = Array.isArray(obj.errors) ? obj.errors : [];

@@ -160,7 +160,7 @@ the answer audio — the native-clip slicing is reserved for the audio path.
 
 ### ✅ Persistence & study (the long-game)
 Local-first and browser-only: everything lives in IndexedDB (`src/lib/store/db.ts`), nothing
-leaves the device. The **Study** tab (`src/components/StudyTab.tsx`) is the surface for all of it.
+leaves the device. The **Study** tab (`src/features/study/components/StudyTab.tsx`) is the surface for all of it.
 - [x] **D1. Local-first store** — IndexedDB (`tts-cards`) with stores for `errorEvents` /
       `phraseCandidates` / `cards` / `srs` / `reviews`. Typed CRUD + study queries in
       `src/lib/store/repository.ts`. Discover now persists the accepted `PhraseCandidate`s
@@ -192,15 +192,15 @@ leaves the device. The **Study** tab (`src/components/StudyTab.tsx`) is the surf
       a new angle. Grounded by construction (every card still points to a real source the
       learner has) and needs no new material. Unlike `/api/cards/generate` it builds no .apkg —
       variants are studied in-app, so it just returns `Card[]` for the client to persist
-      (`saveCards`) and immediately drill. Provider is auto-picked server-side
-      (`bestAvailableProvider`: Claude → OpenAI → local) since the Study tab has no selector.
+      (`saveCards`) and immediately drill. Study uses the explicit global provider from
+      Settings; it blocks with a connection prompt rather than silently falling back.
       Intake validation is shared between both routes via `src/lib/cards/intake.ts`.
       _Still ahead: (b) a **time window** in `detectWeaknesses` for improving/worsening trend
       instead of a static aggregate._
 
 ### ✅ The other half — learn from your own mistakes
 The error-driven path now lands in the same store, cards, and weakness analysis the
-discovery path does. The **Correct** tab (`src/components/CorrectTab.tsx`) is the ingestion
+discovery path does. The **Correct** tab (`src/features/correct/components/CorrectTab.tsx`) is the ingestion
 surface; everything past it reuses the existing provider pipeline and `.apkg` engine.
 - [x] **E1. Correction-tool integration** — wire the native-correction tool's output to
       `ErrorEvent` (the error-driven path). The Correct tab takes corrections two ways

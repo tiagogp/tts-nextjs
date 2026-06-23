@@ -11,6 +11,8 @@ import { isPlainObject } from "@/lib/isObject";
 import { isProviderAvailable, resolveProvider } from "@/lib/cards/registry";
 import type { ProviderKind } from "@/lib/cards/provider";
 import type { ContentSource, TranscriptSegment } from "@/lib/cards/schema";
+import { getDefaultProvider } from "@/server/aiSettings";
+import { isProviderKind, readJsonObject, safeString } from "@/server/http/validation";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -18,15 +20,6 @@ export const maxDuration = 120;
 const MAX_SEGMENTS = 400;
 const PUBLIC_MINE_ERROR =
   "Couldn't preselect segments right now. You can still choose them manually.";
-
-function isProviderKind(v: unknown): v is ProviderKind {
-  return v === "local" || v === "ollama" || v === "claude" || v === "openai";
-}
-
-function safeStr(v: unknown, fallback: string, maxLen: number): string {
-  const s = typeof v === "string" ? v.trim() : "";
-  return (s || fallback).slice(0, maxLen);
-}
 
 function safeSourceKind(v: unknown): ContentSource["kind"] {
   return v === "article" || v === "pdf" || v === "youtube" ? v : "youtube";
@@ -53,13 +46,12 @@ function toSegment(raw: unknown): TranscriptSegment | null {
 
 export async function POST(req: NextRequest) {
   try {
-    const body = (await req.json().catch(() => null)) as unknown;
-    const obj = isPlainObject(body) ? body : null;
+    const obj = await readJsonObject(req);
     if (!obj) {
       return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
     }
 
-    const kind: ProviderKind = isProviderKind(obj.provider) ? obj.provider : "local";
+    const kind: ProviderKind = isProviderKind(obj.provider) ? obj.provider : getDefaultProvider();
     if (!isProviderAvailable(kind)) {
       return NextResponse.json(
         {
@@ -80,21 +72,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No transcript segments to curate." }, { status: 400 });
     }
 
-    const sourceId = safeStr(obj.sourceId, "discover", 64);
+    const sourceId = safeString(obj.sourceId, "discover", 64);
     const source: ContentSource = {
       id: sourceId,
       kind: safeSourceKind(obj.sourceKind),
-      title: safeStr(obj.title, "Discover source", 200),
-      url: safeStr(obj.url, "", 2048) || undefined,
+      title: safeString(obj.title, "Discover source", 200),
+      url: safeString(obj.url, "", 2048) || undefined,
       lang: "en",
       createdAt: Date.now(),
     };
 
-    const model = safeStr(obj.ollamaModel, "", 100) || undefined;
+    const model = safeString(obj.ollamaModel, "", 100) || undefined;
     const provider = resolveProvider(kind, { model });
     const candidates = await provider.mine(segments, {
       source,
-      focus: safeStr(obj.focus, "", 500) || undefined,
+      focus: safeString(obj.focus, "", 500) || undefined,
       targetLevel: safeLevel(obj.targetLevel),
       targetLang: "en",
     });

@@ -8,7 +8,23 @@ export const maxDuration = 300;
 
 const MAX_INPUT_BYTES = 5 * 1024 * 1024; // 5MB
 const PUBLIC_APKG_ERROR =
-  "Não foi possível gerar o deck agora. Tente novamente em instantes.";
+  "PhraseLoop couldn't generate the deck right now. Try again in a moment.";
+
+interface ApkgErrorPayload {
+  error?: string;
+  code?: string;
+  downloading?: boolean;
+  progress?: number;
+}
+
+function readErrorPayload(body: Buffer): ApkgErrorPayload {
+  try {
+    const parsed = JSON.parse(body.toString("utf8") || "{}");
+    return isPlainObject(parsed) ? (parsed as ApkgErrorPayload) : {};
+  } catch {
+    return {};
+  }
+}
 
 function parseBool(v: string | null): boolean {
   if (!v) return false;
@@ -307,8 +323,17 @@ export async function POST(req: NextRequest) {
       noHeader, voice: enKokoroVoice, speed: enKokoroSpeed, lang: enKokoroLang,
     }, 300_000);
     if (exported.status < 200 || exported.status >= 300) {
-      console.error("Anki runtime failed:", exported.status, exported.body.toString("utf8"));
-      return NextResponse.json({ error: PUBLIC_APKG_ERROR }, { status: 500 });
+      const payload = readErrorPayload(exported.body);
+      console.error("Anki runtime failed:", exported.status, payload);
+      return NextResponse.json(
+        {
+          error: payload.error ?? PUBLIC_APKG_ERROR,
+          code: payload.code,
+          downloading: payload.downloading,
+          progress: payload.progress,
+        },
+        { status: exported.status },
+      );
     }
 
     const apkg = exported.body;

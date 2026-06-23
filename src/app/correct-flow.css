@@ -1,0 +1,73 @@
+@keyframes correct-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes correct-mode-enter {
+  from { opacity: 0; transform: translateY(4px) scale(0.995); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes generation-slide {
+  from { transform: translateX(-110%); }
+  to { transform: translateX(360%); }
+}
+
+.correct-tab-enter {
+  animation: correct-enter 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.tab-panel-enter {
+  animation: correct-enter 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.correct-mode-enter,
+.correct-list-enter {
+  animation: correct-mode-enter 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.correct-action-button {
+  box-shadow: 0 0 0 rgb(255 86 0 / 0%);
+  transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease,
+    box-shadow 160ms ease, transform 160ms ease;
+}
+
+.correct-action-button:hover:not(:disabled) {
+  box-shadow: 0 5px 14px rgb(255 86 0 / 18%);
+  transform: translateY(-1px);
+}
+
+.correct-action-button:active:not(:disabled) {
+  box-shadow: none;
+  transform: translateY(0) scale(0.98);
+}
+
+.generation-status {
+  background: color-mix(in srgb, var(--accent) 4%, var(--surface-card));
+  animation: correct-mode-enter 180ms ease-out both;
+}
+
+.generation-track {
+  height: 3px;
+  margin-top: 0.55rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 14%, var(--border));
+}
+
+.generation-bar {
+  display: block;
+  width: 30%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  animation: generation-slide 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.correction-row {
+  transition: background-color 150ms ease, transform 150ms ease;
+}
+
+.correction-row:hover {
+  background: color-mix(in srgb, var(--accent) 3%, transparent);
+}

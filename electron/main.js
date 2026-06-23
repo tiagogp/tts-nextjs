@@ -3,8 +3,9 @@
 //
 // Boot sequence: native-capable Next server -> BrowserWindow.
 
-const { app, BrowserWindow, ipcMain, shell, utilityProcess } = require("electron");
+const { app, BrowserWindow, ipcMain, safeStorage, shell, utilityProcess } = require("electron");
 const { spawn, spawnSync } = require("node:child_process");
+const crypto = require("node:crypto");
 const http = require("node:http");
 const path = require("node:path");
 const fs = require("node:fs");
@@ -21,6 +22,8 @@ const FRONTEND_URL = `http://localhost:${FRONTEND_PORT}`;
 const APP_ICON_PNG = path.join(__dirname, "assets", "icon.png");
 const PRELOAD_JS = path.join(__dirname, "preload.js");
 const USER_ENV_FILE = path.join(app.getPath("userData"), "phraseloop.env");
+const AI_SETTINGS_FILE = path.join(app.getPath("userData"), "ai-settings.safe");
+const SETTINGS_TOKEN = crypto.randomBytes(32).toString("hex");
 
 /** @type {import('node:child_process').ChildProcess[]} */
 const children = [];
@@ -28,6 +31,77 @@ const children = [];
 const utilityChildren = [];
 let mainWindow = null;
 let shuttingDown = false;
+
+function cleanSetting(value, maxLength) {
+  return typeof value === "string" && value.trim()
+    ? value.trim().slice(0, maxLength)
+    : undefined;
+}
+
+function loadSecureAiSettings() {
+  if (!fs.existsSync(AI_SETTINGS_FILE) || !safeStorage.isEncryptionAvailable()) return {};
+  try {
+    const encrypted = Buffer.from(fs.readFileSync(AI_SETTINGS_FILE, "utf8"), "base64");
+    const parsed = JSON.parse(safeStorage.decryptString(encrypted));
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveSecureAiSettings(settings) {
+  if (!safeStorage.isEncryptionAvailable()) {
+    throw new Error("Secure system storage is unavailable on this device.");
+  }
+  const encrypted = safeStorage.encryptString(JSON.stringify(settings));
+  fs.mkdirSync(path.dirname(AI_SETTINGS_FILE), { recursive: true });
+  fs.writeFileSync(AI_SETTINGS_FILE, encrypted.toString("base64"), { mode: 0o600 });
+  fs.chmodSync(AI_SETTINGS_FILE, 0o600);
+}
+
+function safeDownloadFilename(value) {
+  const raw = typeof value === "string" ? value : "anki-deck.apkg";
+  const cleaned = raw
+    .trim()
+    .replace(/[\/\\:*?"<>|]/g, "_")
+    .replace(/\s+/g, " ")
+    .replace(/\.+$/, "")
+    .slice(0, 120);
+  const withExtension = cleaned.toLowerCase().endsWith(".apkg")
+    ? cleaned
+    : `${cleaned || "anki-deck"}.apkg`;
+  return path.basename(withExtension) || "anki-deck.apkg";
+}
+
+function uniqueDownloadPath(filename) {
+  const downloads = app.getPath("downloads");
+  const safe = safeDownloadFilename(filename);
+  const parsed = path.parse(safe);
+  let candidate = path.join(downloads, safe);
+  let index = 2;
+  while (fs.existsSync(candidate)) {
+    candidate = path.join(downloads, `${parsed.name} ${index}${parsed.ext || ".apkg"}`);
+    index += 1;
+  }
+  return candidate;
+}
+
+async function internalSettingsRequest(pathname, method, body) {
+  const response = await fetch(`${FRONTEND_URL}${pathname}`, {
+    method,
+    headers: {
+      "content-type": "application/json",
+      "x-phraseloop-settings-token": SETTINGS_TOKEN,
+    },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) throw new Error("PhraseLoop could not update its AI settings.");
+  return response.json();
+}
+
+async function syncSecureAiSettings() {
+  await internalSettingsRequest("/api/settings/runtime", "PUT", loadSecureAiSettings());
+}
 
 function parseEnvFile(file) {
   const parsed = {};
@@ -245,6 +319,11 @@ function createWindow() {
     }
     return { action: "allow" };
   });
+  mainWindow.webContents.on("will-navigate", (event, url) => {
+    if (url.startsWith(FRONTEND_URL)) return;
+    event.preventDefault();
+    void shell.openExternal(url);
+  });
 
   mainWindow.loadFile(path.join(__dirname, "loading.html"));
   mainWindow.webContents.on("did-finish-load", () => {
@@ -262,6 +341,72 @@ ipcMain.on("phrase-loop:toggle-fullscreen", (event) => {
   const window = BrowserWindow.fromWebContents(event.sender);
   if (!window) return;
   window.setFullScreen(!window.isFullScreen());
+});
+
+ipcMain.handle("phrase-loop:ai-settings-save", async (event, rawPatch) => {
+  try {
+    if (!event.senderFrame?.url.startsWith(FRONTEND_URL)) throw new Error("Untrusted settings request.");
+    const patch = rawPatch && typeof rawPatch === "object" ? rawPatch : {};
+    const current = loadSecureAiSettings();
+    const next = { ...current };
+    if (["ollama", "claude", "openai", "local"].includes(patch.defaultProvider)) {
+      next.defaultProvider = patch.defaultProvider;
+    }
+    for (const [input, stored, max] of [
+      ["ollamaBaseUrl", "ollamaBaseUrl", 2048],
+      ["ollamaModel", "ollamaModel", 100],
+      ["anthropicApiKey", "anthropicApiKey", 500],
+      ["openaiApiKey", "openaiApiKey", 500],
+    ]) {
+      if (!(input in patch)) continue;
+      const value = cleanSetting(patch[input], max);
+      if (value) next[stored] = value;
+      else delete next[stored];
+    }
+    saveSecureAiSettings(next);
+    await syncSecureAiSettings();
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "Could not save settings." };
+  }
+});
+
+ipcMain.handle("phrase-loop:ai-settings-test", async (event, provider, draft) => {
+  try {
+    if (!event.senderFrame?.url.startsWith(FRONTEND_URL)) throw new Error("Untrusted settings request.");
+    const result = await internalSettingsRequest("/api/settings/test", "POST", {
+      provider,
+      ...(draft && typeof draft === "object" ? draft : {}),
+    });
+    return {
+      ok: result.ok === true,
+      detail: typeof result.detail === "string" ? result.detail : "Connection test finished.",
+    };
+  } catch {
+    return { ok: false, detail: "Could not reach the PhraseLoop backend." };
+  }
+});
+
+ipcMain.handle("phrase-loop:save-apkg", async (event, filename, base64) => {
+  try {
+    if (!event.senderFrame?.url.startsWith(FRONTEND_URL)) {
+      throw new Error("Untrusted file save request.");
+    }
+    if (typeof base64 !== "string" || base64.length === 0) {
+      throw new Error("No Anki package data was generated.");
+    }
+    const bytes = Buffer.from(base64, "base64");
+    if (bytes.byteLength === 0) throw new Error("The generated Anki package is empty.");
+    if (bytes.byteLength > 200 * 1024 * 1024) throw new Error("The Anki package is too large to save.");
+    const outPath = uniqueDownloadPath(filename);
+    fs.writeFileSync(outPath, bytes);
+    return { ok: true, path: outPath };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Could not save the Anki package.",
+    };
+  }
 });
 
 function setStatus(text) {
@@ -310,6 +455,7 @@ async function boot() {
   const serviceEnv = {
     ...projectEnv(process.env.NODE_ENV || (built ? "production" : "development")),
     PHRASELOOP_DATA_DIR: dataDir,
+    PHRASELOOP_SETTINGS_TOKEN: SETTINGS_TOKEN,
   };
 
   // Frontend and all local ML services live in the standalone Node server.
@@ -326,6 +472,9 @@ async function boot() {
     spawnService("frontend", "npm", ["run", "dev"], PROJECT_ROOT, serviceEnv, {});
   }
   await waitFor(FRONTEND_URL, "Frontend");
+  await syncSecureAiSettings().catch((error) => {
+    console.error("AI settings sync failed:", error instanceof Error ? error.message : "unknown error");
+  });
 
   // Show it.
   if (mainWindow && !mainWindow.isDestroyed()) {

@@ -5,7 +5,7 @@ import path from "node:path";
 import { buildCardsDeck, buildCsvDeck } from "./native/apkg";
 import { dataDir } from "./native/data";
 import { audioPathFor, discoverArticle, discoverPdf, discoverYouTube } from "./native/discovery";
-import { modelStatus } from "./native/models";
+import { ensureKokoroModel, kokoroInstalled, modelStatus } from "./native/models";
 import { synthesize, transcribe } from "./native/speech";
 
 export interface LocalResponse {
@@ -20,6 +20,7 @@ interface LocalRequestOptions {
   headers?: Record<string, string>;
   body?: Buffer | string;
   timeoutMs?: number;
+  signal?: AbortSignal;
 }
 
 function response(status: number, body: Buffer | string | object = Buffer.alloc(0), headers: Record<string, string> = {}): LocalResponse {
@@ -40,10 +41,51 @@ function parseJson(body?: Buffer | string): Record<string, unknown> {
   return value;
 }
 
+const MODEL_NOT_READY_MESSAGE =
+  "O modelo de voz (Kokoro, ~349MB) ainda não está pronto. O download começou — acompanhe o progresso e refaça o export quando concluir.";
+
+// Gate every audio export behind the Kokoro model being on disk. Returns a
+// 409 (and starts the download) when it's missing, so the client gets an
+// actionable "still downloading" message instead of a generic failure that's
+// really just the model fetch happening inside the request.
+async function requireKokoro(): Promise<LocalResponse | null> {
+  if (await kokoroInstalled()) return null;
+  void ensureKokoroModel().catch(() => {});
+  const status = await modelStatus();
+  return response(409, {
+    error: MODEL_NOT_READY_MESSAGE,
+    code: "model_not_ready",
+    downloading: status.downloading_kokoro,
+    progress: status.download_progress ?? 0,
+  });
+}
+
+function isAbort(error: unknown): boolean {
+  return error instanceof Error && (error.name === "AbortError" || error.name === "TimeoutError");
+}
+
+// Synthesis/packaging failed for a reason that isn't "model missing" — keep the
+// real error in the server log, but tell the client which class it was.
+function synthesisFailure(error: unknown): LocalResponse {
+  console.error("apkg build failed:", error);
+  return response(500, {
+    error: "Falha ao sintetizar o áudio dos cards. Confira o log do servidor para o erro técnico.",
+    code: "synthesis_failed",
+  });
+}
+
 async function dispatch(requestPath: string, options: LocalRequestOptions): Promise<LocalResponse> {
   const method = options.method ?? "GET";
   if (requestPath === "/health") return response(200, { status: "ok", ready: true });
-  if (requestPath === "/status") return response(200, modelStatus());
+  if (requestPath === "/status") return response(200, await modelStatus());
+
+  if (requestPath === "/models/kokoro/ensure" && method === "POST") {
+    // Kick off the (large, one-time) Kokoro download without blocking the
+    // request. `ensureKokoroModel` dedupes concurrent calls, and progress is
+    // surfaced through `/status` (downloading_kokoro / download_progress).
+    void ensureKokoroModel().catch(() => {});
+    return response(202, await modelStatus());
+  }
 
   const voiceFile = path.join(dataDir(), "voice-reference.wav");
   const voiceName = path.join(dataDir(), "voice-reference.name");
@@ -118,28 +160,44 @@ async function dispatch(requestPath: string, options: LocalRequestOptions): Prom
     return response(200, await discoverPdf(body, name));
   }
   if (requestPath === "/anki/apkg") {
+    const notReady = await requireKokoro();
+    if (notReady) return notReady;
     const value = parseJson(options.body);
-    const body = await buildCsvDeck({
-      csv: Buffer.from(String(value.csvBase64 || ""), "base64"),
-      deck: String(value.deck || "PhraseLoop"),
-      ptCol: String(value.ptCol || "pt"),
-      enCol: String(value.enCol || "en"),
-      delimiter: String(value.delimiter || ",").slice(0, 1),
-      noHeader: value.noHeader === true,
-      voice: String(value.voice || "af_heart"),
-      speed: Number(value.speed) || 1.15,
-    });
-    return response(200, body, { "content-type": "application/octet-stream" });
+    try {
+      const body = await buildCsvDeck({
+        csv: Buffer.from(String(value.csvBase64 || ""), "base64"),
+        deck: String(value.deck || "PhraseLoop"),
+        ptCol: String(value.ptCol || "pt"),
+        enCol: String(value.enCol || "en"),
+        delimiter: String(value.delimiter || ",").slice(0, 1),
+        noHeader: value.noHeader === true,
+        voice: String(value.voice || "af_heart"),
+        speed: Number(value.speed) || 1.15,
+        signal: options.signal,
+      });
+      return response(200, body, { "content-type": "application/octet-stream" });
+    } catch (error) {
+      if (isAbort(error)) throw error;
+      return synthesisFailure(error);
+    }
   }
   if (requestPath === "/cards/apkg") {
+    const notReady = await requireKokoro();
+    if (notReady) return notReady;
     const value = parseJson(options.body);
-    const body = await buildCardsDeck({
-      cards: Array.isArray(value.cards) ? value.cards : [],
-      deck: String(value.deck || "PhraseLoop"),
-      voice: String(value.voice || "af_heart"),
-      speed: Number(value.speed) || 1.15,
-    });
-    return response(200, body, { "content-type": "application/octet-stream" });
+    try {
+      const body = await buildCardsDeck({
+        cards: Array.isArray(value.cards) ? value.cards : [],
+        deck: String(value.deck || "PhraseLoop"),
+        voice: String(value.voice || "af_heart"),
+        speed: Number(value.speed) || 1.15,
+        signal: options.signal,
+      });
+      return response(200, body, { "content-type": "application/octet-stream" });
+    } catch (error) {
+      if (isAbort(error)) throw error;
+      return synthesisFailure(error);
+    }
   }
   return response(404, { detail: "not found" });
 }
@@ -150,23 +208,53 @@ export async function localRequest(
 ): Promise<LocalResponse> {
   const timeoutMs = options.timeoutMs ?? 120_000;
   return new Promise<LocalResponse>((resolve, reject) => {
+    if (options.signal?.aborted) {
+      const error = new Error("PhraseLoop local request aborted");
+      error.name = "AbortError";
+      reject(error);
+      return;
+    }
+    const abort = () => {
+      clearTimeout(timer);
+      const error = new Error("PhraseLoop local request aborted");
+      error.name = "AbortError";
+      reject(error);
+    };
     const timer = setTimeout(() => {
+      options.signal?.removeEventListener("abort", abort);
       const error = new Error("PhraseLoop local request timed out");
       error.name = "TimeoutError";
       reject(error);
     }, timeoutMs);
+    options.signal?.addEventListener("abort", abort, { once: true });
     dispatch(requestPath, options).then(
-      (value) => { clearTimeout(timer); resolve(value); },
-      (error) => { clearTimeout(timer); reject(error); },
+      (value) => {
+        clearTimeout(timer);
+        options.signal?.removeEventListener("abort", abort);
+        resolve(value);
+      },
+      (error) => {
+        clearTimeout(timer);
+        options.signal?.removeEventListener("abort", abort);
+        reject(error);
+      },
     );
   });
 }
 
-export function localJson(requestPath: string, value: unknown, timeoutMs?: number): Promise<LocalResponse> {
+export function localJson(
+  requestPath: string,
+  value: unknown,
+  timeoutOrOptions?: number | { timeoutMs?: number; signal?: AbortSignal },
+): Promise<LocalResponse> {
+  const requestOptions =
+    typeof timeoutOrOptions === "number"
+      ? { timeoutMs: timeoutOrOptions }
+      : (timeoutOrOptions ?? {});
   return localRequest(requestPath, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(value),
-    timeoutMs,
+    ...requestOptions,
   });
 }
