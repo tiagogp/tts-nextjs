@@ -8,9 +8,10 @@
 
 import { Rating } from "@/lib/srs/fsrs";
 import type { ErrorEvent } from "@/lib/cards/schema";
-import type { ReviewRecord } from "@/lib/store/repository";
+import type { Conversation, ReviewRecord } from "@/lib/store/repository";
 
 const DAY_MS = 86_400_000;
+const WEEK_MS = 7 * DAY_MS;
 
 /* ──────────────────────────── D3: performance ──────────────────────────── */
 
@@ -62,6 +63,39 @@ export function computePerformance(
     streakDays: streak,
     daily,
   };
+}
+
+/* ──────────────────────────── Weekly exposure (Phase 3) ──────────────────────────── */
+
+/**
+ * How much the learner actually produced this week — all observable in-app, no self-reporting.
+ * "Exposure" here means *output*: conversations held, learner turns spoken, and reviews done.
+ * Drives the weekly meter so the user can tell whether they're coasting or overloading.
+ */
+export interface WeeklyActivity {
+  /** Conversations started in the last 7 days. */
+  conversations: number;
+  /** Learner (not assistant) turns across those conversations. */
+  turns: number;
+  /** Reviews graded in the last 7 days. */
+  reviews: number;
+}
+
+export function computeWeeklyActivity(
+  conversations: Conversation[],
+  reviews: ReviewRecord[],
+  now: number = Date.now(),
+): WeeklyActivity {
+  const since = now - WEEK_MS;
+  let conversationCount = 0;
+  let turns = 0;
+  for (const c of conversations) {
+    if (c.startedAt < since) continue;
+    conversationCount++;
+    for (const t of c.turns) if (t.role === "user") turns++;
+  }
+  const reviews7d = reviews.reduce((n, r) => (r.reviewedAt >= since ? n + 1 : n), 0);
+  return { conversations: conversationCount, turns, reviews: reviews7d };
 }
 
 /* ──────────────────────────── D4: weakness detection ──────────────────────────── */

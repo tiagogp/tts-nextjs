@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { detectWeaknesses } from "./analytics";
+import { computeWeeklyActivity, detectWeaknesses } from "./analytics";
 import { Rating, State, type Grade } from "./fsrs";
-import type { ReviewRecord } from "@/lib/store/repository";
+import type { Conversation, ReviewRecord } from "@/lib/store/repository";
 
 function review(partial: Partial<ReviewRecord> & { grade: Grade }): ReviewRecord {
   return {
@@ -45,5 +45,42 @@ describe("detectWeaknesses — context grouping", () => {
     ];
 
     expect(detectWeaknesses(clean).some((w) => w.label === "travel")).toBe(false);
+  });
+});
+
+describe("computeWeeklyActivity", () => {
+  const now = Date.parse("2026-06-23T12:00:00Z");
+  const dayMs = 86_400_000;
+
+  function convo(startedAt: number, userTurns: number): Conversation {
+    return {
+      id: crypto.randomUUID(),
+      scenario: "x",
+      context: "work",
+      targetLang: "en",
+      sourceLang: "pt",
+      turns: [
+        { role: "assistant", text: "hi" },
+        ...Array.from({ length: userTurns }, () => ({ role: "user" as const, text: "ok" })),
+      ],
+      startedAt,
+    };
+  }
+
+  it("counts conversations, learner turns, and reviews from the last 7 days only", () => {
+    const conversations = [
+      convo(now - 2 * dayMs, 3), // this week
+      convo(now - 6 * dayMs, 2), // this week
+      convo(now - 9 * dayMs, 5), // older — excluded
+    ];
+    const reviews: ReviewRecord[] = [
+      { id: "a", cardId: "c", grade: Rating.Good, reviewedAt: now - dayMs, previousState: State.Review, scheduledDays: 1, concept: "x" },
+      { id: "b", cardId: "c", grade: Rating.Again, reviewedAt: now - 10 * dayMs, previousState: State.Review, scheduledDays: 1, concept: "x" },
+    ];
+
+    const activity = computeWeeklyActivity(conversations, reviews, now);
+    expect(activity.conversations).toBe(2);
+    expect(activity.turns).toBe(5); // 3 + 2 learner turns; assistant turns ignored
+    expect(activity.reviews).toBe(1);
   });
 });

@@ -11,20 +11,28 @@ import {
   getDueCards,
   getReviews,
   getErrorEvents,
+  getConversations,
   recordReview,
   getCounts,
   getReinforcementCards,
   getReinforcementSources,
   saveCards,
+  type Conversation,
   type ReviewRecord,
 } from "@/lib/store/repository";
 import type { ErrorEvent } from "@/lib/cards/schema";
 import type { Grade } from "@/lib/srs/fsrs";
-import { computePerformance, detectWeaknesses, type Weakness } from "@/lib/srs/analytics";
+import {
+  computePerformance,
+  computeWeeklyActivity,
+  detectWeaknesses,
+  type Weakness,
+} from "@/lib/srs/analytics";
 import type { Card } from "@/lib/cards/schema";
 import { useAiSettings } from "@/features/settings/context/AiSettingsContext";
 import { StudyCard, type DueCard } from "./StudyCard";
 import { PerformanceStats } from "./PerformanceStats";
+import { ExposureMeter } from "./ExposureMeter";
 import { WeaknessList } from "./WeaknessList";
 
 export default function StudyTab() {
@@ -38,6 +46,7 @@ export default function StudyTab() {
   const [flipped, setFlipped] = useState(false);
   const [reviews, setReviews] = useState<ReviewRecord[]>([]);
   const [errorEvents, setErrorEvents] = useState<ErrorEvent[]>([]);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [counts, setCounts] = useState({ cards: 0, reviews: 0, due: 0 });
   const [reviewedThisSession, setReviewedThisSession] = useState(0);
   /** D5 — when set, the queue is a focused reinforcement drill, not the due queue. */
@@ -50,15 +59,17 @@ export default function StudyTab() {
   const [genError, setGenError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    const [due, allReviews, events, c] = await Promise.all([
+    const [due, allReviews, events, convos, c] = await Promise.all([
       getDueCards(),
       getReviews(),
       getErrorEvents(),
+      getConversations(),
       getCounts(),
     ]);
     setQueue(due);
     setReviews(allReviews);
     setErrorEvents(events);
+    setConversations(convos);
     setCounts(c);
     setFlipped(false);
   }, []);
@@ -192,6 +203,7 @@ export default function StudyTab() {
   }
 
   const stats = computePerformance(reviews);
+  const activity = computeWeeklyActivity(conversations, reviews);
   const weaknesses = detectWeaknesses(reviews, errorEvents);
 
   return (
@@ -223,6 +235,8 @@ export default function StudyTab() {
       />
 
       <PerformanceStats cardsCount={counts.cards} stats={stats} />
+
+      <ExposureMeter activity={activity} />
 
       {weaknesses.length > 0 && (
         <WeaknessList
