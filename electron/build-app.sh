@@ -15,7 +15,24 @@ APP="dist/$ARCH_DIR/PhraseLoop.app"
 
 echo "→ Building Next.js…"
 node scripts/fix-native-rpaths.mjs
+
+# Keep Next's compiler cache, but remove deployable output so release builds
+# cannot accidentally package a stale standalone server.
+if [ -d .next/cache ]; then
+  NEXT_CACHE_DIR="$(mktemp -d "${TMPDIR:-/tmp}/phraseloop-next-cache.XXXXXX")"
+  mv .next/cache "$NEXT_CACHE_DIR/cache"
+  rm -rf .next
+  mkdir -p .next
+  mv "$NEXT_CACHE_DIR/cache" .next/cache
+  rmdir "$NEXT_CACHE_DIR"
+else
+  rm -rf .next
+fi
+
 npm run build
+
+test -f .next/BUILD_ID
+test -f .next/standalone/server.js
 
 echo "→ Preparing standalone Next.js payload…"
 rm -rf .next/standalone/.next/static .next/standalone/public
