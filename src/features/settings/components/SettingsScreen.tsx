@@ -16,8 +16,10 @@ import { StatusPill, type StatusPillProps } from "@/components/ui/StatusPill";
 type StatusTone = NonNullable<StatusPillProps["tone"]>;
 
 const PROVIDER_COPY: Record<ProviderKind, string> = {
-  ollama: "Private and on-device. Recommended for the default PhraseLoop experience.",
-  claude: "Cloud AI from Anthropic. Your learning content is sent to Anthropic.",
+  ollama:
+    "Private and on-device. Recommended for the default PhraseLoop experience.",
+  claude:
+    "Cloud AI from Anthropic. Your learning content is sent to Anthropic.",
   openai: "Cloud AI from OpenAI. Your learning content is sent to OpenAI.",
   local: "Offline keyword heuristics. It cannot evaluate free-form writing.",
 };
@@ -32,7 +34,8 @@ function statusLabel(provider: ProviderStatus): string {
 
 function statusTone(provider: ProviderStatus): StatusTone {
   if (provider.state === "connected") return "success";
-  if (provider.state === "offline" || provider.state === "invalid") return "danger";
+  if (provider.state === "offline" || provider.state === "invalid")
+    return "danger";
   return "default";
 }
 
@@ -43,21 +46,39 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
   const [anthropicKey, setAnthropicKey] = useState("");
   const [openaiKey, setOpenaiKey] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
-  const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(null);
-  const [testResults, setTestResults] = useState<Partial<Record<ProviderKind, boolean>>>({});
+  const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(
+    null,
+  );
+  const [testResults, setTestResults] = useState<
+    Partial<Record<ProviderKind, boolean>>
+  >({});
 
-  const run = async (name: string, action: () => Promise<{ ok: boolean; error?: string; detail?: string }>) => {
+  const run = async (
+    name: string,
+    action: () => Promise<{ ok: boolean; error?: string; detail?: string }>,
+  ) => {
     setBusy(name);
     setNotice(null);
     const result = await action();
-    setNotice({ ok: result.ok, text: result.detail || result.error || (result.ok ? "Saved." : "Something went wrong.") });
+    setNotice({
+      ok: result.ok,
+      text:
+        result.detail ||
+        result.error ||
+        (result.ok ? "Saved." : "Something went wrong."),
+    });
     setBusy(null);
   };
 
   const chooseDefault = (defaultProvider: string) =>
-    run("default", () => save({ defaultProvider: defaultProvider as ProviderKind }));
+    run("default", () =>
+      save({ defaultProvider: defaultProvider as ProviderKind }),
+    );
 
-  const testConnection = async (kind: ProviderKind, draft: AiSettingsPatch = {}) => {
+  const testConnection = async (
+    kind: ProviderKind,
+    draft: AiSettingsPatch = {},
+  ) => {
     setBusy(`test-${kind}`);
     setNotice(null);
     const result = await test(kind, draft);
@@ -66,16 +87,27 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
     setBusy(null);
   };
 
-  const renderedStatus = (provider: ProviderStatus): { label: string; tone: StatusTone } => {
-    if (busy === `test-${provider.kind}`) return { label: "Testing", tone: "default" };
+  const renderedStatus = (
+    provider: ProviderStatus,
+  ): { label: string; tone: StatusTone } => {
+    if (busy === `test-${provider.kind}`)
+      return { label: "Testing", tone: "default" };
     if (testResults[provider.kind] === false) {
-      return { label: provider.kind === "ollama" ? "Offline" : "Invalid key", tone: "danger" };
+      return {
+        label: provider.kind === "ollama" ? "Offline" : "Invalid key",
+        tone: "danger",
+      };
     }
-    if (testResults[provider.kind] === true) return { label: "Connected", tone: "success" };
+    if (testResults[provider.kind] === true)
+      return { label: "Connected", tone: "success" };
     return { label: statusLabel(provider), tone: statusTone(provider) };
   };
 
-  const cloudCard = (kind: "claude" | "openai", key: string, setKey: (value: string) => void) => {
+  const cloudCard = (
+    kind: "claude" | "openai",
+    key: string,
+    setKey: (value: string) => void,
+  ) => {
     const provider = settings.providers.find((item) => item.kind === kind);
     const keyField = kind === "claude" ? "anthropicApiKey" : "openaiApiKey";
     const shownStatus = provider ? renderedStatus(provider) : null;
@@ -84,7 +116,11 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
         title={provider?.label ?? kind}
         description={PROVIDER_COPY[kind]}
         defaultOpen={settings.defaultProvider === kind}
-        badge={shownStatus && <StatusPill tone={shownStatus.tone}>{shownStatus.label}</StatusPill>}
+        badge={
+          shownStatus && (
+            <StatusPill tone={shownStatus.tone}>{shownStatus.label}</StatusPill>
+          )
+        }
       >
         <Field label="API key" htmlFor={`${kind}-key`}>
           <Input
@@ -93,7 +129,13 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
             autoComplete="off"
             value={key}
             onChange={(event) => setKey(event.target.value)}
-            placeholder={provider?.configured ? "Saved securely — enter a new key to replace it" : "Paste your API key"}
+            placeholder={
+              provider?.configured
+                ? settings.storage === "system"
+                  ? "Saved securely — enter a new key to replace it"
+                  : "Saved locally — enter a new key to replace it"
+                : "Paste your API key"
+            }
             disabled={!settings.writable || busy !== null}
           />
         </Field>
@@ -103,7 +145,9 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
             disabled={!settings.writable || !key.trim() || busy !== null}
             onClick={() =>
               run(`save-${kind}`, async () => {
-                const result = await save({ [keyField]: key } as AiSettingsPatch);
+                const result = await save({
+                  [keyField]: key,
+                } as AiSettingsPatch);
                 if (result.ok) setKey("");
                 return result;
               })
@@ -113,8 +157,17 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
           </Button>
           <Button
             variant="secondary"
-            disabled={!settings.writable || busy !== null || (!key.trim() && !provider?.configured)}
-            onClick={() => void testConnection(kind, key.trim() ? ({ [keyField]: key } as AiSettingsPatch) : {})}
+            disabled={
+              !settings.writable ||
+              busy !== null ||
+              (!key.trim() && !provider?.configured)
+            }
+            onClick={() =>
+              void testConnection(
+                kind,
+                key.trim() ? ({ [keyField]: key } as AiSettingsPatch) : {},
+              )
+            }
           >
             Test connection
           </Button>
@@ -123,8 +176,15 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
               variant="danger"
               disabled={!settings.writable || busy !== null}
               onClick={() => {
-                if (!window.confirm(`Remove the saved ${provider.label} credential?`)) return;
-                void run(`remove-${kind}`, () => save({ [keyField]: null } as AiSettingsPatch));
+                if (
+                  !window.confirm(
+                    `Remove the saved ${provider.label} credential?`,
+                  )
+                )
+                  return;
+                void run(`remove-${kind}`, () =>
+                  save({ [keyField]: null } as AiSettingsPatch),
+                );
               }}
             >
               Remove key
@@ -143,19 +203,26 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
         </IconButton>
         <div>
           <h2 className="text-xl font-semibold text-ink">Settings</h2>
-          <p className="text-sm text-ink-muted">Choose how PhraseLoop uses AI.</p>
+          <p className="text-sm text-ink-muted">
+            Choose how PhraseLoop uses AI.
+          </p>
         </div>
       </div>
 
       {notice && (
-        <Notice tone={notice.ok ? "success" : "error"} role="status" className="mb-5">
+        <Notice
+          tone={notice.ok ? "success" : "error"}
+          role="status"
+          className="mb-5"
+        >
           {notice.text}
         </Notice>
       )}
 
       {!settings.writable && !loading && (
         <Notice role="note" className="mb-5">
-          Settings are read-only in the browser. Configure providers with environment variables or open the desktop app.
+          Settings are read-only in the browser. Configure providers with
+          environment variables or open the desktop app.
         </Notice>
       )}
 
@@ -202,7 +269,10 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
               <Select
                 value={ollamaModel || settings.ollama.models[0]}
                 onChange={setOllamaModel}
-                options={settings.ollama.models.map((model) => ({ value: model, label: model }))}
+                options={settings.ollama.models.map((model) => ({
+                  value: model,
+                  label: model,
+                }))}
                 disabled={!settings.writable || busy !== null}
               />
             ) : (
@@ -220,18 +290,31 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
           <Button
             variant="secondary"
             disabled={!settings.writable || busy !== null}
-            onClick={() => run("save-ollama", () => save({ ollamaBaseUrl: ollamaUrl, ollamaModel }))}
+            onClick={() =>
+              run("save-ollama", () =>
+                save({ ollamaBaseUrl: ollamaUrl, ollamaModel }),
+              )
+            }
           >
             Save
           </Button>
           <Button
             variant="secondary"
             disabled={!settings.writable || busy !== null}
-            onClick={() => void testConnection("ollama", { ollamaBaseUrl: ollamaUrl, ollamaModel })}
+            onClick={() =>
+              void testConnection("ollama", {
+                ollamaBaseUrl: ollamaUrl,
+                ollamaModel,
+              })
+            }
           >
             Test connection
           </Button>
-          <Button variant="secondary" disabled={busy !== null} onClick={() => void refresh()}>
+          <Button
+            variant="secondary"
+            disabled={busy !== null}
+            onClick={() => void refresh()}
+          >
             Refresh models
           </Button>
         </div>
@@ -245,7 +328,9 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
       <section className="mt-3 flex items-center justify-between gap-4 rounded-lg border border-line px-4 py-3">
         <div>
           <h3 className="font-medium text-ink">Local heuristic</h3>
-          <p className="mt-0.5 text-xs text-ink-muted">Offline fallback for basic card generation.</p>
+          <p className="mt-0.5 text-xs text-ink-muted">
+            Offline fallback for basic card generation.
+          </p>
         </div>
         <StatusPill tone="success">Available</StatusPill>
       </section>
