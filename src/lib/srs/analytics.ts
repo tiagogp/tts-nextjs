@@ -76,9 +76,9 @@ export function computePerformance(
 export type WeaknessTrend = "improving" | "worsening" | "stable";
 
 export interface Weakness {
-  /** The grouping key — a concept string or an ErrorType. */
+  /** The grouping key — a concept string, an ErrorType, or a situational context. */
   label: string;
-  kind: "concept" | "errorType";
+  kind: "concept" | "errorType" | "context";
   reviews: number;
   /** Share graded Again or Hard — the higher, the weaker. */
   struggleRate: number;
@@ -206,6 +206,9 @@ export function detectWeaknesses(
   const trends = productionTrends(errorEvents, now);
   const byConcept = group(reviews, "concept", (r) => r.concept?.trim() || undefined);
   const byErrorType = group(reviews, "errorType", (r) => r.errorType);
+  // Where you keep getting stuck by *situation* ("work", "travel") — the dimension the
+  // conversation path stamps. Like concepts, contexts carry no production trend (stable).
+  const byContext = group(reviews, "context", (r) => r.context?.trim() || undefined);
   for (const w of byErrorType) {
     const t = trends.get(w.label);
     if (t) {
@@ -213,7 +216,7 @@ export function detectWeaknesses(
       w.trendDelta = t.trendDelta;
     }
   }
-  return [...byConcept, ...byErrorType]
+  return [...byConcept, ...byErrorType, ...byContext]
     .filter((w) => w.struggleRate > 0)
     .sort((a, b) => b.struggleRate - a.struggleRate || b.reviews - a.reviews);
 }

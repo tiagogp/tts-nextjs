@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { Field, Input } from "@/components/ui/Field";
 import { Segmented } from "@/components/ui/Segmented";
 import ProviderBadge from "@/components/ui/ProviderBadge";
 import Disclosure from "@/components/ui/Disclosure";
@@ -11,6 +12,7 @@ import { cn } from "@/lib/cn";
 import { fadeRise } from "@/lib/motion";
 import { saveCorrectionDeck } from "@/lib/store/repository";
 import type { ErrorEvent, ErrorType } from "@/lib/cards/schema";
+import { normalizeContext } from "@/lib/cards/context";
 import { DECK_GENERATION_TIMEOUT_MS } from "@/features/cards/constants";
 import { useProviderSelection } from "@/features/cards/hooks/useProviderSelection";
 import { useDeckGeneration } from "@/features/cards/hooks/useDeckGeneration";
@@ -41,6 +43,9 @@ export default function CorrectTab() {
   const kokoro = useKokoroModel();
   const [events, setEvents] = useState<ErrorEvent[]>([]);
   const [mode, setMode] = useState<CorrectionInputMode>("ai");
+  // Session-level situational context: one conversation/situation = one context. It stamps
+  // every mistake captured below (manual, AI, or JSON) so weak spots group by situation.
+  const [context, setContext] = useState("");
   const [draft, setDraft] = useState(newDraft());
   const [json, setJson] = useState("");
   const [importNote, setImportNote] = useState<string | null>(null);
@@ -120,6 +125,7 @@ export default function CorrectTab() {
         sourceLang: "pt",
         targetLang: "en",
         rationale: draft.rationale.trim() || undefined,
+        context: normalizeContext(context),
         createdAt: Date.now(),
       },
     ]);
@@ -135,7 +141,12 @@ export default function CorrectTab() {
         setImportNote("No usable corrections found (need `original` + `corrected`).");
         return;
       }
-      setEvents((prev) => [...prev, ...parsed]);
+      // The session context fills in for any imported event that didn't carry its own.
+      const sessionContext = normalizeContext(context);
+      const stamped = sessionContext
+        ? parsed.map((e) => (e.context ? e : { ...e, context: sessionContext }))
+        : parsed;
+      setEvents((prev) => [...prev, ...stamped]);
       setJson("");
       setImportNote(null);
       setGenDone(null);
@@ -172,7 +183,7 @@ export default function CorrectTab() {
     setAiNote(null);
     setGenDone(null);
     try {
-      const found = await evaluateCorrectionText({ provider, selectedModel, text });
+      const found = await evaluateCorrectionText({ provider, selectedModel, text, context });
       if (found.length === 0) {
         setAiNote("No mistakes found — that already reads natural. 🎉");
         return;
@@ -184,7 +195,7 @@ export default function CorrectTab() {
     } finally {
       setEvaluating(false);
     }
-  }, [aiText, evaluating, hasEvaluator, provider, selectedModel, setGenDone]);
+  }, [aiText, context, evaluating, hasEvaluator, provider, selectedModel, setGenDone]);
 
   // E2 (speech) — send a recorded clip to Whisper, then drop the text into the box so
   // the learner can review/edit before it's evaluated (human-in-the-loop, like Discover).
@@ -276,6 +287,22 @@ export default function CorrectTab() {
             ]}
           />
         </div>
+
+        <Field
+          label={
+            <>
+              Situation <span className="font-normal lowercase opacity-70">— optional</span>
+            </>
+          }
+          hint="Tags every mistake below, so your weak spots group by situation — not just grammar."
+        >
+          <Input
+            type="text"
+            value={context}
+            onChange={(event) => setContext(event.target.value)}
+            placeholder="work, travel, ordering at a restaurant…"
+          />
+        </Field>
 
         <AnimatePresence mode="wait" initial={false}>
           <motion.div

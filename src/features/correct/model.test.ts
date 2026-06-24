@@ -26,4 +26,14 @@ describe("correction model", () => {
       },
     ]);
   });
+
+  it("normalizes a situational context from JSON", () => {
+    const [event] = parseErrorsJson('{"original":"a","corrected":"b","context":"  Work Meeting "}');
+    expect(event.context).toBe("work meeting");
+  });
+
+  it("leaves context undefined when absent", () => {
+    const [event] = parseErrorsJson('{"original":"a","corrected":"b"}');
+    expect(event.context).toBeUndefined();
+  });
 });

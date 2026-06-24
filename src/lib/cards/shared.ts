@@ -261,6 +261,9 @@ export function normalizeGenerated(raw: GenerateResult, source: CardSource): Car
   const now = Date.now();
   const ref = sourceRef(source);
   const clip = source.kind === "phrase" ? source.candidate.audioClipPath : undefined;
+  // Cards inherit their source's situational context (correction path only for now;
+  // PhraseCandidate carries none yet). Set by code, like the source pointer.
+  const context = source.kind === "error" ? source.event.context : undefined;
   const out: Card[] = [];
   for (const c of raw.cards ?? []) {
     const front = (c.front ?? "").trim();
@@ -275,6 +278,7 @@ export function normalizeGenerated(raw: GenerateResult, source: CardSource): Car
       // card can never claim a source it didn't come from.
       source: ref,
       errorType: source.kind === "error" ? coerceErrorType(c.errorType) : undefined,
+      context,
       audioClipPath: clip,
       createdAt: now,
     });
@@ -442,6 +446,7 @@ export function normalizeCorrected(
   raw: CorrectResult,
   sourceLang: string,
   targetLang: string,
+  context?: string,
 ): ErrorEvent[] {
   const now = Date.now();
   const out: ErrorEvent[] = [];
@@ -461,6 +466,7 @@ export function normalizeCorrected(
       sourceLang,
       targetLang,
       rationale: (e.rationale ?? "").trim() || undefined,
+      context,
       createdAt: now,
     });
   }

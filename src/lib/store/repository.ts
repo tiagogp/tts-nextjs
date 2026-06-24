@@ -35,6 +35,8 @@ export interface ReviewRecord {
   /** Denormalized so weakness detection survives card deletion. */
   concept: string;
   errorType?: ErrorType;
+  /** Denormalized situational context (see `Card.context`) for context-grouped weakness. */
+  context?: string;
 }
 
 /* ──────────────────────────── sources ──────────────────────────── */
@@ -149,6 +151,7 @@ export async function recordReview(
     scheduledDays,
     concept: card.concept,
     errorType: card.errorType,
+    context: card.context,
   };
   await put(STORES.reviews, review);
   return next;
@@ -158,22 +161,26 @@ export function getReviews(): Promise<ReviewRecord[]> {
   return getAll<ReviewRecord>(STORES.reviews);
 }
 
+/** Which weakness dimension a card is matched on. */
+export type WeaknessRef = { label: string; kind: "concept" | "errorType" | "context" };
+
+function cardMatchesWeakness(card: Card, weakness: WeaknessRef): boolean {
+  if (weakness.kind === "concept") return card.concept === weakness.label;
+  if (weakness.kind === "errorType") return card.errorType === weakness.label;
+  return card.context === weakness.label;
+}
+
 /**
- * D5 — reinforcement: pull every card for a weak concept/error-type into a focused
+ * D5 — reinforcement: pull every card for a weak concept/error-type/context into a focused
  * drill, regardless of FSRS due date. This is what closes the "tutor" loop — a
  * `Weakness` from `detectWeaknesses` stops being a report and becomes an actionable
  * session. Cards without SRS state (shouldn't happen, but be safe) are skipped.
  */
-export async function getReinforcementCards(weakness: {
-  label: string;
-  kind: "concept" | "errorType";
-}): Promise<{ card: Card; srs: SrsRecord }[]> {
+export async function getReinforcementCards(
+  weakness: WeaknessRef,
+): Promise<{ card: Card; srs: SrsRecord }[]> {
   const cards = await getCards();
-  const matches = cards.filter((c) =>
-    weakness.kind === "concept"
-      ? c.concept === weakness.label
-      : c.errorType === weakness.label,
-  );
+  const matches = cards.filter((c) => cardMatchesWeakness(c, weakness));
   const out: { card: Card; srs: SrsRecord }[] = [];
   for (const card of matches) {
     const srs = await getSrs(card.id);
@@ -187,16 +194,11 @@ export async function getReinforcementCards(weakness: {
  * Feeding these back into generation produces fresh, still-grounded variant cards that
  * drill the same weakness — directed generation without needing new material.
  */
-export async function getReinforcementSources(weakness: {
-  label: string;
-  kind: "concept" | "errorType";
-}): Promise<{ candidates: PhraseCandidate[]; errors: ErrorEvent[] }> {
+export async function getReinforcementSources(
+  weakness: WeaknessRef,
+): Promise<{ candidates: PhraseCandidate[]; errors: ErrorEvent[] }> {
   const cards = await getCards();
-  const matches = cards.filter((c) =>
-    weakness.kind === "concept"
-      ? c.concept === weakness.label
-      : c.errorType === weakness.label,
-  );
+  const matches = cards.filter((c) => cardMatchesWeakness(c, weakness));
   const phraseIds = new Set<string>();
   const errorIds = new Set<string>();
   for (const c of matches) {

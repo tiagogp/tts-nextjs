@@ -38,6 +38,14 @@ export interface ErrorEvent {
   targetLang: string;
   /** Free-form note from the correction tool (why it was wrong). Optional. */
   rationale?: string;
+  /**
+   * Situational context the mistake happened in, normalized (e.g. "work",
+   * "restaurant", "job-interview"). Orthogonal to `errorType` (the grammatical
+   * category): it's *where* you got stuck, not *what* was wrong. Drives
+   * context-grouped weakness detection and context-targeted generation. A
+   * conversation stamps every error it produces with its scenario.
+   */
+  context?: string;
   createdAt: number;
 }
 
@@ -131,6 +139,8 @@ export interface Card {
   concept: string;
   /** Set for correction-path cards; undefined for discovery-path cards. */
   errorType?: ErrorType;
+  /** Situational context inherited from the source (see `ErrorEvent.context`). */
+  context?: string;
   /** Pointer back to the source — grounding / anti-hallucination. */
   source: CardSourceRef;
   /** When a native audio clip is available (discovery path), the path to embed. */

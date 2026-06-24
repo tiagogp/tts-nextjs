@@ -139,7 +139,7 @@ export class OpenAIProvider implements CardGenerationProvider {
     const sourceLang = opts.sourceLang ?? this.learnerLang;
     const targetLang = opts.targetLang ?? "en";
     const raw = await this.json(buildCorrectRequest(text, sourceLang, targetLang), options);
-    return normalizeCorrected(raw, sourceLang, targetLang);
+    return normalizeCorrected(raw, sourceLang, targetLang, opts.context);
   }
 
   /** Real semantic dedup (A5): one embedding per card fingerprint. */

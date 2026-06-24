@@ -1,4 +1,5 @@
 import type { ErrorEvent, ErrorType } from "@/lib/cards/schema";
+import { normalizeContext } from "@/lib/cards/context";
 
 export type CorrectionInputMode = "ai" | "manual" | "json";
 
@@ -53,6 +54,7 @@ export function parseErrorsJson(raw: string): ErrorEvent[] {
       sourceLang: typeof o.sourceLang === "string" ? o.sourceLang : "pt",
       targetLang: typeof o.targetLang === "string" ? o.targetLang : "en",
       rationale: typeof o.rationale === "string" && o.rationale.trim() ? o.rationale.trim() : undefined,
+      context: normalizeContext(typeof o.context === "string" ? o.context : undefined),
       createdAt: now,
     });
   }

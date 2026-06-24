@@ -28,6 +28,8 @@ export interface CorrectOptions {
   sourceLang?: string;
   /** Language being learned / corrected. Default "en". */
   targetLang?: string;
+  /** Situational context to stamp on every ErrorEvent found (already normalized). */
+  context?: string;
 }
 
 export type ProviderKind = "local" | "ollama" | "claude" | "openai";

@@ -10,6 +10,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { safeStr } from "@/lib/cards/intake";
+import { normalizeContext } from "@/lib/cards/context";
 import { isProviderAvailable, resolveProvider } from "@/lib/cards/registry";
 import type { ProviderKind } from "@/lib/cards/provider";
 import { getDefaultProvider } from "@/server/aiSettings";
@@ -73,6 +74,7 @@ export async function POST(req: NextRequest) {
 
     const sourceLang = safeStr(obj.sourceLang, "pt", 16);
     const targetLang = safeStr(obj.targetLang, "en", 16);
+    const context = normalizeContext(safeStr(obj.context, "", 100));
     const model = safeStr(obj.ollamaModel, "", 100) || undefined;
 
     const provider = resolveProvider(kind, { learnerLang: sourceLang, model });
@@ -86,7 +88,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const events = await provider.correct(text, { sourceLang, targetLang });
+    const events = await provider.correct(text, { sourceLang, targetLang, context });
     // No errors found is a success — the learner's text was already native-correct.
     return NextResponse.json({ events, count: events.length });
   } catch (err: unknown) {

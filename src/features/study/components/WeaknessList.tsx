@@ -15,13 +15,19 @@ interface WeaknessListProps {
   onGenerate: (weakness: Weakness) => void;
 }
 
+const WEAKNESS_KIND_LABEL: Record<Weakness["kind"], string> = {
+  errorType: "error type",
+  concept: "concept",
+  context: "situation",
+};
+
 export function WeaknessList({ weaknesses, genError, generatingKey, onPractice, onGenerate }: WeaknessListProps) {
   return (
     <Card className="p-5">
       <p className="mb-1 text-sm font-semibold tracking-[-0.01em] text-ink">Weak spots</p>
       <p className="mb-4 text-xs text-ink-muted">
-        Concepts and error types you keep struggling with — worst first. ↓/↑ shows whether that error is slowing
-        down or piling up in your writing.
+        Concepts, error types, and situations you keep struggling with — worst first. ↓/↑ shows whether that error
+        is slowing down or piling up in your writing.
       </p>
       {genError && <p className="mb-3 text-xs text-danger">{genError}</p>}
       <motion.ul className="space-y-2" variants={staggerContainer} initial="hidden" animate="show">
@@ -37,7 +43,7 @@ export function WeaknessList({ weaknesses, genError, generatingKey, onPractice, 
               <div className="min-w-0 flex-1 basis-40">
                 <p className="truncate text-sm text-ink">{weakness.label}</p>
                 <p className="text-xs text-ink-muted">
-                  {weakness.kind === "errorType" ? "error type" : "concept"} · {weakness.reviews} reviews
+                  {WEAKNESS_KIND_LABEL[weakness.kind]} · {weakness.reviews} reviews
                 </p>
               </div>
               <div className="hidden w-24 shrink-0 sm:block">

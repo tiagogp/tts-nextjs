@@ -52,6 +52,8 @@ export async function evaluateCorrectionText(input: {
   provider: ProviderKind;
   selectedModel?: string;
   text: string;
+  /** Situational context to stamp on the mistakes found (e.g. "work", "travel"). */
+  context?: string;
 }): Promise<ErrorEvent[]> {
   const response = await fetch("/api/cards/correct", {
     method: "POST",
@@ -62,6 +64,7 @@ export async function evaluateCorrectionText(input: {
       text: input.text,
       sourceLang: "pt",
       targetLang: "en",
+      context: input.context || undefined,
     }),
   });
   const data = (await response.json().catch(() => ({}))) as {
