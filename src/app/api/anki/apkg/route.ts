@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { isPlainObject } from "@/lib/isObject";
 import { contentDispositionAttachment } from "@/server/anki";
 import { localJson } from "@/server/localRuntime";
+import {
+  apkgDebugLogPath,
+  createApkgDebugId,
+  validateApkgBytes,
+  writeApkgDebug,
+} from "@/server/native/apkgDebug";
 
 export const runtime = "nodejs";
 export const maxDuration = 600;
@@ -27,10 +33,6 @@ function readErrorPayload(body: Buffer): ApkgErrorPayload {
   } catch {
     return {};
   }
-}
-
-function ankiRouteLog(step: string, details: Record<string, unknown> = {}): void {
-  console.info("[api/anki/apkg]", step, details);
 }
 
 function isTimeoutOrAbort(error: unknown): boolean {
@@ -191,6 +193,8 @@ function jsonToCsvBytes(opts: {
 
 export async function POST(req: NextRequest) {
   const startedAt = Date.now();
+  const debugId = createApkgDebugId();
+  const debugLog = apkgDebugLogPath();
   try {
     const contentType = (req.headers.get("content-type") ?? "").toLowerCase();
     const contentLength = Number(req.headers.get("content-length") ?? "0") || 0;
@@ -210,9 +214,10 @@ export async function POST(req: NextRequest) {
     let enKokoroSpeed = 1.15;
     let enKokoroLang: string | null = null;
     let csvBytes: Buffer;
-    ankiRouteLog("request received", {
+    writeApkgDebug(debugId, "api-request-received", {
       contentType,
       contentLength,
+      debugLog,
     });
 
     if (contentType.includes("application/json")) {
@@ -334,7 +339,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    ankiRouteLog("runtime export requested", {
+    writeApkgDebug(debugId, "api-runtime-export-requested", {
       deck,
       bytes: csvBytes.byteLength,
       ptCol,
@@ -347,26 +352,58 @@ export async function POST(req: NextRequest) {
 
     const exported = await localJson("/anki/apkg", {
       csvBase64: csvBytes.toString("base64"), deck, ptCol, enCol, delimiter,
-      noHeader, voice: enKokoroVoice, speed: enKokoroSpeed, lang: enKokoroLang,
+      noHeader, voice: enKokoroVoice, speed: enKokoroSpeed, lang: enKokoroLang, debugId,
     }, { timeoutMs: APKG_EXPORT_TIMEOUT_MS, signal: req.signal });
     if (exported.status < 200 || exported.status >= 300) {
       const payload = readErrorPayload(exported.body);
       console.error("Anki runtime failed:", exported.status, payload);
+      writeApkgDebug(debugId, "api-runtime-export-failed", {
+        status: exported.status,
+        payload,
+      });
       return NextResponse.json(
         {
           error: payload.error ?? PUBLIC_APKG_ERROR,
           code: payload.code,
           downloading: payload.downloading,
           progress: payload.progress,
+          debugId,
+          debugLog,
         },
-        { status: exported.status },
+        {
+          status: exported.status,
+          headers: {
+            "X-PhraseLoop-Apkg-Debug-Id": debugId,
+            "X-PhraseLoop-Apkg-Debug-Log": debugLog,
+          },
+        },
       );
     }
 
     const apkg = exported.body;
+    const validation = await validateApkgBytes(apkg);
+    writeApkgDebug(debugId, "api-apkg-validation", validation as unknown as Record<string, unknown>);
+    if (!validation.ok) {
+      return NextResponse.json(
+        {
+          error: "O .apkg foi gerado, mas falhou na validação interna. Confira o debugLog.",
+          code: "apkg_validation_failed",
+          debugId,
+          debugLog,
+          validation,
+        },
+        {
+          status: 500,
+          headers: {
+            "X-PhraseLoop-Apkg-Debug-Id": debugId,
+            "X-PhraseLoop-Apkg-Debug-Log": debugLog,
+          },
+        },
+      );
+    }
     const filenameUtf8 = `${deck.trim() || "anki-deck"}.apkg`;
     const disposition = contentDispositionAttachment(filenameUtf8);
-    ankiRouteLog("response ready", {
+    writeApkgDebug(debugId, "api-response-ready", {
       deck,
       bytes: apkg.byteLength,
       durationMs: Date.now() - startedAt,
@@ -378,14 +415,42 @@ export async function POST(req: NextRequest) {
         "Content-Type": "application/octet-stream",
         "Content-Disposition": disposition,
         "Content-Length": apkg.byteLength.toString(),
+        "X-PhraseLoop-Apkg-Debug-Id": debugId,
+        "X-PhraseLoop-Apkg-Debug-Log": debugLog,
       },
     });
   } catch (err: unknown) {
     if (isTimeoutOrAbort(err)) {
       console.error("Anki export timed out or was aborted:", err);
-      return NextResponse.json({ error: PUBLIC_APKG_TIMEOUT_ERROR }, { status: 504 });
+      writeApkgDebug(debugId, "api-export-timeout-or-abort", {
+        error: err instanceof Error ? err.message : "unknown",
+        durationMs: Date.now() - startedAt,
+      });
+      return NextResponse.json(
+        { error: PUBLIC_APKG_TIMEOUT_ERROR, debugId, debugLog },
+        {
+          status: 504,
+          headers: {
+            "X-PhraseLoop-Apkg-Debug-Id": debugId,
+            "X-PhraseLoop-Apkg-Debug-Log": debugLog,
+          },
+        },
+      );
     }
     console.error("Anki export error:", err);
-    return NextResponse.json({ error: PUBLIC_APKG_ERROR }, { status: 500 });
+    writeApkgDebug(debugId, "api-export-error", {
+      error: err instanceof Error ? err.message : "unknown",
+      durationMs: Date.now() - startedAt,
+    });
+    return NextResponse.json(
+      { error: PUBLIC_APKG_ERROR, debugId, debugLog },
+      {
+        status: 500,
+        headers: {
+          "X-PhraseLoop-Apkg-Debug-Id": debugId,
+          "X-PhraseLoop-Apkg-Debug-Log": debugLog,
+        },
+      },
+    );
   }
 }

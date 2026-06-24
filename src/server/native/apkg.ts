@@ -1,37 +1,79 @@
 import "server-only";
 
-import { createHash } from "node:crypto";
+import { createHash, randomFillSync } from "node:crypto";
 import { createRequire } from "node:module";
-import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
-import path from "node:path";
 import { parse } from "csv-parse/sync";
-import initSqlJs, { type SqlJsStatic } from "sql.js";
+import type initSqlJsType from "sql.js";
+import type { SqlJsStatic } from "sql.js";
 import { Deck, Model, Note, Package } from "ankipack";
 import { audioPathFor } from "./discovery";
 import { decodeAudio, sliceDecodedAudio, type DecodedAudio } from "./audio";
+import { writeApkgDebug } from "./apkgDebug";
 import { synthesize } from "./speech";
 
 const require = createRequire(import.meta.url);
+const initSqlJs = require("sql.js/dist/sql-asm.js") as typeof initSqlJsType;
 let sqlPromise: Promise<SqlJsStatic> | null = null;
 
-function sqlWasmPath(): string {
-  const moduleEntry = require.resolve("sql.js");
-  const candidates = [
-    path.join(path.dirname(moduleEntry), "sql-wasm.wasm"),
-    path.join(process.cwd(), "node_modules", "sql.js", "dist", "sql-wasm.wasm"),
-  ];
-  const resourcesPath = (process as NodeJS.Process & { resourcesPath?: string }).resourcesPath;
-  if (resourcesPath) {
-    candidates.push(path.join(resourcesPath, "native", "sql-wasm.wasm"));
-  }
-  return candidates.find((candidate) => existsSync(candidate)) ?? candidates[0];
-}
-
 function sql(): Promise<SqlJsStatic> {
-  sqlPromise ??= initSqlJs({ locateFile: () => sqlWasmPath() });
+  sqlPromise ??= initSqlJs();
   return sqlPromise;
 }
+
+const nativeCrypto = globalThis.crypto;
+const nativeDigest = nativeCrypto?.subtle?.digest?.bind(nativeCrypto.subtle);
+
+function digestAlgorithmName(algorithm: AlgorithmIdentifier): string {
+  return typeof algorithm === "string" ? algorithm : algorithm.name;
+}
+
+function digestData(data: BufferSource): Buffer {
+  if (data instanceof ArrayBuffer) return Buffer.from(data);
+  return Buffer.from(data.buffer, data.byteOffset, data.byteLength);
+}
+
+async function nodeDigest(algorithm: AlgorithmIdentifier, data: BufferSource): Promise<ArrayBuffer> {
+  const normalized = digestAlgorithmName(algorithm).toUpperCase().replace(/[^A-Z0-9]/g, "");
+  if (normalized === "SHA1") {
+    const digest = createHash("sha1").update(digestData(data)).digest();
+    return digest.buffer.slice(digest.byteOffset, digest.byteOffset + digest.byteLength);
+  }
+  if (nativeDigest) return nativeDigest(algorithm, data);
+  throw new Error(`Unsupported digest algorithm: ${digestAlgorithmName(algorithm)}`);
+}
+
+function nodeGetRandomValues<T extends ArrayBufferView | null>(array: T): T {
+  if (array) {
+    randomFillSync(new Uint8Array(array.buffer, array.byteOffset, array.byteLength));
+  }
+  return array;
+}
+
+function installAnkipackCryptoShim(): void {
+  const subtle = Object.create(nativeCrypto?.subtle ?? null) as SubtleCrypto;
+  Object.defineProperty(subtle, "digest", {
+    configurable: true,
+    value: nodeDigest,
+  });
+  const crypto = Object.create(nativeCrypto ?? null) as Crypto;
+  Object.defineProperties(crypto, {
+    subtle: {
+      configurable: true,
+      value: subtle,
+    },
+    getRandomValues: {
+      configurable: true,
+      value: nodeGetRandomValues,
+    },
+  });
+  Object.defineProperty(globalThis, "crypto", {
+    configurable: true,
+    value: crypto,
+  });
+}
+
+installAnkipackCryptoShim();
 
 function sha1(value: string): string {
   return createHash("sha1").update(value).digest("hex");
@@ -41,8 +83,8 @@ function stableId(namespace: string, name: string): number {
   return Number.parseInt(sha1(`${namespace}|${name}`).slice(0, 8), 16) & 0x7fffffff;
 }
 
-function logApkg(step: string, details: Record<string, unknown> = {}): void {
-  console.info("[apkg]", step, details);
+function logApkg(debugId: string | undefined, step: string, details: Record<string, unknown> = {}): void {
+  writeApkgDebug(debugId, step, details);
 }
 
 function mediaFilenamePart(value: string): string {
@@ -84,10 +126,13 @@ function cardModel(): Model {
   });
 }
 
-async function output(pkg: Package): Promise<Buffer> {
+async function output(pkg: Package, debugId?: string): Promise<Buffer> {
   const start = Date.now();
-  const bytes = Buffer.from(await pkg.toUint8Array(await sql()));
-  logApkg("package finalized", {
+  logApkg(debugId, "package-finalize-started");
+  const sqlInstance = await sql();
+  logApkg(debugId, "sql-initialized");
+  const bytes = Buffer.from(await pkg.toUint8Array(sqlInstance));
+  logApkg(debugId, "package-finalized", {
     bytes: bytes.byteLength,
     durationMs: Date.now() - start,
   });
@@ -124,6 +169,7 @@ export async function buildCsvDeck(options: {
   speed: number;
   synthesizer?: typeof synthesize;
   signal?: AbortSignal;
+  debugId?: string;
 }): Promise<Buffer> {
   const startedAt = Date.now();
   const text = options.csv.toString("utf8").replace(/^\uFEFF/, "");
@@ -139,7 +185,7 @@ export async function buildCsvDeck(options: {
   const pkg = new Package();
   const media = new Set<string>();
   let notes = 0;
-  logApkg("csv export started", {
+  logApkg(options.debugId, "csv-export-started", {
     deck: options.deck,
     rows: rows.length,
     voice: options.voice,
@@ -147,6 +193,7 @@ export async function buildCsvDeck(options: {
   });
   for (const row of rows) {
     throwIfAborted(options.signal);
+    const rowStartedAt = Date.now();
     const pt = column(row, options.ptCol, !options.noHeader);
     const en = column(row, options.enCol, !options.noHeader);
     if (!pt && !en) continue;
@@ -154,12 +201,29 @@ export async function buildCsvDeck(options: {
     if (en) {
       const filename = `anki_tts_en_${sha1(`${options.voice}|${options.speed}|${en}`).slice(0, 12)}.wav`;
       if (!media.has(filename)) {
-        pkg.addMedia(filename, await (options.synthesizer ?? synthesize)({
+        logApkg(options.debugId, "csv-tts-started", {
+          row: notes + 1,
+          filename,
+          textChars: en.length,
+        });
+        const audio = await (options.synthesizer ?? synthesize)({
           text: en,
           voice: options.voice,
           speed: options.speed,
-        }));
+        });
+        logApkg(options.debugId, "csv-tts-finished", {
+          row: notes + 1,
+          filename,
+          audioBytes: audio.byteLength,
+          durationMs: Date.now() - rowStartedAt,
+        });
+        pkg.addMedia(filename, audio);
         media.add(filename);
+        logApkg(options.debugId, "csv-media-added", {
+          row: notes + 1,
+          filename,
+          media: media.size,
+        });
       }
       front += `<br>[sound:${filename}]`;
     }
@@ -170,18 +234,23 @@ export async function buildCsvDeck(options: {
       tags: ["tts-import"],
     }));
     notes += 1;
+    logApkg(options.debugId, "csv-note-added", {
+      row: notes,
+      hasAudio: Boolean(en),
+      durationMs: Date.now() - rowStartedAt,
+    });
   }
   if (notes === 0) {
     throw new Error("No usable notes were found for the Anki deck.");
   }
   pkg.addDeck(deck);
-  logApkg("csv notes ready", {
+  logApkg(options.debugId, "csv-notes-ready", {
     deck: options.deck,
     notes,
     media: media.size,
     durationMs: Date.now() - startedAt,
   });
-  return output(pkg);
+  return output(pkg, options.debugId);
 }
 
 interface ExportCard {
@@ -204,6 +273,7 @@ export async function buildCardsDeck(options: {
   audioDecoder?: typeof decodeAudio;
   synthesizer?: typeof synthesize;
   signal?: AbortSignal;
+  debugId?: string;
 }): Promise<Buffer> {
   const startedAt = Date.now();
   const model = cardModel();
@@ -215,7 +285,7 @@ export async function buildCardsDeck(options: {
   const resolveAudioPath = options.audioPathResolver ?? audioPathFor;
   const readAudio = options.audioReader ?? readFile;
   const decode = options.audioDecoder ?? decodeAudio;
-  logApkg("card export started", {
+  logApkg(options.debugId, "card-export-started", {
     deck: options.deck,
     cards: options.cards.length,
     voice: options.voice,
@@ -226,10 +296,23 @@ export async function buildCardsDeck(options: {
     if (!cached) {
       cached = (async () => {
         const sourcePath = await resolveAudioPath(sourceId);
+        logApkg(options.debugId, "card-source-audio-resolved", {
+          sourceId,
+          sourcePath,
+        });
         if (!sourcePath) return null;
-        return decode(await readAudio(sourcePath));
+        const sourceAudio = await readAudio(sourcePath);
+        logApkg(options.debugId, "card-source-audio-read", {
+          sourceId,
+          bytes: sourceAudio.byteLength,
+        });
+        return decode(sourceAudio);
       })().catch((error) => {
         console.error("Failed to decode source audio for card clip:", error);
+        logApkg(options.debugId, "card-source-audio-decode-failed", {
+          sourceId,
+          error: error instanceof Error ? error.message : "unknown",
+        });
         return null;
       });
       decodedBySourceId.set(sourceId, cached);
@@ -238,6 +321,7 @@ export async function buildCardsDeck(options: {
   };
   for (const card of options.cards) {
     throwIfAborted(options.signal);
+    const cardStartedAt = Date.now();
     const front = String(card.front ?? "").trim();
     const back = String(card.back ?? "").trim();
     if (!front || !back) continue;
@@ -253,24 +337,50 @@ export async function buildCardsDeck(options: {
       const decoded = await getDecodedSource(sourceId);
       throwIfAborted(options.signal);
       if (decoded) {
+        logApkg(options.debugId, "card-clip-slice-started", {
+          card: notes + 1,
+          sourceId,
+          startMs,
+          endMs,
+        });
         audio = sliceDecodedAudio(decoded, startMs, endMs);
         filename = `clip_${mediaFilenamePart(sourceId)}_${Math.round(startMs)}_${Math.round(endMs)}.wav`;
+        logApkg(options.debugId, "card-clip-slice-finished", {
+          card: notes + 1,
+          filename,
+          audioBytes: audio.byteLength,
+        });
       }
     }
     if (!audio) {
       throwIfAborted(options.signal);
       const text = String(card.audioText ?? back).trim() || back;
       filename = `anki_tts_en_${sha1(`${options.voice}|${options.speed ?? 1.15}|${text}`).slice(0, 12)}.wav`;
+      logApkg(options.debugId, "card-tts-started", {
+        card: notes + 1,
+        filename,
+        textChars: text.length,
+      });
       audio = await (options.synthesizer ?? synthesize)({
         text,
         voice: options.voice,
         speed: options.speed ?? 1.15,
+      });
+      logApkg(options.debugId, "card-tts-finished", {
+        card: notes + 1,
+        filename,
+        audioBytes: audio.byteLength,
       });
       throwIfAborted(options.signal);
     }
     if (!media.has(filename)) {
       pkg.addMedia(filename, audio);
       media.add(filename);
+      logApkg(options.debugId, "card-media-added", {
+        card: notes + 1,
+        filename,
+        media: media.size,
+      });
     }
     deck.addNote(new Note({
       model,
@@ -286,17 +396,22 @@ export async function buildCardsDeck(options: {
       tags: ["card-pipeline"],
     }));
     notes += 1;
+    logApkg(options.debugId, "card-note-added", {
+      card: notes,
+      filename,
+      durationMs: Date.now() - cardStartedAt,
+    });
   }
   if (notes === 0) {
     throw new Error("No usable notes were found for the Anki deck.");
   }
   pkg.addDeck(deck);
-  logApkg("card notes ready", {
+  logApkg(options.debugId, "card-notes-ready", {
     deck: options.deck,
     notes,
     media: media.size,
     decodedSources: decodedBySourceId.size,
     durationMs: Date.now() - startedAt,
   });
-  return output(pkg);
+  return output(pkg, options.debugId);
 }

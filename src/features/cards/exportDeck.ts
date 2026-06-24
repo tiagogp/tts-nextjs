@@ -9,6 +9,8 @@ export interface DeckPayload {
   count?: number;
   filename?: string;
   apkg?: string;
+  debugId?: string;
+  debugLog?: string;
 }
 
 /**
@@ -42,5 +44,6 @@ export async function exportAndSaveDeck(
   const fileNote = await saveApkg(data.filename || options.defaultFilename, data.apkg);
 
   const count = data.count ?? data.cards?.length ?? 0;
-  return `${count} card${count === 1 ? "" : "s"} exported — ${fileNote}${savedNote}.`;
+  const debugNote = data.debugId ? ` · debug ${data.debugId}` : "";
+  return `${count} card${count === 1 ? "" : "s"} exported — ${fileNote}${savedNote}${debugNote}.`;
 }

@@ -67,7 +67,15 @@ export async function generateDiscoverDeck(input: {
   result: DiscoverResult;
   candidates: PhraseCandidate[];
   signal: AbortSignal;
-}): Promise<{ cards?: Card[]; count?: number; filename?: string; apkg?: string; error?: string }> {
+}): Promise<{
+  cards?: Card[];
+  count?: number;
+  filename?: string;
+  apkg?: string;
+  error?: string;
+  debugId?: string;
+  debugLog?: string;
+}> {
   const response = await fetch("/api/cards/generate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -87,7 +95,12 @@ export async function generateDiscoverDeck(input: {
     filename?: string;
     apkg?: string;
     error?: string;
+    debugId?: string;
+    debugLog?: string;
   };
-  if (!response.ok) throw new Error(data.error ?? `Request failed (${response.status})`);
+  if (!response.ok) {
+    const debug = data.debugId ? ` Debug: ${data.debugId}` : "";
+    throw new Error(`${data.error ?? `Request failed (${response.status})`}${debug}`);
+  }
   return data;
 }

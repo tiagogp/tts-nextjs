@@ -8,6 +8,8 @@ export interface DeckGenerationResult {
   apkg?: string;
   error?: string;
   code?: string;
+  debugId?: string;
+  debugLog?: string;
 }
 
 /** Error carrying the server's machine-readable `code` (e.g. "model_not_ready"). */
@@ -40,8 +42,9 @@ export async function generateCorrectionDeck(input: {
   });
   const data = (await response.json().catch(() => ({}))) as DeckGenerationResult;
   if (!response.ok) {
+    const debug = data.debugId ? ` Debug: ${data.debugId}` : "";
     throw new DeckGenerationError(
-      data.error ?? `Request failed (${response.status})`,
+      `${data.error ?? `Request failed (${response.status})`}${debug}`,
       data.code,
     );
   }

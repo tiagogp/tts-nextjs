@@ -71,6 +71,7 @@ export default function AnkiExporter({ embedded = false }: { embedded?: boolean 
   const [enKokoroSpeed, setEnKokoroSpeed] = useState("1.15");
   const [status, setStatus] = useState<ExportStatus>("idle");
   const [error, setError] = useState<string | null>(null);
+  const [lastDebugId, setLastDebugId] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -81,6 +82,7 @@ export default function AnkiExporter({ embedded = false }: { embedded?: boolean 
 
   const resetFeedback = useCallback(() => {
     setError(null);
+    setLastDebugId(null);
     setStatus("idle");
   }, []);
 
@@ -144,12 +146,15 @@ export default function AnkiExporter({ embedded = false }: { embedded?: boolean 
         const data = (await res.json().catch(() => ({}))) as {
           error?: string;
           code?: string;
+          debugId?: string;
         };
         // The voice model wasn't ready: the server just kicked off the download,
         // so start tracking its progress instead of showing a dead error.
         if (data.code === "model_not_ready") void model.refresh();
-        throw new Error(data.error ?? `Error (${res.status})`);
+        const debug = data.debugId ? ` Debug: ${data.debugId}` : "";
+        throw new Error(`${data.error ?? `Error (${res.status})`}${debug}`);
       }
+      setLastDebugId(res.headers.get("x-phraseloop-apkg-debug-id"));
 
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -322,7 +327,9 @@ export default function AnkiExporter({ embedded = false }: { embedded?: boolean 
           </Button>
 
           {status === "done" && (
-            <p className="text-xs text-success">Export finished. If the download didn’t start, try again.</p>
+            <p className="text-xs text-success">
+              {`Export finished. If the download didn’t start, try again.${lastDebugId ? ` Debug: ${lastDebugId}` : ""}`}
+            </p>
           )}
 
           {status === "error" && error && (

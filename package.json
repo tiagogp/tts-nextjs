@@ -26,10 +26,6 @@
       {
         "from": ".next/standalone",
         "to": "app-next"
-      },
-      {
-        "from": "node_modules/sql.js/dist/sql-wasm.wasm",
-        "to": "native/sql-wasm.wasm"
       }
     ],
     "mac": {

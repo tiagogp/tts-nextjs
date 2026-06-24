@@ -16,7 +16,7 @@ const nextConfig: NextConfig = {
       "./node_modules/@kutalia/whisper-node-addon/dist/mac-arm64/**/*",
       "./node_modules/sherpa-onnx-node/**/*",
       "./node_modules/sherpa-onnx-darwin-arm64/**/*",
-      "./node_modules/sql.js/dist/sql-wasm.wasm",
+      "./node_modules/sql.js/dist/sql-asm.js",
       "./node_modules/@napi-rs/canvas/**/*",
       "./node_modules/@napi-rs/canvas-darwin-arm64/**/*",
     ],

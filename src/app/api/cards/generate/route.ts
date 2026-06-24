@@ -21,6 +21,12 @@ import type { CardSource, ErrorEvent, PhraseCandidate } from "@/lib/cards/schema
 import { safeStr, toCandidate, toErrorEvent } from "@/lib/cards/intake";
 import { getDefaultProvider } from "@/server/aiSettings";
 import { isProviderKind, readJsonObject } from "@/server/http/validation";
+import {
+  apkgDebugLogPath,
+  createApkgDebugId,
+  validateApkgBytes,
+  writeApkgDebug,
+} from "@/server/native/apkgDebug";
 
 export const runtime = "nodejs";
 // Local LLM (Ollama) decks of several corrections run generate + critique sequentially and
@@ -86,6 +92,8 @@ function isTimeoutError(error: unknown): boolean {
 }
 
 export async function POST(req: NextRequest) {
+  const debugId = createApkgDebugId();
+  const debugLog = apkgDebugLogPath();
   try {
     const obj = await readJsonObject(req);
     if (!obj) {
@@ -108,6 +116,14 @@ export async function POST(req: NextRequest) {
     const sourceId = safeStr(obj.sourceId, "", 64);
     const deck = safeStr(obj.deck, "English - Discover", 200);
     const enKokoroVoice = safeStr(obj.enKokoroVoice, "af_heart", 64);
+    writeApkgDebug(debugId, "cards-api-request-received", {
+      deck,
+      provider: kind,
+      persist: obj.persist === true,
+      rawCandidates: Array.isArray(obj.candidates) ? obj.candidates.length : 0,
+      rawErrors: Array.isArray(obj.errors) ? obj.errors.length : 0,
+      debugLog,
+    });
     // When the client persists cards locally (D1), it needs the card data back, so we
     // return JSON (cards + base64 .apkg) instead of the raw binary download.
     const wantCards = obj.persist === true;
@@ -145,9 +161,22 @@ export async function POST(req: NextRequest) {
         ...candidates.map((candidate): CardSource => ({ kind: "phrase", candidate })),
         ...errors.map((event): CardSource => ({ kind: "error", event })),
       ];
+      writeApkgDebug(debugId, "cards-api-provider-started", {
+        provider: kind,
+        model: model ?? null,
+        sources: sources.length,
+        candidates: candidates.length,
+        errors: errors.length,
+        timeoutMs: PROVIDER_CALL_TIMEOUT_MS,
+      });
       const { cards, failures } = await generateDeck(provider, sources, {
         signal: scope.signal,
         timeoutMs: PROVIDER_CALL_TIMEOUT_MS,
+        debug: (event, details = {}) => writeApkgDebug(debugId, event, details),
+      });
+      writeApkgDebug(debugId, "cards-api-provider-finished", {
+        cards: cards.length,
+        failures,
       });
 
       if (cards.length === 0) {
@@ -189,24 +218,61 @@ export async function POST(req: NextRequest) {
       }));
 
       const exported = await localJson("/cards/apkg", {
-        cards: exportCards, deck, voice: enKokoroVoice,
+        cards: exportCards, deck, voice: enKokoroVoice, debugId,
       }, { timeoutMs: APKG_EXPORT_TIMEOUT_MS, signal: scope.signal });
       if (exported.status < 200 || exported.status >= 300) {
         const payload = readExportError(exported.body);
         console.error("Card export runtime failed:", exported.status, payload);
+        writeApkgDebug(debugId, "cards-api-runtime-export-failed", {
+          status: exported.status,
+          payload,
+        });
         return NextResponse.json(
           {
             error: payload.error ?? PUBLIC_CARD_EXPORT_ERROR,
             code: payload.code,
             downloading: payload.downloading,
             progress: payload.progress,
+            debugId,
+            debugLog,
           },
-          { status: exported.status },
+          {
+            status: exported.status,
+            headers: {
+              "X-PhraseLoop-Apkg-Debug-Id": debugId,
+              "X-PhraseLoop-Apkg-Debug-Log": debugLog,
+            },
+          },
         );
       }
 
       const apkg = exported.body;
+      const validation = await validateApkgBytes(apkg);
+      writeApkgDebug(debugId, "cards-api-apkg-validation", validation as unknown as Record<string, unknown>);
+      if (!validation.ok) {
+        return NextResponse.json(
+          {
+            error: "The deck was generated, but the .apkg failed internal validation.",
+            code: "apkg_validation_failed",
+            debugId,
+            debugLog,
+            validation,
+          },
+          {
+            status: 500,
+            headers: {
+              "X-PhraseLoop-Apkg-Debug-Id": debugId,
+              "X-PhraseLoop-Apkg-Debug-Log": debugLog,
+            },
+          },
+        );
+      }
       const filenameUtf8 = `${deck.trim() || "anki-deck"}.apkg`;
+      writeApkgDebug(debugId, "cards-api-response-ready", {
+        cards: cards.length,
+        failures,
+        bytes: apkg.byteLength,
+      });
 
       if (wantCards) {
         return NextResponse.json({
@@ -217,6 +283,8 @@ export async function POST(req: NextRequest) {
           failed: failures,
           filename: filenameUtf8,
           apkg: apkg.toString("base64"),
+          debugId,
+          debugLog,
         });
       }
 
@@ -228,6 +296,8 @@ export async function POST(req: NextRequest) {
           "Content-Length": apkg.byteLength.toString(),
           "X-Card-Count": String(cards.length),
           "X-Card-Failures": String(failures),
+          "X-PhraseLoop-Apkg-Debug-Id": debugId,
+          "X-PhraseLoop-Apkg-Debug-Log": debugLog,
         },
       });
     } finally {
@@ -235,12 +305,33 @@ export async function POST(req: NextRequest) {
     }
   } catch (err: unknown) {
     if (isAbortError(err) || isTimeoutError(err)) {
-      return NextResponse.json({ error: PUBLIC_CARD_TIMEOUT_ERROR }, { status: 504 });
+      writeApkgDebug(debugId, "cards-api-timeout-or-abort", {
+        error: err instanceof Error ? err.message : "unknown",
+      });
+      return NextResponse.json(
+        { error: PUBLIC_CARD_TIMEOUT_ERROR, debugId, debugLog },
+        {
+          status: 504,
+          headers: {
+            "X-PhraseLoop-Apkg-Debug-Id": debugId,
+            "X-PhraseLoop-Apkg-Debug-Log": debugLog,
+          },
+        },
+      );
     }
     console.error("Card generation error:", err);
+    writeApkgDebug(debugId, "cards-api-error", {
+      error: err instanceof Error ? err.message : "unknown",
+    });
     return NextResponse.json(
-      { error: PUBLIC_CARD_GENERATION_ERROR },
-      { status: 500 },
+      { error: PUBLIC_CARD_GENERATION_ERROR, debugId, debugLog },
+      {
+        status: 500,
+        headers: {
+          "X-PhraseLoop-Apkg-Debug-Id": debugId,
+          "X-PhraseLoop-Apkg-Debug-Log": debugLog,
+        },
+      },
     );
   }
 }

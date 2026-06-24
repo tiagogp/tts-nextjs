@@ -3,6 +3,7 @@ import "server-only";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { buildCardsDeck, buildCsvDeck } from "./native/apkg";
+import { createApkgDebugId, writeApkgDebug } from "./native/apkgDebug";
 import { dataDir } from "./native/data";
 import { audioPathFor, discoverArticle, discoverPdf, discoverYouTube } from "./native/discovery";
 import { ensureKokoroModel, kokoroInstalled, modelStatus } from "./native/models";
@@ -21,6 +22,7 @@ interface LocalRequestOptions {
   body?: Buffer | string;
   timeoutMs?: number;
   signal?: AbortSignal;
+  debugId?: string;
 }
 
 function response(status: number, body: Buffer | string | object = Buffer.alloc(0), headers: Record<string, string> = {}): LocalResponse {
@@ -35,8 +37,8 @@ function response(status: number, body: Buffer | string | object = Buffer.alloc(
   };
 }
 
-function localLog(step: string, details: Record<string, unknown> = {}): void {
-  console.info("[local-runtime]", step, details);
+function localLog(debugId: string | undefined, step: string, details: Record<string, unknown> = {}): void {
+  writeApkgDebug(debugId, `local-${step}`, details);
 }
 
 function parseJson(body?: Buffer | string): Record<string, unknown> {
@@ -167,6 +169,7 @@ async function dispatch(requestPath: string, options: LocalRequestOptions): Prom
     const notReady = await requireKokoro();
     if (notReady) return notReady;
     const value = parseJson(options.body);
+    const debugId = typeof value.debugId === "string" ? value.debugId : createApkgDebugId();
     try {
       const body = await buildCsvDeck({
         csv: Buffer.from(String(value.csvBase64 || ""), "base64"),
@@ -178,8 +181,12 @@ async function dispatch(requestPath: string, options: LocalRequestOptions): Prom
         voice: String(value.voice || "af_heart"),
         speed: Number(value.speed) || 1.15,
         signal: options.signal,
+        debugId,
       });
-      return response(200, body, { "content-type": "application/octet-stream" });
+      return response(200, body, {
+        "content-type": "application/octet-stream",
+        "x-phraseloop-apkg-debug-id": debugId,
+      });
     } catch (error) {
       if (isAbort(error)) throw error;
       return synthesisFailure(error);
@@ -189,6 +196,7 @@ async function dispatch(requestPath: string, options: LocalRequestOptions): Prom
     const notReady = await requireKokoro();
     if (notReady) return notReady;
     const value = parseJson(options.body);
+    const debugId = typeof value.debugId === "string" ? value.debugId : createApkgDebugId();
     try {
       const body = await buildCardsDeck({
         cards: Array.isArray(value.cards) ? value.cards : [],
@@ -196,8 +204,12 @@ async function dispatch(requestPath: string, options: LocalRequestOptions): Prom
         voice: String(value.voice || "af_heart"),
         speed: Number(value.speed) || 1.15,
         signal: options.signal,
+        debugId,
       });
-      return response(200, body, { "content-type": "application/octet-stream" });
+      return response(200, body, {
+        "content-type": "application/octet-stream",
+        "x-phraseloop-apkg-debug-id": debugId,
+      });
     } catch (error) {
       if (isAbort(error)) throw error;
       return synthesisFailure(error);
@@ -232,7 +244,7 @@ export async function localRequest(
       if (!controller.signal.aborted) controller.abort(options.signal?.reason);
       const error = new Error("PhraseLoop local request aborted");
       error.name = "AbortError";
-      localLog("request aborted", {
+      localLog(options.debugId, "request-aborted", {
         path: requestPath,
         method: options.method ?? "GET",
         durationMs: Date.now() - startedAt,
@@ -244,7 +256,7 @@ export async function localRequest(
       const error = new Error("PhraseLoop local request timed out");
       error.name = "TimeoutError";
       if (!controller.signal.aborted) controller.abort(error);
-      localLog("request timed out", {
+      localLog(options.debugId, "request-timed-out", {
         path: requestPath,
         method: options.method ?? "GET",
         timeoutMs,
@@ -253,7 +265,7 @@ export async function localRequest(
       settle(() => reject(error));
     }, timeoutMs);
     options.signal?.addEventListener("abort", abort, { once: true });
-    localLog("request started", {
+    localLog(options.debugId, "request-started", {
       path: requestPath,
       method: options.method ?? "GET",
       timeoutMs,
@@ -263,7 +275,7 @@ export async function localRequest(
         clearTimeout(timer);
         options.signal?.removeEventListener("abort", abort);
         if (settled) return;
-        localLog("request finished", {
+        localLog(options.debugId, "request-finished", {
           path: requestPath,
           method: options.method ?? "GET",
           status: value.status,
@@ -276,7 +288,7 @@ export async function localRequest(
         clearTimeout(timer);
         options.signal?.removeEventListener("abort", abort);
         if (settled) return;
-        localLog("request failed", {
+        localLog(options.debugId, "request-failed", {
           path: requestPath,
           method: options.method ?? "GET",
           error: error instanceof Error ? error.message : "unknown",
@@ -301,6 +313,9 @@ export function localJson(
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(value),
+    debugId: value && typeof value === "object" && !Array.isArray(value) && typeof (value as Record<string, unknown>).debugId === "string"
+      ? String((value as Record<string, unknown>).debugId)
+      : undefined,
     ...requestOptions,
   });
 }

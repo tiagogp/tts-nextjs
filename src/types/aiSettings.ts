@@ -51,6 +51,14 @@ export interface PhraseLoopBridge {
       filename: string,
       base64: string,
     ) => Promise<{ ok: boolean; path?: string; error?: string }>;
+    revealApkgDebugLog: () => Promise<{ ok: boolean; path?: string; error?: string }>;
+    getApkgDebugInfo: () => Promise<{
+      ok: boolean;
+      path?: string;
+      exists?: boolean;
+      size?: number;
+      error?: string;
+    }>;
   };
   aiSettings?: {
     save: (patch: AiSettingsPatch) => Promise<{ ok: boolean; error?: string }>;
