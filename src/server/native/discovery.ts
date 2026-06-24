@@ -9,7 +9,7 @@ import { promisify } from "node:util";
 import { JSDOM } from "jsdom";
 import { Readability } from "@mozilla/readability";
 import { discoverCacheDir } from "./data";
-import { transcribe } from "./speech";
+import { transcribe, transcriptText } from "./speech";
 
 const execFileAsync = promisify(execFile);
 
@@ -24,6 +24,13 @@ export interface DiscoverResult {
   title: string;
   segments: Segment[];
   hasAudio: boolean;
+}
+
+function normalizeDiscoverResult(result: DiscoverResult): DiscoverResult {
+  return {
+    ...result,
+    segments: dedupeSegments(Array.isArray(result.segments) ? result.segments : []),
+  };
 }
 
 function sourceId(value: string | Buffer): string {
@@ -43,7 +50,7 @@ export function segmentText(text: string): Segment[] {
   const chunks = text.replace(/\s+/g, " ").trim().split(/(?<=[.!?])\s+(?=[A-Z"'(À-ſ])/u);
   const seen = new Set<string>();
   return chunks.flatMap((chunk) => {
-    const value = chunk.trim().slice(0, 1000);
+    const value = transcriptText(chunk).slice(0, 1000);
     const key = value.replace(/\W+/gu, " ").trim().toLocaleLowerCase();
     if (value.length < 8 || !key || seen.has(key)) return [];
     seen.add(key);
@@ -53,11 +60,12 @@ export function segmentText(text: string): Segment[] {
 
 export function dedupeSegments(segments: Segment[]): Segment[] {
   const seen = new Set<string>();
-  return segments.filter((segment) => {
-    const key = segment.text.replace(/\W+/gu, " ").trim().toLocaleLowerCase();
-    if (!key || seen.has(key)) return false;
+  return segments.flatMap((segment) => {
+    const text = transcriptText(segment.text);
+    const key = text.replace(/\W+/gu, " ").trim().toLocaleLowerCase();
+    if (!key || seen.has(key)) return [];
     seen.add(key);
-    return true;
+    return [{ ...segment, text }];
   });
 }
 
@@ -109,13 +117,13 @@ export function parseVtt(content: string): Segment[] {
     const cue = lines.find((line) => line.includes("-->"));
     if (!cue) continue;
     const [rawStart, rawEnd] = cue.split("-->");
-    const text = lines
+    const text = transcriptText(lines
       .slice(lines.indexOf(cue) + 1)
       .join(" ")
       .replace(/<[^>]+>/g, "") // <00:00:01.000>, <c>…</c> word timing
       .replace(/&nbsp;/g, " ")
       .replace(/\s+/g, " ")
-      .trim();
+      .trim());
     if (!text) continue;
     segments.push({ text, startMs: vttTimestampMs(rawStart), endMs: vttTimestampMs(rawEnd) });
   }
@@ -155,7 +163,9 @@ export async function discoverYouTube(url: string, lang?: string | null): Promis
   const id = sourceId(url);
   const cacheFile = path.join(root, `${id}.json`);
   try {
-    return JSON.parse(await readFile(cacheFile, "utf8")) as DiscoverResult;
+    const cached = normalizeDiscoverResult(JSON.parse(await readFile(cacheFile, "utf8")) as DiscoverResult);
+    void writeFile(cacheFile, JSON.stringify(cached)).catch(() => {});
+    return cached;
   } catch {}
 
   // youtubei.js can no longer decipher stream URLs (YouTube cipher changes), so download
@@ -208,7 +218,7 @@ export async function discoverYouTube(url: string, lang?: string | null): Promis
     segments = (await transcribe({ audio: await readFile(audioFile), language: lang })).segments;
   }
 
-  const result = { sourceId: id, title, segments: dedupeSegments(segments), hasAudio: true };
+  const result = normalizeDiscoverResult({ sourceId: id, title, segments, hasAudio: true });
   await writeFile(cacheFile, JSON.stringify(result));
   return result;
 }

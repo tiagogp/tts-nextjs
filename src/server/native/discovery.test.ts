@@ -15,6 +15,15 @@ describe("discovery text processing", () => {
     ])).toHaveLength(1);
   });
 
+  it("drops non-speech placeholders from transcript segments", () => {
+    expect(dedupeSegments([
+      { text: "[BLANK_AUDIO]", startMs: 0, endMs: 1000 },
+      { text: "[BLANK_AUDIO] Hello there", startMs: 1000, endMs: 2000 },
+    ])).toEqual([
+      { text: "Hello there", startMs: 1000, endMs: 2000 },
+    ]);
+  });
+
   it("parses WebVTT cues, stripping inline word-timing tags", () => {
     const vtt = [
       "WEBVTT",
@@ -27,6 +36,9 @@ describe("discovery text processing", () => {
       "",
       "00:02:00.000 --> 00:02:01.000",
       "&nbsp;",
+      "",
+      "00:02:02.000 --> 00:02:03.000",
+      "[BLANK_AUDIO]",
     ].join("\n");
     expect(parseVtt(vtt)).toEqual([
       { text: "Hello world", startMs: 1360, endMs: 3040 },

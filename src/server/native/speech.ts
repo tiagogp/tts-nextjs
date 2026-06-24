@@ -43,6 +43,18 @@ interface SherpaModule {
 let ttsPromise: Promise<OfflineTtsLike> | null = null;
 let ttsQueue: Promise<unknown> = Promise.resolve();
 
+const NON_SPEECH_MARKER = String.raw`(?:blank[_\s-]*audio|no[_\s-]*(?:audio|speech)|silence)`;
+const BRACKETED_NON_SPEECH_RE = new RegExp(String.raw`[\[(]\s*${NON_SPEECH_MARKER}\s*[\])]`, "giu");
+const PLAIN_NON_SPEECH_RE = new RegExp(String.raw`^\s*${NON_SPEECH_MARKER}\s*$`, "iu");
+
+export function transcriptText(value: unknown): string {
+  const text = String(value ?? "")
+    .replace(BRACKETED_NON_SPEECH_RE, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return PLAIN_NON_SPEECH_RE.test(text) ? "" : text;
+}
+
 function whisper(): (options: Record<string, unknown>) => Promise<unknown> {
   if (whisperCall) return whisperCall;
   if (process.platform !== "darwin" || process.arch !== "arm64") {
@@ -90,11 +102,11 @@ function normalizeWhisper(value: unknown): Transcription {
   if (Array.isArray(raw)) {
     for (const item of raw) {
       if (Array.isArray(item)) {
-        const text = String(item.at(-1) ?? "").trim();
+        const text = transcriptText(item.at(-1));
         if (!text) continue;
         segments.push({ text, startMs: timestampMs(item[0]), endMs: timestampMs(item[1]) });
       } else {
-        const text = String(item ?? "").trim();
+        const text = transcriptText(item);
         if (text) segments.push({ text, startMs: 0, endMs: 0 });
       }
     }
