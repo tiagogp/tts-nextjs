@@ -7,8 +7,11 @@ const { app, BrowserWindow, ipcMain, safeStorage, shell, utilityProcess } = requ
 const { spawn, spawnSync } = require("node:child_process");
 const crypto = require("node:crypto");
 const http = require("node:http");
+const os = require("node:os");
 const path = require("node:path");
 const fs = require("node:fs");
+
+app.setName("PhraseLoop");
 
 // In development, run from the repo. In the packaged app, run from resources
 // copied by electron-builder so the app does not depend on a source checkout.
@@ -23,7 +26,12 @@ const APP_ICON_PNG = path.join(__dirname, "assets", "icon.png");
 const PRELOAD_JS = path.join(__dirname, "preload.js");
 const USER_ENV_FILE = path.join(app.getPath("userData"), "phraseloop.env");
 const AI_SETTINGS_FILE = path.join(app.getPath("userData"), "ai-settings.safe");
+const APKG_DEBUG_LOG_FILE = path.join(app.getPath("userData"), "logs", "apkg-debug.jsonl");
 const SETTINGS_TOKEN = crypto.randomBytes(32).toString("hex");
+const LEGACY_DATA_DIRS = [
+  path.join(os.homedir(), "Library", "Application Support", "text-to-speech"),
+  path.join(os.homedir(), "Library", "Application Support", "Electron"),
+];
 
 /** @type {import('node:child_process').ChildProcess[]} */
 const children = [];
@@ -409,6 +417,42 @@ ipcMain.handle("phrase-loop:save-apkg", async (event, filename, base64) => {
   }
 });
 
+ipcMain.handle("phrase-loop:get-apkg-debug-info", async (event) => {
+  try {
+    if (!event.senderFrame?.url.startsWith(FRONTEND_URL)) {
+      throw new Error("Untrusted debug request.");
+    }
+    return {
+      ok: true,
+      path: APKG_DEBUG_LOG_FILE,
+      exists: fs.existsSync(APKG_DEBUG_LOG_FILE),
+      size: fs.existsSync(APKG_DEBUG_LOG_FILE) ? fs.statSync(APKG_DEBUG_LOG_FILE).size : 0,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Could not read debug info.",
+    };
+  }
+});
+
+ipcMain.handle("phrase-loop:reveal-apkg-debug-log", async (event) => {
+  try {
+    if (!event.senderFrame?.url.startsWith(FRONTEND_URL)) {
+      throw new Error("Untrusted debug request.");
+    }
+    fs.mkdirSync(path.dirname(APKG_DEBUG_LOG_FILE), { recursive: true });
+    if (!fs.existsSync(APKG_DEBUG_LOG_FILE)) fs.writeFileSync(APKG_DEBUG_LOG_FILE, "");
+    shell.showItemInFolder(APKG_DEBUG_LOG_FILE);
+    return { ok: true, path: APKG_DEBUG_LOG_FILE };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Could not reveal debug log.",
+    };
+  }
+});
+
 function setStatus(text) {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents
@@ -440,6 +484,29 @@ function clearOwnQuarantine() {
   }
 }
 
+function migrateLegacyModels(dataDir) {
+  const targetModels = path.join(dataDir, "models", "native");
+  for (const legacyDir of LEGACY_DATA_DIRS) {
+    if (path.resolve(legacyDir) === path.resolve(dataDir)) continue;
+    const legacyModels = path.join(legacyDir, "models", "native");
+    for (const modelId of ["kokoro-1.0", "whisper-small"]) {
+      const from = path.join(legacyModels, modelId);
+      const to = path.join(targetModels, modelId);
+      if (fs.existsSync(to) || !fs.existsSync(path.join(from, ".ready.json"))) continue;
+      try {
+        fs.mkdirSync(targetModels, { recursive: true });
+        fs.cpSync(from, to, { recursive: true, errorOnExist: true });
+        console.log(`Migrated ${modelId} model from ${legacyDir}`);
+      } catch (error) {
+        console.error(
+          `Could not migrate ${modelId} model from ${legacyDir}:`,
+          error instanceof Error ? error.message : "unknown error",
+        );
+      }
+    }
+  }
+}
+
 async function boot() {
   clearOwnQuarantine();
 
@@ -451,6 +518,7 @@ async function boot() {
   const standaloneServer = path.join(NEXT_ROOT, "server.js");
   const built = app.isPackaged || fs.existsSync(path.join(PROJECT_ROOT, ".next", "BUILD_ID"));
   const dataDir = app.getPath("userData");
+  migrateLegacyModels(dataDir);
   fs.mkdirSync(path.join(dataDir, "logs"), { recursive: true });
   const serviceEnv = {
     ...projectEnv(process.env.NODE_ENV || (built ? "production" : "development")),

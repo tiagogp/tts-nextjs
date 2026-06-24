@@ -17,5 +17,11 @@ contextBridge.exposeInMainWorld("phraseLoop", {
     saveApkg(filename, base64) {
       return ipcRenderer.invoke("phrase-loop:save-apkg", filename, base64);
     },
+    revealApkgDebugLog() {
+      return ipcRenderer.invoke("phrase-loop:reveal-apkg-debug-log");
+    },
+    getApkgDebugInfo() {
+      return ipcRenderer.invoke("phrase-loop:get-apkg-debug-info");
+    },
   },
 });
