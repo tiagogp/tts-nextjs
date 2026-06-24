@@ -76,7 +76,10 @@ export async function dedupeCards(
   embed?: Embedder,
   options?: GenerationRunOptions,
 ): Promise<Card[]> {
-  if (cards.length < 2) return cards;
+  if (cards.length < 2) {
+    options?.debug?.("cards-dedupe-skipped", { cards: cards.length });
+    return cards;
+  }
 
   const fingerprints = cards.map(fingerprint);
   let vectors: number[][];
@@ -84,14 +87,28 @@ export async function dedupeCards(
 
   if (embed) {
     try {
+      options?.debug?.("cards-dedupe-embed-started", {
+        cards: cards.length,
+        fingerprints: fingerprints.length,
+      });
       vectors = await embed(fingerprints, options);
       threshold = EMBED_THRESHOLD;
+      options?.debug?.("cards-dedupe-embed-finished", {
+        vectors: vectors.length,
+        threshold,
+      });
     } catch (error) {
       if (isAbortError(error)) throw error;
+      options?.debug?.("cards-dedupe-embed-failed-fallback-lexical", {
+        error: error instanceof Error ? error.message : "unknown",
+      });
       vectors = lexicalVectors(fingerprints);
       threshold = LEXICAL_THRESHOLD;
     }
   } else {
+    options?.debug?.("cards-dedupe-lexical-started", {
+      cards: cards.length,
+    });
     vectors = lexicalVectors(fingerprints);
     threshold = LEXICAL_THRESHOLD;
   }
@@ -105,5 +122,11 @@ export async function dedupeCards(
       keptVectors.push(vectors[i]);
     }
   }
+  options?.debug?.("cards-dedupe-result", {
+    before: cards.length,
+    after: kept.length,
+    dropped: cards.length - kept.length,
+    threshold,
+  });
   return kept;
 }
