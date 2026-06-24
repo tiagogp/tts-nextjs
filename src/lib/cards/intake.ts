@@ -8,6 +8,7 @@
  */
 
 import { isPlainObject } from "@/lib/isObject";
+import { normalizeContext } from "./context";
 import type { ErrorEvent, ErrorType, PhraseCandidate } from "./schema";
 
 export const ERROR_TYPES = new Set<ErrorType>([
@@ -81,6 +82,10 @@ export function toErrorEvent(raw: unknown): ErrorEvent | null {
       typeof raw.rationale === "string" && raw.rationale.trim()
         ? raw.rationale.trim().slice(0, 2000)
         : undefined,
+    // Preserve the situational context so generated cards inherit it (and weakness
+    // detection can group by situation). Without this the generate/reinforce routes would
+    // silently strip the tag on the way to the model.
+    context: normalizeContext(typeof raw.context === "string" ? raw.context.slice(0, 100) : undefined),
     createdAt: Date.now(),
   };
 }
