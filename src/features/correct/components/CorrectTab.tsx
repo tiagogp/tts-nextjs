@@ -16,8 +16,9 @@ import { normalizeContext } from "@/lib/cards/context";
 import { DECK_GENERATION_TIMEOUT_MS } from "@/features/cards/constants";
 import { useProviderSelection } from "@/features/cards/hooks/useProviderSelection";
 import { useDeckGeneration } from "@/features/cards/hooks/useDeckGeneration";
-import { exportAndSaveDeck } from "@/features/cards/exportDeck";
+import type { DeckPayload } from "@/features/cards/exportDeck";
 import { ProviderPicker } from "@/features/cards/components/ProviderPicker";
+import { DeckPreview } from "@/features/cards/components/DeckPreview";
 import { useKokoroModel } from "@/features/speech/hooks/useKokoroModel";
 import { MAX_UPLOAD_BYTES, newDraft, parseErrorsJson, type CorrectionInputMode } from "@/features/correct/model";
 import { DeckGenerationError, evaluateCorrectionText, generateCorrectionDeck, transcribeAudio } from "@/features/correct/api";
@@ -37,11 +38,21 @@ import { CorrectionList } from "@/features/correct/components/CorrectionList";
  *   • Paste JSON — import a correction tool's JSON output.
  */
 
-export default function CorrectTab() {
+export default function CorrectTab({
+  onOpenSettings,
+  onStudyNow,
+}: {
+  onOpenSettings?: () => void;
+  onStudyNow?: () => void;
+}) {
   // The deck export synthesizes audio locally, so it needs the Kokoro model on
   // disk. Surface its download state here too — not just in the Anki Export tab.
   const kokoro = useKokoroModel();
   const [events, setEvents] = useState<ErrorEvent[]>([]);
+  const [deckPreview, setDeckPreview] = useState<{
+    data: DeckPayload;
+    events: ErrorEvent[];
+  } | null>(null);
   const [mode, setMode] = useState<CorrectionInputMode>("ai");
   // Session-level situational context: one conversation/situation = one context. It stamps
   // every mistake captured below (manual, AI, or JSON) so weak spots group by situation.
@@ -69,7 +80,7 @@ export default function CorrectTab() {
   const generation = useDeckGeneration({
     timeoutMs: DECK_GENERATION_TIMEOUT_MS,
     timeoutMessage:
-      "Generation took too long and was stopped. Try fewer corrections or another provider.",
+      "This is taking longer than expected. Try a shorter clip or switch to a faster provider.",
     cancelMessage: "Generation cancelled. Your corrections are still here.",
     stages: [
       { untilSeconds: 10, label: "Creating focused cards…" },
@@ -131,6 +142,7 @@ export default function CorrectTab() {
     ]);
     setDraft(newDraft());
     setGenDone(null);
+    setDeckPreview(null);
   };
 
   const importJson = () => {
@@ -150,6 +162,7 @@ export default function CorrectTab() {
       setJson("");
       setImportNote(null);
       setGenDone(null);
+      setDeckPreview(null);
     } catch {
       setImportNote("Couldn't parse that — expected JSON (an object or an array of them).");
     }
@@ -158,21 +171,17 @@ export default function CorrectTab() {
   const removeEvent = (id: string) => {
     setEvents((prev) => prev.filter((e) => e.id !== id));
     setGenDone(null);
+    setDeckPreview(null);
   };
 
   const generateCards = useCallback(async () => {
     if (events.length === 0 || !providerReady) return;
     const sourceEvents = [...events];
-    const ok = await run(async (signal) => {
+    await run(async (signal) => {
       const data = await generateCorrectionDeck({ provider, selectedModel, events: sourceEvents, signal });
-      // Persist the ErrorEvents (source of truth) + cards so the Study tab and
-      // weakness analysis pick them up alongside the discovery path.
-      return exportAndSaveDeck(data, {
-        defaultFilename: "English - Corrections.apkg",
-        persist: (cards) => saveCorrectionDeck(cards, sourceEvents),
-      });
+      setDeckPreview({ data, events: sourceEvents });
+      return `${data.count ?? data.cards?.length ?? 0} card${(data.count ?? data.cards?.length ?? 0) === 1 ? "" : "s"} ready to preview.`;
     });
-    if (ok) setEvents([]);
   }, [events, provider, providerReady, selectedModel, run]);
 
   // E2 — hand the text to the LLM and append the mistakes it finds.
@@ -185,11 +194,12 @@ export default function CorrectTab() {
     try {
       const found = await evaluateCorrectionText({ provider, selectedModel, text, context });
       if (found.length === 0) {
-        setAiNote("No mistakes found — that already reads natural. 🎉");
+        setAiNote("No mistakes found — that already sounds natural. 🎉");
         return;
       }
       setEvents((prev) => [...prev, ...found]);
       setAiText("");
+      setDeckPreview(null);
     } catch (err: unknown) {
       setAiNote(err instanceof Error ? err.message : "Couldn't evaluate the text.");
     } finally {
@@ -251,7 +261,7 @@ export default function CorrectTab() {
       e.target.value = ""; // allow re-picking the same file
       if (!file) return;
       if (file.size > MAX_UPLOAD_BYTES) {
-        setAiNote("Áudio muito grande (máx. 25 MB).");
+        setAiNote("Audio file too large (max 25 MB).");
         return;
       }
       void transcribeBlob(file, file.name);
@@ -282,8 +292,8 @@ export default function CorrectTab() {
             value={mode}
             onChange={switchMode}
             options={[
-              { value: "ai", label: "Evaluate (AI)" },
-              { value: "manual", label: "Write manually" },
+              { value: "ai", label: "AI review" },
+              { value: "manual", label: "Manual entry" },
             ]}
           />
         </div>
@@ -326,6 +336,7 @@ export default function CorrectTab() {
                 onToggleRecord={recording ? stopRecording : startRecording}
                 onPickFile={onPickFile}
                 onEvaluate={evaluate}
+                onOpenSettings={onOpenSettings}
               />
             ) : mode === "json" ? (
               <JsonImportForm value={json} onChange={setJson} importNote={importNote} onImport={importJson} />
@@ -372,6 +383,19 @@ export default function CorrectTab() {
           onGenerate={generateCards}
           onCancel={cancelGeneration}
           onRemove={removeEvent}
+          onOpenSettings={onOpenSettings}
+        />
+      )}
+
+      {deckPreview && (
+        <DeckPreview
+          title="Correction deck preview"
+          data={deckPreview.data}
+          defaultFilename="English - Corrections.apkg"
+          persist={(cards) => saveCorrectionDeck(cards, deckPreview.events)}
+          onStudyNow={onStudyNow}
+          onDismiss={() => setDeckPreview(null)}
+          onExported={() => setEvents([])}
         />
       )}
 

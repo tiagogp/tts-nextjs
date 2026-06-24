@@ -30,6 +30,11 @@ export function WeaknessList({ weaknesses, genError, generatingKey, onPractice, 
         is slowing down or piling up in your writing.
       </p>
       {genError && <p className="mb-3 text-xs text-danger">{genError}</p>}
+      {weaknesses.length === 0 && (
+        <div className="rounded border border-line bg-surface px-3 py-3 text-xs text-ink-soft">
+          No patterns detected yet — study a few cards first.
+        </div>
+      )}
       <motion.ul className="space-y-2" variants={staggerContainer} initial="hidden" animate="show">
         {weaknesses.slice(0, 8).map((weakness) => {
           const key = `${weakness.kind}:${weakness.label}`;

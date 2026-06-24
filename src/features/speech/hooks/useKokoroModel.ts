@@ -4,8 +4,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 interface ModelStatusResponse {
   kokoro_installed?: boolean;
+  loading_kokoro?: boolean;
   downloading_kokoro?: boolean;
   download_progress?: number;
+  error?: string | null;
 }
 
 export interface KokoroModelState {
@@ -43,8 +45,9 @@ export function useKokoroModel(): KokoroModelState {
       const data = (await res.json()) as ModelStatusResponse;
       const installed = data.kokoro_installed === true;
       setReady(installed);
-      setDownloading(!installed && data.downloading_kokoro === true);
+      setDownloading(!installed && (data.downloading_kokoro === true || data.loading_kokoro === true));
       setProgress(data.download_progress);
+      setError(installed ? null : data.error ?? null);
       if (installed) stopPolling();
     } catch {
       // Leave previous state; a transient status hiccup shouldn't flip the UI.

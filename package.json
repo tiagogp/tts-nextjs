@@ -1,6 +1,7 @@
 {
   "name": "text-to-speech",
   "version": "0.1.0",
+  "desktopName": "PhraseLoop",
   "private": true,
   "scripts": {
     "postinstall": "node scripts/fix-native-rpaths.mjs",
@@ -11,6 +12,8 @@
     "test": "vitest run",
     "app": "env -u ELECTRON_RUN_AS_NODE electron electron/main.js",
     "app:dist": "bash electron/build-app.sh",
+    "app:linux": "bash electron/build-linux.sh",
+    "app:windows": "bash electron/build-windows.sh",
     "app:download": "bash make-download.sh"
   },
   "main": "electron/main.js",
@@ -34,6 +37,24 @@
       "target": "dir",
       "identity": null,
       "minimumSystemVersion": "14.0"
+    },
+    "linux": {
+      "icon": "electron/assets/icon.png",
+      "category": "Education",
+      "syncDesktopName": true,
+      "target": [
+        "AppImage"
+      ]
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "artifactName": "${productName}-${version}-Setup.${ext}",
+      "oneClick": false,
+      "perMachine": false
     },
     "dmg": {
       "title": "PhraseLoop",
@@ -63,17 +84,17 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "csv-parse": "^7.0.0",
-    "jsdom": "^29.1.1",
     "jszip": "^3.10.1",
+    "linkedom": "^0.18.12",
     "motion": "^12.41.0",
     "next": "^16.2.9",
     "next-themes": "^0.4.6",
     "openai": "^6.44.0",
     "pdfjs-dist": "^6.0.227",
+    "pino": "^10.3.1",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "server-only": "^0.0.1",
-    "sherpa-onnx-darwin-arm64": "^1.13.3",
     "sherpa-onnx-node": "^1.13.3",
     "sql.js": "^1.14.1",
     "tailwind-merge": "^3.6.0",
@@ -84,7 +105,6 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/jsdom": "^28.0.3",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

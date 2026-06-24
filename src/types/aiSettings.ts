@@ -26,6 +26,9 @@ export interface PublicAiSettings {
   };
   providers: ProviderStatus[];
   writable: boolean;
+  storage: "system" | "local-file" | "readonly";
+  /** Monotonic counter bumped on every server-side settings write. */
+  version: number;
 }
 
 export interface SecureAiSettings {
@@ -42,6 +45,13 @@ export interface AiSettingsPatch {
   ollamaModel?: string;
   anthropicApiKey?: string | null;
   openaiApiKey?: string | null;
+}
+
+export interface AiSettingsSaveResult {
+  ok: boolean;
+  error?: string;
+  /** Server-confirmed settings version after a successful write. */
+  version?: number;
 }
 
 export interface PhraseLoopBridge {
@@ -61,7 +71,7 @@ export interface PhraseLoopBridge {
     }>;
   };
   aiSettings?: {
-    save: (patch: AiSettingsPatch) => Promise<{ ok: boolean; error?: string }>;
+    save: (patch: AiSettingsPatch) => Promise<AiSettingsSaveResult>;
     test: (
       provider: ProviderKind,
       draft?: Pick<AiSettingsPatch, "ollamaBaseUrl" | "ollamaModel" | "anthropicApiKey" | "openaiApiKey">,

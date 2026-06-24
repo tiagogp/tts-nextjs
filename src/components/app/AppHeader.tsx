@@ -25,7 +25,12 @@ interface AppHeaderProps {
   onSettingsOpen: () => void;
 }
 
-export default function AppHeader({ activeTab, onTabChange, settingsOpen, onSettingsOpen }: AppHeaderProps) {
+export default function AppHeader({
+  activeTab,
+  onTabChange,
+  settingsOpen,
+  onSettingsOpen,
+}: AppHeaderProps) {
   const { resolvedTheme, setTheme } = useTheme();
   const isClient = useIsClient();
   const isDark = isClient && resolvedTheme === "dark";
@@ -47,14 +52,18 @@ export default function AppHeader({ activeTab, onTabChange, settingsOpen, onSett
 
   return (
     <header
-      className="sticky top-0 z-20 border-b border-line bg-card"
+      className="sticky top-0 z-20 border-b border-line bg-card shadow-lg"
       onDoubleClick={toggleWindowFullscreen}
     >
       <div className="app-header-inner max-w-5xl mx-auto px-4">
         <div className="min-w-0" data-no-window-drag="true">
           <div className="flex items-center min-w-0">
-            <h1 className="brand-wordmark text-[1.35rem] font-normal leading-none text-ink">PhraseLoop</h1>
-            <h1 className="brand-wordmark text-[1.35rem] font-normal leading-none text-fin">.</h1>
+            <h1 className="brand-wordmark text-[1.35rem] font-normal leading-none text-ink">
+              PhraseLoop
+            </h1>
+            <h1 className="brand-wordmark text-[1.35rem] font-normal leading-none text-fin">
+              .
+            </h1>
           </div>
         </div>
 
@@ -112,9 +121,25 @@ export default function AppHeader({ activeTab, onTabChange, settingsOpen, onSett
             aria-label="Open settings"
             aria-pressed={settingsOpen}
           >
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M12 15.5a3.5 3.5 0 100-7 3.5 3.5 0 000 7z" stroke="currentColor" strokeWidth="1.7" />
-              <path d="M19.4 15a1.7 1.7 0 00.34 1.88l.06.06-2.83 2.83-.06-.06a1.7 1.7 0 00-1.88-.34 1.7 1.7 0 00-1.03 1.56V21h-4v-.08A1.7 1.7 0 008.94 19.4a1.7 1.7 0 00-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 004.57 15 1.7 1.7 0 003 14H3v-4h.08A1.7 1.7 0 004.6 8.94a1.7 1.7 0 00-.34-1.88L4.2 7l2.83-2.83.06.06A1.7 1.7 0 009 4.57 1.7 1.7 0 0010 3.08V3h4v.08a1.7 1.7 0 001.06 1.52 1.7 1.7 0 001.88-.34L17 4.2 19.83 7l-.06.06a1.7 1.7 0 00-.34 1.88A1.7 1.7 0 0021 10h.08v4H21a1.7 1.7 0 00-1.6 1z" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+            <svg
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M12 15.5a3.5 3.5 0 100-7 3.5 3.5 0 000 7z"
+                stroke="currentColor"
+                strokeWidth="1.7"
+              />
+              <path
+                d="M19.4 15a1.7 1.7 0 00.34 1.88l.06.06-2.83 2.83-.06-.06a1.7 1.7 0 00-1.88-.34 1.7 1.7 0 00-1.03 1.56V21h-4v-.08A1.7 1.7 0 008.94 19.4a1.7 1.7 0 00-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 004.57 15 1.7 1.7 0 003 14H3v-4h.08A1.7 1.7 0 004.6 8.94a1.7 1.7 0 00-.34-1.88L4.2 7l2.83-2.83.06.06A1.7 1.7 0 009 4.57 1.7 1.7 0 0010 3.08V3h4v.08a1.7 1.7 0 001.06 1.52 1.7 1.7 0 001.88-.34L17 4.2 19.83 7l-.06.06a1.7 1.7 0 00-.34 1.88A1.7 1.7 0 0021 10h.08v4H21a1.7 1.7 0 00-1.6 1z"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </IconButton>
         </div>

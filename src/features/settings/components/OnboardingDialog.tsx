@@ -26,26 +26,58 @@ export default function OnboardingDialog({ onOpenSettings }: Readonly<{ onOpenSe
     <Modal open={open} onClose={() => finish(false)} labelledBy="welcome-title">
       <p className="text-xs uppercase tracking-widest text-accent">Welcome</p>
       <h2 id="welcome-title" className="mt-1 text-xl font-semibold text-ink">
-        Your first PhraseLoop
+        Learn from content you actually watch
       </h2>
-      <ol className="mt-5 space-y-3 text-sm text-ink-soft">
-        <li>
-          <strong>1. Pick a voice.</strong> Speech runs privately on your Mac.
+      <p className="mt-2 text-sm text-ink-soft">
+        PhraseLoop turns real English content into study cards — locally, privately, in three steps.
+      </p>
+
+      <ol className="mt-5 space-y-4 text-sm">
+        <li className="flex gap-3">
+          <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent text-[11px] font-semibold text-white">
+            1
+          </span>
+          <div>
+            <p className="font-medium text-ink">Discover</p>
+            <p className="mt-0.5 text-ink-soft">
+              Paste a YouTube URL, article, or PDF. Whisper transcribes it and AI picks the phrases worth learning at your level.
+            </p>
+          </div>
         </li>
-        <li>
-          <strong>2. Connect Ollama.</strong> It is the default AI provider and keeps learning content local.
+        <li className="flex gap-3">
+          <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent text-[11px] font-semibold text-white">
+            2
+          </span>
+          <div>
+            <p className="font-medium text-ink">Generate cards</p>
+            <p className="mt-0.5 text-ink-soft">
+              AI turns those phrases into Anki flashcards with audio. Export them straight to your Anki deck.
+            </p>
+          </div>
         </li>
-        <li>
-          <strong>3. Generate something.</strong> Start with Speech, or turn native material into study cards in
-          Discover.
+        <li className="flex gap-3">
+          <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent text-[11px] font-semibold text-white">
+            3
+          </span>
+          <div>
+            <p className="font-medium text-ink">Study</p>
+            <p className="mt-0.5 text-ink-soft">
+              Spaced repetition keeps phrases in memory. Weak spots are detected automatically so you practice what matters.
+            </p>
+          </div>
         </li>
       </ol>
+
+      <p className="mt-5 text-xs text-ink-muted">
+        Everything runs on your Mac — no data leaves your machine. Ollama is the recommended AI provider and is free.
+      </p>
+
       <div className="mt-6 flex flex-wrap justify-end gap-2">
         <Button variant="secondary" onClick={() => finish(false)}>
-          Explore first
+          Start with Discover
         </Button>
         <Button variant="primary" onClick={() => finish(true)}>
-          Set up AI
+          Set up AI first →
         </Button>
       </div>
     </Modal>

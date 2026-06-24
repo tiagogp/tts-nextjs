@@ -6,22 +6,30 @@ import { springSoft, TRAVEL } from "@/lib/motion";
 import AppHeader from "@/components/app/AppHeader";
 import { HOME_TABS, type HomeTab } from "@/components/app/homeTabs";
 import AppProviders from "@/components/app/AppProviders";
-import ConverseTab from "@/features/converse/components/ConverseTab";
 import CorrectTab from "@/features/correct/components/CorrectTab";
 import DiscoverTab from "@/features/discover/components/DiscoverTab";
+import PracticeTab from "@/features/practice/components/PracticeTab";
 import SettingsScreen from "@/features/settings/components/SettingsScreen";
 import OnboardingDialog from "@/features/settings/components/OnboardingDialog";
 import SpeechTab from "@/features/speech/components/SpeechTab";
 
-function TabContent({ tab }: { tab: HomeTab }) {
-  if (tab === "discover") return <DiscoverTab />;
-  if (tab === "converse") return <ConverseTab />;
-  if (tab === "correct") return <CorrectTab />;
+function TabContent({
+  tab,
+  onOpenSettings,
+  onOpenDiscover,
+}: {
+  tab: HomeTab;
+  onOpenSettings: () => void;
+  onOpenDiscover: () => void;
+}) {
+  if (tab === "discover") return <DiscoverTab onOpenSettings={onOpenSettings} onStudyNow={onOpenDiscover} />;
+  if (tab === "converse") return <PracticeTab onOpenSettings={onOpenSettings} onOpenDiscover={onOpenDiscover} />;
+  if (tab === "correct") return <CorrectTab onOpenSettings={onOpenSettings} onStudyNow={onOpenDiscover} />;
   return <SpeechTab />;
 }
 
 export default function HomeClient() {
-  const [tab, setTab] = useState<HomeTab>("speech");
+  const [tab, setTab] = useState<HomeTab>("discover");
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   const changeTab = (next: HomeTab) => {
@@ -65,7 +73,11 @@ export default function HomeClient() {
                       animate={active ? { opacity: 1, y: 0 } : { opacity: 0, y: TRAVEL }}
                       transition={springSoft}
                     >
-                      <TabContent tab={item.id} />
+                      <TabContent
+                        tab={item.id}
+                        onOpenSettings={() => setSettingsOpen(true)}
+                        onOpenDiscover={() => changeTab("discover")}
+                      />
                     </motion.div>
                   </section>
                 );

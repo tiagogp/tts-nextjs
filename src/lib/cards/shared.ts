@@ -397,12 +397,15 @@ export function buildCorrectRequest(
   text: string,
   learnerLang: string,
   targetLang: string,
+  level?: string,
 ): JsonRequest<CorrectResult> {
+  const rationaleLang = rationaleLanguage(learnerLang, targetLang, level);
   const system = [
     `You are a meticulous ${targetLang} tutor for a learner whose first language is ${learnerLang}.`,
     `The learner gives you something they wrote or said in ${targetLang}. Find each spot where a native speaker would phrase it differently and return one correction per distinct mistake.`,
     `Isolate mistakes: if a sentence has a wrong preposition AND a wrong tense, that's two corrections, each scoped to the smallest fragment that carries the error — never the whole passage.`,
     `Only flag real errors (grammar, collocation, naturalness, register) — not style preferences. If the text is already natural and correct, return an empty list.`,
+    `The corrected field must be written only in ${targetLang}; never translate it into ${learnerLang}.`,
     `Never invent text the learner didn't write.`,
   ].join(" ");
 
@@ -414,9 +417,9 @@ export function buildCorrectRequest(
     ``,
     `For each mistake return:`,
     `- original: the exact fragment the learner wrote, verbatim.`,
-    `- corrected: the native-correct version of just that fragment.`,
+    `- corrected: the native-correct ${targetLang} version of just that fragment; do not translate it into ${learnerLang}.`,
     `- errorTypes: one or more of: ${ERROR_TYPES.join(", ")}.`,
-    `- rationale: one short line, in ${learnerLang}, on why it was wrong / how to say it.`,
+    `- rationale: one short line, in ${rationaleLang}, on why it was wrong / how to say it.`,
   ].join("\n");
 
   const schema = objectSchema(
@@ -441,6 +444,11 @@ export function buildCorrectRequest(
   );
 
   return { system, user, schema };
+}
+
+function rationaleLanguage(learnerLang: string, targetLang: string, level?: string): string {
+  const cefr = level?.trim().toUpperCase();
+  return cefr === "B2" || cefr === "C1" || cefr === "C2" ? targetLang : learnerLang;
 }
 
 /* ──────────────────────────── Conversation: converse() ──────────────────────────── */

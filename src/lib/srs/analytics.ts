@@ -26,6 +26,8 @@ export interface PerformanceStats {
   streakDays: number;
   /** Reviews per day for the last 14 days, oldest first. */
   daily: { day: string; count: number }[];
+  /** Reviews grouped by error type, worst accuracy first. */
+  errorTypes: { type: string; reviews: number; accuracy: number; lapses: number }[];
 }
 
 function dayKey(ms: number): string {
@@ -55,6 +57,25 @@ export function computePerformance(
     daily.push({ day: key, count: reviews.filter((r) => dayKey(r.reviewedAt) === key).length });
   }
 
+  const typeBuckets = new Map<string, ReviewRecord[]>();
+  for (const review of reviews) {
+    if (!review.errorType) continue;
+    const list = typeBuckets.get(review.errorType);
+    if (list) list.push(review);
+    else typeBuckets.set(review.errorType, [review]);
+  }
+  const errorTypes = [...typeBuckets.entries()]
+    .map(([type, list]) => {
+      const passedType = list.filter((r) => r.grade >= Rating.Good).length;
+      return {
+        type,
+        reviews: list.length,
+        accuracy: list.length ? passedType / list.length : 0,
+        lapses: list.filter((r) => r.grade === Rating.Again).length,
+      };
+    })
+    .sort((a, b) => a.accuracy - b.accuracy || b.reviews - a.reviews);
+
   return {
     totalReviews: total,
     accuracy: total ? passed / total : 0,
@@ -62,6 +83,7 @@ export function computePerformance(
     reviewsToday,
     streakDays: streak,
     daily,
+    errorTypes,
   };
 }
 

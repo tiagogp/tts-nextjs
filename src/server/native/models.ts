@@ -8,7 +8,7 @@ import { Readable, Transform } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import * as tar from "tar";
 import unbzip2 from "unbzip2-stream";
-import { modelsDir } from "./data";
+import { modelDirs, modelsDir } from "./data";
 
 type ModelId = "whisper-small" | "kokoro-1.0";
 
@@ -110,15 +110,19 @@ async function findFile(root: string, filename: string): Promise<string | null> 
 // AND its payload (the bin file, or the extracted model.onnx) are both present —
 // so a half-written or interrupted install never reads as ready.
 async function resolveInstalled(spec: ModelSpec): Promise<string | null> {
-  const finalDir = path.join(modelsDir(), spec.id);
-  const marker = path.join(finalDir, ".ready.json");
-  if (!(await exists(marker))) return null;
-  if (!spec.archive) {
-    const file = path.join(finalDir, spec.filename);
-    return (await exists(file)) ? file : null;
+  for (const root of modelDirs()) {
+    const finalDir = path.join(root, spec.id);
+    const marker = path.join(finalDir, ".ready.json");
+    if (!(await exists(marker))) continue;
+    if (!spec.archive) {
+      const file = path.join(finalDir, spec.filename);
+      if (await exists(file)) return file;
+      continue;
+    }
+    const model = await findFile(finalDir, "model.onnx");
+    if (model) return path.dirname(model);
   }
-  const model = await findFile(finalDir, "model.onnx");
-  return model ? path.dirname(model) : null;
+  return null;
 }
 
 async function ensure(spec: ModelSpec): Promise<string> {
@@ -126,6 +130,7 @@ async function ensure(spec: ModelSpec): Promise<string> {
   await mkdir(root, { recursive: true });
   const installed = await resolveInstalled(spec);
   if (installed) return installed;
+  lastError = null;
 
   const finalDir = path.join(root, spec.id);
   const marker = path.join(finalDir, ".ready.json");
@@ -206,7 +211,7 @@ export async function modelStatus(): Promise<ModelStatus> {
     downloading_kokoro: downloading.has("kokoro-1.0"),
     loading_whisper: whisper,
     downloading_whisper: downloading.has("whisper-small"),
-    download_progress: downloading.size ? progress : undefined,
+    download_progress: downloading.size || whisper || kokoro ? progress : undefined,
     error: lastError,
   };
 }

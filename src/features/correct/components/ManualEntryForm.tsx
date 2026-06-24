@@ -28,7 +28,7 @@ export function ManualEntryForm({ draft, onChange, onToggleType, onAdd }: Manual
             rows={2}
           />
         </Field>
-        <Field label="Native-correct version">
+        <Field label="Natural English version">
           <Textarea
             value={draft.corrected}
             onChange={(event) => onChange({ corrected: event.target.value })}

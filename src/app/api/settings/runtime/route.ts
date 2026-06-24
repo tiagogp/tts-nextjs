@@ -2,10 +2,12 @@ import { NextResponse } from "next/server";
 import {
   isInternalSettingsRequest,
   replaceRuntimeAiSettings,
+  getSettingsVersion,
 } from "@/server/aiSettings";
 import type { ProviderKind } from "@/lib/cards/provider";
 import type { SecureAiSettings } from "@/types/aiSettings";
 import { isProviderKind, optionalString, readJsonObject } from "@/server/http/validation";
+import { MAX_SETTINGS_JSON_BYTES } from "@/lib/constants";
 
 export const runtime = "nodejs";
 
@@ -21,7 +23,7 @@ export async function PUT(req: Request) {
   if (!isInternalSettingsRequest(req)) {
     return NextResponse.json({ error: "Not found." }, { status: 404 });
   }
-  const raw = await readJsonObject(req);
+  const raw = await readJsonObject(req, { maxBytes: MAX_SETTINGS_JSON_BYTES });
   if (!raw) {
     return NextResponse.json({ error: "Invalid settings." }, { status: 400 });
   }
@@ -33,5 +35,5 @@ export async function PUT(req: Request) {
     openaiApiKey: value(raw.openaiApiKey, 500),
   };
   replaceRuntimeAiSettings(settings);
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, version: getSettingsVersion() });
 }

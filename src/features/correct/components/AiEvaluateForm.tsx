@@ -19,6 +19,7 @@ interface AiEvaluateFormProps {
   onToggleRecord: () => void;
   onPickFile: (event: ChangeEvent<HTMLInputElement>) => void;
   onEvaluate: () => void;
+  onOpenSettings?: () => void;
 }
 
 export function AiEvaluateForm({
@@ -34,13 +35,14 @@ export function AiEvaluateForm({
   onToggleRecord,
   onPickFile,
   onEvaluate,
+  onOpenSettings,
 }: AiEvaluateFormProps) {
   return (
     <div className="space-y-2">
       <Textarea
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        placeholder="Write — or record — a few sentences in English. The AI finds what a native would say differently."
+        placeholder="Write or record a few sentences in English. The AI will find what a native speaker would say differently."
         rows={6}
         disabled={evaluating}
         className="px-4 py-3 leading-relaxed"
@@ -97,10 +99,26 @@ export function AiEvaluateForm({
           {evaluating ? "Evaluating…" : "Evaluate with AI →"}
         </Button>
       </div>
-      {evaluatorHint && <p className="text-xs text-ink-muted">{evaluatorHint}</p>}
+      {evaluatorHint && (
+        <p className="text-xs text-ink-muted">
+          {evaluatorHint}{" "}
+          {onOpenSettings && !evaluatorHint.startsWith("The Local") && (
+            <button onClick={onOpenSettings} className="underline hover:no-underline">
+              Open Settings →
+            </button>
+          )}
+        </p>
+      )}
       {ollamaOffline && (
         <p className="text-xs text-danger">
-          Ollama is offline or has no installed models. Open Settings to check the connection.
+          Ollama is offline or has no installed models.{" "}
+          {onOpenSettings ? (
+            <button onClick={onOpenSettings} className="underline hover:no-underline">
+              Open Settings →
+            </button>
+          ) : (
+            "Open Settings to check the connection."
+          )}
         </p>
       )}
     </div>

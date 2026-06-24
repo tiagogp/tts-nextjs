@@ -13,6 +13,8 @@ import type { ProviderKind } from "@/lib/cards/provider";
 import type { ContentSource, TranscriptSegment } from "@/lib/cards/schema";
 import { getDefaultProvider } from "@/server/aiSettings";
 import { isProviderKind, readJsonObject, safeString } from "@/server/http/validation";
+import { MAX_CARD_JSON_BYTES } from "@/lib/constants";
+import { logger } from "@/lib/logger";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -46,7 +48,7 @@ function toSegment(raw: unknown): TranscriptSegment | null {
 
 export async function POST(req: NextRequest) {
   try {
-    const obj = await readJsonObject(req);
+    const obj = await readJsonObject(req, { maxBytes: MAX_CARD_JSON_BYTES });
     if (!obj) {
       return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
     }
@@ -108,7 +110,7 @@ export async function POST(req: NextRequest) {
       count: selectedIndexes.length,
     });
   } catch (err: unknown) {
-    console.error("Card mining error:", err);
+    logger.error({ err }, "Card mining error");
     return NextResponse.json({ error: PUBLIC_MINE_ERROR }, { status: 500 });
   }
 }

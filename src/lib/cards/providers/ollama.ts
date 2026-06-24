@@ -182,7 +182,7 @@ export class OllamaProvider implements CardGenerationProvider {
   ): Promise<ErrorEvent[]> {
     const sourceLang = opts.sourceLang ?? this.learnerLang;
     const targetLang = opts.targetLang ?? "en";
-    const raw = await this.json(buildCorrectRequest(text, sourceLang, targetLang), options);
+    const raw = await this.json(buildCorrectRequest(text, sourceLang, targetLang, opts.level), options);
     return normalizeCorrected(raw, sourceLang, targetLang, opts.context);
   }
 

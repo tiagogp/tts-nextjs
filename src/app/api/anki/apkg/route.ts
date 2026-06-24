@@ -121,7 +121,7 @@ function jsonToCsvBytesFromParsed(
       : null;
   if (!Array.isArray(cards)) {
     throw new Error(
-      'JSON inválido: esperado um array (ex: [{"pt":"...","en":"..."}]) ou um objeto com a chave "cards".',
+      'Invalid JSON: expected an array, e.g. [{"pt":"...","en":"..."}], or an object with a "cards" key.',
     );
   }
 
@@ -154,14 +154,14 @@ function jsonToCsvBytesFromParsed(
     } else if (isPlainObject(card)) {
       if (!hasHeader) {
         throw new Error(
-          'JSON inválido: quando usar --noHeader com JSON, cada card precisa ser um array (ex: ["pt", "en"]).',
+          'Invalid JSON: when using --noHeader with JSON, each card must be an array, e.g. ["pt", "en"].',
         );
       }
       pt = toCellText(card[ptKey as string]);
       en = toCellText(card[enKey as string]);
     } else {
       throw new Error(
-        "JSON inválido: cada item deve ser um objeto (ex: {pt,en}) ou um array (ex: [pt,en]).",
+        "Invalid JSON: each item must be an object, e.g. {pt,en}, or an array, e.g. [pt,en].",
       );
     }
 
@@ -200,7 +200,7 @@ export async function POST(req: NextRequest) {
     const contentLength = Number(req.headers.get("content-length") ?? "0") || 0;
     if (contentLength > MAX_INPUT_BYTES) {
       return NextResponse.json(
-        { error: "Arquivo muito grande (máx 5MB)." },
+        { error: "File too large (max 5 MB)." },
         { status: 413 },
       );
     }
@@ -249,7 +249,7 @@ export async function POST(req: NextRequest) {
         const msg =
           e instanceof Error
             ? e.message
-            : "JSON inválido. Envie um array de cards ou um objeto com { cards: [...] }.";
+            : "Invalid JSON. Send an array of cards or an object with { cards: [...] }.";
         return NextResponse.json({ error: msg }, { status: 400 });
       }
     } else {
@@ -280,7 +280,7 @@ export async function POST(req: NextRequest) {
       if (f instanceof File) {
         if (f.size > MAX_INPUT_BYTES) {
           return NextResponse.json(
-            { error: "Arquivo muito grande (máx 5MB)." },
+            { error: "File too large (max 5 MB)." },
             { status: 413 },
           );
         }
@@ -299,7 +299,7 @@ export async function POST(req: NextRequest) {
             const msg =
               e instanceof Error
                 ? e.message
-                : "JSON inválido. Envie um array de cards ou um objeto com { cards: [...] }.";
+                : "Invalid JSON. Send an array of cards or an object with { cards: [...] }.";
             return NextResponse.json({ error: msg }, { status: 400 });
           }
         } else {
@@ -309,7 +309,7 @@ export async function POST(req: NextRequest) {
         const raw = String(jsonText ?? text ?? "");
         if (Buffer.byteLength(raw, "utf8") > MAX_INPUT_BYTES) {
           return NextResponse.json(
-            { error: "Arquivo muito grande (máx 5MB)." },
+            { error: "File too large (max 5 MB)." },
             { status: 413 },
           );
         }
@@ -325,14 +325,14 @@ export async function POST(req: NextRequest) {
           const msg =
             e instanceof Error
               ? e.message
-              : "JSON inválido. Envie um array de cards ou um objeto com { cards: [...] }.";
+              : "Invalid JSON. Send an array of cards or an object with { cards: [...] }.";
           return NextResponse.json({ error: msg }, { status: 400 });
         }
       } else {
         return NextResponse.json(
           {
             error:
-              'Envie "file" (CSV/JSON) ou "json"/"text" (JSON em texto) no multipart/form-data.',
+              'Send "file" (CSV/JSON) or "json"/"text" (JSON text) in multipart/form-data.',
           },
           { status: 400 },
         );
@@ -386,7 +386,7 @@ export async function POST(req: NextRequest) {
     if (!validation.ok) {
       return NextResponse.json(
         {
-          error: "O .apkg foi gerado, mas falhou na validação interna. Confira o debugLog.",
+          error: "The .apkg was generated, but internal validation failed. Check the debugLog.",
           code: "apkg_validation_failed",
           debugId,
           debugLog,

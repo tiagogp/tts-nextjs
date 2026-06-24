@@ -14,6 +14,8 @@ import { isProviderAvailable, resolveProvider } from "@/lib/cards/registry";
 import type { ConversationTurn, ProviderKind } from "@/lib/cards/provider";
 import { getDefaultProvider } from "@/server/aiSettings";
 import { isProviderKind, readJsonObject } from "@/server/http/validation";
+import { MAX_CORRECTION_JSON_BYTES } from "@/lib/constants";
+import { logger } from "@/lib/logger";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -71,7 +73,7 @@ function parseTurns(raw: unknown): ConversationTurn[] {
 
 export async function POST(req: NextRequest) {
   try {
-    const obj = await readJsonObject(req);
+    const obj = await readJsonObject(req, { maxBytes: MAX_CORRECTION_JSON_BYTES });
     if (!obj) {
       return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
     }
@@ -109,7 +111,7 @@ export async function POST(req: NextRequest) {
     const reply = await provider.converse(history, { scenario, targetLang, sourceLang, level });
     return NextResponse.json({ reply });
   } catch (err: unknown) {
-    console.error("Conversation error:", err);
+    logger.error({ err }, "Conversation error");
     return NextResponse.json(
       { error: providerErrorMessage(err) ?? PUBLIC_CONVERSATION_ERROR },
       { status: 500 },

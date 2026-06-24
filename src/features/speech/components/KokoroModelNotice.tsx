@@ -22,22 +22,25 @@ export default function KokoroModelNotice({
   if (model.ready !== false) return null;
 
   const percent = Math.round((model.progress ?? 0) * 100);
+  const hasProgress = model.progress !== undefined && model.progress > 0;
 
   return (
     <div className={cn("space-y-2 rounded-lg border border-line bg-input px-3 py-3 text-xs", className)}>
       <p className="text-ink-muted">
-        A voz local (modelo Kokoro, ≈349&nbsp;MB) precisa ser baixada uma única vez antes de gerar áudio.
+        The local voice model (Kokoro, about 349&nbsp;MB) needs to be downloaded once before audio can be generated.
       </p>
       {model.downloading ? (
         <>
           <div className="h-1.5 w-full overflow-hidden rounded bg-line">
             <div className="h-full bg-accent transition-[width] duration-500" style={{ width: `${percent}%` }} />
           </div>
-          <p className="text-ink-muted">Baixando modelo de voz… {percent}%</p>
+          <p className="text-ink-muted">
+            {hasProgress ? `Downloading voice model… ${percent}%` : "Preparing voice model download…"}
+          </p>
         </>
       ) : (
         <Button variant="primary" size="lg" onClick={() => void model.ensure()}>
-          Baixar modelo de voz
+          Download voice model
         </Button>
       )}
       {model.error && <p className="text-danger">{model.error}</p>}

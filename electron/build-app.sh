@@ -5,8 +5,9 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-if [ "$(uname -m)" != "arm64" ]; then
-  echo "✗ PhraseLoop currently targets Apple Silicon (arm64)."
+if [ "$(uname -s)" != "Darwin" ] || [ "$(uname -m)" != "arm64" ]; then
+  echo "✗ PhraseLoop currently targets Apple Silicon macOS."
+  echo "  Detected: $(uname -s) $(uname -m)"
   exit 1
 fi
 
@@ -38,6 +39,10 @@ echo "→ Preparing standalone Next.js payload…"
 rm -rf .next/standalone/.next/static .next/standalone/public
 cp -R .next/static .next/standalone/.next/static
 cp -R public .next/standalone/public
+NEXT_SERVER_RUNTIME_DIR=".next/standalone/node_modules/next/dist/compiled/next-server"
+mkdir -p "$NEXT_SERVER_RUNTIME_DIR"
+cp node_modules/next/dist/compiled/next-server/*.runtime.prod.js* "$NEXT_SERVER_RUNTIME_DIR"/
+test -f "$NEXT_SERVER_RUNTIME_DIR/app-route-turbo.runtime.prod.js"
 
 echo "→ Packaging Electron app…"
 rm -rf dist

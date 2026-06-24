@@ -1,6 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { PDFDocument } from "@napi-rs/canvas";
-import { dedupeSegments, discoverPdf, parseVtt, segmentText } from "./discovery";
+import { dedupeSegments, discoverArticle, discoverPdf, parseVtt, segmentText } from "./discovery";
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe("discovery text processing", () => {
   it("segments readable text and drops short fragments", () => {
@@ -44,6 +48,34 @@ describe("discovery text processing", () => {
       { text: "Hello world", startMs: 1360, endMs: 3040 },
       { text: "Second line", startMs: 65000, endMs: 67500 },
     ]);
+  });
+
+  it("extracts readable article text with the lightweight parser", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(`
+      <!doctype html>
+      <html>
+        <head><title>Readable fixture</title></head>
+        <body>
+          <main>
+            <article>
+              <h1>Readable fixture</h1>
+              <p>This is a complete sentence for PhraseLoop article discovery. It has enough detail to be selected as the primary readable content by the parser.</p>
+              <p>Another complete sentence keeps the article body substantial and gives the segmenter useful text to return.</p>
+            </article>
+          </main>
+        </body>
+      </html>
+    `, {
+      status: 200,
+      headers: { "content-type": "text/html" },
+    })));
+
+    const result = await discoverArticle("https://example.com/articles/readable");
+
+    expect(result.title).toBe("Readable fixture");
+    expect(result.hasAudio).toBe(false);
+    expect(result.segments.map((segment) => segment.text).join(" "))
+      .toContain("PhraseLoop article discovery");
   });
 
   it("extracts text from a PDF using the Node runtime", async () => {

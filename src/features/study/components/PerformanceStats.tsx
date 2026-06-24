@@ -41,6 +41,25 @@ export function PerformanceStats({ cardsCount, stats }: { cardsCount: number; st
           </div>
         </Disclosure>
       )}
+
+      {stats.errorTypes.length > 0 && (
+        <Disclosure
+          title="Error types"
+          description="Accuracy by recurring correction category"
+          className="mt-3"
+          nested
+        >
+          <div className="space-y-2">
+            {stats.errorTypes.map((entry) => (
+              <div key={entry.type} className="grid grid-cols-[minmax(0,1fr)_4rem_4rem] items-center gap-3 text-xs">
+                <span className="truncate text-ink">{entry.type}</span>
+                <span className="text-right tabular-nums text-ink-soft">{Math.round(entry.accuracy * 100)}%</span>
+                <span className="text-right tabular-nums text-ink-muted">{entry.reviews} rev</span>
+              </div>
+            ))}
+          </div>
+        </Disclosure>
+      )}
     </Card>
   );
 }

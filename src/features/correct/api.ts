@@ -57,6 +57,8 @@ export async function evaluateCorrectionText(input: {
   text: string;
   /** Situational context to stamp on the mistakes found (e.g. "work", "travel"). */
   context?: string;
+  /** CEFR level; B2+ gets target-language rationales. */
+  level?: string;
 }): Promise<ErrorEvent[]> {
   const response = await fetch("/api/cards/correct", {
     method: "POST",
@@ -68,6 +70,7 @@ export async function evaluateCorrectionText(input: {
       sourceLang: "pt",
       targetLang: "en",
       context: input.context || undefined,
+      level: input.level || undefined,
     }),
   });
   const data = (await response.json().catch(() => ({}))) as {

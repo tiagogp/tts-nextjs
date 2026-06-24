@@ -55,20 +55,24 @@ export function transcriptText(value: unknown): string {
   return PLAIN_NON_SPEECH_RE.test(text) ? "" : text;
 }
 
+function whisperAddonDir(platform = process.platform, arch = process.arch): string {
+  if (platform === "darwin" && (arch === "arm64" || arch === "x64")) return `mac-${arch}`;
+  if (platform === "linux" && arch === "x64") return "linux-x64";
+  if (platform === "win32" && arch === "x64") return "win32-x64";
+  throw new Error(`Native transcription is not bundled for ${platform} ${arch}`);
+}
+
 function whisper(): (options: Record<string, unknown>) => Promise<unknown> {
   if (whisperCall) return whisperCall;
-  if (process.platform !== "darwin" || process.arch !== "arm64") {
-    throw new Error("Native transcription requires Apple Silicon");
-  }
   // Locate the addon and dlopen it directly. Three traps:
   //   1. Don't use `require.resolve` (the bundler-bound `require`): turbopack
   //      rewrites it to a numeric module id, so path.dirname() later throws
   //      "path argument must be of type string. Received type number".
-  //   2. Don't use the package's own `transcribe` export: its loader looks for
-  //      the addon under `darwin-arm64/`, but the package ships it as
-  //      `mac-arm64/`, so that path doesn't exist.
+  //   2. Don't use the package's own `transcribe` export: older builds used a
+  //      darwin/mac folder mismatch, and direct dlopen lets us keep one stable
+  //      path resolver for standalone Next.
   //   3. Don't `require.resolve` the package entry either: Next's standalone
-  //      build only traces `dist/mac-arm64/**` (the glob in next.config.ts), so
+  //      build only traces the platform dist folders (the globs in next.config.ts), so
   //      the package's package.json and JS entry are absent from the packaged
   //      app — resolve() then throws "Cannot find module" and transcription dies
   //      with a generic error. The addon path is fixed, so build it directly off
@@ -79,7 +83,7 @@ function whisper(): (options: Record<string, unknown>) => Promise<unknown> {
     "@kutalia",
     "whisper-node-addon",
     "dist",
-    `mac-${process.arch}`,
+    whisperAddonDir(),
     "whisper.node",
   );
   const nativeModule = { exports: {} as unknown };
@@ -127,7 +131,7 @@ export async function transcribe(options: {
     model,
     language: options.language || "auto",
     translate: false,
-    use_gpu: true,
+    use_gpu: process.platform !== "linux",
     no_prints: true,
     no_timestamps: false,
     n_threads: Math.max(2, Math.min(8, os.cpus().length - 2)),

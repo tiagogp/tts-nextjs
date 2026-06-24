@@ -3,7 +3,7 @@
 //
 // Boot sequence: native-capable Next server -> BrowserWindow.
 
-const { app, BrowserWindow, ipcMain, safeStorage, shell, utilityProcess } = require("electron");
+const { app, BrowserWindow, ipcMain, Menu, safeStorage, shell, utilityProcess } = require("electron");
 const { spawn, spawnSync } = require("node:child_process");
 const crypto = require("node:crypto");
 const http = require("node:http");
@@ -19,6 +19,7 @@ const DEV_PROJECT_ROOT = path.resolve(__dirname, "..");
 const PACKAGED_NEXT_ROOT = path.join(process.resourcesPath, "app-next");
 const PROJECT_ROOT = process.env.TTS_PROJECT_ROOT || DEV_PROJECT_ROOT;
 const NEXT_ROOT = app.isPackaged ? PACKAGED_NEXT_ROOT : PROJECT_ROOT;
+const WHISPER_NATIVE_DIR = path.join(NEXT_ROOT, "node_modules", "@kutalia", "whisper-node-addon", "dist");
 
 const FRONTEND_PORT = 3000;
 const FRONTEND_URL = `http://localhost:${FRONTEND_PORT}`;
@@ -26,6 +27,7 @@ const APP_ICON_PNG = path.join(__dirname, "assets", "icon.png");
 const PRELOAD_JS = path.join(__dirname, "preload.js");
 const USER_ENV_FILE = path.join(app.getPath("userData"), "phraseloop.env");
 const AI_SETTINGS_FILE = path.join(app.getPath("userData"), "ai-settings.safe");
+const AI_SETTINGS_FALLBACK_FILE = path.join(app.getPath("userData"), "ai-settings.json");
 const APKG_DEBUG_LOG_FILE = path.join(app.getPath("userData"), "logs", "apkg-debug.jsonl");
 const SETTINGS_TOKEN = crypto.randomBytes(32).toString("hex");
 const LEGACY_DATA_DIRS = [
@@ -47,10 +49,19 @@ function cleanSetting(value, maxLength) {
 }
 
 function loadSecureAiSettings() {
-  if (!fs.existsSync(AI_SETTINGS_FILE) || !safeStorage.isEncryptionAvailable()) return {};
+  if (safeStorage.isEncryptionAvailable()) {
+    if (!fs.existsSync(AI_SETTINGS_FILE)) return {};
+    try {
+      const encrypted = Buffer.from(fs.readFileSync(AI_SETTINGS_FILE, "utf8"), "base64");
+      const parsed = JSON.parse(safeStorage.decryptString(encrypted));
+      return parsed && typeof parsed === "object" ? parsed : {};
+    } catch {
+      return {};
+    }
+  }
+  if (!fs.existsSync(AI_SETTINGS_FALLBACK_FILE)) return {};
   try {
-    const encrypted = Buffer.from(fs.readFileSync(AI_SETTINGS_FILE, "utf8"), "base64");
-    const parsed = JSON.parse(safeStorage.decryptString(encrypted));
+    const parsed = JSON.parse(fs.readFileSync(AI_SETTINGS_FALLBACK_FILE, "utf8"));
     return parsed && typeof parsed === "object" ? parsed : {};
   } catch {
     return {};
@@ -58,13 +69,39 @@ function loadSecureAiSettings() {
 }
 
 function saveSecureAiSettings(settings) {
-  if (!safeStorage.isEncryptionAvailable()) {
-    throw new Error("Secure system storage is unavailable on this device.");
-  }
-  const encrypted = safeStorage.encryptString(JSON.stringify(settings));
   fs.mkdirSync(path.dirname(AI_SETTINGS_FILE), { recursive: true });
-  fs.writeFileSync(AI_SETTINGS_FILE, encrypted.toString("base64"), { mode: 0o600 });
-  fs.chmodSync(AI_SETTINGS_FILE, 0o600);
+  if (safeStorage.isEncryptionAvailable()) {
+    const encrypted = safeStorage.encryptString(JSON.stringify(settings));
+    fs.writeFileSync(AI_SETTINGS_FILE, encrypted.toString("base64"), { mode: 0o600 });
+    fs.chmodSync(AI_SETTINGS_FILE, 0o600);
+    return;
+  }
+  fs.writeFileSync(AI_SETTINGS_FALLBACK_FILE, `${JSON.stringify(settings, null, 2)}\n`, { mode: 0o600 });
+  fs.chmodSync(AI_SETTINGS_FALLBACK_FILE, 0o600);
+}
+
+function secureStorageMode() {
+  return safeStorage.isEncryptionAvailable() ? "system" : "local-file";
+}
+
+function prependPathValue(current, value) {
+  return current ? `${value}${path.delimiter}${current}` : value;
+}
+
+function nativeLibraryEnv() {
+  if (process.platform === "linux" && process.arch === "x64") {
+    const libDir = path.join(WHISPER_NATIVE_DIR, "linux-x64");
+    return {
+      LD_LIBRARY_PATH: prependPathValue(process.env.LD_LIBRARY_PATH || "", libDir),
+    };
+  }
+  if (process.platform === "win32" && process.arch === "x64") {
+    const libDir = path.join(WHISPER_NATIVE_DIR, "win32-x64");
+    return {
+      PATH: prependPathValue(process.env.PATH || "", libDir),
+    };
+  }
+  return {};
 }
 
 function safeDownloadFilename(value) {
@@ -108,7 +145,8 @@ async function internalSettingsRequest(pathname, method, body) {
 }
 
 async function syncSecureAiSettings() {
-  await internalSettingsRequest("/api/settings/runtime", "PUT", loadSecureAiSettings());
+  const result = await internalSettingsRequest("/api/settings/runtime", "PUT", loadSecureAiSettings());
+  return typeof result?.version === "number" ? result.version : 0;
 }
 
 function parseEnvFile(file) {
@@ -372,8 +410,8 @@ ipcMain.handle("phrase-loop:ai-settings-save", async (event, rawPatch) => {
       else delete next[stored];
     }
     saveSecureAiSettings(next);
-    await syncSecureAiSettings();
-    return { ok: true };
+    const version = await syncSecureAiSettings();
+    return { ok: true, version };
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : "Could not save settings." };
   }
@@ -518,11 +556,17 @@ async function boot() {
   const standaloneServer = path.join(NEXT_ROOT, "server.js");
   const built = app.isPackaged || fs.existsSync(path.join(PROJECT_ROOT, ".next", "BUILD_ID"));
   const dataDir = app.getPath("userData");
+  const bundledModelsDir = path.join(process.resourcesPath, "models", "native");
   migrateLegacyModels(dataDir);
   fs.mkdirSync(path.join(dataDir, "logs"), { recursive: true });
   const serviceEnv = {
     ...projectEnv(process.env.NODE_ENV || (built ? "production" : "development")),
+    ...nativeLibraryEnv(),
     PHRASELOOP_DATA_DIR: dataDir,
+    ...(app.isPackaged && fs.existsSync(bundledModelsDir)
+      ? { PHRASELOOP_BUNDLED_MODELS_DIR: bundledModelsDir }
+      : {}),
+    PHRASELOOP_SETTINGS_STORAGE: secureStorageMode(),
     PHRASELOOP_SETTINGS_TOKEN: SETTINGS_TOKEN,
   };
 
@@ -553,6 +597,9 @@ async function boot() {
 app.whenReady().then(() => {
   if (process.platform === "darwin" && fs.existsSync(APP_ICON_PNG)) {
     app.dock.setIcon(APP_ICON_PNG);
+  }
+  if (process.platform !== "darwin") {
+    Menu.setApplicationMenu(null);
   }
 
   createWindow();

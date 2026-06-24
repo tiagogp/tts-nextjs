@@ -7,6 +7,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import path from "node:path";
 import { localRequest } from "@/server/localRuntime";
+import { MAX_AUDIO_UPLOAD_BYTES } from "@/lib/constants";
+import { logger } from "@/lib/logger";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,7 +24,7 @@ export async function POST(req: NextRequest) {
     if (!(file instanceof File) || file.size === 0) {
       return NextResponse.json({ error: "Attach an audio file." }, { status: 400 });
     }
-    if (file.size > 25 * 1024 * 1024) {
+    if (file.size > MAX_AUDIO_UPLOAD_BYTES) {
       return NextResponse.json({ error: "Audio too large (max 25 MB)." }, { status: 413 });
     }
     const res = await localRequest("/transcribe", {
@@ -36,7 +38,7 @@ export async function POST(req: NextRequest) {
     });
     const data = res.json<{ text?: string; detail?: string }>();
     if (res.status < 200 || res.status >= 300) {
-      console.error("Transcription runtime error:", res.status, data);
+      logger.error({ status: res.status, data }, "Transcription runtime error");
       return NextResponse.json(
         {
           error:
@@ -49,7 +51,7 @@ export async function POST(req: NextRequest) {
     }
     return NextResponse.json({ text: data.text ?? "" });
   } catch (err: unknown) {
-    console.error("Transcription proxy error:", err);
+    logger.error({ err }, "Transcription proxy error");
     return NextResponse.json(
       { error: PUBLIC_TRANSCRIBE_ERROR },
       { status: 502 },

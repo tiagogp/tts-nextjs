@@ -3,8 +3,17 @@ import "server-only";
 import { isPlainObject, type JsonObject } from "@/lib/isObject";
 import type { ProviderKind } from "@/lib/cards/provider";
 
-export async function readJsonObject(request: Request): Promise<JsonObject | null> {
-  const value = (await request.json().catch(() => null)) as unknown;
+export async function readJsonObject(request: Request, options: { maxBytes?: number } = {}): Promise<JsonObject | null> {
+  const maxBytes = options.maxBytes;
+  const contentLength = Number(request.headers.get("content-length") ?? 0);
+  if (maxBytes != null && contentLength > maxBytes) {
+    throw new Error(`JSON body exceeds ${maxBytes} bytes.`);
+  }
+  const text = await request.text().catch(() => "");
+  if (maxBytes != null && Buffer.byteLength(text, "utf8") > maxBytes) {
+    throw new Error(`JSON body exceeds ${maxBytes} bytes.`);
+  }
+  const value = text ? (JSON.parse(text) as unknown) : null;
   return isPlainObject(value) ? value : null;
 }
 

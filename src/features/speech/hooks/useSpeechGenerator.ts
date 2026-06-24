@@ -11,6 +11,21 @@ export const EXAMPLE_TEXT =
   "I'm willing to work hard because the payoff will come later.";
 export const MAX_CHARS = 4096;
 
+async function responseError(response: Response): Promise<string> {
+  const contentType = response.headers.get("content-type") ?? "";
+  if (contentType.includes("application/json")) {
+    const data = (await response.json().catch(() => null)) as { error?: unknown; detail?: unknown } | null;
+    if (typeof data?.error === "string" && data.error.trim()) return data.error;
+    if (typeof data?.detail === "string" && data.detail.trim()) return data.detail;
+  } else {
+    const text = await response.text().catch(() => "");
+    if (text.trim() && !text.trimStart().startsWith("<!DOCTYPE") && !text.trimStart().startsWith("<html")) {
+      return text.trim().slice(0, 500);
+    }
+  }
+  return `Request failed (${response.status})`;
+}
+
 /** Owns the speech generation workflow and its transient object URLs. */
 export function useSpeechGenerator() {
   const { voice, setVoice } = useTtsSettings();
@@ -67,8 +82,7 @@ export function useSpeechGenerator() {
       });
 
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error ?? `Request failed (${res.status})`);
+        throw new Error(await responseError(res));
       }
 
       const blob = await res.blob();

@@ -3,7 +3,7 @@ import { DECK_GENERATION_TIMEOUT_MS } from "@/features/cards/constants";
 
 export const SOURCE_KINDS: { kind: DiscoverSourceKind; label: string }[] = [
   { kind: "youtube", label: "YouTube" },
-  { kind: "article", label: "Article / URL" },
+  { kind: "article", label: "Article URL" },
   { kind: "pdf", label: "PDF" },
 ];
 

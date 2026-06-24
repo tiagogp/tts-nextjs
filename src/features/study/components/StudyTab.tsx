@@ -14,6 +14,7 @@ import {
   getConversations,
   recordReview,
   getCounts,
+  getCards,
   getReinforcementCards,
   getReinforcementSources,
   saveCards,
@@ -34,8 +35,9 @@ import { StudyCard, type DueCard } from "./StudyCard";
 import { PerformanceStats } from "./PerformanceStats";
 import { ExposureMeter } from "./ExposureMeter";
 import { WeaknessList } from "./WeaknessList";
+import { SavedCardsBrowser } from "./SavedCardsBrowser";
 
-export default function StudyTab() {
+export default function StudyTab({ onDiscover }: { onDiscover?: () => void }) {
   const { settings } = useAiSettings();
   const defaultProvider = settings.providers.find(
     (provider) => provider.kind === settings.defaultProvider,
@@ -48,6 +50,7 @@ export default function StudyTab() {
   const [errorEvents, setErrorEvents] = useState<ErrorEvent[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [counts, setCounts] = useState({ cards: 0, reviews: 0, due: 0 });
+  const [cards, setCards] = useState<Card[]>([]);
   const [reviewedThisSession, setReviewedThisSession] = useState(0);
   /** D5 — when set, the queue is a focused reinforcement drill, not the due queue. */
   const [reinforcing, setReinforcing] = useState<{
@@ -59,18 +62,20 @@ export default function StudyTab() {
   const [genError, setGenError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    const [due, allReviews, events, convos, c] = await Promise.all([
+    const [due, allReviews, events, convos, c, allCards] = await Promise.all([
       getDueCards(),
       getReviews(),
       getErrorEvents(),
       getConversations(),
       getCounts(),
+      getCards(),
     ]);
     setQueue(due);
     setReviews(allReviews);
     setErrorEvents(events);
     setConversations(convos);
     setCounts(c);
+    setCards(allCards.sort((a, b) => b.createdAt - a.createdAt));
     setFlipped(false);
   }, []);
 
@@ -232,21 +237,22 @@ export default function StudyTab() {
         reviewedThisSession={reviewedThisSession}
         onFlip={() => setFlipped(true)}
         onGrade={(g) => void grade(g)}
+        onDiscover={onDiscover ?? (() => {})}
       />
 
       <PerformanceStats cardsCount={counts.cards} stats={stats} />
 
       <ExposureMeter activity={activity} />
 
-      {weaknesses.length > 0 && (
-        <WeaknessList
-          weaknesses={weaknesses}
-          genError={genError}
-          generatingKey={generatingKey}
-          onPractice={(w) => void startReinforcement(w)}
-          onGenerate={(w) => void generateReinforcement(w)}
-        />
-      )}
+      <WeaknessList
+        weaknesses={weaknesses}
+        genError={genError}
+        generatingKey={generatingKey}
+        onPractice={(w) => void startReinforcement(w)}
+        onGenerate={(w) => void generateReinforcement(w)}
+      />
+
+      <SavedCardsBrowser cards={cards} />
     </div>
   );
 }

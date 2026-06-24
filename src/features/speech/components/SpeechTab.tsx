@@ -2,7 +2,7 @@
 
 import AnkiExporter from "@/features/speech/components/AnkiExporter";
 import AudioPlayer from "@/components/ui/AudioPlayer";
-import BatchGenerator from "@/features/speech/components/BatchGenerator";
+import ThemePhraseGenerator from "@/features/speech/components/ThemePhraseGenerator";
 import HistoryPanel from "@/features/speech/components/HistoryPanel";
 import Disclosure from "@/components/ui/Disclosure";
 import Select from "@/components/ui/Select";
@@ -131,7 +131,7 @@ export default function SpeechTab() {
                   <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217z" />
                   </svg>
-                  Generate Audio
+                  Generate audio
                 </>
               )}
             </Button>
@@ -165,10 +165,10 @@ export default function SpeechTab() {
         </Disclosure>
       )}
 
-      <Disclosure title="More tools" description="Batch audio and legacy JSON-to-Anki export." className="mt-3">
+      <Disclosure title="More tools" description="Theme phrase decks and legacy JSON-to-Anki export." className="mt-3">
         <div className="space-y-3">
-          <Disclosure title="Batch audio" description="Generate one audio file per line." nested>
-            <BatchGenerator embedded />
+          <Disclosure title="Theme phrases" description="Generate phrases from a situation, keep the useful ones, then export a deck." nested>
+            <ThemePhraseGenerator embedded />
           </Disclosure>
           <Disclosure title="Import JSON to Anki" description="Build an .apkg deck from an existing JSON file." nested>
             <AnkiExporter embedded />

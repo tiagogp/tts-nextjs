@@ -13,8 +13,10 @@ import { useAiSettings } from "@/features/settings/context/AiSettingsContext";
 import type { PhraseCandidate } from "@/lib/cards/schema";
 import { useProviderSelection } from "@/features/cards/hooks/useProviderSelection";
 import { useDeckGeneration } from "@/features/cards/hooks/useDeckGeneration";
-import { exportAndSaveDeck } from "@/features/cards/exportDeck";
+import type { DeckPayload } from "@/features/cards/exportDeck";
 import { ProviderPicker } from "@/features/cards/components/ProviderPicker";
+import { DeckPreview } from "@/features/cards/components/DeckPreview";
+import { HomeDashboard } from "@/features/discover/components/HomeDashboard";
 import { SourcePicker } from "@/features/discover/components/SourcePicker";
 import { TranscriptReview } from "@/features/discover/components/TranscriptReview";
 import { ENGLISH_LEVELS, GENERATION_TIMEOUT_MS } from "@/features/discover/constants";
@@ -42,7 +44,13 @@ function waitForAudioEvent(
   });
 }
 
-export default function DiscoverTab() {
+export default function DiscoverTab({
+  onOpenSettings,
+  onStudyNow,
+}: {
+  onOpenSettings?: () => void;
+  onStudyNow?: () => void;
+}) {
   const { loading: settingsLoading } = useAiSettings();
   const [sourceKind, setSourceKind] = useState<DiscoverSourceKind>("youtube");
   const [url, setUrl] = useState("");
@@ -55,6 +63,10 @@ export default function DiscoverTab() {
   const [error, setError] = useState<string | null>(null);
   const [curationNote, setCurationNote] = useState<string | null>(null);
   const [result, setResult] = useState<DiscoverResult | null>(null);
+  const [deckPreview, setDeckPreview] = useState<{
+    data: DeckPayload;
+    candidates: PhraseCandidate[];
+  } | null>(null);
   const [kept, setKept] = useState<Set<number>>(new Set());
   const [playing, setPlaying] = useState<number | null>(null);
 
@@ -64,7 +76,7 @@ export default function DiscoverTab() {
   const generation = useDeckGeneration({
     timeoutMs: GENERATION_TIMEOUT_MS,
     timeoutMessage:
-      "Generation took too long and was stopped. Try fewer phrases or another provider.",
+      "This is taking longer than expected. Try a shorter clip or switch to a faster provider.",
     cancelMessage: "Generation cancelled. Your selected phrases are still here.",
     stages: [
       { untilSeconds: 8, label: "Creating focused cards…" },
@@ -89,6 +101,7 @@ export default function DiscoverTab() {
   const stopAtRef = useRef<number | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const playRequestRef = useRef(0);
+  const sourceInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(
     () => () => {
@@ -173,6 +186,7 @@ export default function DiscoverTab() {
     setCurationNote(null);
     setGenError(null);
     setGenDone(null);
+    setDeckPreview(null);
 
     // Only the YouTube path may download the one-time Whisper model.
     if (sourceKind === "youtube") {
@@ -234,6 +248,7 @@ export default function DiscoverTab() {
       return next;
     });
     setGenDone(null);
+    setDeckPreview(null);
   };
 
   const generateCards = useCallback(async () => {
@@ -258,16 +273,15 @@ export default function DiscoverTab() {
 
     await run(async (signal) => {
       const data = await generateDiscoverDeck({ provider, selectedModel, result, candidates, signal });
-      // Persist sources + generated cards locally so they're ready for the Study tab.
-      return exportAndSaveDeck(data, {
-        defaultFilename: `${result.title || "deck"}.apkg`,
-        persist: (cards) => saveGeneratedDeck(cards, candidates),
-      });
+      setDeckPreview({ data, candidates });
+      return `${data.count ?? data.cards?.length ?? 0} card${(data.count ?? data.cards?.length ?? 0) === 1 ? "" : "s"} ready to preview.`;
     });
   }, [result, kept, provider, providerReady, selectedModel, run]);
 
   return (
     <div className="space-y-5">
+      <HomeDashboard onStart={() => sourceInputRef.current?.focus()} />
+
       <Card className="space-y-4 p-5">
         <SourcePicker
           value={sourceKind}
@@ -284,6 +298,7 @@ export default function DiscoverTab() {
         {sourceKind === "pdf" ? (
           <Field label="PDF file" htmlFor="discover-pdf-input">
             <input
+              ref={sourceInputRef}
               id="discover-pdf-input"
               type="file"
               accept="application/pdf,.pdf"
@@ -294,6 +309,7 @@ export default function DiscoverTab() {
         ) : (
           <Field label={sourceKind === "article" ? "Article URL" : "YouTube URL"} htmlFor="discover-url-input">
             <Input
+              ref={sourceInputRef}
               id="discover-url-input"
               type="url"
               value={url}
@@ -340,8 +356,14 @@ export default function DiscoverTab() {
 
         {!providerReady && !settingsLoading && (
           <Notice tone="error" role="status">
-            {activeProvider?.label ?? "The selected AI provider"} is unavailable. Open Settings with the gear button to
-            connect it, or choose Local heuristic.
+            {activeProvider?.label ?? "The selected AI provider"} is unavailable.{" "}
+            {onOpenSettings ? (
+              <button onClick={onOpenSettings} className="underline hover:no-underline">
+                Open Settings →
+              </button>
+            ) : (
+              "Open Settings with the gear icon to connect it."
+            )}
           </Notice>
         )}
 
@@ -376,6 +398,16 @@ export default function DiscoverTab() {
             {error}
           </Notice>
         )}
+
+        {!result && !loading && !hasSource && (
+          <div className="rounded border border-line bg-surface px-3 py-2.5 text-xs text-ink-soft">
+            {sourceKind === "pdf"
+              ? "Choose a PDF file to get started."
+              : sourceKind === "article"
+                ? "Paste an article URL to get started, for example https://example.com/english-learning."
+                : "Paste a YouTube URL to get started, for example https://www.youtube.com/watch?v=VIDEO_ID."}
+          </div>
+        )}
       </Card>
 
       {result && (
@@ -395,6 +427,18 @@ export default function DiscoverTab() {
           onCancel={cancelGeneration}
           onToggleKeep={toggleKeep}
           onPlay={(index, segment) => void playClip(index, segment)}
+          onOpenSettings={onOpenSettings}
+        />
+      )}
+
+      {deckPreview && (
+        <DeckPreview
+          title="Discover deck preview"
+          data={deckPreview.data}
+          defaultFilename={`${result?.title || "deck"}.apkg`}
+          persist={(cards) => saveGeneratedDeck(cards, deckPreview.candidates)}
+          onStudyNow={onStudyNow}
+          onDismiss={() => setDeckPreview(null)}
         />
       )}
     </div>

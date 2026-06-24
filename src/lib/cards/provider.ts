@@ -16,6 +16,7 @@ import type {
   TranscriptSegment,
 } from "./schema";
 import { dedupeCards, type Embedder } from "./dedupe";
+import { logger } from "@/lib/logger";
 
 export interface GenerationRunOptions {
   signal?: AbortSignal;
@@ -29,6 +30,8 @@ export interface CorrectOptions {
   sourceLang?: string;
   /** Language being learned / corrected. Default "en". */
   targetLang?: string;
+  /** CEFR level, used to decide how much explanation can stay in the target language. */
+  level?: string;
   /** Situational context to stamp on every ErrorEvent found (already normalized). */
   context?: string;
 }
@@ -121,6 +124,8 @@ export interface CardGenerationProvider {
    * pipeline falls back to a lexical comparison.
    */
   embed?: Embedder;
+  /** Stable provider/model namespace for the in-memory embeddings cache. */
+  readonly embeddingCacheKey?: string;
 }
 
 /** Registry so the UI can list available providers and resolve the user's choice. */
@@ -288,7 +293,7 @@ export async function generateVettedCards(
       if (isAbortError(err)) throw err;
       // A transient critique failure (rate limit, refusal, malformed JSON) drops just
       // this card rather than failing the source — the quality gate erring toward "drop".
-      console.error("Critique failed; dropping card:", err);
+      logger.error({ err }, "Critique failed; dropping card");
       debug(options, "cards-candidate-critique-failed", {
         provider: provider.kind,
         candidateIndex,
@@ -307,9 +312,29 @@ export async function generateVettedCards(
       durationMs: Date.now() - critiqueStartedAt,
       ...sourceInfo,
     });
-    if (critique.verdict === "keep") kept.push(card);
-    else if (critique.verdict === "rewrite" && critique.rewritten) kept.push(critique.rewritten);
-    // "drop" -> discard
+    if (critique.verdict === "keep") {
+      kept.push(card);
+    } else if (critique.verdict === "rewrite" && critique.rewritten) {
+      kept.push(critique.rewritten);
+      debug(options, "cards-candidate-rewritten", {
+        provider: provider.kind,
+        candidateIndex,
+        cardId: card.id,
+        rewrittenId: critique.rewritten.id,
+        durationMs: Date.now() - critiqueStartedAt,
+        ...sourceInfo,
+      });
+    } else {
+      debug(options, "cards-candidate-dropped-verdict", {
+        provider: provider.kind,
+        candidateIndex,
+        cardId: card.id,
+        verdict: critique.verdict,
+        reason: (critique as { reason?: string }).reason ?? null,
+        durationMs: Date.now() - critiqueStartedAt,
+        ...sourceInfo,
+      });
+    }
   }
   debug(options, "cards-source-vetting-finished", {
     provider: provider.kind,
@@ -390,7 +415,7 @@ export async function generateDeck(
     } catch (err) {
       if (isAbortError(err)) throw err;
       failures++;
-      console.error("Card generation failed for one source:", err);
+      logger.error({ err }, "Card generation failed for one source");
       debug(options, "cards-source-worker-failed", {
         provider: provider.kind,
         error: err instanceof Error ? err.message : "unknown",
@@ -407,7 +432,12 @@ export async function generateDeck(
     cards: beforeDedupe.length,
     hasEmbedder: provider.embed != null,
   });
-  const cards = await dedupeCards(beforeDedupe, provider.embed?.bind(provider), options);
+  const cards = await dedupeCards(
+    beforeDedupe,
+    provider.embed?.bind(provider),
+    options,
+    provider.embeddingCacheKey ?? provider.kind,
+  );
   debug(options, "cards-dedupe-finished", {
     provider: provider.kind,
     before: beforeDedupe.length,

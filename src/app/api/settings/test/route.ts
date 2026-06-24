@@ -4,10 +4,11 @@ import { NextResponse } from "next/server";
 import {
   getOllamaBaseUrl,
   getProviderApiKey,
-  isInternalSettingsRequest,
+  isAuthorizedSettingsRequest,
 } from "@/server/aiSettings";
 import { ollamaRoot } from "@/server/integrations/ollama";
 import { readJsonObject } from "@/server/http/validation";
+import { MAX_SETTINGS_JSON_BYTES } from "@/lib/constants";
 
 export const runtime = "nodejs";
 
@@ -16,10 +17,10 @@ function str(v: unknown, max: number): string | undefined {
 }
 
 export async function POST(req: Request) {
-  if (!isInternalSettingsRequest(req)) {
+  if (!isAuthorizedSettingsRequest(req)) {
     return NextResponse.json({ error: "Not found." }, { status: 404 });
   }
-  const raw = await readJsonObject(req);
+  const raw = await readJsonObject(req, { maxBytes: MAX_SETTINGS_JSON_BYTES });
   if (!raw) {
     return NextResponse.json({ ok: false, detail: "Invalid test request." }, { status: 400 });
   }

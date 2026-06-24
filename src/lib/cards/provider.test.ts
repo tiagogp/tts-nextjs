@@ -132,4 +132,23 @@ describe("generateVettedCards", () => {
     expect(generate).toHaveBeenCalled();
     expect(generate.mock.calls.length).toBeLessThan(sources.length);
   });
+
+  it("reuses cached embeddings for the same provider model and card fingerprints", async () => {
+    const cards = [card("first prompt"), card("second prompt")];
+    const embed = vi.fn(async () => [
+      [1, 0],
+      [0, 1],
+    ]);
+    const provider = makeProvider({
+      skipCritique: true,
+      embeddingCacheKey: "test-embed-model",
+      generate: vi.fn().mockResolvedValue(cards),
+      embed,
+    });
+
+    await generateDeck(provider, [source]);
+    await generateDeck(provider, [source]);
+
+    expect(embed).toHaveBeenCalledTimes(1);
+  });
 });

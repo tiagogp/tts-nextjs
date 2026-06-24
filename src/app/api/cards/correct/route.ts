@@ -15,6 +15,8 @@ import { isProviderAvailable, resolveProvider } from "@/lib/cards/registry";
 import type { ProviderKind } from "@/lib/cards/provider";
 import { getDefaultProvider } from "@/server/aiSettings";
 import { isProviderKind, readJsonObject } from "@/server/http/validation";
+import { MAX_CORRECTION_JSON_BYTES } from "@/lib/constants";
+import { logger } from "@/lib/logger";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -54,7 +56,7 @@ function correctionProviderKind(raw: unknown): ProviderKind {
 
 export async function POST(req: NextRequest) {
   try {
-    const obj = await readJsonObject(req);
+    const obj = await readJsonObject(req, { maxBytes: MAX_CORRECTION_JSON_BYTES });
     if (!obj) {
       return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
     }
@@ -74,6 +76,7 @@ export async function POST(req: NextRequest) {
 
     const sourceLang = safeStr(obj.sourceLang, "pt", 16);
     const targetLang = safeStr(obj.targetLang, "en", 16);
+    const level = safeStr(obj.level, "", 8) || undefined;
     const context = normalizeContext(safeStr(obj.context, "", 100));
     const model = safeStr(obj.ollamaModel, "", 100) || undefined;
 
@@ -88,11 +91,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const events = await provider.correct(text, { sourceLang, targetLang, context });
+    const events = await provider.correct(text, { sourceLang, targetLang, level, context });
     // No errors found is a success — the learner's text was already native-correct.
     return NextResponse.json({ events, count: events.length });
   } catch (err: unknown) {
-    console.error("Correction error:", err);
+    logger.error({ err }, "Correction error");
     return NextResponse.json(
       { error: providerErrorMessage(err) ?? PUBLIC_CORRECTION_ERROR },
       { status: 500 },

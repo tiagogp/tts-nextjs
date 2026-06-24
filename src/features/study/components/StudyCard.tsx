@@ -19,6 +19,7 @@ interface StudyCardProps {
   reviewedThisSession: number;
   onFlip: () => void;
   onGrade: (grade: Grade) => void;
+  onDiscover: () => void;
 }
 
 export function StudyCard({
@@ -29,6 +30,7 @@ export function StudyCard({
   reviewedThisSession,
   onFlip,
   onGrade,
+  onDiscover,
 }: StudyCardProps) {
   return (
     <Card className="p-6 sm:p-8">
@@ -38,14 +40,20 @@ export function StudyCard({
           <p className="text-xs text-ink-muted">
             Generate some cards in the Discover tab — they’ll show up here for review.
           </p>
+          <Button variant="secondary" size="sm" className="mt-3" onClick={onDiscover}>
+            Discover new content
+          </Button>
         </div>
       ) : !current ? (
         <div className="space-y-1 py-8 text-center">
-          <p className="text-sm font-medium text-ink">All caught up 🎉</p>
+          <p className="text-sm font-medium text-ink">You&apos;re all caught up</p>
           <p className="text-xs text-ink-muted">
             {reviewedThisSession > 0 ? `${reviewedThisSession} reviewed this session. ` : ""}
-            Nothing due right now — come back later.
+            Discover new content when you want more to study.
           </p>
+          <Button variant="secondary" size="sm" className="mt-3" onClick={onDiscover}>
+            Discover new content
+          </Button>
         </div>
       ) : (
         <div className="space-y-5">

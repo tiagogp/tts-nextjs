@@ -32,6 +32,7 @@ interface TranscriptReviewProps {
   onCancel: () => void;
   onToggleKeep: (index: number) => void;
   onPlay: (index: number, segment: TranscriptSegment) => void;
+  onOpenSettings?: () => void;
 }
 
 export function TranscriptReview({
@@ -50,7 +51,10 @@ export function TranscriptReview({
   onCancel,
   onToggleKeep,
   onPlay,
+  onOpenSettings,
 }: TranscriptReviewProps) {
+  const showSettingsLink = Boolean(genError?.toLowerCase().includes("faster provider") && onOpenSettings);
+
   return (
     <Card className="overflow-hidden">
       {result.hasAudio && (
@@ -106,6 +110,14 @@ export function TranscriptReview({
       {(genError || genDone) && (
         <div className={cn("border-b border-line px-5 py-2.5 text-xs", genError ? "bg-danger/8 text-danger" : "text-ink-soft")}>
           {genError ?? genDone}
+          {showSettingsLink && (
+            <>
+              {" "}
+              <button type="button" onClick={onOpenSettings} className="font-medium underline hover:no-underline">
+                Open Settings →
+              </button>
+            </>
+          )}
         </div>
       )}
 

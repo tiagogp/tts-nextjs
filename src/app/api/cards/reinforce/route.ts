@@ -23,6 +23,8 @@ import { getDefaultProvider } from "@/server/aiSettings";
 import { safeStr, toCandidate, toErrorEvent } from "@/lib/cards/intake";
 import type { CardSource, ErrorEvent, PhraseCandidate } from "@/lib/cards/schema";
 import { isProviderKind, readJsonObject } from "@/server/http/validation";
+import { MAX_CARD_JSON_BYTES } from "@/lib/constants";
+import { logger } from "@/lib/logger";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -33,7 +35,7 @@ const PUBLIC_REINFORCE_ERROR =
 
 export async function POST(req: NextRequest) {
   try {
-    const obj = await readJsonObject(req);
+    const obj = await readJsonObject(req, { maxBytes: MAX_CARD_JSON_BYTES });
     if (!obj) {
       return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
     }
@@ -93,7 +95,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ cards, count: cards.length, failed: failures });
   } catch (err: unknown) {
-    console.error("Reinforcement generation error:", err);
+    logger.error({ err }, "Reinforcement generation error");
     return NextResponse.json(
       { error: PUBLIC_REINFORCE_ERROR },
       { status: 500 },

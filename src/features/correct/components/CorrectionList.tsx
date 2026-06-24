@@ -22,6 +22,7 @@ interface CorrectionListProps {
   onGenerate: () => void;
   onCancel: () => void;
   onRemove: (id: string) => void;
+  onOpenSettings?: () => void;
 }
 
 export function CorrectionList({
@@ -36,7 +37,10 @@ export function CorrectionList({
   onGenerate,
   onCancel,
   onRemove,
+  onOpenSettings,
 }: CorrectionListProps) {
+  const showSettingsLink = Boolean(genError?.toLowerCase().includes("faster provider") && onOpenSettings);
+
   return (
     <Card className="overflow-hidden">
       <div className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3 border-b border-line bg-card px-5 py-3">
@@ -90,6 +94,14 @@ export function CorrectionList({
       {(genError || genDone) && (
         <div className={cn("border-b border-line px-5 py-2.5 text-xs", genError ? "bg-danger/8 text-danger" : "text-ink-soft")}>
           {genError ?? genDone}
+          {showSettingsLink && (
+            <>
+              {" "}
+              <button type="button" onClick={onOpenSettings} className="font-medium underline hover:no-underline">
+                Open Settings →
+              </button>
+            </>
+          )}
         </div>
       )}
 

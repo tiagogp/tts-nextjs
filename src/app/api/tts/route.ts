@@ -3,13 +3,15 @@ import JSZip from "jszip";
 import { isPlainObject } from "@/lib/isObject";
 import { sanitizeFilename } from "@/lib/sanitizeFilename";
 import { localJson } from "@/server/localRuntime";
+import { MAX_TTS_TEXT_CHARS } from "@/lib/constants";
+import { logger } from "@/lib/logger";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
 
-const MAX_TEXT_CHARS = 4096;
 const MAX_ITEMS = 250;
 const MAX_TOTAL_CHARS = 80_000;
+const MAX_TTS_JSON_BYTES = 512 * 1024;
 const DEFAULT_SPEED = 1.15;
 const DEFAULT_VOICE = "af_heart";
 const PUBLIC_TTS_ERROR =
@@ -83,9 +85,23 @@ function extractLinesFromJson(value: unknown, textKey: string): string[] {
   return [];
 }
 
+function runtimeErrorMessage(rawBody: string): string | null {
+  try {
+    const data = JSON.parse(rawBody) as { error?: unknown; detail?: unknown };
+    if (typeof data.error === "string" && data.error.trim()) return data.error;
+    if (typeof data.detail === "string" && data.detail.trim()) return data.detail;
+  } catch {
+    const text = rawBody.trim();
+    if (text && !text.startsWith("<!DOCTYPE") && !text.startsWith("<html")) {
+      return text.slice(0, 500);
+    }
+  }
+  return null;
+}
+
 async function synthOne(text: string, speed: number, voice: string): Promise<Buffer> {
-  if (text.length > MAX_TEXT_CHARS) {
-    throw new PublicRouteError(`Text exceeds ${MAX_TEXT_CHARS} characters.`, 400);
+  if (text.length > MAX_TTS_TEXT_CHARS) {
+    throw new PublicRouteError(`Text exceeds ${MAX_TTS_TEXT_CHARS} characters.`, 400);
   }
 
   const ttsRes = await localJson(
@@ -95,7 +111,12 @@ async function synthOne(text: string, speed: number, voice: string): Promise<Buf
   );
 
   if (ttsRes.status < 200 || ttsRes.status >= 300) {
-    console.error("TTS runtime error:", ttsRes.status, ttsRes.body.toString("utf8"));
+    const rawBody = ttsRes.body.toString("utf8");
+    const runtimeMessage = runtimeErrorMessage(rawBody);
+    if (runtimeMessage) {
+      throw new PublicRouteError(runtimeMessage, ttsRes.status === 409 ? 409 : 500);
+    }
+    logger.error({ status: ttsRes.status, body: rawBody }, "TTS runtime error");
     throw new PublicRouteError(PUBLIC_TTS_ERROR, 502);
   }
 
@@ -104,7 +125,15 @@ async function synthOne(text: string, speed: number, voice: string): Promise<Buf
 
 export async function POST(req: NextRequest) {
   try {
-    const body = (await req.json().catch(() => null)) as unknown;
+    const contentLength = Number(req.headers.get("content-length") ?? 0);
+    if (contentLength > MAX_TTS_JSON_BYTES) {
+      return NextResponse.json({ error: "Request body too large." }, { status: 413 });
+    }
+    const raw = await req.text();
+    if (Buffer.byteLength(raw, "utf8") > MAX_TTS_JSON_BYTES) {
+      return NextResponse.json({ error: "Request body too large." }, { status: 413 });
+    }
+    const body = raw ? (JSON.parse(raw) as unknown) : null;
     const bodyObj = isPlainObject(body) ? body : null;
     const speed = safeSpeed(bodyObj?.speed);
     const voice = safeVoice(bodyObj?.voice);
@@ -189,7 +218,7 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (err: unknown) {
-    console.error("TTS proxy error:", err);
+    logger.error({ err }, "TTS proxy error");
     if (err instanceof PublicRouteError) {
       return NextResponse.json({ error: err.message }, { status: err.status });
     }

@@ -46,7 +46,7 @@ import {
  * Gated like the Correct tab: the Local heuristic can't hold a conversation, so a model-backed
  * provider (Ollama, Claude, GPT) is required.
  */
-export default function ConverseTab() {
+export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () => void }) {
   const selection = useProviderSelection({ fallbackToEvaluator: true });
   const { provider, activeProvider, hasEvaluator, selectedModel } = selection;
 
@@ -309,6 +309,7 @@ export default function ConverseTab() {
           selectedModel,
           text: userText,
           context: conv.context,
+          level: conv.level,
         });
         const reviewed: Conversation = { ...conv, errors, correctedAt: Date.now() };
         setReview(reviewed);
@@ -406,7 +407,7 @@ export default function ConverseTab() {
             </p>
           ) : errors && errors.length === 0 ? (
             <p className="rounded-lg border border-line bg-surface px-4 py-3 text-sm text-ink-soft">
-              No mistakes caught — that already reads natural. 🎉
+              No mistakes found — that already sounds natural. 🎉
             </p>
           ) : errors && errors.length > 0 ? (
             <>
@@ -451,7 +452,14 @@ export default function ConverseTab() {
               {reviewNote}
             </p>
           )}
-          {!hasEvaluator && evaluatorHint && <p className="text-xs text-ink-muted">{evaluatorHint}</p>}
+          {!hasEvaluator && evaluatorHint && (
+            <p className="text-xs text-ink-muted">
+              {evaluatorHint}{" "}
+              {onOpenSettings && provider !== "local" && (
+                <button onClick={onOpenSettings} className="underline hover:no-underline">Open Settings →</button>
+              )}
+            </p>
+          )}
         </Card>
       </div>
     );
@@ -463,9 +471,9 @@ export default function ConverseTab() {
       <div className="space-y-5">
         <Card className="space-y-4 p-5">
         <div>
-          <p className="text-sm font-semibold tracking-[-0.01em] text-ink">Practice a conversation</p>
+          <p className="text-sm font-semibold tracking-[-0.01em] text-ink">Practice speaking</p>
           <p className="mt-0.5 text-xs text-ink-muted">
-            Speak with an AI partner in a scenario. Keep it flowing — your mistakes become cards afterwards.
+            Speak with an AI partner in a role-play. Keep going naturally; your mistakes become cards afterward.
           </p>
         </div>
 
@@ -488,12 +496,12 @@ export default function ConverseTab() {
               type="text"
               value={customScenario}
               onChange={(e) => setCustomScenario(e.target.value)}
-              placeholder="e.g. negotiating a flat rental with a landlord"
+              placeholder="e.g. negotiating an apartment lease with a landlord"
             />
           </Field>
         )}
 
-        <Field label="Level" hint="Pitches how hard the partner's language is.">
+        <Field label="Level" hint="Sets how challenging your partner's English is.">
           <Segmented<ConversationLevel>
             label="CEFR level"
             value={level}
@@ -507,9 +515,16 @@ export default function ConverseTab() {
 
         <div className="flex items-center gap-3">
           <Button variant="primary" onClick={start} disabled={!canStart || busy} className="h-10">
-            {busy ? "Starting…" : "Start conversation →"}
+            {busy ? "Starting…" : "Start practice →"}
           </Button>
-          {evaluatorHint && <p className="text-xs text-ink-muted">{evaluatorHint}</p>}
+          {evaluatorHint && (
+            <p className="text-xs text-ink-muted">
+              {evaluatorHint}{" "}
+              {onOpenSettings && provider !== "local" && (
+                <button onClick={onOpenSettings} className="underline hover:no-underline">Open Settings →</button>
+              )}
+            </p>
+          )}
         </div>
 
         <Disclosure
@@ -581,7 +596,7 @@ export default function ConverseTab() {
         ))}
         {busy && (
           <li className="flex items-center gap-2 text-xs text-ink-muted">
-            <Spinner className="h-3 w-3" /> thinking…
+            <Spinner className="h-3 w-3" /> Thinking…
           </li>
         )}
         <div ref={bottomRef} />

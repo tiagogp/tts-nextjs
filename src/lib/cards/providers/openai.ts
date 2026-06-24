@@ -74,12 +74,14 @@ export class OpenAIProvider implements CardGenerationProvider {
   private readonly model: string;
   private readonly embedModel: string;
   private readonly learnerLang: string;
+  readonly embeddingCacheKey: string;
 
   constructor(opts: OpenAIProviderOptions = {}) {
     this.client = new OpenAI(opts.apiKey ? { apiKey: opts.apiKey } : {});
     this.model = opts.model ?? DEFAULT_MODEL;
     this.embedModel = opts.embedModel ?? DEFAULT_EMBED_MODEL;
     this.learnerLang = opts.learnerLang ?? DEFAULT_LEARNER_LANG;
+    this.embeddingCacheKey = `${this.kind}:${this.embedModel}`;
   }
 
   private async json<T>(req: JsonRequest<T>, options: GenerationRunOptions = {}): Promise<T> {
@@ -142,7 +144,7 @@ export class OpenAIProvider implements CardGenerationProvider {
   ): Promise<ErrorEvent[]> {
     const sourceLang = opts.sourceLang ?? this.learnerLang;
     const targetLang = opts.targetLang ?? "en";
-    const raw = await this.json(buildCorrectRequest(text, sourceLang, targetLang), options);
+    const raw = await this.json(buildCorrectRequest(text, sourceLang, targetLang, opts.level), options);
     return normalizeCorrected(raw, sourceLang, targetLang, opts.context);
   }
 

@@ -6,7 +6,7 @@ import { existsSync } from "node:fs";
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
-import { JSDOM } from "jsdom";
+import { parseHTML } from "linkedom";
 import { Readability } from "@mozilla/readability";
 import { discoverCacheDir } from "./data";
 import { transcribe, transcriptText } from "./speech";
@@ -228,7 +228,12 @@ export async function discoverArticle(url: string): Promise<DiscoverResult> {
   if (!response.ok) throw new Error(`Article request failed (${response.status})`);
   const html = await response.text();
   if (html.length > 10_000_000) throw new Error("Article is too large");
-  const document = new JSDOM(html, { url }).window.document;
+  const { document } = parseHTML(html);
+  if (!document.querySelector("base")) {
+    const base = document.createElement("base");
+    base.href = url;
+    document.head.prepend(base);
+  }
   const article = new Readability(document).parse();
   if (!article?.textContent?.trim()) throw new Error("No readable article text found");
   return {

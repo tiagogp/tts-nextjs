@@ -17,6 +17,10 @@ export type Embedder = (texts: string[], options?: GenerationRunOptions) => Prom
 
 const EMBED_THRESHOLD = 0.9; // cosine on real embeddings — paraphrases land high
 const LEXICAL_THRESHOLD = 0.8; // cosine on token counts — needs surface overlap
+const EMBED_CACHE_TTL_MS = 30 * 60 * 1000;
+const MAX_EMBED_CACHE_ENTRIES = 1000;
+
+const embeddingCache = new Map<string, { vector: number[]; expiresAt: number }>();
 
 function isAbortError(error: unknown): boolean {
   return error instanceof Error && error.name === "AbortError";
@@ -49,6 +53,70 @@ function tokenize(text: string): string[] {
     .filter(Boolean);
 }
 
+function contentHash(text: string): string {
+  let hash = 2166136261;
+  for (let i = 0; i < text.length; i++) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(36);
+}
+
+function pruneEmbeddingCache(now = Date.now()): void {
+  for (const [key, entry] of embeddingCache) {
+    if (entry.expiresAt <= now || embeddingCache.size > MAX_EMBED_CACHE_ENTRIES) {
+      embeddingCache.delete(key);
+    }
+  }
+}
+
+async function embedWithCache(
+  texts: string[],
+  embed: Embedder,
+  cacheNamespace: string,
+  options?: GenerationRunOptions,
+): Promise<number[][]> {
+  const now = Date.now();
+  pruneEmbeddingCache(now);
+  const vectors = new Array<number[]>(texts.length);
+  const misses = new Map<string, { text: string; indexes: number[] }>();
+
+  texts.forEach((text, index) => {
+    const key = `${cacheNamespace}:${contentHash(text)}`;
+    const cached = embeddingCache.get(key);
+    if (cached && cached.expiresAt > now) {
+      vectors[index] = cached.vector;
+      return;
+    }
+    const miss = misses.get(key);
+    if (miss) {
+      miss.indexes.push(index);
+    } else {
+      misses.set(key, { text, indexes: [index] });
+    }
+  });
+
+  options?.debug?.("cards-dedupe-embed-cache", {
+    hits: texts.length - [...misses.values()].reduce((sum, miss) => sum + miss.indexes.length, 0),
+    misses: misses.size,
+    entries: embeddingCache.size,
+    ttlMs: EMBED_CACHE_TTL_MS,
+  });
+
+  if (misses.size > 0) {
+    const missEntries = [...misses.entries()];
+    const embedded = await embed(missEntries.map(([, miss]) => miss.text), options);
+    const expiresAt = Date.now() + EMBED_CACHE_TTL_MS;
+    missEntries.forEach(([key, miss], missIndex) => {
+      const vector = embedded[missIndex] ?? [];
+      embeddingCache.set(key, { vector, expiresAt });
+      for (const index of miss.indexes) vectors[index] = vector;
+    });
+  }
+
+  return vectors;
+}
+
 /** Lexical fallback: term-frequency vectors over the shared vocabulary. */
 function lexicalVectors(texts: string[]): number[][] {
   const vocab = new Map<string, number>();
@@ -75,6 +143,7 @@ export async function dedupeCards(
   cards: Card[],
   embed?: Embedder,
   options?: GenerationRunOptions,
+  embedCacheNamespace = "default",
 ): Promise<Card[]> {
   if (cards.length < 2) {
     options?.debug?.("cards-dedupe-skipped", { cards: cards.length });
@@ -91,7 +160,7 @@ export async function dedupeCards(
         cards: cards.length,
         fingerprints: fingerprints.length,
       });
-      vectors = await embed(fingerprints, options);
+      vectors = await embedWithCache(fingerprints, embed, embedCacheNamespace, options);
       threshold = EMBED_THRESHOLD;
       options?.debug?.("cards-dedupe-embed-finished", {
         vectors: vectors.length,

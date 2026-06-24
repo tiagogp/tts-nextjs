@@ -22,6 +22,13 @@ import { safeStr, toCandidate, toErrorEvent } from "@/lib/cards/intake";
 import { getDefaultProvider } from "@/server/aiSettings";
 import { isProviderKind, readJsonObject } from "@/server/http/validation";
 import {
+  APKG_EXPORT_TIMEOUT_MS,
+  CARD_GENERATION_TIMEOUT_MS,
+  MAX_CARD_JSON_BYTES,
+  PROVIDER_CALL_TIMEOUT_MS,
+} from "@/lib/constants";
+import { logger } from "@/lib/logger";
+import {
   apkgDebugLogPath,
   createApkgDebugId,
   validateApkgBytes,
@@ -35,9 +42,6 @@ export const maxDuration = 600;
 
 const MAX_CANDIDATES = 200;
 const MAX_ERRORS = 200;
-const SERVER_GENERATION_TIMEOUT_MS = 390_000;
-const PROVIDER_CALL_TIMEOUT_MS = 90_000;
-const APKG_EXPORT_TIMEOUT_MS = 300_000;
 const PUBLIC_CARD_EXPORT_ERROR =
   "Couldn't export the deck right now. Try again in a moment.";
 const PUBLIC_CARD_GENERATION_ERROR =
@@ -95,7 +99,7 @@ export async function POST(req: NextRequest) {
   const debugId = createApkgDebugId();
   const debugLog = apkgDebugLogPath();
   try {
-    const obj = await readJsonObject(req);
+    const obj = await readJsonObject(req, { maxBytes: MAX_CARD_JSON_BYTES });
     if (!obj) {
       return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
     }
@@ -152,7 +156,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const scope = combinedSignal(req.signal, SERVER_GENERATION_TIMEOUT_MS);
+    const scope = combinedSignal(req.signal, CARD_GENERATION_TIMEOUT_MS);
     try {
       // Generate → ground → critique → dedup. Provider-agnostic, path-agnostic.
       const model = safeStr(obj.ollamaModel, "", 100) || undefined;
@@ -222,7 +226,7 @@ export async function POST(req: NextRequest) {
       }, { timeoutMs: APKG_EXPORT_TIMEOUT_MS, signal: scope.signal });
       if (exported.status < 200 || exported.status >= 300) {
         const payload = readExportError(exported.body);
-        console.error("Card export runtime failed:", exported.status, payload);
+        logger.error({ status: exported.status, payload }, "Card export runtime failed");
         writeApkgDebug(debugId, "cards-api-runtime-export-failed", {
           status: exported.status,
           payload,
@@ -319,7 +323,7 @@ export async function POST(req: NextRequest) {
         },
       );
     }
-    console.error("Card generation error:", err);
+    logger.error({ err }, "Card generation error");
     writeApkgDebug(debugId, "cards-api-error", {
       error: err instanceof Error ? err.message : "unknown",
     });
