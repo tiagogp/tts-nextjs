@@ -7,7 +7,8 @@
  */
 
 const DB_NAME = "tts-cards";
-const DB_VERSION = 1;
+// v2: adds the `conversations` store (Phase 1 — in-app conversation practice).
+const DB_VERSION = 2;
 
 export const STORES = {
   errorEvents: "errorEvents",
@@ -15,6 +16,7 @@ export const STORES = {
   cards: "cards",
   srs: "srs",
   reviews: "reviews",
+  conversations: "conversations",
 } as const;
 
 export type StoreName = (typeof STORES)[keyof typeof STORES];
@@ -53,6 +55,10 @@ export function openDb(): Promise<IDBDatabase> {
         const s = db.createObjectStore(STORES.reviews, { keyPath: "id" });
         s.createIndex("cardId", "cardId");
         s.createIndex("reviewedAt", "reviewedAt");
+      }
+      if (!db.objectStoreNames.contains(STORES.conversations)) {
+        const s = db.createObjectStore(STORES.conversations, { keyPath: "id" });
+        s.createIndex("startedAt", "startedAt");
       }
     };
     req.onsuccess = () => resolve(req.result);

@@ -19,6 +19,7 @@ import type {
   PhraseCandidate,
   TranscriptSegment,
 } from "./schema";
+import type { ConversationTurn, ConverseOptions } from "./provider";
 
 /** Default learner (L1) language for translation glosses when none is supplied. */
 export const DEFAULT_LEARNER_LANG = "pt";
@@ -440,6 +441,45 @@ export function buildCorrectRequest(
   );
 
   return { system, user, schema };
+}
+
+/* ──────────────────────────── Conversation: converse() ──────────────────────────── */
+
+/** Kickoff prompt used when there's no prior turn — the assistant opens the scenario. */
+export const CONVERSATION_KICKOFF =
+  "Let's begin — greet me in character and open the scenario with a question.";
+
+/**
+ * System prompt for a practice conversation. Provider-agnostic so Claude / GPT / Ollama
+ * role-play identically. Two product commitments baked in: keep turns short so the learner
+ * does most of the talking, and never correct mid-conversation — mistakes are reviewed
+ * afterwards (Phase 2), so corrections don't break the flow.
+ */
+export function buildConverseSystem(opts: ConverseOptions): string {
+  const sourceLang = opts.sourceLang || DEFAULT_LEARNER_LANG;
+  const levelLine = opts.level
+    ? `Pitch your language at CEFR ${opts.level}: natural but understandable at that level; avoid idioms or vocabulary clearly above it.`
+    : `Assume an intermediate learner; keep your language natural but accessible.`;
+  return [
+    `You are a warm, encouraging conversation partner helping someone practice ${opts.targetLang} by speaking.`,
+    `Role-play this scenario with them: "${opts.scenario}". Stay in character and speak only ${opts.targetLang}.`,
+    levelLine,
+    `Keep every one of your turns short — 1 to 3 sentences — and end with a question or prompt that invites them to respond, so they do most of the talking.`,
+    `Do NOT correct their grammar or wording mid-conversation; just keep it flowing naturally. Their mistakes are reviewed separately afterwards.`,
+    `If they get stuck or slip into ${sourceLang}, gently nudge them back into ${opts.targetLang} with a simpler rephrasing of your question.`,
+  ].join(" ");
+}
+
+/**
+ * Map the stored turn history to the `{ role, content }` shape both the Anthropic and
+ * OpenAI-compatible SDKs accept. When there's no history yet, inject a single kickoff
+ * user turn so the assistant opens the scenario (both APIs require a leading user message).
+ */
+export function conversationMessages(
+  history: ConversationTurn[],
+): { role: "user" | "assistant"; content: string }[] {
+  if (history.length === 0) return [{ role: "user", content: CONVERSATION_KICKOFF }];
+  return history.map((turn) => ({ role: turn.role, content: turn.text }));
 }
 
 export function normalizeCorrected(

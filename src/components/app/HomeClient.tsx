@@ -6,17 +6,17 @@ import { springSoft, TRAVEL } from "@/lib/motion";
 import AppHeader from "@/components/app/AppHeader";
 import { HOME_TABS, type HomeTab } from "@/components/app/homeTabs";
 import AppProviders from "@/components/app/AppProviders";
+import ConverseTab from "@/features/converse/components/ConverseTab";
 import CorrectTab from "@/features/correct/components/CorrectTab";
 import DiscoverTab from "@/features/discover/components/DiscoverTab";
 import SettingsScreen from "@/features/settings/components/SettingsScreen";
 import OnboardingDialog from "@/features/settings/components/OnboardingDialog";
 import SpeechTab from "@/features/speech/components/SpeechTab";
-import StudyTab from "@/features/study/components/StudyTab";
 
 function TabContent({ tab }: { tab: HomeTab }) {
   if (tab === "discover") return <DiscoverTab />;
+  if (tab === "converse") return <ConverseTab />;
   if (tab === "correct") return <CorrectTab />;
-  if (tab === "study") return <StudyTab />;
   return <SpeechTab />;
 }
 

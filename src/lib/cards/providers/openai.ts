@@ -10,6 +10,8 @@
 import OpenAI from "openai";
 import type {
   CardGenerationProvider,
+  ConversationTurn,
+  ConverseOptions,
   CorrectOptions,
   GenerationRunOptions,
   ProviderKind,
@@ -25,10 +27,12 @@ import type {
 } from "../schema";
 import {
   DEFAULT_LEARNER_LANG,
+  buildConverseSystem,
   buildCorrectRequest,
   buildCritiqueRequest,
   buildGenerateRequest,
   buildMineRequest,
+  conversationMessages,
   normalizeCorrected,
   normalizeCritique,
   normalizeGenerated,
@@ -140,6 +144,28 @@ export class OpenAIProvider implements CardGenerationProvider {
     const targetLang = opts.targetLang ?? "en";
     const raw = await this.json(buildCorrectRequest(text, sourceLang, targetLang), options);
     return normalizeCorrected(raw, sourceLang, targetLang, opts.context);
+  }
+
+  async converse(
+    history: ConversationTurn[],
+    opts: ConverseOptions,
+    options: GenerationRunOptions = {},
+  ): Promise<string> {
+    const res = await this.client.chat.completions.create({
+      model: this.model,
+      max_tokens: 1024,
+      messages: [
+        { role: "system", content: buildConverseSystem({ ...opts, sourceLang: opts.sourceLang ?? this.learnerLang }) },
+        ...conversationMessages(history),
+      ],
+    }, requestOptions(options));
+    const choice = res.choices[0];
+    if (choice?.message?.refusal) {
+      throw new Error(`OpenAI declined to continue the conversation: ${choice.message.refusal}`);
+    }
+    const text = choice?.message?.content;
+    if (!text) throw new Error("OpenAI returned no content for the conversation turn.");
+    return text.trim();
   }
 
   /** Real semantic dedup (A5): one embedding per card fingerprint. */

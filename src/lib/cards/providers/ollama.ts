@@ -18,6 +18,8 @@ import { getOllamaBaseUrl, getOllamaModel } from "@/server/aiSettings";
 import { ollamaRoot } from "@/server/integrations/ollama";
 import type {
   CardGenerationProvider,
+  ConversationTurn,
+  ConverseOptions,
   CorrectOptions,
   GenerationRunOptions,
   ProviderKind,
@@ -33,10 +35,12 @@ import type {
 } from "../schema";
 import {
   DEFAULT_LEARNER_LANG,
+  buildConverseSystem,
   buildCorrectRequest,
   buildCritiqueRequest,
   buildGenerateRequest,
   buildMineRequest,
+  conversationMessages,
   normalizeCorrected,
   normalizeCritique,
   normalizeGenerated,
@@ -180,5 +184,27 @@ export class OllamaProvider implements CardGenerationProvider {
     const targetLang = opts.targetLang ?? "en";
     const raw = await this.json(buildCorrectRequest(text, sourceLang, targetLang), options);
     return normalizeCorrected(raw, sourceLang, targetLang, opts.context);
+  }
+
+  async converse(
+    history: ConversationTurn[],
+    opts: ConverseOptions,
+    options: GenerationRunOptions = {},
+  ): Promise<string> {
+    const res = await this.client.chat.completions.create({
+      model: this.model,
+      // A bit of warmth for natural dialogue (vs. 0 for the structured tasks); bounded so a
+      // local model can't ramble past the request timeout.
+      temperature: 0.7,
+      max_tokens: 512,
+      messages: [
+        { role: "system", content: buildConverseSystem({ ...opts, sourceLang: opts.sourceLang ?? this.learnerLang }) },
+        ...conversationMessages(history),
+      ],
+    }, requestOptions(options));
+    const choice = res.choices[0];
+    const text = choice?.message?.content;
+    if (!text) throw new Error("Ollama returned no content for the conversation turn.");
+    return text.trim();
   }
 }

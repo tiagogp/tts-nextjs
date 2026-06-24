@@ -14,6 +14,8 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type {
   CardGenerationProvider,
+  ConversationTurn,
+  ConverseOptions,
   CorrectOptions,
   GenerationRunOptions,
   ProviderKind,
@@ -29,10 +31,12 @@ import type {
 } from "../schema";
 import {
   DEFAULT_LEARNER_LANG,
+  buildConverseSystem,
   buildCorrectRequest,
   buildCritiqueRequest,
   buildGenerateRequest,
   buildMineRequest,
+  conversationMessages,
   normalizeCorrected,
   normalizeCritique,
   normalizeGenerated,
@@ -143,5 +147,29 @@ export class ClaudeProvider implements CardGenerationProvider {
     const targetLang = opts.targetLang ?? "en";
     const raw = await this.json(buildCorrectRequest(text, sourceLang, targetLang), options);
     return normalizeCorrected(raw, sourceLang, targetLang, opts.context);
+  }
+
+  async converse(
+    history: ConversationTurn[],
+    opts: ConverseOptions,
+    options: GenerationRunOptions = {},
+  ): Promise<string> {
+    // Plain text, not structured output: no thinking, modest cap — conversational turns
+    // are short and need to come back fast.
+    const stream = this.client.messages.stream({
+      model: this.model,
+      max_tokens: 1024,
+      system: buildConverseSystem({ ...opts, sourceLang: opts.sourceLang ?? this.learnerLang }),
+      messages: conversationMessages(history),
+    }, requestOptions(options));
+    const res = await stream.finalMessage();
+    if (res.stop_reason === "refusal") {
+      throw new Error("Claude declined to continue the conversation (safety refusal).");
+    }
+    const block = res.content.find((b) => b.type === "text");
+    if (!block || block.type !== "text") {
+      throw new Error("Claude returned no text for the conversation turn.");
+    }
+    return block.text.trim();
   }
 }

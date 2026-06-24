@@ -9,6 +9,7 @@ import type {
   ErrorType,
   PhraseCandidate,
 } from "@/lib/cards/schema";
+import type { ConversationTurn } from "@/lib/cards/provider";
 import {
   STORES,
   get,
@@ -218,6 +219,50 @@ export async function getReinforcementSources(
 /** Persist freshly generated cards (e.g. reinforcement variants) with fresh SRS state. */
 export function saveCards(cards: Card[]): Promise<{ added: number }> {
   return persistCardsWithSrs(cards);
+}
+
+/* ──────────────────────────── conversations (Phase 1) ──────────────────────────── */
+
+/**
+ * One practice conversation. `scenario` is the descriptive prompt the LLM role-plays;
+ * `context` is the normalized situational tag (e.g. "job interview") that Phase 2 stamps
+ * onto the mistakes this conversation produces, tying it into context-grouped weakness.
+ * Turns are append-only; the whole record is re-persisted as the conversation grows.
+ */
+export interface Conversation {
+  id: string;
+  scenario: string;
+  context: string;
+  targetLang: string;
+  sourceLang: string;
+  level?: string;
+  turns: ConversationTurn[];
+  startedAt: number;
+  endedAt?: number;
+  /** Set once Phase 2 has run error extraction over this conversation. */
+  correctedAt?: number;
+  /**
+   * The mistakes found in this conversation, denormalized so re-opening shows them without
+   * re-charging the provider. They're also persisted to the errorEvents store once cards
+   * are generated (the source of truth for weakness detection).
+   */
+  errors?: ErrorEvent[];
+}
+
+export function saveConversation(conversation: Conversation): Promise<void> {
+  return put(STORES.conversations, conversation);
+}
+
+export function getConversation(id: string): Promise<Conversation | undefined> {
+  return get<Conversation>(STORES.conversations, id);
+}
+
+export function getConversations(): Promise<Conversation[]> {
+  return getAll<Conversation>(STORES.conversations);
+}
+
+export function deleteConversation(id: string): Promise<void> {
+  return del(STORES.conversations, id);
 }
 
 /* ──────────────────────────── counts / housekeeping ──────────────────────────── */

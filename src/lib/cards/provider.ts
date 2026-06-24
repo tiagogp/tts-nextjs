@@ -20,6 +20,7 @@ import { dedupeCards, type Embedder } from "./dedupe";
 export interface GenerationRunOptions {
   signal?: AbortSignal;
   timeoutMs?: number;
+  debug?: (event: string, details?: Record<string, unknown>) => void;
 }
 
 /** What `correct()` needs to tag the resulting ErrorEvents with the right language pair. */
@@ -30,6 +31,24 @@ export interface CorrectOptions {
   targetLang?: string;
   /** Situational context to stamp on every ErrorEvent found (already normalized). */
   context?: string;
+}
+
+/** One exchanged message in a practice conversation. */
+export interface ConversationTurn {
+  role: "user" | "assistant";
+  text: string;
+}
+
+/** What `converse()` needs to role-play a scenario at the learner's level. */
+export interface ConverseOptions {
+  /** The scenario being role-played (also the situational context tag downstream). */
+  scenario: string;
+  /** Language being practiced, e.g. "en". */
+  targetLang: string;
+  /** Learner's first language, for gentle scaffolding. Default from the provider. */
+  sourceLang?: string;
+  /** CEFR level to pitch difficulty at, e.g. "B1". */
+  level?: string;
 }
 
 export type ProviderKind = "local" | "ollama" | "claude" | "openai";
@@ -85,6 +104,18 @@ export interface CardGenerationProvider {
   ): Promise<ErrorEvent[]>;
 
   /**
+   * Conversation path — produce the assistant's next turn in a role-played scenario, in the
+   * target language at the learner's level. Optional and gated like correct(): only
+   * model-backed providers implement it; the local heuristic can't hold a conversation, so
+   * callers must check for its presence and surface a "pick Claude/GPT/Ollama" message.
+   */
+  converse?(
+    history: ConversationTurn[],
+    opts: ConverseOptions,
+    options?: GenerationRunOptions,
+  ): Promise<string>;
+
+  /**
    * Optional embedder for semantic dedup (A5). Providers with an embeddings backend
    * (OpenAI) implement it for true paraphrase-aware dedup; others omit it and the
    * pipeline falls back to a lexical comparison.
@@ -122,6 +153,55 @@ function isSourceGrounded(card: Card, source: CardSource): boolean {
  */
 const MAX_CARDS_PER_SOURCE = 2;
 
+function sourceDebugInfo(source: CardSource): Record<string, unknown> {
+  if (source.kind === "phrase") {
+    return {
+      sourceKind: "phrase",
+      sourceId: source.candidate.id,
+      textChars: source.candidate.text.length,
+      hasTimestamps: source.candidate.startMs != null && source.candidate.endMs != null,
+    };
+  }
+  return {
+    sourceKind: "error",
+    sourceId: source.event.id,
+    originalChars: source.event.original.length,
+    correctedChars: source.event.corrected.length,
+    errorTypes: source.event.errorTypes,
+  };
+}
+
+function debug(
+  options: GenerationRunOptions,
+  event: string,
+  details: Record<string, unknown> = {},
+): void {
+  options.debug?.(event, details);
+}
+
+async function withPendingDebug<T>(
+  options: GenerationRunOptions,
+  eventBase: string,
+  details: Record<string, unknown>,
+  task: () => Promise<T>,
+): Promise<T> {
+  const startedAt = Date.now();
+  let ticks = 0;
+  const timer = setInterval(() => {
+    ticks += 1;
+    debug(options, `${eventBase}-still-running`, {
+      ...details,
+      elapsedMs: Date.now() - startedAt,
+      ticks,
+    });
+  }, 10_000);
+  try {
+    return await task();
+  } finally {
+    clearInterval(timer);
+  }
+}
+
 function abortError(): Error {
   const error = new Error("Operation aborted");
   error.name = "AbortError";
@@ -142,33 +222,102 @@ export async function generateVettedCards(
   options: GenerationRunOptions = {},
 ): Promise<Card[]> {
   throwIfAborted(options.signal);
-  const candidates = await provider.generate(source, options);
+  const sourceInfo = sourceDebugInfo(source);
+  const startedAt = Date.now();
+  debug(options, "cards-source-generate-started", {
+    provider: provider.kind,
+    ...sourceInfo,
+  });
+  const candidates = await withPendingDebug(options, "cards-source-generate", {
+    provider: provider.kind,
+    ...sourceInfo,
+  }, () => provider.generate(source, options));
+  debug(options, "cards-source-generate-finished", {
+    provider: provider.kind,
+    candidates: candidates.length,
+    durationMs: Date.now() - startedAt,
+    ...sourceInfo,
+  });
   const kept: Card[] = [];
+  let candidateIndex = 0;
   for (const card of candidates) {
+    candidateIndex += 1;
     throwIfAborted(options.signal);
     if (kept.length >= MAX_CARDS_PER_SOURCE) break;
     // A6: drop anything not traceable to this exact source.
-    if (!isSourceGrounded(card, source)) continue;
+    if (!isSourceGrounded(card, source)) {
+      debug(options, "cards-candidate-dropped-ungrounded", {
+        provider: provider.kind,
+        candidateIndex,
+        cardId: card.id,
+        cardSourceKind: card.source.kind,
+        cardSourceId: card.source.id,
+        ...sourceInfo,
+      });
+      continue;
+    }
     // Slow local LLMs opt out of the critique round-trip — grounding + the card cap are
     // the only gates that remain (see CardGenerationProvider.skipCritique).
     if (provider.skipCritique) {
       kept.push(card);
+      debug(options, "cards-candidate-kept-skip-critique", {
+        provider: provider.kind,
+        candidateIndex,
+        kept: kept.length,
+        cardId: card.id,
+        ...sourceInfo,
+      });
       continue;
     }
     let critique: Critique;
+    const critiqueStartedAt = Date.now();
     try {
-      critique = await provider.critique(card, source, options);
+      debug(options, "cards-candidate-critique-started", {
+        provider: provider.kind,
+        candidateIndex,
+        cardId: card.id,
+        ...sourceInfo,
+      });
+      critique = await withPendingDebug(options, "cards-candidate-critique", {
+        provider: provider.kind,
+        candidateIndex,
+        cardId: card.id,
+        ...sourceInfo,
+      }, () => provider.critique(card, source, options));
     } catch (err) {
       if (isAbortError(err)) throw err;
       // A transient critique failure (rate limit, refusal, malformed JSON) drops just
       // this card rather than failing the source — the quality gate erring toward "drop".
       console.error("Critique failed; dropping card:", err);
+      debug(options, "cards-candidate-critique-failed", {
+        provider: provider.kind,
+        candidateIndex,
+        cardId: card.id,
+        error: err instanceof Error ? err.message : "unknown",
+        durationMs: Date.now() - critiqueStartedAt,
+        ...sourceInfo,
+      });
       continue;
     }
+    debug(options, "cards-candidate-critique-finished", {
+      provider: provider.kind,
+      candidateIndex,
+      cardId: card.id,
+      verdict: critique.verdict,
+      durationMs: Date.now() - critiqueStartedAt,
+      ...sourceInfo,
+    });
     if (critique.verdict === "keep") kept.push(card);
     else if (critique.verdict === "rewrite" && critique.rewritten) kept.push(critique.rewritten);
     // "drop" -> discard
   }
+  debug(options, "cards-source-vetting-finished", {
+    provider: provider.kind,
+    candidates: candidates.length,
+    kept: kept.length,
+    durationMs: Date.now() - startedAt,
+    ...sourceInfo,
+  });
   return kept;
 }
 
@@ -222,17 +371,49 @@ export async function generateDeck(
   options: GenerationRunOptions = {},
 ): Promise<DeckResult> {
   let failures = 0;
+  const startedAt = Date.now();
+  debug(options, "cards-deck-generate-started", {
+    provider: provider.kind,
+    sources: sources.length,
+    concurrency: GENERATE_CONCURRENCY,
+    timeoutMs: options.timeoutMs,
+    skipCritique: provider.skipCritique === true,
+  });
   const perSource = await mapWithConcurrency(sources, GENERATE_CONCURRENCY, async (source) => {
+    const sourceInfo = sourceDebugInfo(source);
     try {
+      debug(options, "cards-source-worker-started", {
+        provider: provider.kind,
+        ...sourceInfo,
+      });
       return await generateVettedCards(provider, source, options);
     } catch (err) {
       if (isAbortError(err)) throw err;
       failures++;
       console.error("Card generation failed for one source:", err);
+      debug(options, "cards-source-worker-failed", {
+        provider: provider.kind,
+        error: err instanceof Error ? err.message : "unknown",
+        failures,
+        ...sourceInfo,
+      });
       return [] as Card[];
     }
   }, options.signal);
   throwIfAborted(options.signal);
-  const cards = await dedupeCards(perSource.flat(), provider.embed?.bind(provider), options);
+  const beforeDedupe = perSource.flat();
+  debug(options, "cards-dedupe-started", {
+    provider: provider.kind,
+    cards: beforeDedupe.length,
+    hasEmbedder: provider.embed != null,
+  });
+  const cards = await dedupeCards(beforeDedupe, provider.embed?.bind(provider), options);
+  debug(options, "cards-dedupe-finished", {
+    provider: provider.kind,
+    before: beforeDedupe.length,
+    after: cards.length,
+    failures,
+    durationMs: Date.now() - startedAt,
+  });
   return { cards, failures };
 }
