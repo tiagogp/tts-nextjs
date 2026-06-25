@@ -22,6 +22,7 @@ import {
   saveCorrectionDeck,
   type Conversation,
 } from "@/lib/store/repository";
+import { emitActivity } from "@/lib/store/activityLog";
 import { useProviderSelection } from "@/features/cards/hooks/useProviderSelection";
 import { ProviderPicker } from "@/features/cards/components/ProviderPicker";
 import { exportAndSaveDeck } from "@/features/cards/exportDeck";
@@ -205,6 +206,11 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
         turns: [...conversation.turns, { role: "user", text: trimmed }],
       };
       persist(withUser);
+      void emitActivity("conversation_turn", {
+        conversationId: conversation.id,
+        scenarioId: conversation.context,
+        turnIndex: withUser.turns.length - 1,
+      });
       setTyped("");
       try {
         const { reply } = await sendConversationTurn({
@@ -571,14 +577,20 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
 
   // ───────────────────────── active conversation ─────────────────────────
   return (
-    <Card className="flex flex-col overflow-hidden">
-      <div className="flex items-center justify-between border-b border-line px-5 py-3">
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-ink">{conversation.context}</p>
-          <p className="text-xs text-ink-muted">
-            {conversation.level ? `Level ${conversation.level} · ` : ""}
-            {activeProvider?.label ?? "AI partner"}
-          </p>
+    <Card className="flex min-h-[calc(100dvh-12rem)] flex-col overflow-hidden border-line-strong shadow-[0_18px_45px_rgb(17_17_17_/_0.08)] sm:min-h-[calc(100dvh-13rem)]">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line bg-surface px-4 py-3 sm:px-5">
+        <div className="min-w-0 space-y-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-success" aria-hidden="true" />
+            <p className="truncate text-base font-semibold tracking-[-0.01em] text-ink">
+              {conversation.context}
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5 text-xs text-ink-muted">
+            <span>{conversation.turns.length} {conversation.turns.length === 1 ? "turn" : "turns"}</span>
+            {conversation.level && <span>Level {conversation.level}</span>}
+            <span>{activeProvider?.label ?? "AI partner"}</span>
+          </div>
         </div>
         <Button variant="secondary" onClick={finish} className="h-9 shrink-0">
           Finish
@@ -586,30 +598,31 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
       </div>
 
       <motion.ul
-        className="space-y-3 px-5 py-4"
+        className="flex-1 space-y-4 overflow-y-auto bg-card px-4 py-5 app-scroll-region sm:px-6"
         variants={staggerContainer}
         initial="hidden"
         animate="show"
+        aria-live="polite"
       >
         {conversation.turns.map((turn, i) => (
           <TurnBubble key={i} turn={turn} />
         ))}
         {busy && (
-          <li className="flex items-center gap-2 text-xs text-ink-muted">
-            <Spinner className="h-3 w-3" /> Thinking…
+          <li className="flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-2 text-xs font-medium text-ink-muted shadow-sm">
+            <Spinner className="h-3.5 w-3.5" /> Thinking…
           </li>
         )}
         <div ref={bottomRef} />
       </motion.ul>
 
-      <div className="space-y-2 border-t border-line p-3">
+      <div className="space-y-2 border-t border-line bg-surface p-3 sm:p-4">
         {note && <p className="text-xs text-danger">{note}</p>}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <Button
             variant="secondary"
             onClick={recording ? stopRecording : startRecording}
             disabled={busy || transcribing}
-            className={cn("h-10 shrink-0 gap-2", recording && "border-danger text-danger")}
+            className={cn("h-11 shrink-0 gap-2 sm:w-auto", recording && "border-danger text-danger")}
           >
             {recording ? (
               <>
@@ -640,13 +653,13 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
             }}
             placeholder="Type your reply, or tap Speak…"
             disabled={busy}
-            className="flex-1"
+            className="h-11 flex-1"
           />
           <Button
             variant="primary"
             onClick={() => void sendTurn(typed)}
             disabled={!typed.trim() || busy}
-            className="h-10 shrink-0"
+            className="h-11 shrink-0 sm:min-w-24"
           >
             Send
           </Button>
@@ -693,8 +706,10 @@ function TurnBubble({ turn }: { turn: ConversationTurn }) {
     <motion.li variants={listItem} className={cn("flex", isUser ? "justify-end" : "justify-start")}>
       <div
         className={cn(
-          "max-w-[80%] whitespace-pre-wrap rounded-2xl px-4 py-2 text-sm leading-relaxed",
-          isUser ? "bg-off-black text-white" : "border border-line bg-surface text-ink",
+          "max-w-[88%] whitespace-pre-wrap rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm sm:max-w-[76%]",
+          isUser
+            ? "rounded-br-md bg-off-black text-white"
+            : "rounded-bl-md border border-line bg-surface text-ink",
         )}
       >
         {turn.text}

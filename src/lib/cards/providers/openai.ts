@@ -170,6 +170,25 @@ export class OpenAIProvider implements CardGenerationProvider {
     return text.trim();
   }
 
+  async complete(prompt: string, options: GenerationRunOptions = {}): Promise<string> {
+    const res = await this.client.chat.completions.create({
+      model: this.model,
+      max_tokens: 32000,
+      response_format: { type: "json_object" },
+      messages: [{ role: "user", content: prompt }],
+    }, requestOptions(options));
+    const choice = res.choices[0];
+    if (choice?.message?.refusal) {
+      throw new Error(`OpenAI declined the request: ${choice.message.refusal}`);
+    }
+    if (choice?.finish_reason === "length") {
+      throw new Error("Response was too long and got cut off. Try a shorter plan (fewer days).");
+    }
+    const text = choice?.message?.content;
+    if (!text) throw new Error("OpenAI returned no content.");
+    return text.trim();
+  }
+
   /** Real semantic dedup (A5): one embedding per card fingerprint. */
   async embed(texts: string[], options: GenerationRunOptions = {}): Promise<number[][]> {
     if (texts.length === 0) return [];

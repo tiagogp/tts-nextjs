@@ -17,11 +17,16 @@ import type { DeckPayload } from "@/features/cards/exportDeck";
 import { ProviderPicker } from "@/features/cards/components/ProviderPicker";
 import { DeckPreview } from "@/features/cards/components/DeckPreview";
 import { HomeDashboard } from "@/features/discover/components/HomeDashboard";
+import { TodayCard } from "@/features/plan/components/TodayCard";
+import { WeeklyEffortCard } from "@/features/plan/components/WeeklyEffortCard";
+import { PlanCalendar } from "@/features/plan/components/PlanCalendar";
 import { SourcePicker } from "@/features/discover/components/SourcePicker";
 import { TranscriptReview } from "@/features/discover/components/TranscriptReview";
 import { ENGLISH_LEVELS, GENERATION_TIMEOUT_MS } from "@/features/discover/constants";
 import type { DiscoverResult, DiscoverSourceKind, EnglishLevel, TranscriptSegment } from "@/features/discover/types";
 import { curateDiscoverSegments, extractDiscoverSource, generateDiscoverDeck } from "@/features/discover/api";
+import { getLearningProfile } from "@/features/settings/learningProfile";
+import { emitActivity } from "@/lib/store/activityLog";
 
 function waitForAudioEvent(
   audio: HTMLAudioElement,
@@ -47,19 +52,25 @@ function waitForAudioEvent(
 export default function DiscoverTab({
   onOpenSettings,
   onStudyNow,
+  onSpeakNow,
+  onCorrectNow,
 }: {
   onOpenSettings?: () => void;
   onStudyNow?: () => void;
+  onSpeakNow?: () => void;
+  onCorrectNow?: () => void;
 }) {
   const { loading: settingsLoading } = useAiSettings();
+  const [profile] = useState(getLearningProfile);
   const [sourceKind, setSourceKind] = useState<DiscoverSourceKind>("youtube");
   const [url, setUrl] = useState("");
   const [file, setFile] = useState<File | null>(null);
-  const [focus, setFocus] = useState("");
-  const [targetLevel, setTargetLevel] = useState<EnglishLevel>("B2");
+  const [focus, setFocus] = useState(profile.focus);
+  const [targetLevel, setTargetLevel] = useState<EnglishLevel>(profile.level);
   const [loading, setLoading] = useState(false);
   const [curating, setCurating] = useState(false);
   const [downloadingModel, setDownloadingModel] = useState(false);
+  const [transcribeProgress, setTranscribeProgress] = useState<{ percent: number; stage: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [curationNote, setCurationNote] = useState<string | null>(null);
   const [result, setResult] = useState<DiscoverResult | null>(null);
@@ -187,6 +198,7 @@ export default function DiscoverTab({
     setGenError(null);
     setGenDone(null);
     setDeckPreview(null);
+    setTranscribeProgress(null);
 
     // Only the YouTube path may download the one-time Whisper model.
     if (sourceKind === "youtube") {
@@ -201,12 +213,19 @@ export default function DiscoverTab({
     }
 
     try {
-      const data = await extractDiscoverSource({ sourceKind, url, file });
+      const data = await extractDiscoverSource({
+        sourceKind,
+        url,
+        file,
+        onProgress: sourceKind === "youtube"
+          ? (percent, stage) => setTranscribeProgress({ percent, stage })
+          : undefined,
+      });
       setResult(data);
 
       setCurating(true);
       try {
-        const { selectedIndexes: selected, count } = await curateDiscoverSegments({
+        const { selectedIndexes: selected } = await curateDiscoverSegments({
           provider,
           selectedModel,
           sourceKind,
@@ -217,8 +236,8 @@ export default function DiscoverTab({
         });
         setKept(new Set(selected));
         setCurationNote(
-          count > 0
-            ? `${count} segment${count === 1 ? "" : "s"} preselected for ${targetLevel}.`
+          selected.length > 0
+            ? `${selected.length} segment${selected.length === 1 ? "" : "s"} preselected for ${targetLevel}.`
             : `No segments preselected for ${targetLevel}.`,
         );
       } catch (mineErr: unknown) {
@@ -237,6 +256,7 @@ export default function DiscoverTab({
       setLoading(false);
       setCurating(false);
       setDownloadingModel(false);
+      setTranscribeProgress(null);
     }
   }, [sourceKind, url, file, provider, selectedModel, focus, targetLevel, setGenError, setGenDone]);
 
@@ -273,16 +293,47 @@ export default function DiscoverTab({
 
     await run(async (signal) => {
       const data = await generateDiscoverDeck({ provider, selectedModel, result, candidates, signal });
+      const cardsCreated = data.count ?? data.cards?.length ?? 0;
+      void emitActivity("video_processed", { sourceUrl: url || result.sourceId, cardsCreated });
       setDeckPreview({ data, candidates });
-      return `${data.count ?? data.cards?.length ?? 0} card${(data.count ?? data.cards?.length ?? 0) === 1 ? "" : "s"} ready to preview.`;
+      return `${cardsCreated} card${cardsCreated === 1 ? "" : "s"} ready to preview.`;
     });
   }, [result, kept, provider, providerReady, selectedModel, run]);
 
   return (
     <div className="space-y-5">
-      <HomeDashboard onStart={() => sourceInputRef.current?.focus()} />
+      <TodayCard
+        onDiscover={() => sourceInputRef.current?.focus()}
+        onStudy={onStudyNow}
+        onConverse={onSpeakNow}
+        onCorrect={onCorrectNow}
+        onOpenSettings={onOpenSettings}
+      />
+
+      <WeeklyEffortCard />
+
+      <PlanCalendar
+        onDiscover={() => sourceInputRef.current?.focus()}
+        onStudy={onStudyNow}
+        onConverse={onSpeakNow}
+        onCorrect={onCorrectNow}
+      />
+
+      <HomeDashboard
+        onDiscover={() => sourceInputRef.current?.focus()}
+        onStudy={onStudyNow}
+        onSpeak={onSpeakNow}
+        onCorrect={onCorrectNow}
+      />
 
       <Card className="space-y-4 p-5">
+        <div className="space-y-1">
+          <p className="text-sm font-semibold tracking-[-0.01em] text-ink">Turn real English into practice</p>
+          <p className="text-xs text-ink-muted">
+            Import one source, keep the useful phrases, then generate a small deck you can study immediately.
+          </p>
+        </div>
+
         <SourcePicker
           value={sourceKind}
           disabled={loading}
@@ -377,14 +428,29 @@ export default function DiscoverTab({
           {loading ? (
             <>
               <Spinner className="h-3.5 w-3.5" />
-              {curating ? "Curating…" : sourceKind === "youtube" ? "Transcribing…" : "Extracting…"}
+              {curating
+                ? "Curating…"
+                : transcribeProgress?.stage === "transcribe"
+                  ? `Transcribing… ${transcribeProgress.percent}%`
+                  : transcribeProgress?.stage === "download"
+                    ? "Downloading audio…"
+                    : sourceKind === "youtube"
+                      ? "Starting…"
+                      : "Extracting…"}
             </>
-          ) : sourceKind === "youtube" ? (
-            "Transcribe audio"
           ) : (
-            "Extract text"
+            "Find phrases to learn"
           )}
         </Button>
+
+        {loading && transcribeProgress?.stage === "transcribe" && (
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-line">
+            <div
+              className="h-full rounded-full bg-accent transition-all duration-300 ease-linear"
+              style={{ width: `${transcribeProgress.percent}%` }}
+            />
+          </div>
+        )}
 
         {downloadingModel && (
           <div className="flex items-center gap-2 rounded border border-line bg-surface px-3 py-2.5 text-xs text-ink-soft">
@@ -436,7 +502,10 @@ export default function DiscoverTab({
           title="Discover deck preview"
           data={deckPreview.data}
           defaultFilename={`${result?.title || "deck"}.apkg`}
-          persist={(cards) => saveGeneratedDeck(cards, deckPreview.candidates)}
+          persist={async (cards) => {
+            await saveGeneratedDeck(cards, deckPreview.candidates);
+            void emitActivity("cards_created", { count: cards.length, source: "discover" });
+          }}
           onStudyNow={onStudyNow}
           onDismiss={() => setDeckPreview(null)}
         />

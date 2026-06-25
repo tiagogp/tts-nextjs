@@ -7,6 +7,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { isStoreAvailable } from "@/lib/store/db";
+import { Button } from "@/components/ui/Button";
+import { Card as UiCard } from "@/components/ui/Card";
 import {
   getDueCards,
   getReviews,
@@ -31,13 +33,21 @@ import {
 } from "@/lib/srs/analytics";
 import type { Card } from "@/lib/cards/schema";
 import { useAiSettings } from "@/features/settings/context/AiSettingsContext";
+import { getWeeklyGoal } from "@/features/study/weeklyGoal";
+import { emitActivity } from "@/lib/store/activityLog";
 import { StudyCard, type DueCard } from "./StudyCard";
 import { PerformanceStats } from "./PerformanceStats";
 import { ExposureMeter } from "./ExposureMeter";
 import { WeaknessList } from "./WeaknessList";
 import { SavedCardsBrowser } from "./SavedCardsBrowser";
 
-export default function StudyTab({ onDiscover }: { onDiscover?: () => void }) {
+export default function StudyTab({
+  onDiscover,
+  onConversation,
+}: {
+  onDiscover?: () => void;
+  onConversation?: () => void;
+}) {
   const { settings } = useAiSettings();
   const defaultProvider = settings.providers.find(
     (provider) => provider.kind === settings.defaultProvider,
@@ -104,6 +114,7 @@ export default function StudyTab({ onDiscover }: { onDiscover?: () => void }) {
     async (g: Grade) => {
       if (!current) return;
       await recordReview(current.card, current.srs, g);
+      void emitActivity("cards_reviewed", { count: 1, cardIds: [current.card.id] });
       setReviewedThisSession((n) => n + 1);
       const rest = queue.slice(1);
       const [allReviews, c] = await Promise.all([getReviews(), getCounts()]);
@@ -210,6 +221,7 @@ export default function StudyTab({ onDiscover }: { onDiscover?: () => void }) {
   const stats = computePerformance(reviews);
   const activity = computeWeeklyActivity(conversations, reviews);
   const weaknesses = detectWeaknesses(reviews, errorEvents);
+  const weeklyGoal = getWeeklyGoal();
 
   return (
     <div className="space-y-5">
@@ -228,6 +240,16 @@ export default function StudyTab({ onDiscover }: { onDiscover?: () => void }) {
           </button>
         </div>
       )}
+
+      <MethodCoach
+        due={counts.due}
+        cards={counts.cards}
+        weeklyGoal={weeklyGoal}
+        conversations={activity.conversations}
+        topWeakness={weaknesses[0] ?? null}
+        onDiscover={onDiscover}
+        onConversation={onConversation}
+      />
 
       <StudyCard
         totalCards={counts.cards}
@@ -254,5 +276,78 @@ export default function StudyTab({ onDiscover }: { onDiscover?: () => void }) {
 
       <SavedCardsBrowser cards={cards} />
     </div>
+  );
+}
+
+function MethodCoach({
+  due,
+  cards,
+  weeklyGoal,
+  conversations,
+  topWeakness,
+  onDiscover,
+  onConversation,
+}: {
+  due: number;
+  cards: number;
+  weeklyGoal: number;
+  conversations: number;
+  topWeakness: Weakness | null;
+  onDiscover?: () => void;
+  onConversation?: () => void;
+}) {
+  const remainingConversations = Math.max(0, weeklyGoal - conversations);
+  const next = cards === 0
+    ? {
+        title: "Capture your first source",
+        text: "Start with one video, article, or PDF. Keep a small set so review stays light.",
+        action: "Open Discover",
+        onClick: onDiscover,
+      }
+    : due > 0
+      ? {
+          title: "Review before adding more",
+          text: `${due} card${due === 1 ? "" : "s"} due now. Clear the queue, then produce language.`,
+          action: null,
+          onClick: undefined,
+        }
+      : topWeakness
+        ? {
+            title: `Reinforce ${topWeakness.label}`,
+            text: "Use the weak spots list below to drill existing cards or create new variants.",
+            action: null,
+            onClick: undefined,
+          }
+        : remainingConversations > 0
+          ? {
+              title: "Produce language this week",
+              text: `${remainingConversations} conversation${
+                remainingConversations === 1 ? "" : "s"
+              } left for your weekly rhythm.`,
+              action: "Start conversation",
+              onClick: onConversation,
+            }
+          : {
+              title: "Add the next small batch",
+              text: "You are caught up. Add fresh input only when you want more material.",
+              action: "Open Discover",
+              onClick: onDiscover,
+            };
+
+  return (
+    <UiCard className="p-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs uppercase tracking-[0.7px] text-accent">Today&apos;s method</p>
+          <p className="mt-1 text-sm font-semibold text-ink">{next.title}</p>
+          <p className="mt-1 text-xs text-ink-muted">{next.text}</p>
+        </div>
+        {next.action && next.onClick && (
+          <Button variant="secondary" size="sm" onClick={next.onClick}>
+            {next.action}
+          </Button>
+        )}
+      </div>
+    </UiCard>
   );
 }

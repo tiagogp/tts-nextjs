@@ -58,15 +58,45 @@ export function segmentText(text: string): Segment[] {
   });
 }
 
+function wordOverlapLen(a: string[], b: string[]): number {
+  const maxLen = Math.min(a.length, b.length);
+  for (let len = maxLen; len >= 2; len--) {
+    if (a.slice(-len).join(" ") === b.slice(0, len).join(" ")) return len;
+  }
+  return 0;
+}
+
 export function dedupeSegments(segments: Segment[]): Segment[] {
+  // Pass 1: normalize and exact-dedup
   const seen = new Set<string>();
-  return segments.flatMap((segment) => {
+  const normalized: Array<Segment & { key: string }> = [];
+  for (const segment of segments) {
     const text = transcriptText(segment.text);
     const key = text.replace(/\W+/gu, " ").trim().toLocaleLowerCase();
-    if (!key || seen.has(key)) return [];
+    if (!key || seen.has(key)) continue;
     seen.add(key);
-    return [{ ...segment, text }];
-  });
+    normalized.push({ ...segment, text, key });
+  }
+
+  // Pass 2: remove rolling-window duplicates (Whisper sliding-window pattern).
+  // A segment is dropped when it is either a strict prefix of the next segment,
+  // or when it overlaps significantly (≥4 words and ≥40% of its length) with
+  // the tail of the previously kept segment.
+  const result: Array<Segment & { key: string }> = [];
+  for (let i = 0; i < normalized.length; i++) {
+    const curr = normalized[i];
+    const next = normalized[i + 1];
+    if (next && next.key.startsWith(curr.key + " ")) continue;
+    const prev = result[result.length - 1];
+    if (prev) {
+      const currWords = curr.key.split(" ");
+      const overlap = wordOverlapLen(prev.key.split(" "), currWords);
+      if (overlap >= 4 && overlap / currWords.length >= 0.4) continue;
+    }
+    result.push(curr);
+  }
+
+  return result.map(({ key: _key, ...s }) => s);
 }
 
 export async function audioPathFor(id: string): Promise<string | null> {
@@ -103,49 +133,6 @@ function ffmpegDir(): string | null {
   return null;
 }
 
-function vttTimestampMs(value: string): number {
-  const match = value.match(/(?:(\d{1,2}):)?(\d{1,2}):(\d{2})[.,](\d{3})/);
-  if (!match) return 0;
-  return (((Number(match[1] ?? 0) * 60 + Number(match[2])) * 60 + Number(match[3])) * 1000) + Number(match[4]);
-}
-
-/** Parse a WebVTT track into timed segments, stripping YouTube's inline word-timing tags. */
-export function parseVtt(content: string): Segment[] {
-  const segments: Segment[] = [];
-  for (const block of content.replace(/\r/g, "").split("\n\n")) {
-    const lines = block.split("\n");
-    const cue = lines.find((line) => line.includes("-->"));
-    if (!cue) continue;
-    const [rawStart, rawEnd] = cue.split("-->");
-    const text = transcriptText(lines
-      .slice(lines.indexOf(cue) + 1)
-      .join(" ")
-      .replace(/<[^>]+>/g, "") // <00:00:01.000>, <c>…</c> word timing
-      .replace(/&nbsp;/g, " ")
-      .replace(/\s+/g, " ")
-      .trim());
-    if (!text) continue;
-    segments.push({ text, startMs: vttTimestampMs(rawStart), endMs: vttTimestampMs(rawEnd) });
-  }
-  return segments;
-}
-
-/** Pick the best downloaded .vtt for `id`, preferring the requested language, and parse it. */
-async function readSubtitleSegments(
-  root: string,
-  id: string,
-  lang?: string | null,
-): Promise<Segment[]> {
-  const vtts = (await readdir(root)).filter(
-    (name) => name.startsWith(`${id}.`) && name.endsWith(".vtt"),
-  );
-  if (vtts.length === 0) return [];
-  const preferred =
-    (lang && vtts.find((name) => name.includes(`.${lang}`))) ||
-    vtts.find((name) => name.includes(".en")) ||
-    vtts[0];
-  return parseVtt(await readFile(path.join(root, preferred), "utf8"));
-}
 
 /** Locate the audio file yt-dlp produced for `id` (extension may vary if ffmpeg is absent). */
 async function downloadedAudio(root: string, id: string): Promise<string | null> {
@@ -157,7 +144,11 @@ async function downloadedAudio(root: string, id: string): Promise<string | null>
   return match ? path.join(root, match) : null;
 }
 
-export async function discoverYouTube(url: string, lang?: string | null): Promise<DiscoverResult> {
+export async function discoverYouTube(
+  url: string,
+  lang?: string | null,
+  onProgress?: (percent: number, stage: string) => void,
+): Promise<DiscoverResult> {
   const root = discoverCacheDir();
   await mkdir(root, { recursive: true });
   const id = sourceId(url);
@@ -170,7 +161,6 @@ export async function discoverYouTube(url: string, lang?: string | null): Promis
 
   // youtubei.js can no longer decipher stream URLs (YouTube cipher changes), so download
   // with yt-dlp, which keeps its signature handling current. Audio is essential; subtitles
-  // are a best-effort optimization (a sub failure must not abort the audio we need).
   const canonicalUrl = `https://www.youtube.com/watch?v=${videoId(url)}`;
   const ffmpeg = ffmpegDir();
   const bin = ytDlpBinary();
@@ -188,6 +178,7 @@ export async function discoverYouTube(url: string, lang?: string | null): Promis
     }
   };
 
+  onProgress?.(0, "download");
   await run([
     "-f", "bestaudio/best",
     ...(ffmpeg ? ["--extract-audio", "--audio-format", "m4a", "--ffmpeg-location", ffmpeg] : []),
@@ -196,27 +187,18 @@ export async function discoverYouTube(url: string, lang?: string | null): Promis
   const audioFile = await downloadedAudio(root, id);
   if (!audioFile) throw new Error("yt-dlp did not produce an audio file");
 
-  // Best-effort original captions (not auto-translations); failure just falls back to Whisper.
-  const subLangs = lang ? `${lang}-orig,${lang},en-orig,en` : "en-orig,en";
-  try {
-    await run([
-      "--skip-download", "--write-subs", "--write-auto-subs",
-      "--sub-langs", subLangs, "--convert-subs", "vtt",
-    ]);
-  } catch (error) {
-    console.error("Subtitle fetch failed; will transcribe instead:", error);
-  }
-
   let title = "Untitled";
   try {
     title = (await readFile(path.join(root, `${id}.title`), "utf8")).trim() || title;
   } catch {}
 
-  // Prefer subtitles (fast, real timestamps); fall back to Whisper for caption-less videos.
-  let segments = await readSubtitleSegments(root, id, lang);
-  if (!segments.length) {
-    segments = (await transcribe({ audio: await readFile(audioFile), language: lang })).segments;
-  }
+  // Map Whisper progress (0–100) into the transcription slice (20–97% overall).
+  const onWhisperProgress = onProgress
+    ? (pct: number) => onProgress(20 + Math.round(pct * 0.77), "transcribe")
+    : undefined;
+  onProgress?.(20, "transcribe");
+  const segments = (await transcribe({ audio: await readFile(audioFile), language: lang, onProgress: onWhisperProgress })).segments;
+  onProgress?.(98, "transcribe");
 
   const result = normalizeDiscoverResult({ sourceId: id, title, segments, hasAudio: true });
   await writeFile(cacheFile, JSON.stringify(result));

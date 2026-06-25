@@ -11,6 +11,7 @@ import Disclosure from "@/components/ui/Disclosure";
 import { cn } from "@/lib/cn";
 import { fadeRise } from "@/lib/motion";
 import { saveCorrectionDeck } from "@/lib/store/repository";
+import { emitActivity } from "@/lib/store/activityLog";
 import type { ErrorEvent, ErrorType } from "@/lib/cards/schema";
 import { normalizeContext } from "@/lib/cards/context";
 import { DECK_GENERATION_TIMEOUT_MS } from "@/features/cards/constants";
@@ -286,7 +287,12 @@ export default function CorrectTab({
     <div className="space-y-5">
       <Card className="space-y-4 p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm font-semibold tracking-[-0.01em] text-ink">Add a correction</p>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold tracking-[-0.01em] text-ink">Turn mistakes into review</p>
+            <p className="mt-0.5 text-xs text-ink-muted">
+              Paste, speak, or enter what you produced. Keep only the corrections that are worth drilling.
+            </p>
+          </div>
           <Segmented<CorrectionInputMode>
             label="Correction input mode"
             value={mode}
@@ -392,7 +398,11 @@ export default function CorrectTab({
           title="Correction deck preview"
           data={deckPreview.data}
           defaultFilename="English - Corrections.apkg"
-          persist={(cards) => saveCorrectionDeck(cards, deckPreview.events)}
+          persist={async (cards) => {
+            await saveCorrectionDeck(cards, deckPreview.events);
+            void emitActivity("correction_generated", { cardsCreated: cards.length, source: "ai" });
+            void emitActivity("cards_created", { count: cards.length, source: "correct" });
+          }}
           onStudyNow={onStudyNow}
           onDismiss={() => setDeckPreview(null)}
           onExported={() => setEvents([])}

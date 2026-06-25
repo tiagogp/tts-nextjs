@@ -24,6 +24,7 @@ export interface LocalRequestOptions {
   timeoutMs?: number;
   signal?: AbortSignal;
   debugId?: string;
+  onProgress?: (percent: number, stage: string) => void;
 }
 
 export type RouteHandler = (options: LocalRequestOptions) => Promise<LocalResponse>;
@@ -200,6 +201,7 @@ const handleDiscover: RouteHandler = async (options) => {
     await discoverYouTube(
       String(value.url || ""),
       typeof value.lang === "string" ? value.lang : null,
+      options.onProgress,
     ),
   );
 };

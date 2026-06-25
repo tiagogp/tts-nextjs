@@ -93,9 +93,13 @@ export function buildMineRequest(
     ? `Target English level: ${request.targetLevel.trim()}. Prefer phrases that are useful and appropriately challenging for that level; avoid items far below it unless they teach a high-value natural pattern.`
     : `No target English level was given; assume an intermediate learner and prefer broadly useful natural phrases.`;
 
+  const targetMin = Math.max(5, Math.round(segments.length * 0.08));
+  const targetMax = Math.max(targetMin + 2, Math.round(segments.length * 0.20));
+
   const system = [
     `You curate phrases worth learning from native ${request.targetLang} content for a language learner whose first language is ${learnerLang}.`,
-    `You are selective: a good run returns the few genuinely useful expressions, not a summary of the video.`,
+    `Be generous: select any segment that contains something worth a learner's attention — a useful expression, natural phrasing, collocation, or construction — even if it's not exotic.`,
+    `Concrete target: from ${segments.length} segments, aim to return ${targetMin}–${targetMax} phrases. Fewer than ${targetMin} is a red flag unless the source is almost entirely filler. Skip only segments that are purely filler, repetition, or trivially simple for the target level.`,
     `Only choose phrases that actually appear in the transcript — never invent or paraphrase into something that wasn't said.`,
   ].join(" ");
 

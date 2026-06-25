@@ -119,6 +119,17 @@ export interface CardGenerationProvider {
   ): Promise<string>;
 
   /**
+   * Single-turn free-text generation. The prompt is sent as-is with no system-level
+   * role-play framing — use this for structured tasks like plan generation where the
+   * prompt already encodes all instructions. Optional: only model-backed providers
+   * implement it.
+   */
+  complete?(
+    prompt: string,
+    options?: GenerationRunOptions,
+  ): Promise<string>;
+
+  /**
    * Optional embedder for semantic dedup (A5). Providers with an embeddings backend
    * (OpenAI) implement it for true paraphrase-aware dedup; others omit it and the
    * pipeline falls back to a lexical comparison.

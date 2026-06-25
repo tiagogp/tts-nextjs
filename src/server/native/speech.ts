@@ -98,6 +98,36 @@ function timestampMs(value: unknown): number {
   return (((Number(match[1]) * 60 + Number(match[2])) * 60 + Number(match[3])) * 1000) + Number(match[4]);
 }
 
+function normalizeKey(text: string): string {
+  return text.replace(/\W+/gu, " ").trim().toLowerCase();
+}
+
+// Whisper's sliding-window decoder produces two artifacts:
+//   1. Same-startMs pairs where the shorter text is a substring of the longer one.
+//   2. Consecutive segments where the start of segment[i+1] duplicates the tail of segment[i].
+// This pass collapses both.
+function collapseWhisperOverlaps(segments: SpeechSegment[]): SpeechSegment[] {
+  // Step 1: for segments sharing the same startMs, keep only the longest.
+  const deduped: SpeechSegment[] = [];
+  for (const seg of segments) {
+    const last = deduped.at(-1);
+    if (last && last.startMs === seg.startMs) {
+      if (seg.text.length > last.text.length) deduped[deduped.length - 1] = seg;
+    } else {
+      deduped.push(seg);
+    }
+  }
+
+  // Step 2: drop any segment whose normalised text is fully contained in the previous one.
+  const result: SpeechSegment[] = [];
+  for (const seg of deduped) {
+    const prev = result.at(-1);
+    if (prev && normalizeKey(prev.text).includes(normalizeKey(seg.text))) continue;
+    result.push(seg);
+  }
+  return result;
+}
+
 function normalizeWhisper(value: unknown): Transcription {
   const raw = (value && typeof value === "object" && "transcription" in value)
     ? (value as { transcription: unknown }).transcription
@@ -115,28 +145,51 @@ function normalizeWhisper(value: unknown): Transcription {
       }
     }
   }
-  return { text: segments.map((segment) => segment.text).join(" ").trim(), segments };
+  const collapsed = collapseWhisperOverlaps(segments);
+  return { text: collapsed.map((segment) => segment.text).join(" ").trim(), segments: collapsed };
 }
 
 export async function transcribe(options: {
   audio: Buffer | Uint8Array;
   language?: string | null;
+  onProgress?: (percent: number) => void;
 }): Promise<Transcription> {
   const [model, decoded] = await Promise.all([
     ensureWhisperModel(),
     decodeAudio(options.audio),
   ]);
-  const result = await whisper()({
-    pcmf32: resample(decoded, 16_000),
-    model,
-    language: options.language || "auto",
-    translate: false,
-    use_gpu: process.platform !== "linux",
-    no_prints: true,
-    no_timestamps: false,
-    n_threads: Math.max(2, Math.min(8, os.cpus().length - 2)),
-  });
-  return normalizeWhisper(result);
+
+  let timer: ReturnType<typeof setInterval> | null = null;
+  if (options.onProgress) {
+    const audioDurationMs = (decoded.samples.length / decoded.sampleRate) * 1000;
+    // Conservative estimate: GPU ~8x realtime, CPU ~1.5x realtime
+    const speedFactor = process.platform !== "linux" ? 8 : 1.5;
+    const estimatedMs = Math.max(3000, audioDurationMs / speedFactor);
+    const startedAt = Date.now();
+    options.onProgress(0);
+    timer = setInterval(() => {
+      const elapsed = Date.now() - startedAt;
+      const pct = Math.min(95, Math.round((elapsed / estimatedMs) * 95));
+      options.onProgress!(pct);
+    }, 400);
+  }
+
+  try {
+    const result = await whisper()({
+      pcmf32: resample(decoded, 16_000),
+      model,
+      language: options.language || "auto",
+      translate: false,
+      use_gpu: process.platform !== "linux",
+      no_prints: true,
+      no_timestamps: false,
+      n_threads: Math.max(2, Math.min(8, os.cpus().length - 2)),
+    });
+    return normalizeWhisper(result);
+  } finally {
+    if (timer) clearInterval(timer);
+    options.onProgress?.(100);
+  }
 }
 
 async function getTts(): Promise<OfflineTtsLike> {

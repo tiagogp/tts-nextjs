@@ -121,14 +121,12 @@ export class OllamaProvider implements CardGenerationProvider {
     this.learnerLang = opts.learnerLang ?? DEFAULT_LEARNER_LANG;
   }
 
-  private async json<T>(req: JsonRequest<T>, options: GenerationRunOptions = {}): Promise<T> {
+  private async json<T>(req: JsonRequest<T>, options: GenerationRunOptions = {}, maxTokens = 1500): Promise<T> {
     const res = await this.client.chat.completions.create({
       model: this.model,
       // Deterministic-ish output for a structured task; local models drift more at high temp.
       temperature: 0,
-      // Bound each call's wall time — a card/critique/correction payload fits comfortably,
-      // but an unbounded local model can ramble and blow the request timeout.
-      max_tokens: 1500,
+      max_tokens: maxTokens,
       messages: [
         // Reinforce the contract in-band — not every Ollama build honors response_format.
         { role: "system", content: `${req.system}\n\nRespond with ONLY a single JSON object that satisfies the requested schema. No prose, no markdown fences.` },
@@ -157,7 +155,10 @@ export class OllamaProvider implements CardGenerationProvider {
     request: DiscoveryRequest,
     options?: GenerationRunOptions,
   ): Promise<PhraseCandidate[]> {
-    const raw = await this.json(buildMineRequest(transcript, request, this.learnerLang), options);
+    // Mine may return 20+ phrases at ~100 tokens each; 4096 handles most transcripts
+    // while 8192 covers the MAX_MINE_SEGMENTS (400-segment) worst case.
+    const maxTokens = Math.max(4096, Math.ceil(transcript.length * 0.2) * 100);
+    const raw = await this.json(buildMineRequest(transcript, request, this.learnerLang), options, maxTokens);
     return normalizeMined(raw, transcript, request);
   }
 
@@ -205,6 +206,22 @@ export class OllamaProvider implements CardGenerationProvider {
     const choice = res.choices[0];
     const text = choice?.message?.content;
     if (!text) throw new Error("Ollama returned no content for the conversation turn.");
+    return text.trim();
+  }
+
+  async complete(prompt: string, options: GenerationRunOptions = {}): Promise<string> {
+    const res = await this.client.chat.completions.create({
+      model: this.model,
+      temperature: 0,
+      max_tokens: 32000,
+      messages: [{ role: "user", content: prompt }],
+    }, requestOptions(options));
+    const choice = res.choices[0];
+    if (choice?.finish_reason === "length") {
+      throw new Error("Response was too long and got cut off. Try a shorter plan (fewer days).");
+    }
+    const text = choice?.message?.content;
+    if (!text) throw new Error("Ollama returned no content.");
     return text.trim();
   }
 }

@@ -7,8 +7,8 @@
  */
 
 const DB_NAME = "tts-cards";
-// v2: adds the `conversations` store (Phase 1 — in-app conversation practice).
-const DB_VERSION = 2;
+// v4: adds `learningPlan` and `effortHistory` stores (90-day plan system).
+const DB_VERSION = 4;
 
 export const STORES = {
   errorEvents: "errorEvents",
@@ -17,6 +17,9 @@ export const STORES = {
   srs: "srs",
   reviews: "reviews",
   conversations: "conversations",
+  activityLog: "activityLog",
+  learningPlan: "learningPlan",
+  effortHistory: "effortHistory",
 } as const;
 
 export type StoreName = (typeof STORES)[keyof typeof STORES];
@@ -59,6 +62,17 @@ export function openDb(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains(STORES.conversations)) {
         const s = db.createObjectStore(STORES.conversations, { keyPath: "id" });
         s.createIndex("startedAt", "startedAt");
+      }
+      if (!db.objectStoreNames.contains(STORES.activityLog)) {
+        const s = db.createObjectStore(STORES.activityLog, { keyPath: "id" });
+        s.createIndex("ts", "ts");
+        s.createIndex("type", "type");
+      }
+      if (!db.objectStoreNames.contains(STORES.learningPlan)) {
+        db.createObjectStore(STORES.learningPlan, { keyPath: "id" });
+      }
+      if (!db.objectStoreNames.contains(STORES.effortHistory)) {
+        db.createObjectStore(STORES.effortHistory, { keyPath: "weekOf" });
       }
     };
     req.onsuccess = () => resolve(req.result);

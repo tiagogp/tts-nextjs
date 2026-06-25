@@ -13,28 +13,64 @@ import SettingsScreen from "@/features/settings/components/SettingsScreen";
 import OnboardingDialog from "@/features/settings/components/OnboardingDialog";
 import SpeechTab from "@/features/speech/components/SpeechTab";
 
+type PracticeView = "study" | "conversation";
+
 function TabContent({
   tab,
   onOpenSettings,
   onOpenDiscover,
+  onOpenPractice,
+  onOpenConversation,
+  onOpenCorrect,
+  practiceView,
+  onPracticeViewChange,
 }: {
   tab: HomeTab;
   onOpenSettings: () => void;
   onOpenDiscover: () => void;
+  onOpenPractice: () => void;
+  onOpenConversation: () => void;
+  onOpenCorrect: () => void;
+  practiceView: PracticeView;
+  onPracticeViewChange: (view: PracticeView) => void;
 }) {
-  if (tab === "discover") return <DiscoverTab onOpenSettings={onOpenSettings} onStudyNow={onOpenDiscover} />;
-  if (tab === "converse") return <PracticeTab onOpenSettings={onOpenSettings} onOpenDiscover={onOpenDiscover} />;
-  if (tab === "correct") return <CorrectTab onOpenSettings={onOpenSettings} onStudyNow={onOpenDiscover} />;
+  if (tab === "discover") {
+    return (
+      <DiscoverTab
+        onOpenSettings={onOpenSettings}
+        onStudyNow={onOpenPractice}
+        onSpeakNow={onOpenConversation}
+        onCorrectNow={onOpenCorrect}
+      />
+    );
+  }
+  if (tab === "converse") {
+    return (
+      <PracticeTab
+        onOpenSettings={onOpenSettings}
+        onOpenDiscover={onOpenDiscover}
+        view={practiceView}
+        onViewChange={onPracticeViewChange}
+      />
+    );
+  }
+  if (tab === "correct") return <CorrectTab onOpenSettings={onOpenSettings} onStudyNow={onOpenPractice} />;
   return <SpeechTab />;
 }
 
 export default function HomeClient() {
   const [tab, setTab] = useState<HomeTab>("discover");
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [practiceView, setPracticeView] = useState<PracticeView>("study");
 
   const changeTab = (next: HomeTab) => {
     setTab(next);
     setSettingsOpen(false);
+  };
+
+  const openPractice = (view: PracticeView) => {
+    setPracticeView(view);
+    changeTab("converse");
   };
 
   return (
@@ -49,7 +85,7 @@ export default function HomeClient() {
 
           <main className="flex-1 min-h-0" id="main-content">
             {settingsOpen ? (
-              <div className="h-full overflow-y-auto app-scroll-region">
+              <div className="h-full overflow-y-auto pb-16 app-scroll-region sm:pb-20">
                 <SettingsScreen onBack={() => setSettingsOpen(false)} />
               </div>
             ) : (
@@ -68,7 +104,7 @@ export default function HomeClient() {
                     {/* Mount stays alive across tab switches so each tab keeps its
                         state; only the entrance animation replays on activation. */}
                     <motion.div
-                      className="max-w-5xl mx-auto px-4 py-5 sm:py-7"
+                      className="max-w-5xl mx-auto px-4 pt-5 pb-14 sm:pt-7 sm:pb-20"
                       initial={false}
                       animate={active ? { opacity: 1, y: 0 } : { opacity: 0, y: TRAVEL }}
                       transition={springSoft}
@@ -77,6 +113,11 @@ export default function HomeClient() {
                         tab={item.id}
                         onOpenSettings={() => setSettingsOpen(true)}
                         onOpenDiscover={() => changeTab("discover")}
+                        onOpenPractice={() => openPractice("study")}
+                        onOpenConversation={() => openPractice("conversation")}
+                        onOpenCorrect={() => changeTab("correct")}
+                        practiceView={practiceView}
+                        onPracticeViewChange={setPracticeView}
                       />
                     </motion.div>
                   </section>

@@ -172,4 +172,28 @@ export class ClaudeProvider implements CardGenerationProvider {
     }
     return block.text.trim();
   }
+
+  async complete(prompt: string, options: GenerationRunOptions = {}): Promise<string> {
+    const stream = this.client.messages.stream({
+      model: this.model,
+      max_tokens: 32000,
+      messages: [
+        { role: "user", content: prompt },
+        { role: "assistant", content: "{" },
+      ],
+    }, requestOptions(options));
+    const res = await stream.finalMessage();
+    if (res.stop_reason === "refusal") {
+      throw new Error("Claude declined the request (safety refusal).");
+    }
+    if (res.stop_reason === "max_tokens") {
+      throw new Error("Response was too long and got cut off. Try a shorter plan (fewer days).");
+    }
+    const block = res.content.find((b) => b.type === "text");
+    if (!block || block.type !== "text") {
+      throw new Error("Claude returned no text.");
+    }
+    // Prepend the prefill "{" since Anthropic doesn't echo it back in the response.
+    return "{" + block.text.trim();
+  }
 }

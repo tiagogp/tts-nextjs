@@ -38,7 +38,7 @@ export function StudyCard({
         <div className="space-y-1 py-8 text-center">
           <p className="text-sm font-medium text-ink">No cards yet</p>
           <p className="text-xs text-ink-muted">
-            Generate some cards in the Discover tab — they’ll show up here for review.
+            Start with one real source in Discover. Keep a small set of phrases, then review them here.
           </p>
           <Button variant="secondary" size="sm" className="mt-3" onClick={onDiscover}>
             Discover new content
@@ -49,7 +49,7 @@ export function StudyCard({
           <p className="text-sm font-medium text-ink">You&apos;re all caught up</p>
           <p className="text-xs text-ink-muted">
             {reviewedThisSession > 0 ? `${reviewedThisSession} reviewed this session. ` : ""}
-            Discover new content when you want more to study.
+            Add a small batch only when you are ready for more.
           </p>
           <Button variant="secondary" size="sm" className="mt-3" onClick={onDiscover}>
             Discover new content
@@ -61,7 +61,7 @@ export function StudyCard({
             <span className="text-xs font-medium uppercase tracking-[0.8px] text-ink-muted">
               {current.card.concept || "Card"}
             </span>
-            <span className="text-xs tabular-nums text-ink-muted">{queueLength} due</span>
+            <span className="text-xs tabular-nums text-ink-muted">{queueLength} in today&apos;s queue</span>
           </div>
 
           <div className="flex min-h-24 flex-col items-center justify-center gap-3 text-center">

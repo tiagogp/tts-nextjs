@@ -38,7 +38,7 @@ export default function Select({ value, onChange, options, disabled }: SelectPro
         <RadixSelect.Content
           position="popper"
           sideOffset={4}
-          className="z-50 w-(--radix-select-trigger-width) overflow-hidden rounded-md border border-line bg-card text-sm shadow-[0_4px_16px_rgba(0,0,0,0.12)]"
+          className="z-[110] w-(--radix-select-trigger-width) overflow-hidden rounded-md border border-line bg-card text-sm shadow-[0_4px_16px_rgba(0,0,0,0.12)]"
         >
           <RadixSelect.Viewport className="p-1 max-h-64 overflow-y-auto">
             {options.map((opt) => (

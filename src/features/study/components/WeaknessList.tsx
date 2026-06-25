@@ -24,15 +24,15 @@ const WEAKNESS_KIND_LABEL: Record<Weakness["kind"], string> = {
 export function WeaknessList({ weaknesses, genError, generatingKey, onPractice, onGenerate }: WeaknessListProps) {
   return (
     <Card className="p-5">
-      <p className="mb-1 text-sm font-semibold tracking-[-0.01em] text-ink">Weak spots</p>
+      <p className="mb-1 text-sm font-semibold tracking-[-0.01em] text-ink">Weak spots to reinforce</p>
       <p className="mb-4 text-xs text-ink-muted">
-        Concepts, error types, and situations you keep struggling with — worst first. ↓/↑ shows whether that error
-        is slowing down or piling up in your writing.
+        The app ranks concepts, error types, and situations from your reviews. Practice drills existing cards;
+        new cards creates fresh variants from the same sources.
       </p>
       {genError && <p className="mb-3 text-xs text-danger">{genError}</p>}
       {weaknesses.length === 0 && (
         <div className="rounded border border-line bg-surface px-3 py-3 text-xs text-ink-soft">
-          No patterns detected yet — study a few cards first.
+          No patterns detected yet — review a few cards or run a correction session first.
         </div>
       )}
       <motion.ul className="space-y-2" variants={staggerContainer} initial="hidden" animate="show">
@@ -64,14 +64,14 @@ export function WeaknessList({ weaknesses, genError, generatingKey, onPractice, 
               </span>
               <TrendBadge trend={weakness.trend} delta={weakness.trendDelta} />
               <Chip tone="danger" className="shrink-0" onClick={() => onPractice(weakness)}>
-                Practice
+                Drill
               </Chip>
               <button
                 type="button"
                 onClick={() => onGenerate(weakness)}
                 disabled={generatingKey !== null}
                 className="shrink-0 cursor-pointer rounded-sm px-2 py-1 text-xs font-medium text-ink-muted opacity-60 transition-opacity hover:opacity-100 focus-visible:opacity-100 group-hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-50"
-                title="Generate new cards for this concept from existing sources"
+                title="Generate new cards for this weak spot from existing sources"
               >
                 {generatingKey === key ? "Generating…" : "New cards"}
               </button>
