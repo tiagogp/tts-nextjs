@@ -30,6 +30,18 @@ install_linux_appimage() {
   local icon_file="$icon_dir/phraseloop.png"
 
   echo "→ Installing PhraseLoop for this Linux user..."
+
+  if [ "${PHRASELOOP_CLEAN_INSTALL:-0}" = "1" ]; then
+    echo "  Wiping user data for clean install..."
+    local xdg_data="${XDG_DATA_HOME:-$HOME/.local/share}"
+    rm -rf "$xdg_data/PhraseLoop" "${XDG_CONFIG_HOME:-$HOME/.config}/PhraseLoop"
+    echo "  User data cleared."
+  else
+    echo "  Resetting onboarding for this install..."
+    rm -rf "${XDG_CONFIG_HOME:-$HOME/.config}/PhraseLoop/Local Storage"
+    echo "  Onboarding reset."
+  fi
+
   mkdir -p "$install_dir" "$bin_dir" "$desktop_dir" "$icon_dir"
   cp "$appimage" "$installed_appimage"
   chmod 755 "$installed_appimage"
@@ -113,8 +125,33 @@ build_macos_download() {
   echo "  and opens it once (right-click -> Open the first time)."
 }
 
+kokoro_is_ready() {
+  local xdg_data="${XDG_DATA_HOME:-$HOME/.local/share}"
+  local xdg_cfg="${XDG_CONFIG_HOME:-$HOME/.config}"
+  for candidate in \
+      "${PHRASELOOP_KOKORO_MODEL_DIR:-}" \
+      "${PHRASELOOP_DATA_DIR:+$PHRASELOOP_DATA_DIR/models/native/kokoro-1.0}" \
+      "$xdg_data/PhraseLoop/models/native/kokoro-1.0" \
+      "$xdg_cfg/PhraseLoop/models/native/kokoro-1.0"; do
+    [ -n "$candidate" ] || continue
+    if [ -f "$candidate/.ready.json" ] \
+        && find "$candidate" -name model.onnx -print -quit 2>/dev/null | grep -q . \
+        && find "$candidate" -name voices.bin -print -quit 2>/dev/null | grep -q . \
+        && find "$candidate" -name tokens.txt -print -quit 2>/dev/null | grep -q .; then
+      return 0
+    fi
+  done
+  return 1
+}
+
 build_linux_download() {
-  PHRASELOOP_BUNDLE_KOKORO=1 ./electron/build-linux.sh
+  if kokoro_is_ready; then
+    PHRASELOOP_BUNDLE_KOKORO=1 ./electron/build-linux.sh
+  else
+    echo "  Kokoro model not found — building without bundled voice model."
+    echo "  The app will prompt the user to download it on first use."
+    ./electron/build-linux.sh
+  fi
   APPIMAGE="$(find dist -maxdepth 1 -type f -name "*.AppImage" -print | head -1)"
   if [ -z "$APPIMAGE" ]; then
     echo "✗ AppImage was not produced"
