@@ -110,7 +110,7 @@ Runs 100% locally — the speech-recognition model (`small`, ~480 MB) downloads 
 Audio decoding uses in-process WebAssembly; Homebrew and ffmpeg are not required.
 
 > Next step (in progress): LLM curation biased by an optional **focus** field, a review pass,
-> and one-click card generation. See [docs/card-architecture.md](docs/card-architecture.md).
+> and one-click card generation. See [docs/README.md](docs/README.md).
 
 ## Card AI providers
 
