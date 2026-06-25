@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import LandingClient from "./landing/LandingClient";
+import LandingClient from "./LandingClient";
 
 export const metadata: Metadata = {
   title: "PhraseLoop - Local-first English practice",
@@ -7,6 +7,6 @@ export const metadata: Metadata = {
     "Turn real English into audio-backed flashcards, practice sessions, and focused drills - locally by default.",
 };
 
-export default function Home() {
+export default function LandingPage() {
   return <LandingClient />;
 }
