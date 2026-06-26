@@ -1,18 +1,11 @@
 import { nanoid } from "nanoid";
 import { STORES, get, getAll, put, del } from "@/lib/store/db";
 import type { DailyTask, EffortSnapshot, LearningPlan, PlanMeta, PlanGenerationResult, Phase } from "./schema";
+import { addDays, dateString } from "./utils";
+
+export { getIsoWeek } from "./utils";
 
 const ACTIVE_PLAN_KEY = "phraseloop.activePlanId.v1";
-
-function dateString(date: Date): string {
-  return date.toISOString().slice(0, 10);
-}
-
-function addDays(base: Date, days: number): Date {
-  const d = new Date(base);
-  d.setDate(d.getDate() + days);
-  return d;
-}
 
 /** Build a full LearningPlan from the LLM result + meta, anchored to today. */
 export function buildPlan(meta: PlanMeta, result: PlanGenerationResult): LearningPlan {
@@ -111,15 +104,6 @@ export async function getTodayTasks(planId: string): Promise<DailyTask | null> {
 }
 
 /* ── effort history ─────────────────────────────────────────── */
-
-export function getIsoWeek(date: Date): string {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
-  const week1 = new Date(d.getFullYear(), 0, 4);
-  const weekNum = 1 + Math.round(((d.getTime() - week1.getTime()) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7);
-  return `${d.getFullYear()}-W${String(weekNum).padStart(2, "0")}`;
-}
 
 export async function getEffortSnapshot(weekOf: string): Promise<EffortSnapshot | null> {
   const snap = await get<EffortSnapshot>(STORES.effortHistory, weekOf);

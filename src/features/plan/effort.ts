@@ -2,6 +2,7 @@ import { getActivitySince } from "@/lib/store/activityLog";
 import type { ActivityEvent, ActivityEventType, CardsReviewedPayload, ConversationTurnPayload } from "@/lib/store/activityLog";
 import type { LearningPlan, EffortSnapshot } from "./schema";
 import { getIsoWeek, saveEffortSnapshot } from "./store";
+import { dateString } from "./utils";
 
 /** Approximate cost in minutes for each activity event type. */
 const MINUTES_PER_EVENT: Record<ActivityEventType, (event: ActivityEvent) => number> = {
@@ -21,13 +22,8 @@ function startOfWeek(date: Date): Date {
   return d;
 }
 
-function dateString(date: Date): string {
-  return date.toISOString().slice(0, 10);
-}
-
 /** Minutes planned for the given ISO week from the learning plan. */
 function plannedMinutesForWeek(plan: LearningPlan, weekOf: string): number {
-  const weekStart = new Date(weekOf.replace("W", "") + "-1"); // approximate
   // Parse ISO week properly
   const [yearStr, weekStr] = weekOf.split("-W");
   const year = parseInt(yearStr, 10);

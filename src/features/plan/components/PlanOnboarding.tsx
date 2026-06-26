@@ -13,25 +13,12 @@ import { getLearningProfile } from "@/features/settings/learningProfile";
 import { useProviderSelection } from "@/features/cards/hooks/useProviderSelection";
 import { generateAndSavePlan } from "@/features/plan/generator";
 import type { LearningPlan } from "@/features/plan/schema";
-
-const PLAN_DAYS_OPTIONS = [
-  { value: "30", label: "30 days" },
-  { value: "60", label: "60 days" },
-  { value: "90", label: "90 days" },
-  { value: "180", label: "180 days" },
-];
-
-const AVAILABILITY_OPTIONS = [
-  { value: "10", label: "10 min / day" },
-  { value: "20", label: "20 min / day" },
-  { value: "30", label: "30 min / day" },
-  { value: "45", label: "45 min / day" },
-  { value: "60", label: "1 hour / day" },
-];
-
-const TARGET_LEVELS = ENGLISH_LEVELS.filter((l) => l.value !== "A1");
-
-type Step = "goal" | "availability" | "generating";
+import {
+  AVAILABILITY_OPTIONS,
+  PLAN_DAYS_OPTIONS,
+  TARGET_LEVELS,
+} from "@/features/plan/constants";
+import type { PlanOnboardingStep } from "@/features/plan/types";
 
 interface PlanOnboardingProps {
   open: boolean;
@@ -52,7 +39,7 @@ export function PlanOnboarding({
       fallbackToEvaluator: true,
     });
 
-  const [step, setStep] = useState<Step>("goal");
+  const [step, setStep] = useState<PlanOnboardingStep>("goal");
   const [goal, setGoal] = useState("");
   const [currentLevel, setCurrentLevel] = useState<EnglishLevel>(profile.level);
   const [targetLevel, setTargetLevel] = useState<EnglishLevel>("B2");
@@ -211,7 +198,7 @@ export function PlanOnboarding({
             </h2>
             <p className="mt-2 text-sm text-ink-soft">
               Be honest — a consistent 15 min beats an ambitious 1 hour that
-              doesn't happen.
+              doesn&apos;t happen.
             </p>
           </div>
 

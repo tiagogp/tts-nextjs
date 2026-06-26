@@ -3,31 +3,13 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { Spinner } from "@/components/ui/Spinner";
 import { PlanOnboarding } from "./PlanOnboarding";
+import { PlanTaskRow } from "./PlanTaskRow";
 import { useTodayPlan } from "../hooks/useTodayPlan";
 import { deletePlan } from "../store";
-import type { LearningPlan, TaskItem, TaskType } from "../schema";
+import type { PlanNavigationHandlers, PlanTaskActionMap } from "../types";
 
-const TASK_LABELS: Record<TaskType, string> = {
-  discover: "Discover",
-  study: "Study",
-  converse: "Speak",
-  correct: "Correct",
-};
-
-const TASK_COLORS: Record<TaskType, string> = {
-  discover: "bg-accent/10 text-accent",
-  study: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
-  converse: "bg-violet-500/10 text-violet-700 dark:text-violet-400",
-  correct: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
-};
-
-interface TodayCardProps {
-  onDiscover?: () => void;
-  onStudy?: () => void;
-  onConverse?: () => void;
-  onCorrect?: () => void;
+interface TodayCardProps extends PlanNavigationHandlers {
   onOpenSettings?: () => void;
 }
 
@@ -37,7 +19,7 @@ export function TodayCard({ onDiscover, onStudy, onConverse, onCorrect, onOpenSe
 
   if (loading) return null;
 
-  const handlePlanCreated = async (_plan: LearningPlan) => {
+  const handlePlanCreated = async () => {
     await refresh();
   };
 
@@ -108,7 +90,7 @@ export function TodayCard({ onDiscover, onStudy, onConverse, onCorrect, onOpenSe
   const totalDays = plan.meta.planDays;
   const dayNumber = plan.days.findIndex((d) => d.date === today.date) + 1;
 
-  const tabCallback: Record<TaskType, (() => void) | undefined> = {
+  const tabCallback: PlanTaskActionMap = {
     discover: onDiscover,
     study: onStudy,
     converse: onConverse,
@@ -116,7 +98,7 @@ export function TodayCard({ onDiscover, onStudy, onConverse, onCorrect, onOpenSe
   };
 
   return (
-    <Card className="p-5 space-y-4">
+    <Card className={`p-5 space-y-4 ${allDone ? "" : "due-pulse"}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
@@ -146,7 +128,7 @@ export function TodayCard({ onDiscover, onStudy, onConverse, onCorrect, onOpenSe
 
       <ul className="space-y-2">
         {today.tasks.map((task) => (
-          <TaskRow
+          <PlanTaskRow
             key={task.id}
             task={task}
             onGo={tabCallback[task.type]}
@@ -168,59 +150,5 @@ export function TodayCard({ onDiscover, onStudy, onConverse, onCorrect, onOpenSe
         </button>
       </div>
     </Card>
-  );
-}
-
-function TaskRow({
-  task,
-  onGo,
-  onComplete,
-}: {
-  task: TaskItem;
-  onGo?: () => void;
-  onComplete: () => void;
-}) {
-  const done = task.completedAt != null;
-
-  return (
-    <li className={`flex items-center gap-3 rounded-lg border px-3 py-2.5 transition-colors ${
-      done ? "border-line bg-surface opacity-60" : "border-line bg-canvas"
-    }`}>
-      <button
-        type="button"
-        aria-label={done ? "Mark as not done" : "Mark as done"}
-        onClick={onComplete}
-        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
-          done
-            ? "border-emerald-500 bg-emerald-500 text-white"
-            : "border-line hover:border-accent"
-        }`}
-      >
-        {done && (
-          <svg width="10" height="8" viewBox="0 0 10 8" fill="none" aria-hidden="true">
-            <path d="M1 4l3 3 5-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        )}
-      </button>
-
-      <div className="flex min-w-0 flex-1 items-center gap-2">
-        <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${TASK_COLORS[task.type]}`}>
-          {TASK_LABELS[task.type]}
-        </span>
-        <p className={`truncate text-xs ${done ? "line-through text-ink-muted" : "text-ink-soft"}`}>
-          {task.instruction}
-        </p>
-      </div>
-
-      {!done && onGo && (
-        <button
-          type="button"
-          onClick={onGo}
-          className="shrink-0 text-xs font-medium text-accent transition-opacity hover:opacity-70"
-        >
-          Go →
-        </button>
-      )}
-    </li>
   );
 }
