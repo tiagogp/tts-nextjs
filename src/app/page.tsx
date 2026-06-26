@@ -1,12 +1,7 @@
-import type { Metadata } from "next";
-import LandingClient from "./landing/LandingClient";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "PhraseLoop - Local-first English practice",
-  description:
-    "Turn real English into audio-backed flashcards, practice sessions, and focused drills - locally by default.",
-};
-
+// The marketing landing now lives in the separate `apps/landing` workspace.
+// The desktop app opens straight into the workspace.
 export default function Home() {
-  return <LandingClient />;
+  redirect("/app");
 }

@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "desktopName": "PhraseLoop",
   "private": true,
+  "packageManager": "yarn@1.22.22",
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
     "postinstall": "node scripts/fix-native-rpaths.mjs",
     "dev": "next dev",
@@ -14,7 +18,9 @@
     "app:dist": "bash electron/build-app.sh",
     "app:linux": "bash electron/build-linux.sh",
     "app:windows": "bash electron/build-windows.sh",
-    "app:download": "bash make-download.sh"
+    "app:download": "bash make-download.sh",
+    "landing:dev": "yarn workspace landing dev",
+    "landing:build": "yarn workspace landing build"
   },
   "main": "electron/main.js",
   "build": {
@@ -115,6 +121,7 @@
     "eslint": "^9",
     "eslint-config-next": "^16.2.9",
     "tailwindcss": "^4",
+    "turbo": "^2.5.8",
     "typescript": "^5",
     "vitest": "^4.1.9"
   }

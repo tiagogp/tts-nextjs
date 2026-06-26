@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+apps/*/node_modules
 /.pnp
 .pnp.*
 .yarn/*
@@ -20,7 +21,11 @@ __pycache__
 
 # next.js
 /.next/
+apps/*/.next/
 /out/
+
+# turborepo
+.turbo
 
 # production
 /build
