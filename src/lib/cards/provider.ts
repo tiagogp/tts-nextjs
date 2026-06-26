@@ -54,7 +54,7 @@ export interface ConverseOptions {
   level?: string;
 }
 
-export type ProviderKind = "local" | "ollama" | "claude" | "openai";
+export type ProviderKind = "openrouter" | "ollama" | "claude" | "openai";
 
 export interface CardGenerationProvider {
   readonly kind: ProviderKind;
@@ -97,8 +97,7 @@ export interface CardGenerationProvider {
   /**
    * E2 — correction ingestion. Evaluate free text the learner wrote or said and return
    * one ErrorEvent per mistake (empty if it was already native-correct). Optional: only
-   * model-backed providers implement it — the local provider can't judge open text, so
-   * callers must check for its presence and surface a "pick Claude/GPT" message.
+   * model-backed providers implement it, so callers must check for its presence before use.
    */
   correct?(
     text: string,
@@ -109,8 +108,7 @@ export interface CardGenerationProvider {
   /**
    * Conversation path — produce the assistant's next turn in a role-played scenario, in the
    * target language at the learner's level. Optional and gated like correct(): only
-   * model-backed providers implement it; the local heuristic can't hold a conversation, so
-   * callers must check for its presence and surface a "pick Claude/GPT/Ollama" message.
+   * model-backed providers implement it, so callers must check for its presence before use.
    */
   converse?(
     history: ConversationTurn[],

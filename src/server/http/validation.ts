@@ -18,7 +18,7 @@ export async function readJsonObject(request: Request, options: { maxBytes?: num
 }
 
 export function isProviderKind(value: unknown): value is ProviderKind {
-  return value === "local" || value === "ollama" || value === "claude" || value === "openai";
+  return value === "openrouter" || value === "ollama" || value === "claude" || value === "openai";
 }
 
 export function optionalString(value: unknown, maxLength: number): string | undefined {

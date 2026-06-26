@@ -1,21 +1,18 @@
 /**
- * A1 — OllamaProvider. A local *LLM* backend, for users running Ollama on their own machine.
+ * A1 — OpenRouterProvider. The default cloud backend, routed through OpenRouter.
  *
- * The on-device LLM option: it runs a real model so it can `correct()` free text and write
- * understanding-testing cards, but nothing leaves the machine (unlike the cloud providers).
- * Ollama exposes an OpenAI-compatible API, so we reuse the
- * OpenAI SDK pointed at the local endpoint and the same shared request builders the cloud
- * providers use — the only differences are the base URL, no real key, and lenient JSON parsing
- * (local models are less reliable at strict structured output than the cloud ones).
+ * OpenRouter exposes an OpenAI-compatible API to 400+ models, so we reuse the OpenAI SDK
+ * pointed at `https://openrouter.ai/api/v1` and the same shared request builders the other
+ * providers use — the only differences are the base URL, the OpenRouter key, and lenient
+ * JSON parsing (the default model is `openrouter/free`, a router over free models that don't
+ * reliably honor structured-output mode, so we can't rely on it).
  *
- * Configure with OLLAMA_BASE_URL (e.g. http://localhost:11434) to enable it, and optionally
- * OLLAMA_MODEL to pick the model. No embeddings backend is wired up, so semantic dedup (A5)
- * falls back to its lexical path.
+ * Configure with OPENROUTER_API_KEY (or save it in Settings); OPENROUTER_MODEL overrides the
+ * default model. No embeddings backend is wired up, so semantic dedup (A5) falls back to its
+ * lexical path.
  */
 
 import OpenAI from "openai";
-import { getOllamaBaseUrl, getOllamaModel } from "@/server/aiSettings";
-import { ollamaRoot } from "@/server/integrations/ollama";
 import type {
   CardGenerationProvider,
   ConversationTurn,
@@ -48,31 +45,21 @@ import {
   type JsonRequest,
 } from "../shared";
 
-export interface OllamaProviderOptions {
-  /** Base URL of the running Ollama server. Default from OLLAMA_BASE_URL, else localhost. */
-  baseUrl?: string;
-  /** Model tag, e.g. "llama3.1" or "qwen2.5". Default from OLLAMA_MODEL, else "llama3.1". */
+export interface OpenRouterProviderOptions {
+  apiKey?: string;
+  /** OpenRouter model slug. Default from OPENROUTER_MODEL, else `openrouter/free`. */
   model?: string;
   learnerLang?: string;
 }
 
-const DEFAULT_BASE_URL = "http://localhost:11434";
-const DEFAULT_MODEL = "llama3.1";
-
-/** The Ollama server root (no `/v1`), for its native API like `/api/tags`. */
-export function ollamaApiRoot(explicit?: string): string {
-  return ollamaRoot(explicit ?? getOllamaBaseUrl() ?? DEFAULT_BASE_URL);
-}
-
-/** Where to reach Ollama, normalized to the OpenAI-compatible `/v1` root. */
-export function ollamaBaseUrl(explicit?: string): string {
-  return `${ollamaApiRoot(explicit)}/v1`;
-}
+const BASE_URL = "https://openrouter.ai/api/v1";
+const DEFAULT_MODEL = "openrouter/free";
 
 /**
- * Pull the first JSON object out of a model response. Local models often wrap JSON in
- * markdown fences or add a sentence of preamble, so we strip fences and, failing a clean
- * parse, fall back to the outermost {...} span before giving up.
+ * Pull the first JSON object out of a model response. Many OpenRouter models (especially the
+ * free ones `openrouter/free` routes to) wrap JSON in markdown fences or a sentence of preamble,
+ * so we strip fences and, failing a clean parse, fall back to the outermost {...} span before
+ * giving up.
  */
 function extractJson(text: string): string {
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
@@ -101,52 +88,51 @@ function requestOptions(options: GenerationRunOptions): {
   };
 }
 
-export class OllamaProvider implements CardGenerationProvider {
-  readonly kind: ProviderKind = "ollama";
-  readonly label = "Ollama (local LLM)";
-  readonly isLocal = true;
-  // Local models are slow; the per-card critique round-trip multiplies wall time and would
-  // push multi-correction decks past the request timeout. Grounding + the per-source card
-  // cap stand in for the quality gate here.
+export class OpenRouterProvider implements CardGenerationProvider {
+  readonly kind: ProviderKind = "openrouter";
+  readonly label = "OpenRouter";
+  readonly isLocal = false;
+  // The default `openrouter/free` route picks free models that are slower and rate-limited, so a
+  // per-card critique round-trip would double the request count against those limits; grounding +
+  // the per-source card cap stand in for the quality gate here.
   readonly skipCritique = true;
 
   private readonly client: OpenAI;
   private readonly model: string;
   private readonly learnerLang: string;
 
-  constructor(opts: OllamaProviderOptions = {}) {
-    // Ollama ignores the key but the SDK requires one; "ollama" is the conventional placeholder.
-    this.client = new OpenAI({ baseURL: ollamaBaseUrl(opts.baseUrl), apiKey: "ollama" });
-    this.model = opts.model ?? getOllamaModel() ?? DEFAULT_MODEL;
+  constructor(opts: OpenRouterProviderOptions = {}) {
+    this.client = new OpenAI({
+      baseURL: BASE_URL,
+      apiKey: opts.apiKey ?? process.env.OPENROUTER_API_KEY ?? "",
+      // Optional attribution headers for the OpenRouter leaderboards.
+      defaultHeaders: { "HTTP-Referer": "https://phraseloop.app", "X-Title": "PhraseLoop" },
+    });
+    this.model = opts.model ?? process.env.OPENROUTER_MODEL ?? DEFAULT_MODEL;
     this.learnerLang = opts.learnerLang ?? DEFAULT_LEARNER_LANG;
   }
 
-  private async json<T>(req: JsonRequest<T>, options: GenerationRunOptions = {}, maxTokens = 1500): Promise<T> {
+  private async json<T>(req: JsonRequest<T>, options: GenerationRunOptions = {}, maxTokens = 4000): Promise<T> {
     const res = await this.client.chat.completions.create({
       model: this.model,
-      // Deterministic-ish output for a structured task; local models drift more at high temp.
-      temperature: 0,
       max_tokens: maxTokens,
       messages: [
-        // Reinforce the contract in-band — not every Ollama build honors response_format.
+        // Reinforce the JSON contract in-band: not every OpenRouter model (least of all the free
+        // ones) honors response_format, so we don't rely on it.
         { role: "system", content: `${req.system}\n\nRespond with ONLY a single JSON object that satisfies the requested schema. No prose, no markdown fences.` },
         { role: "user", content: req.user },
       ],
-      response_format: {
-        type: "json_schema",
-        json_schema: { name: "result", schema: req.schema },
-      },
     }, requestOptions(options));
     const choice = res.choices[0];
     if (choice?.finish_reason === "length") {
-      throw new Error("Ollama response was truncated before completing the JSON (length).");
+      throw new Error("OpenRouter response was truncated before completing the JSON (length).");
     }
     const text = choice?.message?.content;
-    if (!text) throw new Error("Ollama returned no content to parse");
+    if (!text) throw new Error("OpenRouter returned no content to parse");
     try {
       return JSON.parse(extractJson(text)) as T;
     } catch {
-      throw new Error("Ollama returned malformed JSON — try a more capable model in OLLAMA_MODEL.");
+      throw new Error("OpenRouter returned malformed JSON — try a different model in OPENROUTER_MODEL.");
     }
   }
 
@@ -155,8 +141,7 @@ export class OllamaProvider implements CardGenerationProvider {
     request: DiscoveryRequest,
     options?: GenerationRunOptions,
   ): Promise<PhraseCandidate[]> {
-    // Mine may return 20+ phrases at ~100 tokens each; 4096 handles most transcripts
-    // while 8192 covers the MAX_MINE_SEGMENTS (400-segment) worst case.
+    // Mine may return 20+ phrases at ~100 tokens each; scale the budget with the transcript.
     const maxTokens = Math.max(4096, Math.ceil(transcript.length * 0.2) * 100);
     const raw = await this.json(buildMineRequest(transcript, request, this.learnerLang), options, maxTokens);
     return normalizeMined(raw, transcript, request);
@@ -194,10 +179,7 @@ export class OllamaProvider implements CardGenerationProvider {
   ): Promise<string> {
     const res = await this.client.chat.completions.create({
       model: this.model,
-      // A bit of warmth for natural dialogue (vs. 0 for the structured tasks); bounded so a
-      // local model can't ramble past the request timeout.
-      temperature: 0.7,
-      max_tokens: 512,
+      max_tokens: 1024,
       messages: [
         { role: "system", content: buildConverseSystem({ ...opts, sourceLang: opts.sourceLang ?? this.learnerLang }) },
         ...conversationMessages(history),
@@ -205,14 +187,13 @@ export class OllamaProvider implements CardGenerationProvider {
     }, requestOptions(options));
     const choice = res.choices[0];
     const text = choice?.message?.content;
-    if (!text) throw new Error("Ollama returned no content for the conversation turn.");
+    if (!text) throw new Error("OpenRouter returned no content for the conversation turn.");
     return text.trim();
   }
 
   async complete(prompt: string, options: GenerationRunOptions = {}): Promise<string> {
     const res = await this.client.chat.completions.create({
       model: this.model,
-      temperature: 0,
       max_tokens: 32000,
       messages: [{ role: "user", content: prompt }],
     }, requestOptions(options));
@@ -221,7 +202,7 @@ export class OllamaProvider implements CardGenerationProvider {
       throw new Error("Response was too long and got cut off. Try a shorter plan (fewer days).");
     }
     const text = choice?.message?.content;
-    if (!text) throw new Error("Ollama returned no content.");
+    if (!text) throw new Error("OpenRouter returned no content.");
     return text.trim();
   }
 }

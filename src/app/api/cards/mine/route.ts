@@ -57,10 +57,7 @@ export async function POST(req: NextRequest) {
     if (!isProviderAvailable(kind)) {
       return NextResponse.json(
         {
-          error:
-            kind === "local"
-              ? "Local provider unavailable."
-              : `${kind} provider has no API key configured.`,
+          error: `${kind} provider has no API key configured.`,
         },
         { status: 400 },
       );

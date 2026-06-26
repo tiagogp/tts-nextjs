@@ -21,7 +21,8 @@ const PROVIDER_COPY: Record<ProviderKind, string> = {
   claude:
     "Cloud AI from Anthropic. Your learning content is sent to Anthropic.",
   openai: "Cloud AI from OpenAI. Your learning content is sent to OpenAI.",
-  local: "Offline keyword heuristics. It cannot evaluate free-form writing.",
+  openrouter:
+    "Cloud AI routed through OpenRouter (default model openrouter/fusion). Your learning content is sent to OpenRouter.",
 };
 
 function statusLabel(provider: ProviderStatus): string {
@@ -45,6 +46,7 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
   const [ollamaModel, setOllamaModel] = useState(settings.ollama.model);
   const [anthropicKey, setAnthropicKey] = useState("");
   const [openaiKey, setOpenaiKey] = useState("");
+  const [openrouterKey, setOpenrouterKey] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(
     null,
@@ -104,12 +106,13 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
   };
 
   const cloudCard = (
-    kind: "claude" | "openai",
+    kind: "claude" | "openai" | "openrouter",
     key: string,
     setKey: (value: string) => void,
   ) => {
     const provider = settings.providers.find((item) => item.kind === kind);
-    const keyField = kind === "claude" ? "anthropicApiKey" : "openaiApiKey";
+    const keyField: "anthropicApiKey" | "openaiApiKey" | "openrouterApiKey" =
+      kind === "claude" ? "anthropicApiKey" : kind === "openrouter" ? "openrouterApiKey" : "openaiApiKey";
     const shownStatus = provider ? renderedStatus(provider) : null;
     return (
       <Disclosure
@@ -321,19 +324,10 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
       </Disclosure>
 
       <div className="space-y-3">
+        {cloudCard("openrouter", openrouterKey, setOpenrouterKey)}
         {cloudCard("claude", anthropicKey, setAnthropicKey)}
         {cloudCard("openai", openaiKey, setOpenaiKey)}
       </div>
-
-      <section className="mt-3 flex items-center justify-between gap-4 rounded-lg border border-line px-4 py-3">
-        <div>
-          <h3 className="font-medium text-ink">Local heuristic</h3>
-          <p className="mt-0.5 text-xs text-ink-muted">
-            Offline fallback for basic card generation.
-          </p>
-        </div>
-        <StatusPill tone="success">Available</StatusPill>
-      </section>
     </div>
   );
 }

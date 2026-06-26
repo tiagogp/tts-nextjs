@@ -44,7 +44,13 @@ export async function POST(req: Request) {
       await new OpenAI({ apiKey }).models.list();
       return NextResponse.json({ ok: true, detail: "Connected to OpenAI." });
     }
-    return NextResponse.json({ ok: true, detail: "The Local provider is always available." });
+    if (raw.provider === "openrouter") {
+      const apiKey = str(raw.openrouterApiKey, 500) || getProviderApiKey("openrouter");
+      if (!apiKey) return NextResponse.json({ ok: false, detail: "Enter an OpenRouter API key." });
+      await new OpenAI({ apiKey, baseURL: "https://openrouter.ai/api/v1" }).models.list();
+      return NextResponse.json({ ok: true, detail: "Connected to OpenRouter." });
+    }
+    return NextResponse.json({ ok: false, detail: "Unknown provider." });
   } catch {
     return NextResponse.json({ ok: false, detail: "Connection failed. Check the address or credential." });
   }

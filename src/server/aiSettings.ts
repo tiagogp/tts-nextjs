@@ -49,9 +49,12 @@ export function getOllamaModel(): string | undefined {
   return store().settings.ollamaModel || process.env.OLLAMA_MODEL || undefined;
 }
 
-export function getProviderApiKey(kind: "claude" | "openai"): string | undefined {
+export function getProviderApiKey(kind: "claude" | "openai" | "openrouter"): string | undefined {
   if (kind === "claude") {
     return store().settings.anthropicApiKey || process.env.ANTHROPIC_API_KEY || undefined;
+  }
+  if (kind === "openrouter") {
+    return store().settings.openrouterApiKey || process.env.OPENROUTER_API_KEY || undefined;
   }
   return store().settings.openaiApiKey || process.env.OPENAI_API_KEY || undefined;
 }

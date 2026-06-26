@@ -102,7 +102,7 @@ export function AiEvaluateForm({
       {evaluatorHint && (
         <p className="text-xs text-ink-muted">
           {evaluatorHint}{" "}
-          {onOpenSettings && !evaluatorHint.startsWith("The Local") && (
+          {onOpenSettings && (
             <button onClick={onOpenSettings} className="underline hover:no-underline">
               Open Settings →
             </button>

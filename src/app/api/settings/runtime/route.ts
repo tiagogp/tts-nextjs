@@ -33,6 +33,7 @@ export async function PUT(req: Request) {
     ollamaModel: value(raw.ollamaModel, 100),
     anthropicApiKey: value(raw.anthropicApiKey, 500),
     openaiApiKey: value(raw.openaiApiKey, 500),
+    openrouterApiKey: value(raw.openrouterApiKey, 500),
   };
   replaceRuntimeAiSettings(settings);
   return NextResponse.json({ ok: true, version: getSettingsVersion() });

@@ -34,66 +34,23 @@ import {
   validateApkgBytes,
   writeApkgDebug,
 } from "@/server/native/apkgDebug";
+import {
+  MAX_GENERATION_CANDIDATES,
+  MAX_GENERATION_ERRORS,
+  PUBLIC_CARD_EXPORT_ERROR,
+  PUBLIC_CARD_GENERATION_ERROR,
+  PUBLIC_CARD_TIMEOUT_ERROR,
+} from "@/app/api/cards/_lib/constants";
+import {
+  combinedSignal,
+  isTimeoutError,
+  readExportError,
+} from "@/app/api/cards/_lib/utils";
 
 export const runtime = "nodejs";
 // Local LLM (Ollama) decks of several corrections run generate + critique sequentially and
 // can exceed 5 min; keep the server ahead of the client's 420s abort.
 export const maxDuration = 600;
-
-const MAX_CANDIDATES = 200;
-const MAX_ERRORS = 200;
-const PUBLIC_CARD_EXPORT_ERROR =
-  "Couldn't export the deck right now. Try again in a moment.";
-const PUBLIC_CARD_GENERATION_ERROR =
-  "Couldn't generate cards right now. Try again in a moment.";
-const PUBLIC_CARD_TIMEOUT_ERROR =
-  "Generation took too long. Try fewer phrases or another provider.";
-
-interface ExportErrorPayload {
-  error?: string;
-  code?: string;
-  downloading?: boolean;
-  progress?: number;
-}
-
-function readExportError(body: Buffer): ExportErrorPayload {
-  try {
-    const parsed = JSON.parse(body.toString("utf8") || "{}");
-    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
-      ? (parsed as ExportErrorPayload)
-      : {};
-  } catch {
-    return {};
-  }
-}
-
-function timeoutError(): Error {
-  const error = new Error("Card generation timed out");
-  error.name = "TimeoutError";
-  return error;
-}
-
-function combinedSignal(signal: AbortSignal, timeoutMs: number): {
-  signal: AbortSignal;
-  dispose(): void;
-} {
-  const controller = new AbortController();
-  const abortFromRequest = () => controller.abort(signal.reason);
-  const timer = setTimeout(() => controller.abort(timeoutError()), timeoutMs);
-  if (signal.aborted) controller.abort(signal.reason);
-  else signal.addEventListener("abort", abortFromRequest, { once: true });
-  return {
-    signal: controller.signal,
-    dispose() {
-      clearTimeout(timer);
-      signal.removeEventListener("abort", abortFromRequest);
-    },
-  };
-}
-
-function isTimeoutError(error: unknown): boolean {
-  return error instanceof Error && error.name === "TimeoutError";
-}
 
 export async function POST(req: NextRequest) {
   const debugId = createApkgDebugId();
@@ -108,10 +65,7 @@ export async function POST(req: NextRequest) {
     if (!isProviderAvailable(kind)) {
       return NextResponse.json(
         {
-          error:
-            kind === "local"
-              ? "Local provider unavailable."
-              : `${kind} provider has no API key configured. Set the key in .env.local or pick Local.`,
+          error: `${kind} provider has no API key configured. Set the key in .env.local or pick Ollama.`,
         },
         { status: 400 },
       );
@@ -141,12 +95,12 @@ export async function POST(req: NextRequest) {
       );
     }
     const candidates = rawCandidates
-      .slice(0, MAX_CANDIDATES)
+      .slice(0, MAX_GENERATION_CANDIDATES)
       .map((c) => toCandidate(c, sourceId))
       .filter((c): c is PhraseCandidate => c !== null);
     // E1 — the correction path: native-correction output → ErrorEvent sources.
     const errors = rawErrors
-      .slice(0, MAX_ERRORS)
+      .slice(0, MAX_GENERATION_ERRORS)
       .map(toErrorEvent)
       .filter((e): e is ErrorEvent => e !== null);
     if (candidates.length === 0 && errors.length === 0) {
@@ -188,7 +142,7 @@ export async function POST(req: NextRequest) {
           {
             error:
               failures > 0
-                ? `Generation failed for all ${failures} source(s) — likely a provider/network error. Try again, or pick the Local provider.`
+                ? `Generation failed for all ${failures} source(s) — likely a provider/network error. Try again, or pick another provider.`
                 : "The quality gate dropped every source. Try keeping longer, more complete phrases, or fuller corrections.",
           },
           { status: failures > 0 ? 502 : 422 },

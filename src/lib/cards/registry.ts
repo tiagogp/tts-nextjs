@@ -2,9 +2,9 @@
  * Resolve a provider from the user's runtime choice. Server-side only — reads API
  * keys from the environment, so never import this into client components.
  *
- * `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` are picked up by the SDKs automatically;
- * the local provider needs no key and is always available. Ollama is local too and defaults
- * to localhost; `OLLAMA_BASE_URL` only overrides that address.
+ * `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `OPENROUTER_API_KEY` are read from the environment
+ * (or saved settings) per provider. Ollama is local and defaults to localhost; `OLLAMA_BASE_URL`
+ * only overrides that address.
  */
 
 import "server-only";
@@ -12,7 +12,7 @@ import type { CardGenerationProvider, ProviderKind, ProviderRegistry } from "./p
 import { ClaudeProvider } from "./providers/claude";
 import { OpenAIProvider } from "./providers/openai";
 import { OllamaProvider } from "./providers/ollama";
-import { LocalProvider } from "./providers/local";
+import { OpenRouterProvider } from "./providers/openrouter";
 import {
   getOllamaBaseUrl,
   getOllamaModel,
@@ -31,14 +31,14 @@ export const providerRegistry: ProviderRegistry = {
   claude: () => new ClaudeProvider({ apiKey: getProviderApiKey("claude") }),
   openai: () => new OpenAIProvider({ apiKey: getProviderApiKey("openai") }),
   ollama: () => new OllamaProvider({ baseUrl: getOllamaBaseUrl(), model: getOllamaModel() }),
-  local: () => new LocalProvider(),
+  openrouter: () => new OpenRouterProvider({ apiKey: getProviderApiKey("openrouter") }),
 };
 
-/** True when the provider is usable here: a cloud key set, or a local provider. */
+/** True when the provider is usable here: a cloud key set, or Ollama (always reachable-ish). */
 export function isProviderAvailable(kind: ProviderKind): boolean {
-  if (kind === "local") return true;
   if (kind === "claude") return Boolean(getProviderApiKey("claude"));
   if (kind === "openai") return Boolean(getProviderApiKey("openai"));
+  if (kind === "openrouter") return Boolean(getProviderApiKey("openrouter"));
   if (kind === "ollama") return true;
   return false;
 }
@@ -64,7 +64,10 @@ export function resolveProvider(
         model: opts.model ?? getOllamaModel(),
         baseUrl: opts.baseUrl ?? getOllamaBaseUrl(),
       });
-    case "local":
-      return new LocalProvider({ learnerLang: opts.learnerLang });
+    case "openrouter":
+      return new OpenRouterProvider({
+        learnerLang: opts.learnerLang,
+        apiKey: getProviderApiKey("openrouter"),
+      });
   }
 }

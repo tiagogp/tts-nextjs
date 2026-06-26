@@ -33,9 +33,9 @@ export interface ProviderSelection {
 /**
  * Centralizes the provider/model derivation shared by the Discover and Correct tabs.
  *
- * `fallbackToEvaluator` turns on the Correct-tab behavior: the Local heuristic can't judge free
- * text, so when the default resolves to Local (and the user hasn't explicitly overridden), fall
- * back to the first model-backed provider that's available.
+ * `fallbackToEvaluator` turns on the Correct/Converse-tab behavior: those tabs need a provider
+ * that's actually available, so when the requested provider isn't configured (and the user
+ * hasn't explicitly overridden), fall back to the first available provider.
  */
 export function useProviderSelection({
   fallbackToEvaluator = false,
@@ -57,17 +57,17 @@ export function useProviderSelection({
   const effectiveOverride = overrideMatch?.available ? providerOverride : null;
 
   const requestedProvider = effectiveOverride ?? settings.defaultProvider;
-  const fallbackEvaluator = providers.find(
-    (item) => item.kind !== "local" && item.available,
-  )?.kind;
+  const requestedReady =
+    providers.find((item) => item.kind === requestedProvider)?.available === true;
+  const fallbackEvaluator = providers.find((item) => item.available)?.kind;
   const provider =
-    fallbackToEvaluator && requestedProvider === "local" && effectiveOverride == null
+    fallbackToEvaluator && !requestedReady && effectiveOverride == null
       ? (fallbackEvaluator ?? requestedProvider)
       : requestedProvider;
 
   const activeProvider = providers.find((item) => item.kind === provider);
   const providerReady = activeProvider?.available === true;
-  const hasEvaluator = fallbackToEvaluator && provider !== "local" && providerReady;
+  const hasEvaluator = fallbackToEvaluator && providerReady;
 
   const ollamaModels = settings.ollama.models;
   // Effective choice: the user's pick if still installed, else default to the first model.

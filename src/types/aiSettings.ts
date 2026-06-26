@@ -37,6 +37,7 @@ export interface SecureAiSettings {
   ollamaModel?: string;
   anthropicApiKey?: string;
   openaiApiKey?: string;
+  openrouterApiKey?: string;
 }
 
 export interface AiSettingsPatch {
@@ -45,6 +46,7 @@ export interface AiSettingsPatch {
   ollamaModel?: string;
   anthropicApiKey?: string | null;
   openaiApiKey?: string | null;
+  openrouterApiKey?: string | null;
 }
 
 export interface AiSettingsSaveResult {
@@ -74,7 +76,7 @@ export interface PhraseLoopBridge {
     save: (patch: AiSettingsPatch) => Promise<AiSettingsSaveResult>;
     test: (
       provider: ProviderKind,
-      draft?: Pick<AiSettingsPatch, "ollamaBaseUrl" | "ollamaModel" | "anthropicApiKey" | "openaiApiKey">,
+      draft?: Pick<AiSettingsPatch, "ollamaBaseUrl" | "ollamaModel" | "anthropicApiKey" | "openaiApiKey" | "openrouterApiKey">,
     ) => Promise<{ ok: boolean; detail: string }>;
   };
 }

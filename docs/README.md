@@ -104,7 +104,7 @@ Selected at runtime. See `src/lib/cards/provider.ts`.
 
 | Provider | Evaluates free text? | How to enable |
 | --- | --- | --- |
-| **Local** (heuristic) | No | Always available. No model — cloze/keyword heuristics only. |
+| **OpenRouter** | Yes | Save an OpenRouter key in Settings, or set `OPENROUTER_API_KEY` in `.env.local`. Default model `openrouter/fusion` (override with `OPENROUTER_MODEL`). |
 | **Ollama** (local LLM) | Yes | Run [Ollama](https://ollama.com). Uses `http://localhost:11434` by default. |
 | **Claude** | Yes | Save an Anthropic key in Settings, or set `ANTHROPIC_API_KEY` in `.env.local`. |
 | **GPT** | Yes | Save an OpenAI key in Settings, or set `OPENAI_API_KEY` in `.env.local`. |

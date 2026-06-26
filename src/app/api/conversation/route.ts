@@ -4,8 +4,8 @@
  * NOT done here: the client renders the text immediately and requests /api/tts separately so
  * reading isn't blocked on audio synthesis.
  *
- * The local heuristic provider has no `converse()` — it can't hold a conversation — so a 422
- * tells the client to pick Ollama, Claude, or GPT.
+ * Every provider is model-backed and implements `converse()`; an unconfigured provider (no
+ * API key) is caught earlier with a 400 telling the client to connect or switch providers.
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -47,13 +47,8 @@ function providerErrorMessage(error: unknown): string | null {
   return null;
 }
 
-/** Conversation needs a model-backed provider; fall back off "local" like the correct route. */
 function conversationProviderKind(raw: unknown): ProviderKind {
-  const requested = isProviderKind(raw) ? raw : getDefaultProvider();
-  if (requested !== "local") return requested;
-  if (isProviderAvailable("claude")) return "claude";
-  if (isProviderAvailable("openai")) return "openai";
-  return "ollama";
+  return isProviderKind(raw) ? raw : getDefaultProvider();
 }
 
 function parseTurns(raw: unknown): ConversationTurn[] {
@@ -102,7 +97,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           error:
-            "The Local provider can't hold a conversation. Pick Ollama, Claude, or GPT to practice speaking.",
+            "This provider can't hold a conversation. Pick OpenRouter, Ollama, Claude, or GPT to practice speaking.",
         },
         { status: 422 },
       );

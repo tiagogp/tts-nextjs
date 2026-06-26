@@ -22,21 +22,21 @@ const LABELS: Record<ProviderKind, string> = {
   ollama: "Ollama",
   claude: "Claude",
   openai: "OpenAI",
-  local: "Local heuristic",
+  openrouter: "OpenRouter",
 };
 
 export async function GET() {
   const root = ollamaRoot(getOllamaBaseUrl());
   const { models, online: ollamaOnline } = await getOllamaStatus({ baseUrl: root });
 
-  const order: ProviderKind[] = ["ollama", "claude", "openai", "local"];
+  const order: ProviderKind[] = ["ollama", "openrouter", "claude", "openai"];
   const providers: ProviderStatus[] = order.map((kind) => {
     const configured = kind === "ollama" ? true : isProviderAvailable(kind);
     const available = kind === "ollama" ? ollamaOnline && models.length > 0 : configured;
     return {
       kind,
       label: LABELS[kind] || providerRegistry[kind]().label,
-      isLocal: kind === "ollama" || kind === "local",
+      isLocal: kind === "ollama",
       configured,
       available,
       state:
@@ -97,11 +97,12 @@ export async function PATCH(req: NextRequest) {
   if (isProviderKind(raw.defaultProvider)) {
     next.defaultProvider = raw.defaultProvider;
   }
-  const stringFields: { key: "ollamaBaseUrl" | "ollamaModel" | "anthropicApiKey" | "openaiApiKey"; max: number }[] = [
+  const stringFields: { key: "ollamaBaseUrl" | "ollamaModel" | "anthropicApiKey" | "openaiApiKey" | "openrouterApiKey"; max: number }[] = [
     { key: "ollamaBaseUrl", max: 2048 },
     { key: "ollamaModel", max: 100 },
     { key: "anthropicApiKey", max: 500 },
     { key: "openaiApiKey", max: 500 },
+    { key: "openrouterApiKey", max: 500 },
   ];
   for (const { key, max } of stringFields) {
     if (!(key in raw)) continue;

@@ -19,15 +19,15 @@ vi.mock("@/lib/cards/provider", async (importOriginal) => {
 vi.mock("@/lib/cards/registry", () => ({
   isProviderAvailable: vi.fn(() => true),
   resolveProvider: vi.fn(() => ({
-    kind: "local",
-    label: "Local",
-    isLocal: true,
+    kind: "openrouter",
+    label: "OpenRouter",
+    isLocal: false,
     mine: vi.fn(),
     generate: vi.fn(),
     critique: vi.fn(),
   })),
   providerRegistry: {
-    local: () => ({ label: "Local heuristic" }),
+    openrouter: () => ({ label: "OpenRouter" }),
     ollama: () => ({ label: "Ollama" }),
     claude: () => ({ label: "Claude" }),
     openai: () => ({ label: "OpenAI" }),
@@ -110,7 +110,7 @@ describe("API route integration", () => {
     const { POST } = await import("@/app/api/cards/generate/route");
 
     const response = await POST(jsonRequest("/api/cards/generate", {
-      provider: "local",
+      provider: "openrouter",
       persist: true,
       sourceId: "source-1",
       candidates: [{

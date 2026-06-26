@@ -3,7 +3,7 @@
 //
 // Boot sequence: native-capable Next server -> BrowserWindow.
 
-const { app, BrowserWindow, ipcMain, Menu, safeStorage, shell, utilityProcess } = require("electron");
+const { app, BrowserWindow, ipcMain, Menu, shell, utilityProcess } = require("electron");
 const { spawn, spawnSync } = require("node:child_process");
 const crypto = require("node:crypto");
 const http = require("node:http");
@@ -26,7 +26,6 @@ const FRONTEND_URL = `http://localhost:${FRONTEND_PORT}`;
 const APP_ICON_PNG = path.join(__dirname, "assets", "icon.png");
 const PRELOAD_JS = path.join(__dirname, "preload.js");
 const USER_ENV_FILE = path.join(app.getPath("userData"), "phraseloop.env");
-const AI_SETTINGS_FILE = path.join(app.getPath("userData"), "ai-settings.safe");
 const AI_SETTINGS_FALLBACK_FILE = path.join(app.getPath("userData"), "ai-settings.json");
 const APKG_DEBUG_LOG_FILE = path.join(app.getPath("userData"), "logs", "apkg-debug.jsonl");
 const SETTINGS_TOKEN = crypto.randomBytes(32).toString("hex");
@@ -49,16 +48,6 @@ function cleanSetting(value, maxLength) {
 }
 
 function loadSecureAiSettings() {
-  if (safeStorage.isEncryptionAvailable()) {
-    if (!fs.existsSync(AI_SETTINGS_FILE)) return {};
-    try {
-      const encrypted = Buffer.from(fs.readFileSync(AI_SETTINGS_FILE, "utf8"), "base64");
-      const parsed = JSON.parse(safeStorage.decryptString(encrypted));
-      return parsed && typeof parsed === "object" ? parsed : {};
-    } catch {
-      return {};
-    }
-  }
   if (!fs.existsSync(AI_SETTINGS_FALLBACK_FILE)) return {};
   try {
     const parsed = JSON.parse(fs.readFileSync(AI_SETTINGS_FALLBACK_FILE, "utf8"));
@@ -69,19 +58,13 @@ function loadSecureAiSettings() {
 }
 
 function saveSecureAiSettings(settings) {
-  fs.mkdirSync(path.dirname(AI_SETTINGS_FILE), { recursive: true });
-  if (safeStorage.isEncryptionAvailable()) {
-    const encrypted = safeStorage.encryptString(JSON.stringify(settings));
-    fs.writeFileSync(AI_SETTINGS_FILE, encrypted.toString("base64"), { mode: 0o600 });
-    fs.chmodSync(AI_SETTINGS_FILE, 0o600);
-    return;
-  }
+  fs.mkdirSync(path.dirname(AI_SETTINGS_FALLBACK_FILE), { recursive: true });
   fs.writeFileSync(AI_SETTINGS_FALLBACK_FILE, `${JSON.stringify(settings, null, 2)}\n`, { mode: 0o600 });
   fs.chmodSync(AI_SETTINGS_FALLBACK_FILE, 0o600);
 }
 
 function secureStorageMode() {
-  return safeStorage.isEncryptionAvailable() ? "system" : "local-file";
+  return "local-file";
 }
 
 function prependPathValue(current, value) {
@@ -395,7 +378,7 @@ ipcMain.handle("phrase-loop:ai-settings-save", async (event, rawPatch) => {
     const patch = rawPatch && typeof rawPatch === "object" ? rawPatch : {};
     const current = loadSecureAiSettings();
     const next = { ...current };
-    if (["ollama", "claude", "openai", "local"].includes(patch.defaultProvider)) {
+    if (["ollama", "openrouter", "claude", "openai"].includes(patch.defaultProvider)) {
       next.defaultProvider = patch.defaultProvider;
     }
     for (const [input, stored, max] of [
@@ -403,6 +386,7 @@ ipcMain.handle("phrase-loop:ai-settings-save", async (event, rawPatch) => {
       ["ollamaModel", "ollamaModel", 100],
       ["anthropicApiKey", "anthropicApiKey", 500],
       ["openaiApiKey", "openaiApiKey", 500],
+      ["openrouterApiKey", "openrouterApiKey", 500],
     ]) {
       if (!(input in patch)) continue;
       const value = cleanSetting(patch[input], max);

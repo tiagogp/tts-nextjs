@@ -4,55 +4,28 @@
  * the ErrorEvents it found. The client reviews them, then runs the same generate pipeline
  * the Discover/Correct tabs already use.
  *
- * The local provider has no `correct()` — it can't judge open text — so a 422 tells the
- * client to pick Claude, GPT, or Ollama.
+ * Every provider is model-backed and implements `correct()`; an unconfigured provider (no
+ * API key) is caught earlier with a 400 telling the client to connect or switch providers.
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { safeStr } from "@/lib/cards/intake";
 import { normalizeContext } from "@/lib/cards/context";
 import { isProviderAvailable, resolveProvider } from "@/lib/cards/registry";
-import type { ProviderKind } from "@/lib/cards/provider";
-import { getDefaultProvider } from "@/server/aiSettings";
-import { isProviderKind, readJsonObject } from "@/server/http/validation";
+import { readJsonObject } from "@/server/http/validation";
 import { MAX_CORRECTION_JSON_BYTES } from "@/lib/constants";
 import { logger } from "@/lib/logger";
+import {
+  MAX_CORRECTION_TEXT_CHARS,
+  PUBLIC_CORRECTION_ERROR,
+} from "@/app/api/cards/_lib/constants";
+import {
+  cardProviderKind,
+  providerErrorMessage,
+} from "@/app/api/cards/_lib/utils";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
-
-/** Cap input so one paste can't blow the model's context or the request timeout. */
-const MAX_TEXT = 8000;
-const PUBLIC_CORRECTION_ERROR =
-  "Couldn't evaluate the text right now. Try again in a moment.";
-
-function providerErrorMessage(error: unknown): string | null {
-  if (!(error instanceof Error)) return null;
-  const message = error.message.trim();
-  if (!message) return null;
-  if (
-    message.includes("Ollama") ||
-    message.includes("OpenAI") ||
-    message.includes("Claude") ||
-    message.includes("Anthropic") ||
-    message.includes("API key") ||
-    message.includes("timed out") ||
-    message.includes("timeout") ||
-    message.includes("connect") ||
-    message.includes("ECONNREFUSED")
-  ) {
-    return message;
-  }
-  return null;
-}
-
-function correctionProviderKind(raw: unknown): ProviderKind {
-  const requested = isProviderKind(raw) ? raw : getDefaultProvider();
-  if (requested !== "local") return requested;
-  if (isProviderAvailable("claude")) return "claude";
-  if (isProviderAvailable("openai")) return "openai";
-  return "ollama";
-}
 
 export async function POST(req: NextRequest) {
   try {
@@ -61,12 +34,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
     }
 
-    const text = safeStr(obj.text, "", MAX_TEXT);
+    const text = safeStr(obj.text, "", MAX_CORRECTION_TEXT_CHARS);
     if (!text) {
       return NextResponse.json({ error: "Nothing to correct." }, { status: 400 });
     }
 
-    const kind = correctionProviderKind(obj.provider);
+    const kind = cardProviderKind(obj.provider);
     if (!isProviderAvailable(kind)) {
       return NextResponse.json(
         { error: `${kind} provider is not configured. Set the key in .env.local or pick Ollama.` },
@@ -85,7 +58,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           error:
-            "The Local provider can't evaluate free text. Pick Ollama, Claude, or GPT to have the AI find your mistakes.",
+            "This provider can't evaluate free text. Pick OpenRouter, Ollama, Claude, or GPT to have the AI find your mistakes.",
         },
         { status: 422 },
       );

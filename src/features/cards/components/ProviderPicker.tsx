@@ -20,14 +20,11 @@ export function ProviderPicker({ selection, disabled }: { selection: Selection; 
     setOllamaModel,
   } = selection;
 
-  const selectableProviders = providers.filter((entry) => entry.kind !== "local");
-  const selectValue = provider === "local"
-    ? (selectableProviders.find((entry) => entry.available) ?? selectableProviders[0])?.kind ?? provider
-    : provider;
+  const selectableProviders = providers;
+  const selectValue = provider;
 
   if (selectableProviders.length <= 1 && !showModelPicker) {
-    if (provider !== "local") return null;
-    return <p className="text-xs text-ink-muted">Using Local heuristic as an offline fallback.</p>;
+    return null;
   }
 
   return (
