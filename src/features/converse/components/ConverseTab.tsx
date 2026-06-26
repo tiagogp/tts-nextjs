@@ -44,8 +44,8 @@ import {
  * scenario; the assistant text renders immediately and its audio plays after (best-effort).
  * The conversation persists per turn. Correction → cards happens in Phase 2.
  *
- * Gated like the Correct tab: the Local heuristic can't hold a conversation, so a model-backed
- * provider (Ollama, Claude, GPT) is required.
+ * Gated like the Correct tab: a configured, available provider (OpenRouter, Ollama, Claude, GPT)
+ * is required to hold a conversation.
  */
 export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () => void }) {
   const selection = useProviderSelection({ fallbackToEvaluator: true });
@@ -61,6 +61,9 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
   const [recording, setRecording] = useState(false);
   const [transcribing, setTranscribing] = useState(false);
   const [note, setNote] = useState<string | null>(null);
+  // Free talk = hands-free: after each AI reply the mic auto-opens and silence detection
+  // (a "debounce" on quiet) decides when you've finished and sends your turn automatically.
+  const [freeTalk, setFreeTalk] = useState(false);
 
   // Phase 2 — post-session review (find mistakes → cards). `review` is the conversation being
   // reviewed; null while in setup or an active chat.
@@ -75,10 +78,24 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioUrlRef = useRef<string | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  // VAD (voice-activity detection) plumbing for free-talk listening.
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const vadFrameRef = useRef<number | null>(null);
+  const discardRef = useRef(false);
+  // Refs bridge the start↔listen↔send cycle so the callbacks below don't need to
+  // depend on each other (which would create a definition-order knot).
+  const freeTalkRef = useRef(freeTalk);
+  const sendTurnRef = useRef<(text: string) => void>(() => {});
+  const listenRef = useRef<() => void>(() => {});
+  useEffect(() => {
+    freeTalkRef.current = freeTalk;
+  }, [freeTalk]);
 
   useEffect(
     () => () => {
       recorderRef.current?.stream.getTracks().forEach((track) => track.stop());
+      if (vadFrameRef.current) cancelAnimationFrame(vadFrameRef.current);
+      void audioCtxRef.current?.close().catch(() => {});
       if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current);
     },
     [],
@@ -126,9 +143,11 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
     [],
   );
 
-  // Audio is optional — the text is already on screen — so swallow failures (e.g. the Kokoro
-  // model isn't downloaded yet, or the browser blocks autoplay) instead of nagging.
-  const playReply = useCallback(async (text: string) => {
+  // Synthesize the reply's audio and stage it on the shared <audio> element, returning it ready
+  // to play. We await this *before* revealing the assistant bubble so text and voice land
+  // together. Audio is optional (Kokoro may not be downloaded, etc.), so failures return null
+  // and the conversation continues silently.
+  const synthReply = useCallback(async (text: string): Promise<HTMLAudioElement | null> => {
     try {
       const blob = await synthesizeSpeech(text);
       if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current);
@@ -136,16 +155,28 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
       audioUrlRef.current = url;
       if (!audioRef.current) audioRef.current = new Audio();
       audioRef.current.src = url;
-      await audioRef.current.play().catch(() => {});
+      return audioRef.current;
     } catch {
-      /* no-op: conversation continues without audio */
+      return null;
     }
   }, []);
 
+  // Play the staged reply. In free talk we auto-open the mic once the AI has finished speaking
+  // (or immediately, if there's no audio) so the learner can answer hands-free.
+  const speak = useCallback((audio: HTMLAudioElement | null) => {
+    const relisten = () => {
+      if (freeTalkRef.current) listenRef.current();
+    };
+    if (!audio) {
+      relisten();
+      return;
+    }
+    audio.onended = relisten;
+    void audio.play().catch(relisten);
+  }, []);
+
   const evaluatorHint = !hasEvaluator
-    ? provider === "local"
-      ? "The Local provider can't hold a conversation. Choose Ollama, Claude, or GPT."
-      : `${activeProvider?.label ?? "This provider"} is unavailable. Open Settings with the gear button to connect it.`
+    ? `${activeProvider?.label ?? "No provider"} is unavailable. Open Settings with the gear button to connect one.`
     : null;
   const cloudNote =
     activeProvider && !activeProvider.isLocal
@@ -174,6 +205,8 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
         level,
         history: [],
       });
+      // Hold the "Starting…" state through TTS so the greeting bubble and its voice appear together.
+      const audio = reply ? await synthReply(reply) : null;
       const conv: Conversation = {
         id: crypto.randomUUID(),
         scenario: scenarioPrompt,
@@ -187,13 +220,13 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
         startedAt: Date.now(),
       };
       persist(conv);
-      if (reply) void playReply(reply);
+      if (reply) speak(audio);
     } catch (err: unknown) {
       setNote(err instanceof Error ? err.message : "Couldn't start the conversation.");
     } finally {
       setBusy(false);
     }
-  }, [busy, canStart, usingCustom, customTrimmed, activeScenario, provider, selectedModel, level, persist, playReply]);
+  }, [busy, canStart, usingCustom, customTrimmed, activeScenario, provider, selectedModel, level, persist, synthReply, speak]);
 
   const sendTurn = useCallback(
     async (text: string) => {
@@ -221,12 +254,14 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
           history: withUser.turns,
         });
         if (reply) {
+          // Stage the audio first, then reveal the bubble + play together (kept in sync).
+          const audio = await synthReply(reply);
           const withReply: Conversation = {
             ...withUser,
             turns: [...withUser.turns, { role: "assistant", text: reply }],
           };
           persist(withReply);
-          void playReply(reply);
+          speak(audio);
         }
       } catch (err: unknown) {
         setNote(err instanceof Error ? err.message : "Couldn't get a reply.");
@@ -234,13 +269,16 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
         setBusy(false);
       }
     },
-    [busy, conversation, provider, selectedModel, persist, playReply],
+    [busy, conversation, provider, selectedModel, persist, synthReply, speak],
   );
+  useEffect(() => {
+    sendTurnRef.current = sendTurn;
+  }, [sendTurn]);
 
-  // Speech → text drops into the input so the learner can review/edit before sending
-  // (human-in-the-loop, like the Correct tab). Off Apple Silicon, transcription fails
-  // gracefully and they can just type.
-  const transcribeBlob = useCallback(async (blob: Blob) => {
+  // Speech → text. In guided mode it drops into the input so the learner can review/edit before
+  // sending (human-in-the-loop, like the Correct tab); in free talk we send it straight away.
+  // Off Apple Silicon, transcription fails gracefully and they can just type.
+  const transcribeBlob = useCallback(async (blob: Blob, opts?: { autoSend?: boolean }) => {
     setTranscribing(true);
     setNote(null);
     try {
@@ -249,12 +287,24 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
         setNote("Couldn't make out any speech in that clip.");
         return;
       }
-      setTyped((prev) => (prev.trim() ? `${prev.trim()} ${text}` : text));
+      if (opts?.autoSend) {
+        sendTurnRef.current(text);
+      } else {
+        setTyped((prev) => (prev.trim() ? `${prev.trim()} ${text}` : text));
+      }
     } catch (err: unknown) {
       setNote(err instanceof Error ? err.message : "Transcription failed.");
     } finally {
       setTranscribing(false);
     }
+  }, []);
+
+  // Tear down the VAD analyser loop. Safe to call repeatedly.
+  const cleanupVad = useCallback(() => {
+    if (vadFrameRef.current) cancelAnimationFrame(vadFrameRef.current);
+    vadFrameRef.current = null;
+    void audioCtxRef.current?.close().catch(() => {});
+    audioCtxRef.current = null;
   }, []);
 
   const startRecording = useCallback(async () => {
@@ -279,11 +329,93 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
     }
   }, [transcribeBlob]);
 
+  // Free-talk listening: open the mic and watch the input level. Once speech has been heard,
+  // a sustained quiet stretch (SILENCE_MS — the "debounce") ends the turn and auto-sends it.
+  // If no speech arrives at all within NO_SPEECH_MS, we quietly give up so we don't loop forever.
+  const startListening = useCallback(async () => {
+    if (recorderRef.current) return; // already listening/recording
+    setNote(null);
+    discardRef.current = false;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      chunksRef.current = [];
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+      recorder.onstop = () => {
+        stream.getTracks().forEach((t) => t.stop());
+        cleanupVad();
+        recorderRef.current = null;
+        setRecording(false);
+        if (discardRef.current) return;
+        const blob = new Blob(chunksRef.current, { type: recorder.mimeType || "audio/webm" });
+        if (blob.size > 0) void transcribeBlob(blob, { autoSend: true });
+      };
+      recorderRef.current = recorder;
+      recorder.start();
+      setRecording(true);
+
+      const ctx = new AudioContext();
+      audioCtxRef.current = ctx;
+      const source = ctx.createMediaStreamSource(stream);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 2048;
+      source.connect(analyser);
+      const data = new Uint8Array(analyser.fftSize);
+
+      const SPEECH_RMS = 0.025; // ~normal speaking volume; tuned against ambient noise
+      const SILENCE_MS = 1500; // quiet stretch that counts as "done talking"
+      const NO_SPEECH_MS = 9000; // give up if they never start
+      const startedAt = performance.now();
+      let heardSpeech = false;
+      let silenceSince = 0;
+
+      const tick = () => {
+        analyser.getByteTimeDomainData(data);
+        let sum = 0;
+        for (let i = 0; i < data.length; i++) {
+          const v = (data[i] - 128) / 128;
+          sum += v * v;
+        }
+        const rms = Math.sqrt(sum / data.length);
+        const now = performance.now();
+
+        if (rms > SPEECH_RMS) {
+          heardSpeech = true;
+          silenceSince = 0;
+        } else if (heardSpeech) {
+          if (!silenceSince) silenceSince = now;
+          else if (now - silenceSince > SILENCE_MS) {
+            recorderRef.current?.stop(); // → onstop → transcribe + auto-send
+            return;
+          }
+        } else if (now - startedAt > NO_SPEECH_MS) {
+          discardRef.current = true; // nothing said — bail without a wasted transcription
+          recorderRef.current?.stop();
+          return;
+        }
+        vadFrameRef.current = requestAnimationFrame(tick);
+      };
+      vadFrameRef.current = requestAnimationFrame(tick);
+    } catch {
+      cleanupVad();
+      setRecording(false);
+      setNote("Couldn't access the microphone. Check the browser's permission.");
+    }
+  }, [transcribeBlob, cleanupVad]);
+  useEffect(() => {
+    listenRef.current = startListening;
+  }, [startListening]);
+
   const stopRecording = useCallback(() => {
+    // In free talk a manual stop is a cancel — discard rather than send a half-formed turn.
+    if (vadFrameRef.current || audioCtxRef.current) discardRef.current = true;
+    cleanupVad();
     recorderRef.current?.stop();
     recorderRef.current = null;
     setRecording(false);
-  }, []);
+  }, [cleanupVad]);
 
   // Phase 2 — run correction over just the learner's turns and stamp the conversation's
   // situational context onto every mistake found. Runs once per session; re-opening shows the
@@ -333,6 +465,8 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
   const openReview = useCallback(
     (conv: Conversation) => {
       audioRef.current?.pause();
+      if (audioRef.current) audioRef.current.onended = null; // don't re-arm the mic after we leave
+      stopRecording();
       setConversation(null);
       setTyped("");
       setNote(null);
@@ -347,7 +481,7 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
         void correctReview(ended);
       }
     },
-    [correctReview, refreshPast],
+    [correctReview, refreshPast, stopRecording],
   );
 
   const finish = useCallback(() => {
@@ -461,7 +595,7 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
           {!hasEvaluator && evaluatorHint && (
             <p className="text-xs text-ink-muted">
               {evaluatorHint}{" "}
-              {onOpenSettings && provider !== "local" && (
+              {onOpenSettings && (
                 <button onClick={onOpenSettings} className="underline hover:no-underline">Open Settings →</button>
               )}
             </p>
@@ -516,6 +650,25 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
           />
         </Field>
 
+        <Field
+          label="Mode"
+          hint={
+            freeTalk
+              ? "Free talk: the mic opens after each reply and sends when you pause — fully hands-free."
+              : "Guided: tap Speak (or type), review, then send each turn yourself."
+          }
+        >
+          <Segmented<"guided" | "free">
+            label="Conversation mode"
+            value={freeTalk ? "free" : "guided"}
+            onChange={(v) => setFreeTalk(v === "free")}
+            options={[
+              { value: "guided", label: "Guided" },
+              { value: "free", label: "Free talk" },
+            ]}
+          />
+        </Field>
+
         {cloudNote && <p className="text-xs text-ink-muted">{cloudNote}</p>}
         {note && <p className="text-xs text-danger">{note}</p>}
 
@@ -526,7 +679,7 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
           {evaluatorHint && (
             <p className="text-xs text-ink-muted">
               {evaluatorHint}{" "}
-              {onOpenSettings && provider !== "local" && (
+              {onOpenSettings && (
                 <button onClick={onOpenSettings} className="underline hover:no-underline">Open Settings →</button>
               )}
             </p>
@@ -577,7 +730,7 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
 
   // ───────────────────────── active conversation ─────────────────────────
   return (
-    <Card className="flex min-h-[calc(100dvh-12rem)] flex-col overflow-hidden border-line-strong shadow-[0_18px_45px_rgb(17_17_17_/_0.08)] sm:min-h-[calc(100dvh-13rem)]">
+    <Card className="flex h-[calc(100dvh-12rem)] flex-col overflow-hidden border-line-strong shadow-[0_18px_45px_rgb(17_17_17_/_0.08)] sm:h-[calc(100dvh-13rem)]">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line bg-surface px-4 py-3 sm:px-5">
         <div className="min-w-0 space-y-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -590,6 +743,7 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
             <span>{conversation.turns.length} {conversation.turns.length === 1 ? "turn" : "turns"}</span>
             {conversation.level && <span>Level {conversation.level}</span>}
             <span>{activeProvider?.label ?? "AI partner"}</span>
+            {freeTalk && <span className="text-accent">Free talk</span>}
           </div>
         </div>
         <Button variant="secondary" onClick={finish} className="h-9 shrink-0">
@@ -620,14 +774,14 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <Button
             variant="secondary"
-            onClick={recording ? stopRecording : startRecording}
+            onClick={recording ? stopRecording : freeTalk ? startListening : startRecording}
             disabled={busy || transcribing}
             className={cn("h-11 shrink-0 gap-2 sm:w-auto", recording && "border-danger text-danger")}
           >
             {recording ? (
               <>
                 <span className="h-2 w-2 animate-pulse rounded-full bg-danger" />
-                Stop
+                {freeTalk ? "Listening…" : "Stop"}
               </>
             ) : transcribing ? (
               <>
