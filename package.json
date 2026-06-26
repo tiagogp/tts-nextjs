@@ -41,7 +41,7 @@
       "icon": "electron/assets/icon.icns",
       "category": "public.app-category.education",
       "target": "dir",
-      "identity": null,
+      "identity": "PhraseLoop Dev",
       "minimumSystemVersion": "14.0"
     },
     "linux": {
