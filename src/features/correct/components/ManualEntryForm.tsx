@@ -2,7 +2,8 @@
 
 import { Chip } from "@/components/ui/Chip";
 import { Field, Input, Textarea } from "@/components/ui/Field";
-import { ERROR_TYPES, type CorrectionDraft } from "@/features/correct/model";
+import { CORRECTION_ERROR_TYPES } from "@/features/correct/constants";
+import type { CorrectionDraft } from "@/features/correct/types";
 import type { ErrorType } from "@/lib/cards/schema";
 
 interface ManualEntryFormProps {
@@ -40,7 +41,7 @@ export function ManualEntryForm({ draft, onChange, onToggleType, onAdd }: Manual
 
       <Field label={<>Error type {optionalHint}</>}>
         <div className="flex flex-wrap gap-1.5">
-          {ERROR_TYPES.map((type) => (
+          {CORRECTION_ERROR_TYPES.map((type) => (
             <Chip key={type} active={draft.errorTypes.includes(type)} onClick={() => onToggleType(type)}>
               {type}
             </Chip>

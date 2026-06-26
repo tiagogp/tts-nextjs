@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -21,8 +21,11 @@ import type { DeckPayload } from "@/features/cards/exportDeck";
 import { ProviderPicker } from "@/features/cards/components/ProviderPicker";
 import { DeckPreview } from "@/features/cards/components/DeckPreview";
 import { useKokoroModel } from "@/features/speech/hooks/useKokoroModel";
-import { MAX_UPLOAD_BYTES, newDraft, parseErrorsJson, type CorrectionInputMode } from "@/features/correct/model";
-import { DeckGenerationError, evaluateCorrectionText, generateCorrectionDeck, transcribeAudio } from "@/features/correct/api";
+import { CORRECTION_INPUT_OPTIONS } from "@/features/correct/constants";
+import type { CorrectionInputMode } from "@/features/correct/types";
+import { newDraft, parseErrorsJson } from "@/features/correct/utils";
+import { DeckGenerationError, evaluateCorrectionText, generateCorrectionDeck } from "@/features/correct/api";
+import { useCorrectionAudio } from "@/features/correct/hooks/useCorrectionAudio";
 import { AiEvaluateForm } from "@/features/correct/components/AiEvaluateForm";
 import { ManualEntryForm } from "@/features/correct/components/ManualEntryForm";
 import { JsonImportForm } from "@/features/correct/components/JsonImportForm";
@@ -66,15 +69,18 @@ export default function CorrectTab({
   const [aiText, setAiText] = useState("");
   const [evaluating, setEvaluating] = useState(false);
   const [aiNote, setAiNote] = useState<string | null>(null);
-  const [recording, setRecording] = useState(false);
-  const [transcribing, setTranscribing] = useState(false);
-  const recorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const {
+    fileInputRef,
+    recording,
+    transcribing,
+    startRecording,
+    stopRecording,
+    onPickFile,
+  } = useCorrectionAudio({ onNote: setAiNote, onText: setAiText });
 
-  // The heuristic Local provider can't judge open text; any model-backed provider can —
-  // `fallbackToEvaluator` makes the hook fall back to one and expose `hasEvaluator`, which
-  // gates the AI-evaluate affordance.
+  // The AI-evaluate affordance needs a configured, available provider; `fallbackToEvaluator`
+  // makes the hook fall back to the first available one and expose `hasEvaluator`, which gates
+  // the affordance.
   const selection = useProviderSelection({ fallbackToEvaluator: true });
   const { provider, activeProvider, providerReady, hasEvaluator, ollamaModels, selectedModel } = selection;
 
@@ -107,13 +113,6 @@ export default function CorrectTab({
     cancelGeneration,
     setGenDone,
   } = generation;
-
-  useEffect(
-    () => () => {
-      recorderRef.current?.stream.getTracks().forEach((track) => track.stop());
-    },
-    [],
-  );
 
   const toggleType = (t: ErrorType) =>
     setDraft((d) => ({
@@ -208,72 +207,8 @@ export default function CorrectTab({
     }
   }, [aiText, context, evaluating, hasEvaluator, provider, selectedModel, setGenDone]);
 
-  // E2 (speech) — send a recorded clip to Whisper, then drop the text into the box so
-  // the learner can review/edit before it's evaluated (human-in-the-loop, like Discover).
-  const transcribeBlob = useCallback(async (blob: Blob, filename?: string) => {
-    setTranscribing(true);
-    setAiNote(null);
-    try {
-      const text = await transcribeAudio(blob, filename);
-      if (!text) {
-        setAiNote("Couldn't make out any speech in that clip.");
-        return;
-      }
-      setAiText((prev) => (prev.trim() ? `${prev.trim()} ${text}` : text));
-    } catch (err: unknown) {
-      setAiNote(err instanceof Error ? err.message : "Transcription failed.");
-    } finally {
-      setTranscribing(false);
-    }
-  }, []);
-
-  const startRecording = useCallback(async () => {
-    setAiNote(null);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
-      chunksRef.current = [];
-      recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunksRef.current.push(e.data);
-      };
-      recorder.onstop = () => {
-        stream.getTracks().forEach((t) => t.stop());
-        const blob = new Blob(chunksRef.current, { type: recorder.mimeType || "audio/webm" });
-        if (blob.size > 0) void transcribeBlob(blob);
-      };
-      recorderRef.current = recorder;
-      recorder.start();
-      setRecording(true);
-    } catch {
-      setAiNote("Couldn't access the microphone. Check the browser's permission.");
-    }
-  }, [transcribeBlob]);
-
-  const stopRecording = useCallback(() => {
-    recorderRef.current?.stop();
-    recorderRef.current = null;
-    setRecording(false);
-  }, []);
-
-  // E2 (speech) — same Whisper path, but from an existing audio file instead of the mic.
-  const onPickFile = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      e.target.value = ""; // allow re-picking the same file
-      if (!file) return;
-      if (file.size > MAX_UPLOAD_BYTES) {
-        setAiNote("Audio file too large (max 25 MB).");
-        return;
-      }
-      void transcribeBlob(file, file.name);
-    },
-    [transcribeBlob],
-  );
-
   const evaluatorHint = !hasEvaluator
-    ? provider === "local"
-      ? "The Local heuristic cannot evaluate free-form text. Choose Ollama, Claude, or OpenAI."
-      : `${activeProvider?.label ?? "This provider"} is unavailable. Open Settings with the gear button to connect it.`
+    ? `${activeProvider?.label ?? "No provider"} is unavailable. Open Settings with the gear button to connect one.`
     : null;
   const ollamaOffline = provider === "ollama" && ollamaModels.length === 0;
 
@@ -297,10 +232,7 @@ export default function CorrectTab({
             label="Correction input mode"
             value={mode}
             onChange={switchMode}
-            options={[
-              { value: "ai", label: "AI review" },
-              { value: "manual", label: "Manual entry" },
-            ]}
+            options={CORRECTION_INPUT_OPTIONS}
           />
         </div>
 
