@@ -87,6 +87,14 @@ textarea {
   outline-offset: 2px;
 }
 
+/* Form controls provide their own focus styling (see Field.tsx),
+   so skip the global outline to avoid a doubled border. */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none;
+}
+
 .app-scroll-region {
   overscroll-behavior: contain;
   scrollbar-color: color-mix(in srgb, var(--text-muted) 38%, transparent) transparent;

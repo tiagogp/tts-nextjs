@@ -110,7 +110,7 @@ export function HomeDashboard({
           };
 
   return (
-    <Card className="p-5">
+    <Card className="surface-grid-glow p-5">
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
         <div className="min-w-0">
           <p className="text-xs uppercase tracking-[0.7px] text-accent">Next learning step · {recommendation.stage}</p>

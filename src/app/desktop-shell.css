@@ -47,3 +47,46 @@ html[data-electron="true"] header > div:first-child {
   width: min(100%, 31rem);
   justify-self: center;
 }
+
+/*
+ * Landing-inspired surface treatments, adapted for in-app use.
+ * Kept subtle so they read as "crafted product", not marketing decoration.
+ */
+
+/* Dotted accent grid + warm radial glow — for hero/dashboard surfaces. */
+.surface-grid-glow {
+  background-image:
+    radial-gradient(circle at 18% 0%, rgba(255, 86, 0, 0.1), transparent 38%),
+    linear-gradient(rgba(255, 86, 0, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 86, 0, 0.05) 1px, transparent 1px);
+  background-size: 100% 100%, 28px 28px, 28px 28px;
+}
+
+.dark .surface-grid-glow {
+  background-image:
+    radial-gradient(circle at 18% 0%, rgba(255, 86, 0, 0.22), transparent 34%),
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 100% 100%, 30px 30px, 30px 30px;
+}
+
+/* Attention pulse — cycles a card's border to accent while action is pending. */
+@keyframes due-pulse {
+  0%,
+  100% {
+    border-color: var(--border);
+  }
+  50% {
+    border-color: var(--accent);
+  }
+}
+
+.due-pulse {
+  animation: due-pulse 2.8s ease-in-out 1.2s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .due-pulse {
+    animation: none;
+  }
+}
