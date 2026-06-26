@@ -19,6 +19,7 @@ import PracticeTab from "@/features/practice/components/PracticeTab";
 import SettingsScreen from "@/features/settings/components/SettingsScreen";
 import SpeechTab from "@/features/speech/components/SpeechTab";
 import { YourSection } from "./YourSection";
+import { AsciiLoop } from "./AsciiLoop";
 
 const sectionReveal: Variants = {
   hidden: { opacity: 0, y: 22 },
@@ -845,11 +846,17 @@ export default function LandingPage() {
         <div className="mx-auto max-w-7xl">
           <div id="top" className="scroll-mt-28 space-y-8">
             <motion.div
-              className="mx-auto max-w-4xl text-center"
+              className="relative mx-auto max-w-4xl text-center"
               variants={staggerContainer}
               initial="hidden"
               animate="show"
             >
+              <motion.div
+                className="absolute left-1/2 top-1/2 -z-10 -translate-x-1/2 -translate-y-1/2"
+                variants={listItem}
+              >
+                <AsciiLoop className="text-[clamp(7px,1.4vw,12px)]" />
+              </motion.div>
               <motion.p
                 className="mb-4 text-sm font-semibold text-accent"
                 variants={listItem}
