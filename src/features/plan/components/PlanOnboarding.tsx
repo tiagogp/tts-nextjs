@@ -40,11 +40,17 @@ interface PlanOnboardingProps {
   onOpenSettings?: () => void;
 }
 
-export function PlanOnboarding({ open, onClose, onPlanCreated, onOpenSettings }: PlanOnboardingProps) {
+export function PlanOnboarding({
+  open,
+  onClose,
+  onPlanCreated,
+  onOpenSettings,
+}: PlanOnboardingProps) {
   const profile = getLearningProfile();
-  const { provider, activeProvider, hasEvaluator, selectedModel } = useProviderSelection({
-    fallbackToEvaluator: true,
-  });
+  const { provider, activeProvider, hasEvaluator, selectedModel } =
+    useProviderSelection({
+      fallbackToEvaluator: true,
+    });
 
   const [step, setStep] = useState<Step>("goal");
   const [goal, setGoal] = useState("");
@@ -77,7 +83,11 @@ export function PlanOnboarding({ open, onClose, onPlanCreated, onOpenSettings }:
       onPlanCreated(plan);
       onClose();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Couldn't generate the plan. Try again.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Couldn't generate the plan. Try again.",
+      );
       setStep("availability");
     }
   };
@@ -88,14 +98,21 @@ export function PlanOnboarding({ open, onClose, onPlanCreated, onOpenSettings }:
   };
 
   return (
-    <Modal open={open} onClose={handleClose} labelledBy="plan-onboarding-title" className="w-[min(100%,36rem)]">
+    <Modal
+      open={open}
+      onClose={handleClose}
+      labelledBy="plan-onboarding-title"
+      className="w-[min(100%,36rem)]"
+    >
       {step !== "generating" && (
         <div className="mb-5 flex gap-1.5" aria-hidden="true">
           {(["goal", "availability"] as const).map((s) => (
             <span
               key={s}
               className={`h-1.5 flex-1 rounded-full ${
-                s === "goal" || step === "availability" ? "bg-accent" : "bg-line"
+                s === "goal" || step === "availability"
+                  ? "bg-accent"
+                  : "bg-line"
               }`}
             />
           ))}
@@ -105,12 +122,18 @@ export function PlanOnboarding({ open, onClose, onPlanCreated, onOpenSettings }:
       {step === "goal" && (
         <div className="space-y-5">
           <div>
-            <p className="text-xs uppercase tracking-widest text-accent">Learning plan</p>
-            <h2 id="plan-onboarding-title" className="mt-1 text-xl font-semibold text-ink">
+            <p className="text-xs uppercase tracking-widest text-accent">
+              Learning plan
+            </p>
+            <h2
+              id="plan-onboarding-title"
+              className="mt-1 text-xl font-semibold text-ink"
+            >
               What do you want to achieve?
             </h2>
             <p className="mt-2 text-sm text-ink-soft">
-              Be specific — the more concrete your goal, the more focused your daily tasks will be.
+              Be specific — the more concrete your goal, the more focused your
+              daily tasks will be.
             </p>
           </div>
 
@@ -147,7 +170,10 @@ export function PlanOnboarding({ open, onClose, onPlanCreated, onOpenSettings }:
             <Notice tone="error">
               A model-backed AI provider is required to generate a plan.{" "}
               {onOpenSettings ? (
-                <button onClick={onOpenSettings} className="underline hover:no-underline">
+                <button
+                  onClick={onOpenSettings}
+                  className="underline hover:no-underline"
+                >
                   Open Settings →
                 </button>
               ) : (
@@ -174,12 +200,18 @@ export function PlanOnboarding({ open, onClose, onPlanCreated, onOpenSettings }:
       {step === "availability" && (
         <div className="space-y-5">
           <div>
-            <p className="text-xs uppercase tracking-widest text-accent">Learning plan</p>
-            <h2 id="plan-onboarding-title" className="mt-1 text-xl font-semibold text-ink">
+            <p className="text-xs uppercase tracking-widest text-accent">
+              Learning plan
+            </p>
+            <h2
+              id="plan-onboarding-title"
+              className="mt-1 text-xl font-semibold text-ink"
+            >
               How much time can you commit?
             </h2>
             <p className="mt-2 text-sm text-ink-soft">
-              Be honest — a consistent 15 min beats an ambitious 1 hour that doesn't happen.
+              Be honest — a consistent 15 min beats an ambitious 1 hour that
+              doesn't happen.
             </p>
           </div>
 
@@ -201,8 +233,9 @@ export function PlanOnboarding({ open, onClose, onPlanCreated, onOpenSettings }:
           </div>
 
           <div className="rounded border border-line bg-surface px-4 py-3 text-xs text-ink-soft">
-            The AI will create a {planDays}-day plan with {availabilityMinutes} min of tasks per day,
-            divided into phases that match your progress from {currentLevel} toward {targetLevel}.
+            The AI will create a {planDays}-day plan with {availabilityMinutes}{" "}
+            min of tasks per day, divided into phases that match your progress
+            from {currentLevel} toward {targetLevel}.
           </div>
 
           {error && <Notice tone="error">{error}</Notice>}
@@ -217,7 +250,11 @@ export function PlanOnboarding({ open, onClose, onPlanCreated, onOpenSettings }:
             <Button variant="ghost" onClick={() => setStep("goal")}>
               Back
             </Button>
-            <Button variant="primary" onClick={() => void generate()} disabled={!canGenerate}>
+            <Button
+              variant="primary"
+              onClick={() => void generate()}
+              disabled={!canGenerate}
+            >
               Generate my plan
             </Button>
           </div>
@@ -228,9 +265,12 @@ export function PlanOnboarding({ open, onClose, onPlanCreated, onOpenSettings }:
         <div className="flex flex-col items-center gap-4 py-8 text-center">
           <Spinner className="h-8 w-8 text-accent" />
           <div>
-            <p className="text-sm font-semibold text-ink">Building your {planDays}-day plan…</p>
+            <p className="text-sm font-semibold text-ink">
+              Building your {planDays}-day plan…
+            </p>
             <p className="mt-1 text-xs text-ink-muted">
-              {activeProvider?.label ?? "The AI"} is designing your phases and daily tasks.
+              {activeProvider?.label ?? "The AI"} is designing your phases and
+              daily tasks.
             </p>
           </div>
         </div>
