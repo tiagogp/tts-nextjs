@@ -1,6 +1,8 @@
 # PhraseLoop
 
-Convert English text into natural speech and download the audio file. Runs 100% locally — no API keys required.
+PhraseLoop helps Portuguese-speaking English learners turn real English into native-audio review cards and a calm daily study habit on desktop first.
+
+PhraseLoop starts from native material, helps you keep useful phrases, generates focused cards, schedules review, corrects your output, and lets you practice conversation. Speech generation and transcription are still built in, but they support the learning loop rather than defining the whole product.
 
 ## Stack
 
@@ -71,7 +73,8 @@ opens the `.dmg`, drags **PhraseLoop** to **Applications**, and opens it once
 window and no install script — the app clears its own download quarantine on
 first launch.
 
-Provider setup for card generation/correction:
+The first-run lesson and local speech features work without AI keys or Ollama. Provider setup is
+only needed for AI mining, card generation from your own sources, correction, and conversation:
 
 - If Ollama is running locally, PhraseLoop detects it automatically (`http://localhost:11434`).
 - If Ollama is not available, add one of these keys to `phraseloop.env`, then restart the app:
@@ -93,13 +96,12 @@ OLLAMA_MODEL=llama3.1
 
 ## Features
 
-- Local **Kokoro 1.0** text-to-speech and whisper.cpp transcription
-- 8 Kokoro voices (US/UK, male/female)
-- Adjust playback speed (0.5× – 2.0×)
-- Play audio in the browser with scrubable progress bar
-- Download as WAV
-- History of last 10 generations with restore and download
-- **Batch generation** — one sentence per line, download all as ZIP
+- **Discover** — import YouTube audio, articles, or PDFs and keep phrases worth learning
+- **Study** — review generated cards with local spaced repetition
+- **Correct** — turn writing or transcribed speech mistakes into reviewable cards
+- **Speak** — practice conversation and reuse mistakes as learning material
+- **Tools** — local Kokoro text-to-speech, batch audio generation, and Anki export
+- **Local-first storage** — cards, reviews, plans, conversations, and source material live in IndexedDB with a JSON backup export from Settings
 - Dark / light / system theme
 
 ## Discover (YouTube → transcript → phrases)
@@ -112,12 +114,13 @@ transcript. Each segment can be played back as its **native audio clip** and mar
 Runs 100% locally — the speech-recognition model (`small`, ~480 MB) downloads on first use.
 Audio decoding uses in-process WebAssembly; Homebrew and ffmpeg are not required.
 
-> Next step (in progress): LLM curation biased by an optional **focus** field, a review pass,
-> and one-click card generation. See [docs/README.md](docs/README.md).
+> Product direction, active priorities, and research-backed roadmap live in
+> [docs/product.md](docs/product.md). Architecture and shipped feature history live in
+> [docs/README.md](docs/README.md).
 
 ## Card AI providers
 
-Card mining, generation, the quality critique, and free-text correction run through a
+Card mining, generation, the quality critique, conversation, and free-text correction run through a
 pluggable provider. Open **Settings → AI Provider** to choose the global default, test a
 connection, or override the provider for one Discover/Correct task. Ollama is the default;
 PhraseLoop never sends content to a cloud provider unless you explicitly select it.
@@ -139,7 +142,7 @@ ollama serve                   # exposes the OpenAI-compatible API on :11434
 Settings, **Discover**, and **Correct** show a model picker populated from the models you've
 actually pulled (`ollama list`) — no need to hardcode `OLLAMA_MODEL`. If your server runs
 somewhere else, change its address in Settings or set `OLLAMA_BASE_URL` in `.env.local`.
-Desktop credentials are encrypted with the operating system's secure storage and synchronized
+Desktop credentials are saved in the app's local user-data folder with restrictive file permissions and synchronized
 to the local backend without restarting PhraseLoop. Ollama uses its OpenAI-compatible endpoint, so structured-output quality
 depends on the model: prefer an instruction-tuned one that handles JSON well (e.g. `llama3.1`,
 `qwen2.5`).

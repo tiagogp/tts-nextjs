@@ -5,6 +5,7 @@ import type { DayStatus } from "./types";
 
 export const PLAN_TASK_TYPES: PlanGenerationResult["days"][number]["tasks"][number]["type"][] = [
   "discover",
+  "lesson",
   "study",
   "converse",
   "correct",
@@ -17,6 +18,7 @@ export const PLAN_METRIC_ACTIONS: NonNullable<
   "video_processed",
   "conversation_turns",
   "cards_created",
+  "progress_checkin",
 ];
 
 export const PLAN_DAYS_OPTIONS = [
@@ -35,10 +37,11 @@ export const AVAILABILITY_OPTIONS = [
 ];
 
 export const TARGET_LEVELS: { value: EnglishLevel; label: string }[] =
-  ENGLISH_LEVELS.filter((level) => level.value !== "A1");
+  ENGLISH_LEVELS;
 
 export const TASK_LABELS: Record<TaskType, string> = {
   discover: "Discover",
+  lesson: "Learn",
   study: "Study",
   converse: "Speak",
   correct: "Correct",
@@ -46,6 +49,7 @@ export const TASK_LABELS: Record<TaskType, string> = {
 
 export const TASK_COLORS: Record<TaskType, string> = {
   discover: "bg-accent/10 text-accent",
+  lesson: "bg-sky-500/10 text-sky-700 dark:text-sky-300",
   study: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
   converse: "bg-violet-500/10 text-violet-700 dark:text-violet-400",
   correct: "bg-amber-500/10 text-amber-700 dark:text-amber-400",

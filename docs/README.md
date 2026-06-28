@@ -1,8 +1,9 @@
-# PhraseLoop — Architecture & Roadmap
+# PhraseLoop — Architecture & Build Record
 
-Single source of truth for product direction, the card pipeline, what's built, and what's
-planned. Visual/UI rules live separately in [design-system.md](design-system.md);
-user-facing setup and the feature list live in the [root README](../README.md).
+Technical source of truth for the card pipeline, architecture, and shipped build history.
+Product direction and active priorities live in [product.md](product.md); visual/UI rules live
+in [design-system.md](design-system.md); user-facing setup and the feature list live in the
+[root README](../README.md).
 
 **Contents**
 
@@ -17,11 +18,14 @@ user-facing setup and the feature list live in the [root README](../README.md).
 
 ## 1. What this is
 
-PhraseLoop extends a TTS + `.apkg` exporter into a system that builds spaced-repetition
-cards from real material, with **native audio**, and drills your weak spots over time —
-100% local by default. This repo already owns the *output* half (audio + `.apkg`); the card
-work adds the *inputs* (discovery + correction) and the *brain* (pluggable generation +
-quality gate).
+PhraseLoop helps Portuguese-speaking English learners turn real English into native-audio
+review cards and a calm daily study habit on desktop first, with review-anywhere surfaces
+planned next.
+
+It extends a TTS + `.apkg` exporter into a system that builds spaced-repetition cards from
+real material, with **native audio**, and drills your weak spots over time — 100% local by
+default. This repo already owns the *output* half (audio + `.apkg`); the card work adds the
+*inputs* (discovery + correction) and the *brain* (pluggable generation + quality gate).
 
 **The vision:** drop in material (PDF, YouTube, article) → get **active-recall exercises**
 and **spaced flashcards** whose questions test understanding, not literal memorization →
@@ -253,7 +257,21 @@ surface; everything past it reuses the existing provider pipeline and `.apkg` en
       (`src/lib/store/repository.ts`), mirroring `saveGeneratedDeck`, so the Study tab,
       FSRS scheduling, and `detectWeaknesses` pick up mistakes alongside discoveries.
 
-### Recommended order
+### Active product priority
+
+The current product sequencing is now owned by [product.md](product.md):
+
+1. Commit to one identity: Portuguese-speaking English learners, PT -> EN, desktop first.
+2. Engineer the 5-minute zero-config wow: URL or bundled demo -> native-audio cards ->
+   first review, with no keys and no Ollama required.
+3. Ship exactly one calm re-engagement pull.
+4. Refocus IA on Discover -> Study -> Correct; move Tools/Speech to secondary surfaces and
+   keep Converse/Plan/cycle UI as depth.
+5. Scope review-anywhere for the SRS habit.
+6. Freeze new adaptive-difficulty work until 1-5 are real.
+7. Deepen the tutor only after the habit loop is working.
+
+### Historical build order
 
 | Step | Unlocks |
 |------|---------|
@@ -279,7 +297,8 @@ discovery path does. The two paths fully converge on one `Card` and one Anki exp
 
 ## 4. Pre-launch TODO
 
-Ordered by priority. Do not ship publicly until **Critical Fixes** are done.
+Ordered by priority for the older build-out. For the active product sequence, use
+[product.md](product.md).
 
 ### Critical Fixes (blockers)
 

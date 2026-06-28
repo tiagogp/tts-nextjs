@@ -1,0 +1,3935 @@
+{
+  "phases": [
+    {
+      "number": 1,
+      "title": "B2 Accuracy and Strong Input",
+      "focus": "Build advanced vocabulary, clearer pronunciation, grammar control, and daily input habits.",
+      "startDay": 1,
+      "endDay": 60
+    },
+    {
+      "number": 2,
+      "title": "Active Output and Professional English",
+      "focus": "Speak and write more often, organize ideas, fix recurring mistakes, and handle work scenarios.",
+      "startDay": 61,
+      "endDay": 120
+    },
+    {
+      "number": 3,
+      "title": "C1 Fluency, Nuance, and Autonomy",
+      "focus": "Consolidate C1 skills with long conversations, complex topics, precise style, and real work tasks.",
+      "startDay": 121,
+      "endDay": 180
+    }
+  ],
+  "days": [
+    {
+      "dayNumber": 1,
+      "phase": 1,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Mine 8 phrases from a short article about work meetings",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 2,
+      "phase": 1,
+      "estimatedMinutes": 40,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Process one podcast clip about news headlines",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        },
+        {
+          "type": "study",
+          "instruction": "Review cards and suspend weak duplicates",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 20
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 3,
+      "phase": 1,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Read one B2 article about small talk and save phrases",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 4,
+      "phase": 1,
+      "estimatedMinutes": 40,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Process one 8-minute video about email phrases",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        },
+        {
+          "type": "study",
+          "instruction": "Review due cards and repeat example sentences",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 20
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 5,
+      "phase": 1,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Mine 8 phrases from a short article about podcast clips",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 6,
+      "phase": 1,
+      "estimatedMinutes": 40,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Process one podcast clip about tech talks",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        },
+        {
+          "type": "study",
+          "instruction": "Review due cards and mark hard items",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 20
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 7,
+      "phase": 1,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Read one B2 article about interviews and save phrases",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 8,
+      "phase": 1,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards and suspend weak duplicates",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Ask and answer follow-up questions about pronunciation",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 9,
+      "phase": 1,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Mine 8 phrases from a short article about phrasal verbs",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 10,
+      "phase": 1,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and repeat example sentences",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Record 90 seconds about conditionals and correct it",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 11,
+      "phase": 1,
+      "estimatedMinutes": 40,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards focused on mistakes",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Ask and answer follow-up questions about reported speech",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Rewrite 8 weak sentences about reported speech",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 12,
+      "phase": 1,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Process one 8-minute video about idioms",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 13,
+      "phase": 1,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and mark hard items",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Explain your opinion about presentations",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 14,
+      "phase": 1,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards aloud with shadowing",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Rewrite 8 weak sentences about customer calls",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 15,
+      "phase": 1,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards and suspend weak duplicates",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Role-play a clear conversation about team updates",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 16,
+      "phase": 1,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Process one 8-minute video about work meetings",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 17,
+      "phase": 1,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards focused on mistakes",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Rewrite 8 weak sentences about news headlines",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 18,
+      "phase": 1,
+      "estimatedMinutes": 40,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards with full-sentence answers",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Role-play a clear conversation about small talk",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Write 120 words about small talk and fix errors",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 19,
+      "phase": 1,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Read one B2 article about email phrases and save phrases",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 20,
+      "phase": 1,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards aloud with shadowing",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Ask and answer follow-up questions about podcast clips",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 21,
+      "phase": 1,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards and suspend weak duplicates",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Write 120 words about tech talks and fix errors",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 22,
+      "phase": 1,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and repeat example sentences",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Explain your opinion about interviews",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 23,
+      "phase": 1,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Read one B2 article about pronunciation and save phrases",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 24,
+      "phase": 1,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards with full-sentence answers",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Write 120 words about phrasal verbs and fix errors",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 25,
+      "phase": 1,
+      "estimatedMinutes": 40,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and mark hard items",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Explain your opinion about conditionals",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Record 90 seconds about conditionals and correct it",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 26,
+      "phase": 1,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Process one podcast clip about reported speech",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 27,
+      "phase": 1,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards and suspend weak duplicates",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Role-play a clear conversation about idioms",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 28,
+      "phase": 1,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and repeat example sentences",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Record 90 seconds about presentations and correct it",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 29,
+      "phase": 1,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards focused on mistakes",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Ask and answer follow-up questions about customer calls",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 30,
+      "phase": 1,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Process one podcast clip about team updates",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 31,
+      "phase": 1,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and mark hard items",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Record 90 seconds about work meetings and correct it",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 32,
+      "phase": 1,
+      "estimatedMinutes": 40,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards aloud with shadowing",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Ask and answer follow-up questions about news headlines",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Rewrite 8 weak sentences about news headlines",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 33,
+      "phase": 1,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Mine 8 phrases from a short article about small talk",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 34,
+      "phase": 1,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and repeat example sentences",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Explain your opinion about email phrases",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 35,
+      "phase": 1,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards focused on mistakes",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Rewrite 8 weak sentences about podcast clips",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 36,
+      "phase": 1,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards with full-sentence answers",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Role-play a clear conversation about tech talks",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 37,
+      "phase": 1,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Mine 8 phrases from a short article about interviews",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 38,
+      "phase": 1,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards aloud with shadowing",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Rewrite 8 weak sentences about pronunciation",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 39,
+      "phase": 1,
+      "estimatedMinutes": 40,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards and suspend weak duplicates",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Role-play a clear conversation about phrasal verbs",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Write 120 words about phrasal verbs and fix errors",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 40,
+      "phase": 1,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Process one 8-minute video about conditionals",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 41,
+      "phase": 1,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards focused on mistakes",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Ask and answer follow-up questions about reported speech",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 42,
+      "phase": 1,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards with full-sentence answers",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Write 120 words about idioms and fix errors",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 43,
+      "phase": 1,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and mark hard items",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Explain your opinion about presentations",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 44,
+      "phase": 1,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Process one 8-minute video about customer calls",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 45,
+      "phase": 1,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards and suspend weak duplicates",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Write 120 words about team updates and fix errors",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 46,
+      "phase": 1,
+      "estimatedMinutes": 40,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and repeat example sentences",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Explain your opinion about work meetings",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Record 90 seconds about work meetings and correct it",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 47,
+      "phase": 1,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Read one B2 article about news headlines and save phrases",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 48,
+      "phase": 1,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards with full-sentence answers",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Role-play a clear conversation about small talk",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 49,
+      "phase": 1,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and mark hard items",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Record 90 seconds about email phrases and correct it",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 50,
+      "phase": 1,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards aloud with shadowing",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Ask and answer follow-up questions about podcast clips",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 51,
+      "phase": 1,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Read one B2 article about tech talks and save phrases",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 52,
+      "phase": 1,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and repeat example sentences",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Record 90 seconds about interviews and correct it",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 53,
+      "phase": 1,
+      "estimatedMinutes": 40,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards focused on mistakes",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Ask and answer follow-up questions about pronunciation",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Rewrite 8 weak sentences about pronunciation",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 54,
+      "phase": 1,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Process one podcast clip about phrasal verbs",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 55,
+      "phase": 1,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and mark hard items",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Explain your opinion about conditionals",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 56,
+      "phase": 1,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards aloud with shadowing",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Rewrite 8 weak sentences about reported speech",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 57,
+      "phase": 1,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards and suspend weak duplicates",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Role-play a clear conversation about idioms",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 58,
+      "phase": 1,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Process one podcast clip about presentations",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 59,
+      "phase": 1,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards focused on mistakes",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Rewrite 8 weak sentences about customer calls",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 60,
+      "phase": 1,
+      "estimatedMinutes": 40,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards with full-sentence answers",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Role-play a clear conversation about team updates",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Write 120 words about team updates and fix errors",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 61,
+      "phase": 2,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Mine 10 phrases from an article about debates",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 62,
+      "phase": 2,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards and suspend weak duplicates",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Solve a work problem in English about negotiation",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 63,
+      "phase": 2,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and repeat example sentences",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Write 180 words about product demos and fix patterns",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 64,
+      "phase": 2,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards focused on mistakes",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Debate both sides of a topic about code reviews",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 65,
+      "phase": 2,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Mine 10 phrases from an article about job interviews",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 66,
+      "phase": 2,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and mark hard items",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Write 180 words about project updates and fix patterns",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 67,
+      "phase": 2,
+      "estimatedMinutes": 40,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards aloud with shadowing",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Debate both sides of a topic about problem solving",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Record 2 minutes about problem solving and correct it",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 68,
+      "phase": 2,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Process one expert talk about feedback",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 69,
+      "phase": 2,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and repeat example sentences",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Lead a meeting role-play about storytelling",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 70,
+      "phase": 2,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards focused on mistakes",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Record 2 minutes about data explanation and correct it",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 71,
+      "phase": 2,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards with full-sentence answers",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Solve a work problem in English about remote work",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 72,
+      "phase": 2,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Process one expert talk about leadership",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 73,
+      "phase": 2,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards aloud with shadowing",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Record 2 minutes about case studies and correct it",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 74,
+      "phase": 2,
+      "estimatedMinutes": 40,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards and suspend weak duplicates",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Solve a work problem in English about stand-ups",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Rewrite a work message about stand-ups clearly",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 75,
+      "phase": 2,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Read one opinion article about retrospectives",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 76,
+      "phase": 2,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards focused on mistakes",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Debate both sides of a topic about debates",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 77,
+      "phase": 2,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards with full-sentence answers",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Rewrite a work message about negotiation clearly",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 78,
+      "phase": 2,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and mark hard items",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Lead a meeting role-play about product demos",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 79,
+      "phase": 2,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Read one opinion article about code reviews",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 80,
+      "phase": 2,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards and suspend weak duplicates",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Rewrite a work message about job interviews clearly",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 81,
+      "phase": 2,
+      "estimatedMinutes": 40,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and repeat example sentences",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Lead a meeting role-play about project updates",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Write 180 words about project updates and fix patterns",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 82,
+      "phase": 2,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Process one interview clip about problem solving",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 83,
+      "phase": 2,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards focused on mistakes",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Solve a work problem in English about feedback",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 84,
+      "phase": 2,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards with full-sentence answers",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Write 180 words about storytelling and fix patterns",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 85,
+      "phase": 2,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and mark hard items",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Debate both sides of a topic about data explanation",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 86,
+      "phase": 2,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Process one interview clip about remote work",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 87,
+      "phase": 2,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards and suspend weak duplicates",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Write 180 words about leadership and fix patterns",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 88,
+      "phase": 2,
+      "estimatedMinutes": 40,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and repeat example sentences",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Debate both sides of a topic about case studies",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Record 2 minutes about case studies and correct it",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 89,
+      "phase": 2,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Mine 10 phrases from an article about stand-ups",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 90,
+      "phase": 2,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards focused on mistakes",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Lead a meeting role-play about retrospectives",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 91,
+      "phase": 2,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards with full-sentence answers",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Record 2 minutes about debates and correct it",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 92,
+      "phase": 2,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and mark hard items",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Solve a work problem in English about negotiation",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 93,
+      "phase": 2,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Mine 10 phrases from an article about product demos",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 94,
+      "phase": 2,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards and suspend weak duplicates",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Record 2 minutes about code reviews and correct it",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 95,
+      "phase": 2,
+      "estimatedMinutes": 40,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and repeat example sentences",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Solve a work problem in English about job interviews",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Rewrite a work message about job interviews clearly",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 96,
+      "phase": 2,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Process one expert talk about project updates",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 97,
+      "phase": 2,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards focused on mistakes",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Debate both sides of a topic about problem solving",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 98,
+      "phase": 2,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards with full-sentence answers",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Rewrite a work message about feedback clearly",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 99,
+      "phase": 2,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and mark hard items",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Lead a meeting role-play about storytelling",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 100,
+      "phase": 2,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Process one expert talk about data explanation",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 101,
+      "phase": 2,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards and suspend weak duplicates",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Rewrite a work message about remote work clearly",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 102,
+      "phase": 2,
+      "estimatedMinutes": 40,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and repeat example sentences",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Lead a meeting role-play about leadership",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Write 180 words about leadership and fix patterns",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 103,
+      "phase": 2,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Read one opinion article about case studies",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 104,
+      "phase": 2,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards focused on mistakes",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Solve a work problem in English about stand-ups",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 105,
+      "phase": 2,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards with full-sentence answers",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Write 180 words about retrospectives and fix patterns",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 106,
+      "phase": 2,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and mark hard items",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Debate both sides of a topic about debates",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 107,
+      "phase": 2,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Read one opinion article about negotiation",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 108,
+      "phase": 2,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards and suspend weak duplicates",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Write 180 words about product demos and fix patterns",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 109,
+      "phase": 2,
+      "estimatedMinutes": 40,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and repeat example sentences",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Debate both sides of a topic about code reviews",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Record 2 minutes about code reviews and correct it",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 110,
+      "phase": 2,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Process one interview clip about job interviews",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 111,
+      "phase": 2,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards focused on mistakes",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Lead a meeting role-play about project updates",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 112,
+      "phase": 2,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards with full-sentence answers",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Record 2 minutes about problem solving and correct it",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 113,
+      "phase": 2,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and mark hard items",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Solve a work problem in English about feedback",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 114,
+      "phase": 2,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Process one interview clip about storytelling",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 115,
+      "phase": 2,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards and suspend weak duplicates",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Record 2 minutes about data explanation and correct it",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 116,
+      "phase": 2,
+      "estimatedMinutes": 40,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and repeat example sentences",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Solve a work problem in English about remote work",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Rewrite a work message about remote work clearly",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 117,
+      "phase": 2,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Mine 10 phrases from an article about leadership",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 118,
+      "phase": 2,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards focused on mistakes",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Debate both sides of a topic about case studies",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 119,
+      "phase": 2,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards with full-sentence answers",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Rewrite a work message about stand-ups clearly",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 120,
+      "phase": 2,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and mark hard items",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Lead a meeting role-play about retrospectives",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 121,
+      "phase": 3,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Mine 12 phrases from a long article about executive summaries",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 122,
+      "phase": 3,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards and suspend weak duplicates",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Rewrite a formal argument about technical strategy",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 123,
+      "phase": 3,
+      "estimatedMinutes": 40,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and repeat example sentences",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Run a C1 discussion about complex debates",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Write 250 words about complex debates with C1 corrections",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 124,
+      "phase": 3,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Process one C1 lecture clip about C1 essays",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 125,
+      "phase": 3,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards focused on mistakes",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Handle tough questions about stakeholder meetings",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 126,
+      "phase": 3,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards with full-sentence answers",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Write 250 words about conference talks with C1 corrections",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 127,
+      "phase": 3,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and mark hard items",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Defend a nuanced opinion about policy articles",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 128,
+      "phase": 3,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Process one C1 lecture clip about advanced podcasts",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 129,
+      "phase": 3,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards and suspend weak duplicates",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Write 250 words about performance reviews with C1 corrections",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 130,
+      "phase": 3,
+      "estimatedMinutes": 40,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and repeat example sentences",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Defend a nuanced opinion about architecture discussions",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Record 3 minutes about architecture discussions and refine style",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 131,
+      "phase": 3,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Read one analysis piece about culture topics",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 132,
+      "phase": 3,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards focused on mistakes",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Run a C1 discussion about career stories",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 133,
+      "phase": 3,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards with full-sentence answers",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Record 3 minutes about business writing and refine style",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 134,
+      "phase": 3,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and mark hard items",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Handle tough questions about abstract ideas",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 135,
+      "phase": 3,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Read one analysis piece about long interviews",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 136,
+      "phase": 3,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards and suspend weak duplicates",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Record 3 minutes about executive summaries and refine style",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 137,
+      "phase": 3,
+      "estimatedMinutes": 40,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and repeat example sentences",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Handle tough questions about technical strategy",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Rewrite a formal argument about technical strategy",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 138,
+      "phase": 3,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Process one advanced podcast about complex debates",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 139,
+      "phase": 3,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards focused on mistakes",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Defend a nuanced opinion about C1 essays",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 140,
+      "phase": 3,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards with full-sentence answers",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Rewrite a formal argument about stakeholder meetings",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 141,
+      "phase": 3,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and mark hard items",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Run a C1 discussion about conference talks",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 142,
+      "phase": 3,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Process one advanced podcast about policy articles",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 143,
+      "phase": 3,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards and suspend weak duplicates",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Rewrite a formal argument about advanced podcasts",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 144,
+      "phase": 3,
+      "estimatedMinutes": 40,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and repeat example sentences",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Run a C1 discussion about performance reviews",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Write 250 words about performance reviews with C1 corrections",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 145,
+      "phase": 3,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Mine 12 phrases from a long article about architecture discussions",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 146,
+      "phase": 3,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards focused on mistakes",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Handle tough questions about culture topics",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 147,
+      "phase": 3,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards with full-sentence answers",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Write 250 words about career stories with C1 corrections",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 148,
+      "phase": 3,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and mark hard items",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Defend a nuanced opinion about business writing",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 149,
+      "phase": 3,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Mine 12 phrases from a long article about abstract ideas",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 150,
+      "phase": 3,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards and suspend weak duplicates",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Write 250 words about long interviews with C1 corrections",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 151,
+      "phase": 3,
+      "estimatedMinutes": 40,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and repeat example sentences",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Defend a nuanced opinion about executive summaries",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Record 3 minutes about executive summaries and refine style",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 152,
+      "phase": 3,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Process one C1 lecture clip about technical strategy",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 153,
+      "phase": 3,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards focused on mistakes",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Run a C1 discussion about complex debates",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 154,
+      "phase": 3,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards with full-sentence answers",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Record 3 minutes about C1 essays and refine style",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 155,
+      "phase": 3,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and mark hard items",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Handle tough questions about stakeholder meetings",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 156,
+      "phase": 3,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Process one C1 lecture clip about conference talks",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 157,
+      "phase": 3,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards and suspend weak duplicates",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Record 3 minutes about policy articles and refine style",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 158,
+      "phase": 3,
+      "estimatedMinutes": 40,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and repeat example sentences",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Handle tough questions about advanced podcasts",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Rewrite a formal argument about advanced podcasts",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 159,
+      "phase": 3,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Read one analysis piece about performance reviews",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 160,
+      "phase": 3,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards focused on mistakes",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Run a C1 discussion about architecture discussions",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 161,
+      "phase": 3,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards with full-sentence answers",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Record 3 minutes about culture topics and refine style",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 162,
+      "phase": 3,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and mark hard items",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Defend a nuanced opinion about career stories",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 163,
+      "phase": 3,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Read one analysis piece about business writing",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 164,
+      "phase": 3,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards and suspend weak duplicates",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Record 3 minutes about abstract ideas and refine style",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 165,
+      "phase": 3,
+      "estimatedMinutes": 40,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and repeat example sentences",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Defend a nuanced opinion about long interviews",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Write 250 words about long interviews with C1 corrections",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 166,
+      "phase": 3,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Mine 12 phrases from a long article about executive summaries",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 167,
+      "phase": 3,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards focused on mistakes",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Handle tough questions about technical strategy",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 168,
+      "phase": 3,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards with full-sentence answers",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Write 250 words about complex debates with C1 corrections",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 169,
+      "phase": 3,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and mark hard items",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Run a C1 discussion about C1 essays",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 170,
+      "phase": 3,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Mine 12 phrases from a long article about stakeholder meetings",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 171,
+      "phase": 3,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards and suspend weak duplicates",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Write 250 words about conference talks with C1 corrections",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 172,
+      "phase": 3,
+      "estimatedMinutes": 40,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and repeat example sentences",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Run a C1 discussion about policy articles",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Record 3 minutes about policy articles and refine style",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 173,
+      "phase": 3,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Process one advanced podcast about advanced podcasts",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 174,
+      "phase": 3,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards focused on mistakes",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Handle tough questions about performance reviews",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 175,
+      "phase": 3,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards with full-sentence answers",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Rewrite a formal argument about architecture discussions",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 176,
+      "phase": 3,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and mark hard items",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Defend a nuanced opinion about culture topics",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 177,
+      "phase": 3,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Process one advanced podcast about career stories",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 178,
+      "phase": 3,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards and suspend weak duplicates",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Rewrite a formal argument about business writing",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 179,
+      "phase": 3,
+      "estimatedMinutes": 40,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards and repeat example sentences",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Defend a nuanced opinion about abstract ideas",
+          "targetMetric": {
+            "action": "minutes_spoken",
+            "quantity": 15
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Record 3 minutes about abstract ideas and refine style",
+          "targetMetric": {
+            "action": "text_or_audio_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 180,
+      "phase": 3,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Process one C1 lecture clip about long interviews",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -90,6 +90,19 @@ export function applyGrade(
   };
 }
 
+/**
+ * FSRS-predicted probability of recall for a card at a given moment (0..1). This is the
+ * honest "is it actually stable?" signal — distinct from how the learner just performed.
+ */
+export function recallProbability(rec: SrsRecord, at: Date = new Date()): number {
+  return scheduler.get_retrievability(deserialize(rec), at, false) as number;
+}
+
+/** Predicted recall `hoursAhead` from now, e.g. +24h → "stable for tomorrow". */
+export function recallProbabilityAt(rec: SrsRecord, hoursAhead: number): number {
+  return recallProbability(rec, new Date(Date.now() + hoursAhead * 3600_000));
+}
+
 /** Human-readable "next review" hint for a grade button, e.g. "10m" / "3d". */
 export function previewInterval(rec: SrsRecord, grade: Grade, now: Date = new Date()): string {
   const { card } = scheduler.next(deserialize(rec), now, grade);

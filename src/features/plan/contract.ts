@@ -1,4 +1,4 @@
-import { PLAN_METRIC_ACTIONS, PLAN_TASK_TYPES } from "./constants";
+import { PLAN_TASK_TYPES } from "./constants";
 import type { PlanGenerationResult } from "./schema";
 
 type GeneratedTask = PlanGenerationResult["days"][number]["tasks"][number];
@@ -22,12 +22,9 @@ function validateTask(raw: unknown): GeneratedTask | null {
   let targetMetric: GeneratedTask["targetMetric"];
   if (task.targetMetric && typeof task.targetMetric === "object") {
     const metric = task.targetMetric as Record<string, unknown>;
-    if (
-      PLAN_METRIC_ACTIONS.includes(metric.action as NonNullable<GeneratedTask["targetMetric"]>["action"]) &&
-      typeof metric.quantity === "number"
-    ) {
+    if (typeof metric.action === "string" && metric.action.length > 0 && typeof metric.quantity === "number") {
       targetMetric = {
-        action: metric.action as NonNullable<GeneratedTask["targetMetric"]>["action"],
+        action: metric.action,
         quantity: metric.quantity,
       };
     }
@@ -36,6 +33,7 @@ function validateTask(raw: unknown): GeneratedTask | null {
   return {
     type: task.type as GeneratedTask["type"],
     instruction: task.instruction.slice(0, 120),
+    ...(typeof task.lessonId === "string" ? { lessonId: task.lessonId.slice(0, 80) } : {}),
     ...(targetMetric ? { targetMetric } : {}),
   };
 }

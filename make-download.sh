@@ -70,12 +70,56 @@ EOF
   echo "  Installed launcher: $desktop_file"
 }
 
+remove_path_if_exists() {
+  local target="$1"
+  [ -e "$target" ] || [ -L "$target" ] || return 0
+
+  echo "  Removing $target"
+  if rm -rf "$target" 2>/dev/null; then
+    return 0
+  fi
+
+  if [[ "$target" == /Applications/* ]]; then
+    echo "  Admin permission is needed to remove $target"
+    sudo rm -rf "$target"
+    return 0
+  fi
+
+  echo "✗ Could not remove $target"
+  exit 1
+}
+
+clean_macos_install() {
+  if [ "${PHRASELOOP_SKIP_MAC_CLEAN_INSTALL:-0}" = "1" ]; then
+    echo "→ Skipping installed macOS app cleanup."
+    return
+  fi
+
+  echo "→ Removing installed macOS app and cached data for a clean install..."
+
+  remove_path_if_exists "/Applications/PhraseLoop.app"
+  remove_path_if_exists "$HOME/Applications/PhraseLoop.app"
+  remove_path_if_exists "$HOME/Library/Application Support/PhraseLoop"
+  remove_path_if_exists "$HOME/Library/Application Support/text-to-speech"
+  remove_path_if_exists "$HOME/Library/Application Support/Electron"
+  remove_path_if_exists "$HOME/Library/Caches/PhraseLoop"
+  remove_path_if_exists "$HOME/Library/Caches/com.tiago.texttospeech"
+  remove_path_if_exists "$HOME/Library/HTTPStorages/com.tiago.texttospeech"
+  remove_path_if_exists "$HOME/Library/Logs/PhraseLoop"
+  remove_path_if_exists "$HOME/Library/Preferences/com.tiago.texttospeech.plist"
+  remove_path_if_exists "$HOME/Library/Saved Application State/com.tiago.texttospeech.savedState"
+
+  echo "  Clean install state ready."
+}
+
 build_macos_download() {
   if [ "$(uname -m)" != "arm64" ]; then
     echo "✗ PhraseLoop macOS downloads must be built on Apple Silicon macOS."
     echo "  Detected: $(uname -s) $(uname -m)"
     exit 1
   fi
+
+  clean_macos_install
 
   # Mirror the arch-derived output dir used by electron/build-app.sh.
   ARCH_DIR="mac-arm64"

@@ -3,17 +3,36 @@ import "server-only";
 import { isPlainObject, type JsonObject } from "@/lib/isObject";
 import type { ProviderKind } from "@/lib/cards/provider";
 
+export class HttpError extends Error {
+  constructor(
+    public readonly status: number,
+    message: string,
+  ) {
+    super(message);
+    this.name = "HttpError";
+  }
+}
+
+export function isHttpError(error: unknown): error is HttpError {
+  return error instanceof HttpError;
+}
+
 export async function readJsonObject(request: Request, options: { maxBytes?: number } = {}): Promise<JsonObject | null> {
   const maxBytes = options.maxBytes;
   const contentLength = Number(request.headers.get("content-length") ?? 0);
   if (maxBytes != null && contentLength > maxBytes) {
-    throw new Error(`JSON body exceeds ${maxBytes} bytes.`);
+    throw new HttpError(413, `JSON body exceeds ${maxBytes} bytes.`);
   }
   const text = await request.text().catch(() => "");
   if (maxBytes != null && Buffer.byteLength(text, "utf8") > maxBytes) {
-    throw new Error(`JSON body exceeds ${maxBytes} bytes.`);
+    throw new HttpError(413, `JSON body exceeds ${maxBytes} bytes.`);
   }
-  const value = text ? (JSON.parse(text) as unknown) : null;
+  let value: unknown = null;
+  try {
+    value = text ? (JSON.parse(text) as unknown) : null;
+  } catch {
+    throw new HttpError(400, "Invalid JSON body.");
+  }
   return isPlainObject(value) ? value : null;
 }
 

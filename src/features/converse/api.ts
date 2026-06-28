@@ -1,4 +1,5 @@
 import type { ConversationTurn, ProviderKind } from "@/lib/cards/provider";
+import { getLearnerLangs } from "@/features/settings/learningProfile";
 
 /**
  * Ask the AI for the next assistant turn. `history` is the full prior exchange (empty for the
@@ -11,9 +12,11 @@ export async function sendConversationTurn(input: {
   scenario: string;
   targetLang?: string;
   level?: string;
+  challenge?: boolean;
   history: ConversationTurn[];
   signal?: AbortSignal;
 }): Promise<{ reply: string }> {
+  const { nativeLang, targetLang } = getLearnerLangs();
   const response = await fetch("/api/conversation", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -21,9 +24,10 @@ export async function sendConversationTurn(input: {
       provider: input.provider,
       ollamaModel: input.selectedModel || undefined,
       scenario: input.scenario,
-      targetLang: input.targetLang ?? "en",
-      sourceLang: "pt",
+      targetLang: input.targetLang ?? targetLang,
+      sourceLang: nativeLang,
       level: input.level || undefined,
+      challenge: input.challenge || undefined,
       history: input.history,
     }),
     signal: input.signal,

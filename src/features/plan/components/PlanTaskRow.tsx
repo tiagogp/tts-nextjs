@@ -1,5 +1,6 @@
 import { TASK_COLORS, TASK_LABELS } from "../constants";
 import type { PlanTaskRowProps } from "../types";
+import { useT } from "@/i18n/I18nProvider";
 
 export function PlanTaskRow({
   task,
@@ -11,6 +12,7 @@ export function PlanTaskRow({
     pending: "Mark as done",
   },
 }: PlanTaskRowProps) {
+  const { t } = useT();
   const done = task.completedAt != null;
 
   return (
@@ -21,7 +23,7 @@ export function PlanTaskRow({
     >
       <button
         type="button"
-        aria-label={done ? completeButtonLabel.done : completeButtonLabel.pending}
+        aria-label={done ? t(completeButtonLabel.done) : t(completeButtonLabel.pending)}
         onClick={onComplete}
         className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
           done
@@ -48,7 +50,7 @@ export function PlanTaskRow({
             TASK_COLORS[task.type]
           }`}
         >
-          {TASK_LABELS[task.type]}
+          {t(TASK_LABELS[task.type])}
         </span>
         <p className={`truncate text-xs ${done ? "line-through text-ink-muted" : "text-ink-soft"}`}>
           {task.instruction}
@@ -61,7 +63,7 @@ export function PlanTaskRow({
           onClick={onGo}
           className="shrink-0 text-xs font-medium text-accent transition-opacity hover:opacity-70"
         >
-          Go &rarr;
+          {t("Go")} &rarr;
         </button>
       )}
     </li>

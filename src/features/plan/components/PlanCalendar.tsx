@@ -15,7 +15,7 @@ import type { DailyTask, LearningPlan } from "../schema";
 import type { PlanNavigationHandlers, PlanTaskActionMap } from "../types";
 import { buildCalendarDays, dateString } from "../utils";
 
-export function PlanCalendar({ onStudy, onConverse, onCorrect, onDiscover }: PlanNavigationHandlers) {
+export function PlanCalendar({ onStudy, onConverse, onCorrect, onDiscover, onLesson }: PlanNavigationHandlers) {
   const [plan, setPlan] = useState<LearningPlan | null>(null);
   const [loading, setLoading] = useState(true);
   const [today] = useState(() => dateString(new Date()));
@@ -78,6 +78,7 @@ export function PlanCalendar({ onStudy, onConverse, onCorrect, onDiscover }: Pla
 
   const tabCallback: PlanTaskActionMap = {
     discover: onDiscover,
+    lesson: undefined,
     study: onStudy,
     converse: onConverse,
     correct: onCorrect,
@@ -196,7 +197,11 @@ export function PlanCalendar({ onStudy, onConverse, onCorrect, onDiscover }: Pla
                     task={task}
                     hideGoAction={selected < today}
                     completeButtonLabel={{ done: "Mark undone", pending: "Mark done" }}
-                    onGo={tabCallback[task.type]}
+                    onGo={
+                      task.type === "lesson"
+                        ? (onLesson ? () => onLesson(task.lessonId) : undefined)
+                        : tabCallback[task.type]
+                    }
                     onComplete={() => void completeTask(selected, task.id)}
                   />
                 ))}

@@ -1,3 +1,5 @@
+import type { EnglishLevel } from "@/features/discover/types";
+
 export interface ConversationScenario {
   id: string;
   /** Normalized situational tag — becomes ErrorEvent.context downstream (Phase 2). */
@@ -36,6 +38,6 @@ export const CONVERSATION_SCENARIOS: ConversationScenario[] = [
   },
 ];
 
-export const CONVERSATION_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
-export type ConversationLevel = (typeof CONVERSATION_LEVELS)[number];
-export const DEFAULT_LEVEL: ConversationLevel = "B1";
+export const CONVERSATION_LEVELS: EnglishLevel[] = ["A1", "A2", "B1", "B2", "C1", "C2"];
+export type ConversationLevel = EnglishLevel;
+export const DEFAULT_LEVEL: ConversationLevel = "A1";

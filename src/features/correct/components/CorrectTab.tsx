@@ -12,7 +12,7 @@ import { cn } from "@/lib/cn";
 import { fadeRise } from "@/lib/motion";
 import { saveCorrectionDeck } from "@/lib/store/repository";
 import { emitActivity } from "@/lib/store/activityLog";
-import type { ErrorEvent, ErrorType } from "@/lib/cards/schema";
+import type { AdvancedReview, ErrorEvent, ErrorType } from "@/lib/cards/schema";
 import { normalizeContext } from "@/lib/cards/context";
 import { DECK_GENERATION_TIMEOUT_MS } from "@/features/cards/constants";
 import { useProviderSelection } from "@/features/cards/hooks/useProviderSelection";
@@ -24,12 +24,13 @@ import { useKokoroModel } from "@/features/speech/hooks/useKokoroModel";
 import { CORRECTION_INPUT_OPTIONS } from "@/features/correct/constants";
 import type { CorrectionInputMode } from "@/features/correct/types";
 import { newDraft, parseErrorsJson } from "@/features/correct/utils";
-import { DeckGenerationError, evaluateCorrectionText, generateCorrectionDeck } from "@/features/correct/api";
+import { DeckGenerationError, generateCorrectionDeck, reviewAdvancedText } from "@/features/correct/api";
 import { useCorrectionAudio } from "@/features/correct/hooks/useCorrectionAudio";
 import { AiEvaluateForm } from "@/features/correct/components/AiEvaluateForm";
 import { ManualEntryForm } from "@/features/correct/components/ManualEntryForm";
 import { JsonImportForm } from "@/features/correct/components/JsonImportForm";
 import { CorrectionList } from "@/features/correct/components/CorrectionList";
+import { NaturalnessReview } from "@/features/correct/components/NaturalnessReview";
 
 /**
  * E1/E2 — the correction ingestion surface. Turns mistakes into ErrorEvents, then runs
@@ -57,6 +58,7 @@ export default function CorrectTab({
     data: DeckPayload;
     events: ErrorEvent[];
   } | null>(null);
+  const [advancedReview, setAdvancedReview] = useState<AdvancedReview | null>(null);
   const [mode, setMode] = useState<CorrectionInputMode>("ai");
   // Session-level situational context: one conversation/situation = one context. It stamps
   // every mistake captured below (manual, AI, or JSON) so weak spots group by situation.
@@ -141,6 +143,7 @@ export default function CorrectTab({
       },
     ]);
     setDraft(newDraft());
+    setAdvancedReview(null);
     setGenDone(null);
     setDeckPreview(null);
   };
@@ -159,6 +162,7 @@ export default function CorrectTab({
         ? parsed.map((e) => (e.context ? e : { ...e, context: sessionContext }))
         : parsed;
       setEvents((prev) => [...prev, ...stamped]);
+      setAdvancedReview(null);
       setJson("");
       setImportNote(null);
       setGenDone(null);
@@ -190,15 +194,22 @@ export default function CorrectTab({
     if (!text || evaluating || !hasEvaluator) return;
     setEvaluating(true);
     setAiNote(null);
+    setAdvancedReview(null);
     setGenDone(null);
     try {
-      const found = await evaluateCorrectionText({ provider, selectedModel, text, context });
-      if (found.length === 0) {
+      const review = await reviewAdvancedText({ provider, selectedModel, text, context });
+      setAdvancedReview(review);
+      if (review.errors.length === 0 && review.refinements.length === 0) {
         setAiNote("No mistakes found — that already sounds natural. 🎉");
         return;
       }
-      setEvents((prev) => [...prev, ...found]);
-      setAiText("");
+      if (review.errors.length > 0) {
+        setEvents((prev) => [...prev, ...review.errors]);
+        setAiText("");
+      }
+      if (review.errors.length === 0 && review.refinements.length > 0) {
+        setAiNote("No errors found — see the naturalness upgrades below.");
+      }
       setDeckPreview(null);
     } catch (err: unknown) {
       setAiNote(err instanceof Error ? err.message : "Couldn't evaluate the text.");
@@ -216,6 +227,7 @@ export default function CorrectTab({
     setMode(next);
     setImportNote(null);
     setAiNote(null);
+    setAdvancedReview(null);
   };
 
   return (
@@ -307,6 +319,13 @@ export default function CorrectTab({
           </div>
         </Disclosure>
       </Card>
+
+      {advancedReview && (
+        <NaturalnessReview
+          refinements={advancedReview.refinements}
+          overall={advancedReview.overall}
+        />
+      )}
 
       {events.length > 0 && (
         <CorrectionList

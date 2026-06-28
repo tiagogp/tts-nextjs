@@ -16,6 +16,14 @@ __pycache__
 .discover_cache
 .anki_tts_out
 /dist
+
+# Source APKG decks include bundled audio and are too large for the repo.
+/assets/*.apkg
+
+# Generated from src/features/learn/lessons.json by yarn learn:audio.
+/public/learn/audio/
+/public/demo/audio/
+
 # testing
 /coverage
 

@@ -17,6 +17,7 @@ import type {
   ProviderKind,
 } from "../provider";
 import type {
+  AdvancedReview,
   Card,
   CardSource,
   Critique,
@@ -27,12 +28,15 @@ import type {
 } from "../schema";
 import {
   DEFAULT_LEARNER_LANG,
+  DEFAULT_TARGET_LANG,
+  buildAdvancedReviewRequest,
   buildConverseSystem,
   buildCorrectRequest,
   buildCritiqueRequest,
   buildGenerateRequest,
   buildMineRequest,
   conversationMessages,
+  normalizeAdvancedReview,
   normalizeCorrected,
   normalizeCritique,
   normalizeGenerated,
@@ -47,16 +51,21 @@ export interface OpenAIProviderOptions {
   /** Embedding model for semantic dedup. Default `text-embedding-3-small`. */
   embedModel?: string;
   learnerLang?: string;
+  targetLang?: string;
+  /** CEFR level; B2+ produces monolingual (target-language) cards. */
+  level?: string;
 }
 
 const DEFAULT_MODEL = "gpt-4o";
 const DEFAULT_EMBED_MODEL = "text-embedding-3-small";
 
-function requestOptions(options: GenerationRunOptions): {
-  signal?: AbortSignal;
-  timeout?: number;
-  maxRetries: 0;
-} | undefined {
+function requestOptions(options: GenerationRunOptions):
+  | {
+      signal?: AbortSignal;
+      timeout?: number;
+      maxRetries: 0;
+    }
+  | undefined {
   if (!options.signal && options.timeoutMs == null) return undefined;
   return {
     ...(options.signal ? { signal: options.signal } : {}),
@@ -74,6 +83,8 @@ export class OpenAIProvider implements CardGenerationProvider {
   private readonly model: string;
   private readonly embedModel: string;
   private readonly learnerLang: string;
+  private readonly targetLang: string;
+  private readonly level?: string;
   readonly embeddingCacheKey: string;
 
   constructor(opts: OpenAIProviderOptions = {}) {
@@ -81,26 +92,36 @@ export class OpenAIProvider implements CardGenerationProvider {
     this.model = opts.model ?? DEFAULT_MODEL;
     this.embedModel = opts.embedModel ?? DEFAULT_EMBED_MODEL;
     this.learnerLang = opts.learnerLang ?? DEFAULT_LEARNER_LANG;
+    this.targetLang = opts.targetLang ?? DEFAULT_TARGET_LANG;
+    this.level = opts.level;
     this.embeddingCacheKey = `${this.kind}:${this.embedModel}`;
   }
 
-  private async json<T>(req: JsonRequest<T>, options: GenerationRunOptions = {}): Promise<T> {
-    const res = await this.client.chat.completions.create({
-      model: this.model,
-      messages: [
-        { role: "system", content: req.system },
-        { role: "user", content: req.user },
-      ],
-      response_format: {
-        type: "json_schema",
-        json_schema: { name: "result", schema: req.schema, strict: true },
+  private async json<T>(
+    req: JsonRequest<T>,
+    options: GenerationRunOptions = {},
+  ): Promise<T> {
+    const res = await this.client.chat.completions.create(
+      {
+        model: this.model,
+        messages: [
+          { role: "system", content: req.system },
+          { role: "user", content: req.user },
+        ],
+        response_format: {
+          type: "json_schema",
+          json_schema: { name: "result", schema: req.schema, strict: true },
+        },
       },
-    }, requestOptions(options));
+      requestOptions(options),
+    );
     const choice = res.choices[0];
     // A length finish means the JSON was cut off; a refusal means no usable content. Both
     // surface as a clean per-card drop upstream rather than a malformed-parse crash.
     if (choice?.finish_reason === "length") {
-      throw new Error("OpenAI response was truncated before completing the JSON (length).");
+      throw new Error(
+        "OpenAI response was truncated before completing the JSON (length).",
+      );
     }
     if (choice?.message?.refusal) {
       throw new Error(`OpenAI declined this card: ${choice.message.refusal}`);
@@ -110,7 +131,9 @@ export class OpenAIProvider implements CardGenerationProvider {
     try {
       return JSON.parse(text) as T;
     } catch {
-      throw new Error("OpenAI returned malformed JSON for a structured-output request.");
+      throw new Error(
+        "OpenAI returned malformed JSON for a structured-output request.",
+      );
     }
   }
 
@@ -119,12 +142,21 @@ export class OpenAIProvider implements CardGenerationProvider {
     request: DiscoveryRequest,
     options?: GenerationRunOptions,
   ): Promise<PhraseCandidate[]> {
-    const raw = await this.json(buildMineRequest(transcript, request, this.learnerLang), options);
+    const raw = await this.json(
+      buildMineRequest(transcript, request, this.learnerLang),
+      options,
+    );
     return normalizeMined(raw, transcript, request);
   }
 
-  async generate(source: CardSource, options?: GenerationRunOptions): Promise<Card[]> {
-    const raw = await this.json(buildGenerateRequest(source, this.learnerLang), options);
+  async generate(
+    source: CardSource,
+    options?: GenerationRunOptions,
+  ): Promise<Card[]> {
+    const raw = await this.json(
+      buildGenerateRequest(source, this.learnerLang, this.targetLang, this.level),
+      options,
+    );
     return normalizeGenerated(raw, source);
   }
 
@@ -133,7 +165,7 @@ export class OpenAIProvider implements CardGenerationProvider {
     source: CardSource,
     options?: GenerationRunOptions,
   ): Promise<Critique> {
-    const raw = await this.json(buildCritiqueRequest(card, source), options);
+    const raw = await this.json(buildCritiqueRequest(card, source, this.level), options);
     return normalizeCritique(raw, card);
   }
 
@@ -144,8 +176,25 @@ export class OpenAIProvider implements CardGenerationProvider {
   ): Promise<ErrorEvent[]> {
     const sourceLang = opts.sourceLang ?? this.learnerLang;
     const targetLang = opts.targetLang ?? "en";
-    const raw = await this.json(buildCorrectRequest(text, sourceLang, targetLang, opts.level), options);
+    const raw = await this.json(
+      buildCorrectRequest(text, sourceLang, targetLang, opts.level),
+      options,
+    );
     return normalizeCorrected(raw, sourceLang, targetLang, opts.context);
+  }
+
+  async review(
+    text: string,
+    opts: CorrectOptions = {},
+    options?: GenerationRunOptions,
+  ): Promise<AdvancedReview> {
+    const sourceLang = opts.sourceLang ?? this.learnerLang;
+    const targetLang = opts.targetLang ?? "en";
+    const raw = await this.json(
+      buildAdvancedReviewRequest(text, sourceLang, targetLang, opts.level),
+      options,
+    );
+    return normalizeAdvancedReview(raw, sourceLang, targetLang, opts.context);
   }
 
   async converse(
@@ -153,36 +202,56 @@ export class OpenAIProvider implements CardGenerationProvider {
     opts: ConverseOptions,
     options: GenerationRunOptions = {},
   ): Promise<string> {
-    const res = await this.client.chat.completions.create({
-      model: this.model,
-      max_tokens: 1024,
-      messages: [
-        { role: "system", content: buildConverseSystem({ ...opts, sourceLang: opts.sourceLang ?? this.learnerLang }) },
-        ...conversationMessages(history),
-      ],
-    }, requestOptions(options));
+    const res = await this.client.chat.completions.create(
+      {
+        model: this.model,
+        max_tokens: 1024,
+        messages: [
+          {
+            role: "system",
+            content: buildConverseSystem({
+              ...opts,
+              sourceLang: opts.sourceLang ?? this.learnerLang,
+            }),
+          },
+          ...conversationMessages(history),
+        ],
+      },
+      requestOptions(options),
+    );
     const choice = res.choices[0];
     if (choice?.message?.refusal) {
-      throw new Error(`OpenAI declined to continue the conversation: ${choice.message.refusal}`);
+      throw new Error(
+        `OpenAI declined to continue the conversation: ${choice.message.refusal}`,
+      );
     }
     const text = choice?.message?.content;
-    if (!text) throw new Error("OpenAI returned no content for the conversation turn.");
+    if (!text)
+      throw new Error("OpenAI returned no content for the conversation turn.");
     return text.trim();
   }
 
-  async complete(prompt: string, options: GenerationRunOptions = {}): Promise<string> {
-    const res = await this.client.chat.completions.create({
-      model: this.model,
-      max_tokens: 32000,
-      response_format: { type: "json_object" },
-      messages: [{ role: "user", content: prompt }],
-    }, requestOptions(options));
+  async complete(
+    prompt: string,
+    options: GenerationRunOptions = {},
+  ): Promise<string> {
+    const res = await this.client.chat.completions.create(
+      {
+        model: this.model,
+        max_tokens: 15000,
+        response_format: { type: "json_object" },
+        messages: [{ role: "user", content: prompt }],
+      },
+      requestOptions(options),
+    );
     const choice = res.choices[0];
     if (choice?.message?.refusal) {
       throw new Error(`OpenAI declined the request: ${choice.message.refusal}`);
     }
     if (choice?.finish_reason === "length") {
-      throw new Error("Response was too long and got cut off. Try a shorter plan (fewer days).");
+      throw new Error(
+        "Response was too long and got cut off. Try a shorter plan (fewer days).",
+      );
     }
     const text = choice?.message?.content;
     if (!text) throw new Error("OpenAI returned no content.");
@@ -190,12 +259,18 @@ export class OpenAIProvider implements CardGenerationProvider {
   }
 
   /** Real semantic dedup (A5): one embedding per card fingerprint. */
-  async embed(texts: string[], options: GenerationRunOptions = {}): Promise<number[][]> {
+  async embed(
+    texts: string[],
+    options: GenerationRunOptions = {},
+  ): Promise<number[][]> {
     if (texts.length === 0) return [];
-    const res = await this.client.embeddings.create({
-      model: this.embedModel,
-      input: texts,
-    }, requestOptions(options));
+    const res = await this.client.embeddings.create(
+      {
+        model: this.embedModel,
+        input: texts,
+      },
+      requestOptions(options),
+    );
     return res.data.map((d) => d.embedding);
   }
 }

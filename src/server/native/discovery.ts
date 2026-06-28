@@ -96,7 +96,11 @@ export function dedupeSegments(segments: Segment[]): Segment[] {
     result.push(curr);
   }
 
-  return result.map(({ key: _key, ...s }) => s);
+  return result.map((segment) => ({
+    text: segment.text,
+    startMs: segment.startMs,
+    endMs: segment.endMs,
+  }));
 }
 
 export async function audioPathFor(id: string): Promise<string | null> {

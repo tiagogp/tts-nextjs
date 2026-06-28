@@ -6,7 +6,8 @@ export type ActivityEventType =
   | "video_processed"
   | "conversation_turn"
   | "correction_generated"
-  | "cards_created";
+  | "cards_created"
+  | "progress_checkin";
 
 export interface CardsReviewedPayload {
   count: number;
@@ -31,7 +32,13 @@ export interface CorrectionGeneratedPayload {
 
 export interface CardsCreatedPayload {
   count: number;
-  source: "discover" | "correct" | "converse";
+  source: "discover" | "correct" | "converse" | "learn";
+}
+
+export interface ProgressCheckinPayload {
+  assessmentId: string;
+  levelEstimate: string;
+  errorsFound: number;
 }
 
 type PayloadMap = {
@@ -40,6 +47,7 @@ type PayloadMap = {
   conversation_turn: ConversationTurnPayload;
   correction_generated: CorrectionGeneratedPayload;
   cards_created: CardsCreatedPayload;
+  progress_checkin: ProgressCheckinPayload;
 };
 
 export interface ActivityEvent<T extends ActivityEventType = ActivityEventType> {

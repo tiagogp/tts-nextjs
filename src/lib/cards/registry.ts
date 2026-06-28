@@ -20,11 +20,15 @@ import {
 } from "@/server/aiSettings";
 
 export interface ResolveOptions {
-  /** Learner's first language for translation glosses. */
+  /** Learner's first language — the translation side of cards. */
   learnerLang?: string;
+  /** Language being learned — the front side of cards. */
+  targetLang?: string;
   /** Model override (currently honored by Ollama, picked from the UI's model list). */
   model?: string;
   baseUrl?: string;
+  /** Learner's CEFR level; B2+ produces monolingual (target-language) cards. */
+  level?: string;
 }
 
 export const providerRegistry: ProviderRegistry = {
@@ -51,22 +55,30 @@ export function resolveProvider(
     case "claude":
       return new ClaudeProvider({
         learnerLang: opts.learnerLang,
+        targetLang: opts.targetLang,
+        level: opts.level,
         apiKey: getProviderApiKey("claude"),
       });
     case "openai":
       return new OpenAIProvider({
         learnerLang: opts.learnerLang,
+        targetLang: opts.targetLang,
+        level: opts.level,
         apiKey: getProviderApiKey("openai"),
       });
     case "ollama":
       return new OllamaProvider({
         learnerLang: opts.learnerLang,
+        targetLang: opts.targetLang,
+        level: opts.level,
         model: opts.model ?? getOllamaModel(),
         baseUrl: opts.baseUrl ?? getOllamaBaseUrl(),
       });
     case "openrouter":
       return new OpenRouterProvider({
         learnerLang: opts.learnerLang,
+        targetLang: opts.targetLang,
+        level: opts.level,
         apiKey: getProviderApiKey("openrouter"),
       });
   }

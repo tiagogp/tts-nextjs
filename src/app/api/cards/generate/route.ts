@@ -20,7 +20,7 @@ import type { ProviderKind } from "@/lib/cards/provider";
 import type { CardSource, ErrorEvent, PhraseCandidate } from "@/lib/cards/schema";
 import { safeStr, toCandidate, toErrorEvent } from "@/lib/cards/intake";
 import { getDefaultProvider } from "@/server/aiSettings";
-import { isProviderKind, readJsonObject } from "@/server/http/validation";
+import { isHttpError, isProviderKind, readJsonObject } from "@/server/http/validation";
 import {
   APKG_EXPORT_TIMEOUT_MS,
   CARD_GENERATION_TIMEOUT_MS,
@@ -72,6 +72,9 @@ export async function POST(req: NextRequest) {
     }
 
     const sourceId = safeStr(obj.sourceId, "", 64);
+    const sourceLang = safeStr(obj.sourceLang, "pt", 16);
+    const targetLang = safeStr(obj.targetLang, "en", 16);
+    const level = safeStr(obj.level, "", 8) || undefined;
     const deck = safeStr(obj.deck, "English - Discover", 200);
     const enKokoroVoice = safeStr(obj.enKokoroVoice, "af_heart", 64);
     writeApkgDebug(debugId, "cards-api-request-received", {
@@ -114,7 +117,7 @@ export async function POST(req: NextRequest) {
     try {
       // Generate → ground → critique → dedup. Provider-agnostic, path-agnostic.
       const model = safeStr(obj.ollamaModel, "", 100) || undefined;
-      const provider = resolveProvider(kind, { model });
+      const provider = resolveProvider(kind, { learnerLang: sourceLang, targetLang, model, level });
       const sources: CardSource[] = [
         ...candidates.map((candidate): CardSource => ({ kind: "phrase", candidate })),
         ...errors.map((event): CardSource => ({ kind: "error", event })),
@@ -262,6 +265,18 @@ export async function POST(req: NextRequest) {
       scope.dispose();
     }
   } catch (err: unknown) {
+    if (isHttpError(err)) {
+      return NextResponse.json(
+        { error: err.message, debugId, debugLog },
+        {
+          status: err.status,
+          headers: {
+            "X-PhraseLoop-Apkg-Debug-Id": debugId,
+            "X-PhraseLoop-Apkg-Debug-Log": debugLog,
+          },
+        },
+      );
+    }
     if (isAbortError(err) || isTimeoutError(err)) {
       writeApkgDebug(debugId, "cards-api-timeout-or-abort", {
         error: err instanceof Error ? err.message : "unknown",

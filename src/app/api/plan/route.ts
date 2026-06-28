@@ -36,8 +36,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "A goal is required to generate a plan." }, { status: 400 });
     }
 
-    const currentLevel = safeStr(obj.currentLevel, "B1", 4);
-    const targetLevel = safeStr(obj.targetLevel, "B2", 4);
+    const currentLevel = safeStr(obj.currentLevel, "A1", 4);
+    const targetLevel = safeStr(obj.targetLevel, "B1", 4);
     const language = safeStr(obj.language, "English", 50);
     const planDays = typeof obj.planDays === "number" ? Math.max(7, Math.min(180, obj.planDays)) : 90;
     const availabilityMinutes =

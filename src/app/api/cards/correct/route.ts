@@ -12,7 +12,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { safeStr } from "@/lib/cards/intake";
 import { normalizeContext } from "@/lib/cards/context";
 import { isProviderAvailable, resolveProvider } from "@/lib/cards/registry";
-import { readJsonObject } from "@/server/http/validation";
+import { isHttpError, readJsonObject } from "@/server/http/validation";
 import { MAX_CORRECTION_JSON_BYTES } from "@/lib/constants";
 import { logger } from "@/lib/logger";
 import {
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     const context = normalizeContext(safeStr(obj.context, "", 100));
     const model = safeStr(obj.ollamaModel, "", 100) || undefined;
 
-    const provider = resolveProvider(kind, { learnerLang: sourceLang, model });
+    const provider = resolveProvider(kind, { learnerLang: sourceLang, targetLang, model });
     if (!provider.correct) {
       return NextResponse.json(
         {
@@ -68,6 +68,9 @@ export async function POST(req: NextRequest) {
     // No errors found is a success — the learner's text was already native-correct.
     return NextResponse.json({ events, count: events.length });
   } catch (err: unknown) {
+    if (isHttpError(err)) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     logger.error({ err }, "Correction error");
     return NextResponse.json(
       { error: providerErrorMessage(err) ?? PUBLIC_CORRECTION_ERROR },

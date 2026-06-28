@@ -1,0 +1,2024 @@
+{
+  "phases": [
+    {
+      "number": 1,
+      "title": "Survival Basics",
+      "focus": "Build greetings, daily words, basic grammar, pronunciation, and listening habit",
+      "startDay": 1,
+      "endDay": 30
+    },
+    {
+      "number": 2,
+      "title": "Simple Output",
+      "focus": "Speak and write more often, build better sentences, and fix common mistakes",
+      "startDay": 31,
+      "endDay": 60
+    },
+    {
+      "number": 3,
+      "title": "B1 Practice",
+      "focus": "Use English in real-life situations, longer talks, and practical work topics",
+      "startDay": 61,
+      "endDay": 90
+    }
+  ],
+  "days": [
+    {
+      "dayNumber": 1,
+      "phase": 1,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "lesson",
+          "lessonId": "a1-greetings",
+          "instruction": "Complete Lesson 1 — Greetings",
+          "targetMetric": {
+            "action": "cards_created",
+            "quantity": 8
+          }
+        },
+        {
+          "type": "study",
+          "instruction": "Review greeting flashcards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 10
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 2,
+      "phase": 1,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review greetings and names",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 15
+          }
+        },
+        {
+          "type": "lesson",
+          "lessonId": "a1-introductions",
+          "instruction": "Complete Lesson 2 — Names",
+          "targetMetric": {
+            "action": "cards_created",
+            "quantity": 8
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 3,
+      "phase": 1,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards with I am and my name is",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 15
+          }
+        },
+        {
+          "type": "lesson",
+          "lessonId": "a1-places",
+          "instruction": "Complete Lesson 3 — Countries and Cities",
+          "targetMetric": {
+            "action": "cards_created",
+            "quantity": 8
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 4,
+      "phase": 1,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review country and city flashcards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 20
+          }
+        },
+        {
+          "type": "lesson",
+          "lessonId": "a1-verb-be",
+          "instruction": "Complete Lesson 4 — Be",
+          "targetMetric": {
+            "action": "cards_created",
+            "quantity": 8
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 5,
+      "phase": 1,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review verb be cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 20
+          }
+        },
+        {
+          "type": "lesson",
+          "lessonId": "a1-jobs",
+          "instruction": "Complete Lesson 5 — Jobs",
+          "targetMetric": {
+            "action": "cards_created",
+            "quantity": 8
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 6,
+      "phase": 1,
+      "estimatedMinutes": 20,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review all due cards from week one",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 7,
+      "phase": 1,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "lesson",
+          "lessonId": "a1-family",
+          "instruction": "Complete Lesson 6 — Family",
+          "targetMetric": {
+            "action": "cards_created",
+            "quantity": 8
+          }
+        },
+        {
+          "type": "study",
+          "instruction": "Review family and job cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 8,
+      "phase": 1,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review family and verb be cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 20
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Introduce yourself to the AI",
+          "targetMetric": {
+            "action": "turns_completed",
+            "quantity": 8
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 9,
+      "phase": 1,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "lesson",
+          "lessonId": "a1-numbers-age",
+          "instruction": "Complete Lesson 7 — Numbers and Age",
+          "targetMetric": {
+            "action": "cards_created",
+            "quantity": 8
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Write five sentences about your age and city",
+          "targetMetric": {
+            "action": "sentences_corrected",
+            "quantity": 5
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 10,
+      "phase": 1,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review numbers and age cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 20
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Say five simple facts about yourself",
+          "targetMetric": {
+            "action": "sentences_corrected",
+            "quantity": 5
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 11,
+      "phase": 1,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards about basic facts",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Ask and answer simple personal questions",
+          "targetMetric": {
+            "action": "turns_completed",
+            "quantity": 10
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 12,
+      "phase": 1,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "lesson",
+          "lessonId": "a1-routine",
+          "instruction": "Complete Lesson 8 — Daily Routine",
+          "targetMetric": {
+            "action": "cards_created",
+            "quantity": 8
+          }
+        },
+        {
+          "type": "study",
+          "instruction": "Review routine phrase cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 13,
+      "phase": 1,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards with I have and I like",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Write five sentences about your routine",
+          "targetMetric": {
+            "action": "sentences_corrected",
+            "quantity": 5
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 14,
+      "phase": 1,
+      "estimatedMinutes": 15,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review all due cards from week two",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 30
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 15,
+      "phase": 1,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "lesson",
+          "lessonId": "a2-food",
+          "instruction": "Complete Lesson 9 — Food",
+          "targetMetric": {
+            "action": "cards_created",
+            "quantity": 8
+          }
+        },
+        {
+          "type": "study",
+          "instruction": "Review food and drink cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 16,
+      "phase": 1,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review food cards and simple verbs",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Order food in a simple cafe roleplay",
+          "targetMetric": {
+            "action": "turns_completed",
+            "quantity": 10
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 17,
+      "phase": 1,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "lesson",
+          "lessonId": "a2-food",
+          "instruction": "Review Lesson 9 — Food",
+          "targetMetric": {
+            "action": "cards_created",
+            "quantity": 8
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Write five sentences using I want",
+          "targetMetric": {
+            "action": "sentences_corrected",
+            "quantity": 5
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 18,
+      "phase": 1,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review shopping and food cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Buy one item in a shop roleplay",
+          "targetMetric": {
+            "action": "turns_completed",
+            "quantity": 8
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 19,
+      "phase": 1,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "lesson",
+          "lessonId": "a1-routine",
+          "instruction": "Review Lesson 8 — Daily Routine",
+          "targetMetric": {
+            "action": "cards_created",
+            "quantity": 8
+          }
+        },
+        {
+          "type": "study",
+          "instruction": "Review present simple phrase cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 20,
+      "phase": 1,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards about routine and food",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 30
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Say six sentences about what you eat",
+          "targetMetric": {
+            "action": "sentences_corrected",
+            "quantity": 6
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 21,
+      "phase": 1,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review all due cards from week three",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 30
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Talk about your normal day",
+          "targetMetric": {
+            "action": "turns_completed",
+            "quantity": 10
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 22,
+      "phase": 1,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "lesson",
+          "lessonId": "a2-directions",
+          "instruction": "Complete Lesson 10 — Directions",
+          "targetMetric": {
+            "action": "cards_created",
+            "quantity": 8
+          }
+        },
+        {
+          "type": "study",
+          "instruction": "Review place and direction cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 23,
+      "phase": 1,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards with where and there is",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Ask for directions in a town roleplay",
+          "targetMetric": {
+            "action": "turns_completed",
+            "quantity": 10
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 24,
+      "phase": 1,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "lesson",
+          "lessonId": "a2-directions",
+          "instruction": "Review Lesson 10 — Directions",
+          "targetMetric": {
+            "action": "cards_created",
+            "quantity": 8
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Write six sentences about your neighborhood",
+          "targetMetric": {
+            "action": "sentences_corrected",
+            "quantity": 6
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 25,
+      "phase": 1,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review town and direction cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 30
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Say how to go to three places",
+          "targetMetric": {
+            "action": "answers_corrected",
+            "quantity": 3
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 26,
+      "phase": 1,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "lesson",
+          "lessonId": "a1-jobs",
+          "instruction": "Review Lesson 5 — Jobs and help",
+          "targetMetric": {
+            "action": "cards_created",
+            "quantity": 8
+          }
+        },
+        {
+          "type": "study",
+          "instruction": "Review ability phrase cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 27,
+      "phase": 1,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards about can and places",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 30
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Talk about things you can do",
+          "targetMetric": {
+            "action": "turns_completed",
+            "quantity": 10
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 28,
+      "phase": 1,
+      "estimatedMinutes": 15,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review all due cards from phase one",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 35
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 29,
+      "phase": 1,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "lesson",
+          "lessonId": "a1-greetings",
+          "instruction": "Review Lesson 1 — Greetings",
+          "targetMetric": {
+            "action": "cards_created",
+            "quantity": 8
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Write ten sentences about yourself",
+          "targetMetric": {
+            "action": "sentences_corrected",
+            "quantity": 10
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 30,
+      "phase": 1,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review your hardest A1 cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 30
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Do a full beginner introduction",
+          "targetMetric": {
+            "action": "turns_completed",
+            "quantity": 12
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 31,
+      "phase": 2,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Find a video about past simple basics",
+          "targetMetric": {
+            "action": "video_processed",
+            "quantity": 1
+          }
+        },
+        {
+          "type": "study",
+          "instruction": "Review past simple phrase cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 20
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 32,
+      "phase": 2,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review yesterday and last week cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 30
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Write six sentences about yesterday",
+          "targetMetric": {
+            "action": "sentences_corrected",
+            "quantity": 6
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 33,
+      "phase": 2,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review regular past verb cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 30
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Talk about what you did yesterday",
+          "targetMetric": {
+            "action": "turns_completed",
+            "quantity": 12
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 34,
+      "phase": 2,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Find a simple story in the past tense",
+          "targetMetric": {
+            "action": "story_processed",
+            "quantity": 1
+          }
+        },
+        {
+          "type": "study",
+          "instruction": "Review new story phrase cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 20
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 35,
+      "phase": 2,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards from this week",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 35
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Retell the story in five sentences",
+          "targetMetric": {
+            "action": "sentences_corrected",
+            "quantity": 5
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 36,
+      "phase": 2,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review past and routine cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 30
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Answer questions about last weekend",
+          "targetMetric": {
+            "action": "turns_completed",
+            "quantity": 12
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 37,
+      "phase": 2,
+      "estimatedMinutes": 20,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review your hardest past tense cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 35
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 38,
+      "phase": 2,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Find a video about questions in English",
+          "targetMetric": {
+            "action": "video_processed",
+            "quantity": 1
+          }
+        },
+        {
+          "type": "study",
+          "instruction": "Review question word cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 20
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 39,
+      "phase": 2,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review who what where when why cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 30
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Ask the AI ten simple questions",
+          "targetMetric": {
+            "action": "questions_asked",
+            "quantity": 10
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 40,
+      "phase": 2,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review question and answer cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 30
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Write eight questions about daily life",
+          "targetMetric": {
+            "action": "questions_corrected",
+            "quantity": 8
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 41,
+      "phase": 2,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Find a dialogue about making plans",
+          "targetMetric": {
+            "action": "dialogue_processed",
+            "quantity": 1
+          }
+        },
+        {
+          "type": "study",
+          "instruction": "Review plan and time cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 20
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 42,
+      "phase": 2,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards with going to",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 30
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Make weekend plans with the AI",
+          "targetMetric": {
+            "action": "turns_completed",
+            "quantity": 12
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 43,
+      "phase": 2,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards from week six",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 35
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Write six sentences about future plans",
+          "targetMetric": {
+            "action": "sentences_corrected",
+            "quantity": 6
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 44,
+      "phase": 2,
+      "estimatedMinutes": 20,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review your hardest question cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 35
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 45,
+      "phase": 2,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Find a video about travel English",
+          "targetMetric": {
+            "action": "video_processed",
+            "quantity": 1
+          }
+        },
+        {
+          "type": "study",
+          "instruction": "Review travel phrase cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 20
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 46,
+      "phase": 2,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review airport and hotel cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 30
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Check in at a hotel roleplay",
+          "targetMetric": {
+            "action": "turns_completed",
+            "quantity": 12
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 47,
+      "phase": 2,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Find a dialogue about buying tickets",
+          "targetMetric": {
+            "action": "dialogue_processed",
+            "quantity": 1
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Say six travel questions",
+          "targetMetric": {
+            "action": "questions_corrected",
+            "quantity": 6
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 48,
+      "phase": 2,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review travel and ticket cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 30
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Ask for help at a station",
+          "targetMetric": {
+            "action": "turns_completed",
+            "quantity": 12
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 49,
+      "phase": 2,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due travel cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 35
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Write a short message to a hotel",
+          "targetMetric": {
+            "action": "messages_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 50,
+      "phase": 2,
+      "estimatedMinutes": 20,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review your hardest travel cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 35
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 51,
+      "phase": 2,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Find an easy article about work routines",
+          "targetMetric": {
+            "action": "article_processed",
+            "quantity": 1
+          }
+        },
+        {
+          "type": "study",
+          "instruction": "Review work routine cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 20
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 52,
+      "phase": 2,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review work and meeting phrase cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 30
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Talk about your job or studies",
+          "targetMetric": {
+            "action": "turns_completed",
+            "quantity": 12
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 53,
+      "phase": 2,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards with need and have to",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 30
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Write eight sentences about your work",
+          "targetMetric": {
+            "action": "sentences_corrected",
+            "quantity": 8
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 54,
+      "phase": 2,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Find a short podcast about productivity",
+          "targetMetric": {
+            "action": "podcast_processed",
+            "quantity": 1
+          }
+        },
+        {
+          "type": "study",
+          "instruction": "Review productivity phrase cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 20
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 55,
+      "phase": 2,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review work and productivity cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 35
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Explain your daily work tasks",
+          "targetMetric": {
+            "action": "turns_completed",
+            "quantity": 14
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 56,
+      "phase": 2,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards from week eight",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 35
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Record one minute about your workday",
+          "targetMetric": {
+            "action": "recordings_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 57,
+      "phase": 2,
+      "estimatedMinutes": 20,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review your hardest work cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 35
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 58,
+      "phase": 2,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Find an A2 review conversation",
+          "targetMetric": {
+            "action": "conversation_processed",
+            "quantity": 1
+          }
+        },
+        {
+          "type": "study",
+          "instruction": "Review all new review cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 20
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 59,
+      "phase": 2,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review your weakest A2 cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 40
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Write a 80-word text about your week",
+          "targetMetric": {
+            "action": "texts_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 60,
+      "phase": 2,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards from phase two",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 40
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Have a review talk about life and work",
+          "targetMetric": {
+            "action": "turns_completed",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 61,
+      "phase": 3,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Find a B1 video about opinions",
+          "targetMetric": {
+            "action": "video_processed",
+            "quantity": 1
+          }
+        },
+        {
+          "type": "study",
+          "instruction": "Review opinion phrase cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 62,
+      "phase": 3,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards with I think and because",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 35
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Give opinions about three simple topics",
+          "targetMetric": {
+            "action": "opinions_given",
+            "quantity": 3
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 63,
+      "phase": 3,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review opinion and reason cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 35
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Write one opinion paragraph",
+          "targetMetric": {
+            "action": "paragraphs_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 64,
+      "phase": 3,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Find an easy article about technology",
+          "targetMetric": {
+            "action": "article_processed",
+            "quantity": 1
+          }
+        },
+        {
+          "type": "study",
+          "instruction": "Review technology phrase cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 65,
+      "phase": 3,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review technology and opinion cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 35
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Talk about technology you use",
+          "targetMetric": {
+            "action": "turns_completed",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 66,
+      "phase": 3,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards from this week",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 40
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Record one minute about your phone or PC",
+          "targetMetric": {
+            "action": "recordings_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 67,
+      "phase": 3,
+      "estimatedMinutes": 20,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review your hardest B1 cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 40
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 68,
+      "phase": 3,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Find a dialogue about solving a problem",
+          "targetMetric": {
+            "action": "dialogue_processed",
+            "quantity": 1
+          }
+        },
+        {
+          "type": "study",
+          "instruction": "Review problem-solving phrase cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 69,
+      "phase": 3,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards with should and could",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 35
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Solve a travel problem with the AI",
+          "targetMetric": {
+            "action": "turns_completed",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 70,
+      "phase": 3,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review advice and problem cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 35
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Write advice for three common problems",
+          "targetMetric": {
+            "action": "answers_corrected",
+            "quantity": 3
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 71,
+      "phase": 3,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Find a short podcast about learning skills",
+          "targetMetric": {
+            "action": "podcast_processed",
+            "quantity": 1
+          }
+        },
+        {
+          "type": "study",
+          "instruction": "Review learning skill phrase cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 72,
+      "phase": 3,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards about skills and goals",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 35
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Talk about your learning goals",
+          "targetMetric": {
+            "action": "turns_completed",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 73,
+      "phase": 3,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards from week eleven",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 40
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Write a 100-word text about a goal",
+          "targetMetric": {
+            "action": "texts_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 74,
+      "phase": 3,
+      "estimatedMinutes": 20,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review your hardest advice cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 40
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 75,
+      "phase": 3,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Find a video about job interviews",
+          "targetMetric": {
+            "action": "video_processed",
+            "quantity": 1
+          }
+        },
+        {
+          "type": "study",
+          "instruction": "Review interview phrase cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 76,
+      "phase": 3,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review work experience phrase cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 35
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Answer simple interview questions",
+          "targetMetric": {
+            "action": "questions_answered",
+            "quantity": 8
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 77,
+      "phase": 3,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Find an article about a work skill",
+          "targetMetric": {
+            "action": "article_processed",
+            "quantity": 1
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Write a short answer about your strengths",
+          "targetMetric": {
+            "action": "answers_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 78,
+      "phase": 3,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review interview and skill cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 40
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Explain your work experience simply",
+          "targetMetric": {
+            "action": "turns_completed",
+            "quantity": 15
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 79,
+      "phase": 3,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due work cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 40
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Record a one-minute self-introduction",
+          "targetMetric": {
+            "action": "recordings_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 80,
+      "phase": 3,
+      "estimatedMinutes": 20,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review your hardest interview cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 40
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 81,
+      "phase": 3,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Find a B1 dialogue about meetings",
+          "targetMetric": {
+            "action": "dialogue_processed",
+            "quantity": 1
+          }
+        },
+        {
+          "type": "study",
+          "instruction": "Review meeting phrase cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 82,
+      "phase": 3,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review cards for agreeing and asking",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 35
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Join a simple team meeting roleplay",
+          "targetMetric": {
+            "action": "turns_completed",
+            "quantity": 16
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 83,
+      "phase": 3,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review meeting and work cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 40
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Write a short work update message",
+          "targetMetric": {
+            "action": "messages_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 84,
+      "phase": 3,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Find an easy podcast about remote work",
+          "targetMetric": {
+            "action": "podcast_processed",
+            "quantity": 1
+          }
+        },
+        {
+          "type": "study",
+          "instruction": "Review remote work phrase cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 85,
+      "phase": 3,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review remote work and meeting cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 40
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Discuss remote work pros and cons",
+          "targetMetric": {
+            "action": "turns_completed",
+            "quantity": 16
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 86,
+      "phase": 3,
+      "estimatedMinutes": 25,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review due cards from week thirteen",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 40
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Write one paragraph about remote work",
+          "targetMetric": {
+            "action": "paragraphs_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 87,
+      "phase": 3,
+      "estimatedMinutes": 20,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review your weakest B1 cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 45
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 88,
+      "phase": 3,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "discover",
+          "instruction": "Find a B1 review video or dialogue",
+          "targetMetric": {
+            "action": "source_processed",
+            "quantity": 1
+          }
+        },
+        {
+          "type": "study",
+          "instruction": "Review new review phrase cards",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 25
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 89,
+      "phase": 3,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review all due cards before final talk",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 45
+          }
+        },
+        {
+          "type": "correct",
+          "instruction": "Write a 120-word text about your progress",
+          "targetMetric": {
+            "action": "texts_corrected",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "dayNumber": 90,
+      "phase": 3,
+      "estimatedMinutes": 30,
+      "tasks": [
+        {
+          "type": "study",
+          "instruction": "Review your hardest cards from 90 days",
+          "targetMetric": {
+            "action": "cards_reviewed",
+            "quantity": 50
+          }
+        },
+        {
+          "type": "converse",
+          "instruction": "Do a final B1 conversation about life and work",
+          "targetMetric": {
+            "action": "turns_completed",
+            "quantity": 20
+          }
+        }
+      ]
+    }
+  ]
+}

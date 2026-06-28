@@ -2,6 +2,12 @@ export interface TranscriptSegment {
   text: string;
   startMs: number;
   endMs: number;
+  /**
+   * A self-contained audio clip for this segment (e.g. the bundled demo). When
+   * set, playback uses this URL directly instead of seeking within the source's
+   * single audio file.
+   */
+  clipUrl?: string;
 }
 
 export interface DiscoverResult {

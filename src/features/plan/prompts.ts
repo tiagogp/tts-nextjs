@@ -33,6 +33,7 @@ For EACH of the ${meta.planDays} days, provide 1-3 tasks. Each task must have:
 Rules:
 - Days 1-7: focus on discover + study only (build the first cards)
 - Mix in converse and correct from week 2 onward
+- Every 14 days, include one "correct" task for a short progress check-in with targetMetric action "progress_checkin"
 - study should appear 5-6 days per week (spaced repetition needs consistency)
 - discover 2-3 times per week (not every day)
 - Keep total estimatedMinutes close to ${meta.availabilityMinutes} per day
@@ -100,6 +101,7 @@ Keep the same phase structure. Adjust task count and estimatedMinutes to fit ${n
 
 Rules:
 - study should appear 5-6 days per week (spaced repetition needs consistency)
+- keep or add one progress check-in every 14 days as a "correct" task with targetMetric action "progress_checkin"
 - discover 2-3 times per week
 - converse and correct based on phase and availability
 - Keep estimatedMinutes close to ${newAvailabilityMinutes} per day

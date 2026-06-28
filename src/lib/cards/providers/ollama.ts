@@ -25,6 +25,7 @@ import type {
   ProviderKind,
 } from "../provider";
 import type {
+  AdvancedReview,
   Card,
   CardSource,
   Critique,
@@ -35,12 +36,15 @@ import type {
 } from "../schema";
 import {
   DEFAULT_LEARNER_LANG,
+  DEFAULT_TARGET_LANG,
+  buildAdvancedReviewRequest,
   buildConverseSystem,
   buildCorrectRequest,
   buildCritiqueRequest,
   buildGenerateRequest,
   buildMineRequest,
   conversationMessages,
+  normalizeAdvancedReview,
   normalizeCorrected,
   normalizeCritique,
   normalizeGenerated,
@@ -54,6 +58,9 @@ export interface OllamaProviderOptions {
   /** Model tag, e.g. "llama3.1" or "qwen2.5". Default from OLLAMA_MODEL, else "llama3.1". */
   model?: string;
   learnerLang?: string;
+  targetLang?: string;
+  /** CEFR level; B2+ produces monolingual (target-language) cards. */
+  level?: string;
 }
 
 const DEFAULT_BASE_URL = "http://localhost:11434";
@@ -88,11 +95,13 @@ function extractJson(text: string): string {
   }
 }
 
-function requestOptions(options: GenerationRunOptions): {
-  signal?: AbortSignal;
-  timeout?: number;
-  maxRetries: 0;
-} | undefined {
+function requestOptions(options: GenerationRunOptions):
+  | {
+      signal?: AbortSignal;
+      timeout?: number;
+      maxRetries: 0;
+    }
+  | undefined {
   if (!options.signal && options.timeoutMs == null) return undefined;
   return {
     ...(options.signal ? { signal: options.signal } : {}),
@@ -113,40 +122,61 @@ export class OllamaProvider implements CardGenerationProvider {
   private readonly client: OpenAI;
   private readonly model: string;
   private readonly learnerLang: string;
+  private readonly targetLang: string;
+  private readonly level?: string;
 
   constructor(opts: OllamaProviderOptions = {}) {
     // Ollama ignores the key but the SDK requires one; "ollama" is the conventional placeholder.
-    this.client = new OpenAI({ baseURL: ollamaBaseUrl(opts.baseUrl), apiKey: "ollama" });
+    this.client = new OpenAI({
+      baseURL: ollamaBaseUrl(opts.baseUrl),
+      apiKey: "ollama",
+    });
     this.model = opts.model ?? getOllamaModel() ?? DEFAULT_MODEL;
     this.learnerLang = opts.learnerLang ?? DEFAULT_LEARNER_LANG;
+    this.targetLang = opts.targetLang ?? DEFAULT_TARGET_LANG;
+    this.level = opts.level;
   }
 
-  private async json<T>(req: JsonRequest<T>, options: GenerationRunOptions = {}, maxTokens = 1500): Promise<T> {
-    const res = await this.client.chat.completions.create({
-      model: this.model,
-      // Deterministic-ish output for a structured task; local models drift more at high temp.
-      temperature: 0,
-      max_tokens: maxTokens,
-      messages: [
-        // Reinforce the contract in-band — not every Ollama build honors response_format.
-        { role: "system", content: `${req.system}\n\nRespond with ONLY a single JSON object that satisfies the requested schema. No prose, no markdown fences.` },
-        { role: "user", content: req.user },
-      ],
-      response_format: {
-        type: "json_schema",
-        json_schema: { name: "result", schema: req.schema },
+  private async json<T>(
+    req: JsonRequest<T>,
+    options: GenerationRunOptions = {},
+    maxTokens = 1500,
+  ): Promise<T> {
+    const res = await this.client.chat.completions.create(
+      {
+        model: this.model,
+        // Deterministic-ish output for a structured task; local models drift more at high temp.
+        temperature: 0,
+        max_tokens: maxTokens,
+        messages: [
+          // Reinforce the contract in-band — not every Ollama build honors response_format.
+          {
+            role: "system",
+            content: `${req.system}\n\nRespond with ONLY a single JSON object that satisfies the requested schema. No prose, no markdown fences.`,
+          },
+          { role: "user", content: req.user },
+        ],
+        response_format: {
+          type: "json_schema",
+          json_schema: { name: "result", schema: req.schema },
+        },
       },
-    }, requestOptions(options));
+      requestOptions(options),
+    );
     const choice = res.choices[0];
     if (choice?.finish_reason === "length") {
-      throw new Error("Ollama response was truncated before completing the JSON (length).");
+      throw new Error(
+        "Ollama response was truncated before completing the JSON (length).",
+      );
     }
     const text = choice?.message?.content;
     if (!text) throw new Error("Ollama returned no content to parse");
     try {
       return JSON.parse(extractJson(text)) as T;
     } catch {
-      throw new Error("Ollama returned malformed JSON — try a more capable model in OLLAMA_MODEL.");
+      throw new Error(
+        "Ollama returned malformed JSON — try a more capable model in OLLAMA_MODEL.",
+      );
     }
   }
 
@@ -158,12 +188,22 @@ export class OllamaProvider implements CardGenerationProvider {
     // Mine may return 20+ phrases at ~100 tokens each; 4096 handles most transcripts
     // while 8192 covers the MAX_MINE_SEGMENTS (400-segment) worst case.
     const maxTokens = Math.max(4096, Math.ceil(transcript.length * 0.2) * 100);
-    const raw = await this.json(buildMineRequest(transcript, request, this.learnerLang), options, maxTokens);
+    const raw = await this.json(
+      buildMineRequest(transcript, request, this.learnerLang),
+      options,
+      maxTokens,
+    );
     return normalizeMined(raw, transcript, request);
   }
 
-  async generate(source: CardSource, options?: GenerationRunOptions): Promise<Card[]> {
-    const raw = await this.json(buildGenerateRequest(source, this.learnerLang), options);
+  async generate(
+    source: CardSource,
+    options?: GenerationRunOptions,
+  ): Promise<Card[]> {
+    const raw = await this.json(
+      buildGenerateRequest(source, this.learnerLang, this.targetLang, this.level),
+      options,
+    );
     return normalizeGenerated(raw, source);
   }
 
@@ -172,7 +212,7 @@ export class OllamaProvider implements CardGenerationProvider {
     source: CardSource,
     options?: GenerationRunOptions,
   ): Promise<Critique> {
-    const raw = await this.json(buildCritiqueRequest(card, source), options);
+    const raw = await this.json(buildCritiqueRequest(card, source, this.level), options);
     return normalizeCritique(raw, card);
   }
 
@@ -183,8 +223,25 @@ export class OllamaProvider implements CardGenerationProvider {
   ): Promise<ErrorEvent[]> {
     const sourceLang = opts.sourceLang ?? this.learnerLang;
     const targetLang = opts.targetLang ?? "en";
-    const raw = await this.json(buildCorrectRequest(text, sourceLang, targetLang, opts.level), options);
+    const raw = await this.json(
+      buildCorrectRequest(text, sourceLang, targetLang, opts.level),
+      options,
+    );
     return normalizeCorrected(raw, sourceLang, targetLang, opts.context);
+  }
+
+  async review(
+    text: string,
+    opts: CorrectOptions = {},
+    options?: GenerationRunOptions,
+  ): Promise<AdvancedReview> {
+    const sourceLang = opts.sourceLang ?? this.learnerLang;
+    const targetLang = opts.targetLang ?? "en";
+    const raw = await this.json(
+      buildAdvancedReviewRequest(text, sourceLang, targetLang, opts.level),
+      options,
+    );
+    return normalizeAdvancedReview(raw, sourceLang, targetLang, opts.context);
   }
 
   async converse(
@@ -192,33 +249,51 @@ export class OllamaProvider implements CardGenerationProvider {
     opts: ConverseOptions,
     options: GenerationRunOptions = {},
   ): Promise<string> {
-    const res = await this.client.chat.completions.create({
-      model: this.model,
-      // A bit of warmth for natural dialogue (vs. 0 for the structured tasks); bounded so a
-      // local model can't ramble past the request timeout.
-      temperature: 0.7,
-      max_tokens: 512,
-      messages: [
-        { role: "system", content: buildConverseSystem({ ...opts, sourceLang: opts.sourceLang ?? this.learnerLang }) },
-        ...conversationMessages(history),
-      ],
-    }, requestOptions(options));
+    const res = await this.client.chat.completions.create(
+      {
+        model: this.model,
+        // A bit of warmth for natural dialogue (vs. 0 for the structured tasks); bounded so a
+        // local model can't ramble past the request timeout.
+        temperature: 0.7,
+        max_tokens: 512,
+        messages: [
+          {
+            role: "system",
+            content: buildConverseSystem({
+              ...opts,
+              sourceLang: opts.sourceLang ?? this.learnerLang,
+            }),
+          },
+          ...conversationMessages(history),
+        ],
+      },
+      requestOptions(options),
+    );
     const choice = res.choices[0];
     const text = choice?.message?.content;
-    if (!text) throw new Error("Ollama returned no content for the conversation turn.");
+    if (!text)
+      throw new Error("Ollama returned no content for the conversation turn.");
     return text.trim();
   }
 
-  async complete(prompt: string, options: GenerationRunOptions = {}): Promise<string> {
-    const res = await this.client.chat.completions.create({
-      model: this.model,
-      temperature: 0,
-      max_tokens: 32000,
-      messages: [{ role: "user", content: prompt }],
-    }, requestOptions(options));
+  async complete(
+    prompt: string,
+    options: GenerationRunOptions = {},
+  ): Promise<string> {
+    const res = await this.client.chat.completions.create(
+      {
+        model: this.model,
+        temperature: 0,
+        max_tokens: 15000,
+        messages: [{ role: "user", content: prompt }],
+      },
+      requestOptions(options),
+    );
     const choice = res.choices[0];
     if (choice?.finish_reason === "length") {
-      throw new Error("Response was too long and got cut off. Try a shorter plan (fewer days).");
+      throw new Error(
+        "Response was too long and got cut off. Try a shorter plan (fewer days).",
+      );
     }
     const text = choice?.message?.content;
     if (!text) throw new Error("Ollama returned no content.");

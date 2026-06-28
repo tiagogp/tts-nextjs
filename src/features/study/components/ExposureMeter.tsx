@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useSyncExternalStore } from "react";
 import { Card } from "@/components/ui/Card";
 import { cn } from "@/lib/cn";
 import type { WeeklyActivity } from "@/lib/srs/analytics";
 import {
   exposureZone,
+  DEFAULT_WEEKLY_GOAL,
   getWeeklyGoal,
   setWeeklyGoal,
+  subscribeWeeklyGoal,
   MAX_GOAL,
   MIN_GOAL,
   type ExposureZone,
@@ -20,9 +22,10 @@ const ZONE: Record<ExposureZone, { label: string; tone: string; bar: string }> =
 };
 
 export function ExposureMeter({ activity }: { activity: WeeklyActivity }) {
-  // Read once on mount (lazy initializer); edits persist immediately.
-  const [goal, setGoal] = useState(getWeeklyGoal);
-  const updateGoal = (next: number) => setGoal(setWeeklyGoal(next));
+  const goal = useSyncExternalStore(subscribeWeeklyGoal, getWeeklyGoal, () => DEFAULT_WEEKLY_GOAL);
+  const updateGoal = (next: number) => {
+    setWeeklyGoal(next);
+  };
 
   const zone = exposureZone(activity.conversations, goal);
   const pct = goal > 0 ? Math.min(100, Math.round((activity.conversations / goal) * 100)) : 0;

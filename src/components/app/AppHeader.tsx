@@ -2,11 +2,12 @@
 
 import { type MouseEvent, useSyncExternalStore } from "react";
 import { motion } from "motion/react";
-import { useTheme } from "next-themes";
 import { springSnappy } from "@/lib/motion";
+import { useTheme } from "@/components/app/ThemeProvider";
 import { HOME_TABS, type HomeTab } from "@/components/app/homeTabs";
 import { IconButton } from "@/components/ui/IconButton";
 import { toggleElectronFullscreen } from "@/platform/electron/bridge";
+import { useT } from "@/i18n/I18nProvider";
 
 const emptySubscribe = () => () => {};
 
@@ -23,6 +24,9 @@ interface AppHeaderProps {
   onTabChange: (tab: HomeTab) => void;
   settingsOpen: boolean;
   onSettingsOpen: () => void;
+  /** The tabs to render; defaults to the full app nav. The landing preview passes
+   *  a subset (it has no "Hoje" home surface). */
+  tabs?: readonly { id: HomeTab; label: string }[];
 }
 
 export default function AppHeader({
@@ -30,8 +34,10 @@ export default function AppHeader({
   onTabChange,
   settingsOpen,
   onSettingsOpen,
+  tabs = HOME_TABS,
 }: AppHeaderProps) {
   const { resolvedTheme, setTheme } = useTheme();
+  const { t } = useT();
   const isClient = useIsClient();
   const isDark = isClient && resolvedTheme === "dark";
 
@@ -68,13 +74,14 @@ export default function AppHeader({
         </div>
 
         <div
-          className="app-header-nav relative grid grid-cols-4"
+          className="app-header-nav relative grid"
+          style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}
           role="tablist"
           aria-label="PhraseLoop sections"
           data-no-window-drag="true"
           data-ignore-window-double-click="true"
         >
-          {HOME_TABS.map((tab) => {
+          {tabs.map((tab) => {
             const active = activeTab === tab.id;
             return (
               <button
@@ -88,7 +95,7 @@ export default function AppHeader({
                 aria-controls={`panel-${tab.id}`}
                 type="button"
               >
-                {tab.label}
+                {t(tab.label)}
                 {active && (
                   <motion.span
                     layoutId="tab-underline"

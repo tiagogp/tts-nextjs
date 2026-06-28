@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   CONVERSATION_KICKOFF,
+  buildAdvancedReviewRequest,
   buildConverseSystem,
   buildCorrectRequest,
   conversationMessages,
+  normalizeAdvancedReview,
 } from "./shared";
 
 describe("conversationMessages", () => {
@@ -38,6 +40,20 @@ describe("buildConverseSystem", () => {
     // The product commitment: never correct mid-conversation (Phase 2 does that afterwards).
     expect(system.toLowerCase()).toContain("do not correct");
   });
+
+  it("can ask for a more challenging advanced partner", () => {
+    const system = buildConverseSystem({
+      scenario: "debating a product decision",
+      targetLang: "en",
+      sourceLang: "pt",
+      level: "C1",
+      challenge: true,
+    });
+
+    expect(system).toContain("mild counterpoint");
+    expect(system).toContain("defend a view");
+    expect(system.toLowerCase()).toContain("do not correct");
+  });
 });
 
 describe("buildCorrectRequest", () => {
@@ -61,5 +77,48 @@ describe("buildCorrectRequest", () => {
     const req = buildCorrectRequest("I have 25 years", "pt", "en", "B2");
 
     expect(req.user).toContain("rationale: one short line, in en");
+  });
+});
+
+describe("buildAdvancedReviewRequest", () => {
+  it("asks for separate errors and refinements", () => {
+    const req = buildAdvancedReviewRequest("It works fine, but I need better results.", "pt", "en", "C1");
+
+    expect(req.user).toContain("errors: one item per real mistake");
+    expect(req.user).toContain("refinements: 0 to 7 optional upgrades");
+    expect(req.system).toContain("Separate real errors from optional refinements");
+  });
+});
+
+describe("normalizeAdvancedReview", () => {
+  it("keeps correct-but-less-native refinements separate from errors", () => {
+    const review = normalizeAdvancedReview(
+      {
+        errors: [],
+        refinements: [
+          {
+            original: "It works fine",
+            suggested: "It does the job",
+            dimension: "naturalness",
+            rationale: "More idiomatic in a casual product discussion.",
+            impact: "sounds more native",
+          },
+        ],
+        overall: { strengths: ["Clear meaning"], nextFocus: "Use more idiomatic phrasing." },
+      },
+      "pt",
+      "en",
+      "work",
+    );
+
+    expect(review.errors).toEqual([]);
+    expect(review.refinements).toHaveLength(1);
+    expect(review.refinements[0]).toMatchObject({
+      original: "It works fine",
+      suggested: "It does the job",
+      dimension: "naturalness",
+      context: "work",
+    });
+    expect(review.overall?.nextFocus).toBe("Use more idiomatic phrasing.");
   });
 });

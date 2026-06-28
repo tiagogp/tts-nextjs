@@ -1,11 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Card } from "@/lib/cards/schema";
+import { MAX_AUDIO_UPLOAD_BYTES } from "@/lib/constants";
 
 const localJson = vi.fn();
+const localRequest = vi.fn();
 const generateDeck = vi.fn();
 
 vi.mock("@/server/localRuntime", () => ({
   localJson,
+  localRequest,
 }));
 
 vi.mock("@/lib/cards/provider", async (importOriginal) => {
@@ -63,6 +66,13 @@ function jsonRequest(path: string, body: unknown): Request {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
+  });
+}
+
+function formRequest(path: string, form: FormData): Request {
+  return new Request(`http://localhost${path}`, {
+    method: "POST",
+    body: form,
   });
 }
 
@@ -127,5 +137,102 @@ describe("API route integration", () => {
     expect(data.cards).toHaveLength(1);
     expect(data.apkg).toBe(Buffer.from("apkg").toString("base64"));
     expect(generateDeck).toHaveBeenCalledOnce();
+  });
+
+  it("/api/pronunciation/assess validates missing audio", async () => {
+    const { POST } = await import("@/app/api/pronunciation/assess/route");
+    const form = new FormData();
+    form.append("targetText", "Good morning.");
+
+    const response = await POST(formRequest("/api/pronunciation/assess", form) as never);
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe("Attach an audio file.");
+    expect(localRequest).not.toHaveBeenCalled();
+  });
+
+  it("/api/pronunciation/assess validates missing target text", async () => {
+    const { POST } = await import("@/app/api/pronunciation/assess/route");
+    const form = new FormData();
+    form.append("file", new File([new Uint8Array([1, 2, 3])], "clip.webm", { type: "audio/webm" }));
+
+    const response = await POST(formRequest("/api/pronunciation/assess", form) as never);
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe("Add a phrase to assess.");
+    expect(localRequest).not.toHaveBeenCalled();
+  });
+
+  it("/api/pronunciation/assess rejects oversized audio", async () => {
+    const { POST } = await import("@/app/api/pronunciation/assess/route");
+    const form = new FormData();
+    form.append("targetText", "Good morning.");
+    form.append("file", new File([new Uint8Array(MAX_AUDIO_UPLOAD_BYTES + 1)], "clip.webm"));
+
+    const response = await POST(formRequest("/api/pronunciation/assess", form) as never);
+    const data = await response.json();
+
+    expect(response.status).toBe(413);
+    expect(data.error).toBe("Audio too large (max 25 MB).");
+    expect(localRequest).not.toHaveBeenCalled();
+  });
+
+  it("/api/pronunciation/assess rejects long target text", async () => {
+    const { POST } = await import("@/app/api/pronunciation/assess/route");
+    const form = new FormData();
+    form.append("targetText", "a".repeat(501));
+    form.append("file", new File([new Uint8Array([1, 2, 3])], "clip.webm"));
+
+    const response = await POST(formRequest("/api/pronunciation/assess", form) as never);
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe("Phrase is too long for pronunciation practice.");
+    expect(localRequest).not.toHaveBeenCalled();
+  });
+
+  it("/api/pronunciation/assess proxies audio to the local runtime", async () => {
+    localRequest.mockResolvedValueOnce(localResponse({
+      targetText: "Good morning.",
+      transcript: "good morning",
+      scores: { overall: 99, accuracy: 100, completeness: 100, fluency: 96 },
+      words: [],
+      tips: ["Good rhythm."],
+    }));
+    const { POST } = await import("@/app/api/pronunciation/assess/route");
+    const form = new FormData();
+    form.append("targetText", "Good morning.");
+    form.append("targetLang", "en");
+    form.append("file", new File([new Uint8Array([1, 2, 3])], "clip.webm", { type: "audio/webm" }));
+
+    const response = await POST(formRequest("/api/pronunciation/assess", form) as never);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.scores.overall).toBe(99);
+    expect(localRequest).toHaveBeenCalledWith("/pronunciation/assess", expect.objectContaining({
+      method: "POST",
+      timeoutMs: 120_000,
+      headers: expect.objectContaining({
+        "X-Target-Text": encodeURIComponent("Good morning."),
+        "X-Target-Lang": "en",
+      }),
+    }));
+  });
+
+  it("/api/pronunciation/assess hides runtime failures", async () => {
+    localRequest.mockResolvedValueOnce(localResponse({ detail: "failed" }, 500));
+    const { POST } = await import("@/app/api/pronunciation/assess/route");
+    const form = new FormData();
+    form.append("targetText", "Good morning.");
+    form.append("file", new File([new Uint8Array([1, 2, 3])], "clip.webm"));
+
+    const response = await POST(formRequest("/api/pronunciation/assess", form) as never);
+    const data = await response.json();
+
+    expect(response.status).toBe(502);
+    expect(data.error).toContain("Couldn't assess pronunciation");
   });
 });

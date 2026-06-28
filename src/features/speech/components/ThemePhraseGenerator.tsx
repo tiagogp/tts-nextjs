@@ -11,6 +11,7 @@ import type { PhraseCandidate } from "@/lib/cards/schema";
 import type { Card as GeneratedCard } from "@/lib/cards/schema";
 import { saveGeneratedDeck } from "@/lib/store/repository";
 import { useProviderSelection } from "@/features/cards/hooks/useProviderSelection";
+import { getLearnerLangs } from "@/features/settings/learningProfile";
 import { ProviderPicker } from "@/features/cards/components/ProviderPicker";
 import { DeckPreview } from "@/features/cards/components/DeckPreview";
 import type { DeckPayload } from "@/features/cards/exportDeck";
@@ -54,6 +55,7 @@ export default function ThemePhraseGenerator({ embedded = false }: { embedded?: 
     setResult(null);
     setDeckPreview(null);
     try {
+      const { nativeLang, targetLang, level } = getLearnerLangs();
       const response = await fetch("/api/cards/generate-from-theme", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -62,6 +64,9 @@ export default function ThemePhraseGenerator({ embedded = false }: { embedded?: 
           count,
           provider,
           ollamaModel: selectedModel || undefined,
+          sourceLang: nativeLang,
+          targetLang,
+          level,
         }),
       });
       const data = (await response.json().catch(() => ({}))) as ThemeResponse;
@@ -81,6 +86,7 @@ export default function ThemePhraseGenerator({ embedded = false }: { embedded?: 
     setError(null);
     setDeckPreview(null);
     try {
+      const { nativeLang, targetLang, level } = getLearnerLangs();
       const response = await fetch("/api/cards/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -90,6 +96,9 @@ export default function ThemePhraseGenerator({ embedded = false }: { embedded?: 
           sourceId: result.sourceId,
           deck: result.title,
           persist: true,
+          sourceLang: nativeLang,
+          targetLang,
+          level,
           candidates: keptCandidates.map((candidate) => ({ ...candidate, status: "accepted" })),
         }),
       });

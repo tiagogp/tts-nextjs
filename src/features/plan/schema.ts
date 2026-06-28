@@ -1,13 +1,15 @@
 import type { EnglishLevel } from "@/features/discover/types";
 
-export type TaskType = "discover" | "study" | "converse" | "correct";
+export type TaskType = "discover" | "study" | "converse" | "correct" | "lesson";
 
 export interface TaskItem {
   id: string;
   type: TaskType;
   instruction: string;
+  lessonId?: string;
   targetMetric?: {
-    action: "cards_reviewed" | "video_processed" | "conversation_turns" | "cards_created";
+    /** Free-form metric label (e.g. "cards_reviewed", "minutes_spoken"). Stored as metadata only. */
+    action: string;
     quantity: number;
   };
   completedAt?: number;
@@ -72,8 +74,9 @@ export interface PlanGenerationResult {
     tasks: Array<{
       type: TaskType;
       instruction: string;
+      lessonId?: string;
       targetMetric?: {
-        action: "cards_reviewed" | "video_processed" | "conversation_turns" | "cards_created";
+        action: string;
         quantity: number;
       };
     }>;

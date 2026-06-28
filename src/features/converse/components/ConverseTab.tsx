@@ -27,11 +27,13 @@ import { useProviderSelection } from "@/features/cards/hooks/useProviderSelectio
 import { ProviderPicker } from "@/features/cards/components/ProviderPicker";
 import { exportAndSaveDeck } from "@/features/cards/exportDeck";
 import {
-  evaluateCorrectionText,
   generateCorrectionDeck,
+  reviewAdvancedText,
   transcribeAudio,
 } from "@/features/correct/api";
+import { NaturalnessReview } from "@/features/correct/components/NaturalnessReview";
 import { sendConversationTurn, synthesizeSpeech } from "@/features/converse/api";
+import { getLearnerLangs } from "@/features/settings/learningProfile";
 import {
   CONVERSATION_LEVELS,
   CONVERSATION_SCENARIOS,
@@ -55,7 +57,8 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
   const [past, setPast] = useState<Conversation[]>([]);
   const [scenarioId, setScenarioId] = useState<string>(CONVERSATION_SCENARIOS[0].id);
   const [customScenario, setCustomScenario] = useState("");
-  const [level, setLevel] = useState<ConversationLevel>(DEFAULT_LEVEL);
+  const [level, setLevel] = useState<ConversationLevel>(() => getLearnerLangs().level || DEFAULT_LEVEL);
+  const [challenge, setChallenge] = useState(false);
   const [typed, setTyped] = useState("");
   const [busy, setBusy] = useState(false);
   const [recording, setRecording] = useState(false);
@@ -100,6 +103,12 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
     },
     [],
   );
+
+  useEffect(() => {
+    const loadProfileLevel = () => setLevel(getLearnerLangs().level);
+    window.addEventListener("phraseloop:profile-updated", loadProfileLevel);
+    return () => window.removeEventListener("phraseloop:profile-updated", loadProfileLevel);
+  }, []);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -203,6 +212,7 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
         selectedModel,
         scenario: scenarioPrompt,
         level,
+        challenge,
         history: [],
       });
       // Hold the "Starting…" state through TTS so the greeting bubble and its voice appear together.
@@ -213,9 +223,10 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
         // The short situational tag (e.g. "restaurant"), not the long role-play prompt —
         // this is what weakness detection groups by and the review header shows.
         context: fallbackContext,
-        targetLang: "en",
-        sourceLang: "pt",
+        targetLang: getLearnerLangs().targetLang,
+        sourceLang: getLearnerLangs().nativeLang,
         level,
+        challenge,
         turns: reply ? [{ role: "assistant", text: reply }] : [],
         startedAt: Date.now(),
       };
@@ -226,7 +237,7 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
     } finally {
       setBusy(false);
     }
-  }, [busy, canStart, usingCustom, customTrimmed, activeScenario, provider, selectedModel, level, persist, synthReply, speak]);
+  }, [busy, canStart, usingCustom, customTrimmed, activeScenario, provider, selectedModel, level, challenge, persist, synthReply, speak]);
 
   const sendTurn = useCallback(
     async (text: string) => {
@@ -250,7 +261,9 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
           provider,
           selectedModel,
           scenario: conversation.scenario,
+          targetLang: conversation.targetLang,
           level: conversation.level,
+          challenge: conversation.challenge,
           history: withUser.turns,
         });
         if (reply) {
@@ -429,7 +442,12 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
         .trim();
       // Nothing the learner said → nothing to correct. Mark reviewed (empty) and move on.
       if (!userText) {
-        const reviewed: Conversation = { ...conv, errors: [], correctedAt: Date.now() };
+        const reviewed: Conversation = {
+          ...conv,
+          errors: [],
+          advancedReview: { errors: [], refinements: [] },
+          correctedAt: Date.now(),
+        };
         setReview(reviewed);
         void saveConversation(reviewed);
         void refreshPast();
@@ -442,14 +460,19 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
       setCorrecting(true);
       setReviewNote(null);
       try {
-        const errors = await evaluateCorrectionText({
+        const advanced = await reviewAdvancedText({
           provider,
           selectedModel,
           text: userText,
           context: conv.context,
           level: conv.level,
         });
-        const reviewed: Conversation = { ...conv, errors, correctedAt: Date.now() };
+        const reviewed: Conversation = {
+          ...conv,
+          errors: advanced.errors,
+          advancedReview: advanced,
+          correctedAt: Date.now(),
+        };
         setReview(reviewed);
         void saveConversation(reviewed);
         void refreshPast();
@@ -523,6 +546,8 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
   // ───────────────────────── review (Phase 2) ─────────────────────────
   if (review) {
     const errors = review.errors;
+    const advanced = review.advancedReview;
+    const refinements = advanced?.refinements ?? [];
     const userTurns = review.turns.filter((t) => t.role === "user").length;
     return (
       <div className="space-y-5">
@@ -546,9 +571,14 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
               <Spinner className="h-4 w-4" /> Reviewing your mistakes…
             </p>
           ) : errors && errors.length === 0 ? (
-            <p className="rounded-lg border border-line bg-surface px-4 py-3 text-sm text-ink-soft">
-              No mistakes found — that already sounds natural. 🎉
-            </p>
+            <>
+              <p className="rounded-lg border border-line bg-surface px-4 py-3 text-sm text-ink-soft">
+                {refinements.length > 0
+                  ? "No errors found. A few native-sounding upgrades are below."
+                  : "No mistakes found — that already sounds natural. 🎉"}
+              </p>
+              <NaturalnessReview refinements={refinements} overall={advanced?.overall} />
+            </>
           ) : errors && errors.length > 0 ? (
             <>
               <ul className="space-y-2">
@@ -556,6 +586,7 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
                   <ErrorRow key={e.id} error={e} />
                 ))}
               </ul>
+              <NaturalnessReview refinements={refinements} overall={advanced?.overall} />
               <Button
                 variant="primary"
                 onClick={() => void generateReviewCards()}
@@ -647,6 +678,19 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
             value={level}
             onChange={setLevel}
             options={CONVERSATION_LEVELS.map((l) => ({ value: l, label: l }))}
+            className="flex-wrap"
+          />
+        </Field>
+
+        <Field label="Partner" hint="Supportive keeps the role-play simple. Challenging asks follow-ups and pushes your reasoning.">
+          <Segmented<"supportive" | "challenging">
+            label="Conversation partner style"
+            value={challenge ? "challenging" : "supportive"}
+            onChange={(v) => setChallenge(v === "challenging")}
+            options={[
+              { value: "supportive", label: "Supportive" },
+              { value: "challenging", label: "Challenging" },
+            ]}
           />
         </Field>
 
@@ -743,6 +787,7 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
             <span>{conversation.turns.length} {conversation.turns.length === 1 ? "turn" : "turns"}</span>
             {conversation.level && <span>Level {conversation.level}</span>}
             <span>{activeProvider?.label ?? "AI partner"}</span>
+            {conversation.challenge && <span className="text-accent">Challenging</span>}
             {freeTalk && <span className="text-accent">Free talk</span>}
           </div>
         </div>

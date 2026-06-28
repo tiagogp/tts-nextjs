@@ -28,6 +28,8 @@ interface TranscriptReviewProps {
   generationStage: string;
   generationSeconds: number;
   providerReady: boolean;
+  generateLabel?: string;
+  cancelLabel?: string;
   onGenerate: () => void;
   onCancel: () => void;
   onToggleKeep: (index: number) => void;
@@ -47,6 +49,8 @@ export function TranscriptReview({
   generationStage,
   generationSeconds,
   providerReady,
+  generateLabel = "Generate cards →",
+  cancelLabel = "Cancel",
   onGenerate,
   onCancel,
   onToggleKeep,
@@ -58,7 +62,18 @@ export function TranscriptReview({
   return (
     <Card className="overflow-hidden">
       {result.hasAudio && (
-        <audio key={result.sourceId} ref={audioRef} src={`/api/discover/audio/${result.sourceId}`} preload="metadata" />
+        <audio
+          key={result.sourceId}
+          ref={audioRef}
+          // Per-segment bundled clips (demo) set the src on play; the source's
+          // single audio file is only used when segments lack their own clip.
+          src={
+            result.segments.some((segment) => segment.clipUrl)
+              ? undefined
+              : `/api/discover/audio/${result.sourceId}`
+          }
+          preload="metadata"
+        />
       )}
 
       <div className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3 border-b border-line bg-card px-5 py-3">
@@ -79,10 +94,10 @@ export function TranscriptReview({
           {generating ? (
             <>
               <span aria-hidden="true">×</span>
-              Cancel
+              {cancelLabel}
             </>
           ) : (
-            "Generate cards →"
+            generateLabel
           )}
         </Button>
       </div>

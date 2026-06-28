@@ -7,6 +7,7 @@
  */
 
 import type {
+  AdvancedReview,
   Card,
   CardSource,
   Critique,
@@ -52,6 +53,8 @@ export interface ConverseOptions {
   sourceLang?: string;
   /** CEFR level to pitch difficulty at, e.g. "B1". */
   level?: string;
+  /** For advanced practice: press the learner with follow-ups and counterpoints. */
+  challenge?: boolean;
 }
 
 export type ProviderKind = "openrouter" | "ollama" | "claude" | "openai";
@@ -104,6 +107,17 @@ export interface CardGenerationProvider {
     opts?: CorrectOptions,
     options?: GenerationRunOptions,
   ): Promise<ErrorEvent[]>;
+
+  /**
+   * Advanced production review. Returns real mistakes plus optional native-sounding
+   * refinements for text that may already be correct. Kept separate from correct() so
+   * refinements don't pollute weakness detection or automatic card generation.
+   */
+  review?(
+    text: string,
+    opts?: CorrectOptions,
+    options?: GenerationRunOptions,
+  ): Promise<AdvancedReview>;
 
   /**
    * Conversation path — produce the assistant's next turn in a role-played scenario, in the

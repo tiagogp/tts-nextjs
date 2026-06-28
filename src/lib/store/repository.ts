@@ -4,11 +4,14 @@
  */
 
 import type {
+  AdvancedReview,
   Card,
   ErrorEvent,
   ErrorType,
   PhraseCandidate,
 } from "@/lib/cards/schema";
+import type { PronunciationAttempt } from "@/lib/pronunciation/types";
+import type { StoredProgressAssessment } from "@/features/progress/model";
 import type { ConversationTurn } from "@/lib/cards/provider";
 import {
   STORES,
@@ -19,6 +22,7 @@ import {
   putMany,
   del,
   count,
+  type StoreName,
 } from "@/lib/store/db";
 import { initialSrs, type Grade, type SrsRecord, type State } from "@/lib/srs/fsrs";
 import { applyGrade } from "@/lib/srs/fsrs";
@@ -38,6 +42,19 @@ export interface ReviewRecord {
   errorType?: ErrorType;
   /** Denormalized situational context (see `Card.context`) for context-grouped weakness. */
   context?: string;
+  /** ms from card-shown (flip) to grade. Overload/fatigue signal. */
+  latencyMs?: number;
+  /** true if any scaffold (hint/slow audio/modality) was used this review. */
+  hintUsed?: boolean;
+  /** 0 = none, 1 = hint, 2 = partial reveal, 3 = modality fallback. */
+  scaffoldLevel?: number;
+}
+
+/** Per-review scaffolding/latency telemetry. All optional — captured now, analyzed later. */
+export interface ReviewTelemetry {
+  latencyMs?: number;
+  hintUsed?: boolean;
+  scaffoldLevel?: number;
 }
 
 /* ──────────────────────────── sources ──────────────────────────── */
@@ -134,11 +151,31 @@ export async function getDueCards(now: number = Date.now()): Promise<
   return out;
 }
 
+/**
+ * Every card paired with its SRS state, regardless of due date. The light-session queue
+ * draws from this to surface already-stable cards (which are usually *not* due) for a
+ * low-load round.
+ */
+export async function getCardsWithSrs(): Promise<{ card: Card; srs: SrsRecord }[]> {
+  const [cards, allSrs] = await Promise.all([
+    getCards(),
+    getAll<SrsRecord>(STORES.srs),
+  ]);
+  const byId = new Map(allSrs.map((s) => [s.cardId, s]));
+  const out: { card: Card; srs: SrsRecord }[] = [];
+  for (const card of cards) {
+    const srs = byId.get(card.id);
+    if (srs) out.push({ card, srs });
+  }
+  return out;
+}
+
 /** Grade a card: advance its SRS state and append a review-log entry. */
 export async function recordReview(
   card: Card,
   srs: SrsRecord,
   grade: Grade,
+  telemetry?: ReviewTelemetry,
   now: Date = new Date(),
 ): Promise<SrsRecord> {
   const { next, scheduledDays, previousState } = applyGrade(srs, grade, now);
@@ -153,6 +190,9 @@ export async function recordReview(
     concept: card.concept,
     errorType: card.errorType,
     context: card.context,
+    latencyMs: telemetry?.latencyMs,
+    hintUsed: telemetry?.hintUsed,
+    scaffoldLevel: telemetry?.scaffoldLevel,
   };
   await put(STORES.reviews, review);
   return next;
@@ -221,6 +261,31 @@ export function saveCards(cards: Card[]): Promise<{ added: number }> {
   return persistCardsWithSrs(cards);
 }
 
+/* ──────────────────────────── pronunciation attempts ──────────────────────────── */
+
+export function savePronunciationAttempt(attempt: PronunciationAttempt): Promise<void> {
+  return put(STORES.pronunciationAttempts, attempt);
+}
+
+export function getPronunciationAttempts(): Promise<PronunciationAttempt[]> {
+  return getAll<PronunciationAttempt>(STORES.pronunciationAttempts);
+}
+
+export function getPronunciationAttemptsForCard(cardId: string): Promise<PronunciationAttempt[]> {
+  return getAllFromIndex<PronunciationAttempt>(STORES.pronunciationAttempts, "cardId", cardId);
+}
+
+/* ──────────────────────────── progress assessments ──────────────────────────── */
+
+export function saveProgressAssessment(assessment: StoredProgressAssessment): Promise<void> {
+  return put(STORES.progressAssessments, assessment);
+}
+
+export async function getProgressAssessments(): Promise<StoredProgressAssessment[]> {
+  const assessments = await getAll<StoredProgressAssessment>(STORES.progressAssessments);
+  return assessments.sort((a, b) => b.createdAt - a.createdAt);
+}
+
 /* ──────────────────────────── conversations (Phase 1) ──────────────────────────── */
 
 /**
@@ -236,6 +301,7 @@ export interface Conversation {
   targetLang: string;
   sourceLang: string;
   level?: string;
+  challenge?: boolean;
   turns: ConversationTurn[];
   startedAt: number;
   endedAt?: number;
@@ -247,6 +313,7 @@ export interface Conversation {
    * are generated (the source of truth for weakness detection).
    */
   errors?: ErrorEvent[];
+  advancedReview?: AdvancedReview;
 }
 
 export function saveConversation(conversation: Conversation): Promise<void> {
@@ -283,4 +350,26 @@ export async function getCounts(): Promise<{
 export async function deleteCard(cardId: string): Promise<void> {
   await del(STORES.cards, cardId);
   await del(STORES.srs, cardId);
+}
+
+export interface LocalBackup {
+  app: "PhraseLoop";
+  schemaVersion: 1;
+  dbName: string;
+  exportedAt: string;
+  stores: Record<StoreName, unknown[]>;
+}
+
+export async function exportLocalBackup(): Promise<LocalBackup> {
+  const storeNames = Object.values(STORES) as StoreName[];
+  const entries = await Promise.all(
+    storeNames.map(async (store) => [store, await getAll<unknown>(store)] as const),
+  );
+  return {
+    app: "PhraseLoop",
+    schemaVersion: 1,
+    dbName: "tts-cards",
+    exportedAt: new Date().toISOString(),
+    stores: Object.fromEntries(entries) as Record<StoreName, unknown[]>,
+  };
 }

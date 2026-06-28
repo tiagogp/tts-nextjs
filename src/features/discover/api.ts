@@ -1,6 +1,7 @@
 import type { Card, PhraseCandidate } from "@/lib/cards/schema";
 import type { ProviderKind } from "@/lib/cards/provider";
 import type { DiscoverResult, DiscoverSourceKind, EnglishLevel } from "@/features/discover/types";
+import { getLearnerLangs } from "@/features/settings/learningProfile";
 
 export async function extractDiscoverSource(input: {
   sourceKind: DiscoverSourceKind;
@@ -81,6 +82,7 @@ export async function curateDiscoverSegments(input: {
   focus: string;
   targetLevel: EnglishLevel;
 }): Promise<{ selectedIndexes: number[]; count: number }> {
+  const { nativeLang, targetLang } = getLearnerLangs();
   const response = await fetch("/api/cards/mine", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -94,6 +96,8 @@ export async function curateDiscoverSegments(input: {
       segments: input.result.segments,
       focus: input.focus.trim() || undefined,
       targetLevel: input.targetLevel,
+      sourceLang: nativeLang,
+      targetLang,
     }),
   });
   const data = (await response.json().catch(() => ({}))) as {
@@ -123,6 +127,7 @@ export async function generateDiscoverDeck(input: {
   debugId?: string;
   debugLog?: string;
 }> {
+  const { nativeLang, targetLang, level } = getLearnerLangs();
   const response = await fetch("/api/cards/generate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -130,8 +135,11 @@ export async function generateDiscoverDeck(input: {
       provider: input.provider,
       ollamaModel: input.selectedModel || undefined,
       sourceId: input.result.sourceId,
-      deck: input.result.title || "English - Discover",
+      deck: input.result.title || "Discover",
       persist: true,
+      sourceLang: nativeLang,
+      targetLang,
+      level,
       candidates: input.candidates,
     }),
     signal: input.signal,

@@ -11,6 +11,7 @@ const MINUTES_PER_EVENT: Record<ActivityEventType, (event: ActivityEvent) => num
   conversation_turn: () => 1.5,
   correction_generated: () => 15,
   cards_created: () => 0, // overlap with other events — don't double-count
+  progress_checkin: () => 5,
 };
 
 function startOfWeek(date: Date): Date {

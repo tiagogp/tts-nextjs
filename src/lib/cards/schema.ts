@@ -49,6 +49,45 @@ export interface ErrorEvent {
   createdAt: number;
 }
 
+/* ──────────────────────────── Advanced refinement ──────────────────────────── */
+
+export type RefinementDimension =
+  | "naturalness"
+  | "register"
+  | "idiom"
+  | "precision"
+  | "conciseness"
+  | "discourse"
+  | "collocation";
+
+/**
+ * A high-signal upgrade for text that may already be correct. Unlike ErrorEvent, this is
+ * not a weakness/drill source by default; it is coaching for advanced naturalness.
+ */
+export interface RefinementEvent {
+  id: string;
+  original: string;
+  suggested: string;
+  dimension: RefinementDimension;
+  rationale?: string;
+  impact?: string;
+  sourceLang: string;
+  targetLang: string;
+  context?: string;
+  createdAt: number;
+}
+
+export interface AdvancedReviewSummary {
+  strengths: string[];
+  nextFocus?: string;
+}
+
+export interface AdvancedReview {
+  errors: ErrorEvent[];
+  refinements: RefinementEvent[];
+  overall?: AdvancedReviewSummary;
+}
+
 /* ──────────────────────────── Path 2: discovery ──────────────────────────── */
 
 /**
@@ -116,6 +155,12 @@ export interface PhraseCandidate {
 
 /* ──────────────────────────── Convergence: cards ──────────────────────────── */
 
+/**
+ * Coarse skill a card mostly trains (Phase 2 #6). Deliberately small: it's a derived,
+ * weakly-held tag used to surface per-skill state, not a taxonomy. See `skillOfCard`.
+ */
+export type Skill = "vocabulary" | "grammar" | "listening" | "speaking";
+
 /** Where a card came from — grounding / anti-hallucination, regardless of ingestion path. */
 export interface CardSourceRef {
   kind: "error" | "phrase";
@@ -139,6 +184,12 @@ export interface Card {
   concept: string;
   /** Set for correction-path cards; undefined for discovery-path cards. */
   errorType?: ErrorType;
+  /**
+   * Coarse skill this card mostly exercises (Phase 2 #6). Optional and derive-on-read:
+   * when absent, `skillOfCard` infers it from audio/errorType. Tagging at generation time
+   * is just a cache.
+   */
+  skill?: Skill;
   /** Situational context inherited from the source (see `ErrorEvent.context`). */
   context?: string;
   /** Pointer back to the source — grounding / anti-hallucination. */

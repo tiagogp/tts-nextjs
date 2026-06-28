@@ -7,8 +7,8 @@
  */
 
 const DB_NAME = "tts-cards";
-// v4: adds `learningPlan` and `effortHistory` stores (90-day plan system).
-const DB_VERSION = 4;
+// v6: adds progress assessment checkpoints for local-first outcome tracking.
+const DB_VERSION = 6;
 
 export const STORES = {
   errorEvents: "errorEvents",
@@ -20,6 +20,8 @@ export const STORES = {
   activityLog: "activityLog",
   learningPlan: "learningPlan",
   effortHistory: "effortHistory",
+  pronunciationAttempts: "pronunciationAttempts",
+  progressAssessments: "progressAssessments",
 } as const;
 
 export type StoreName = (typeof STORES)[keyof typeof STORES];
@@ -73,6 +75,15 @@ export function openDb(): Promise<IDBDatabase> {
       }
       if (!db.objectStoreNames.contains(STORES.effortHistory)) {
         db.createObjectStore(STORES.effortHistory, { keyPath: "weekOf" });
+      }
+      if (!db.objectStoreNames.contains(STORES.pronunciationAttempts)) {
+        const s = db.createObjectStore(STORES.pronunciationAttempts, { keyPath: "id" });
+        s.createIndex("cardId", "cardId");
+        s.createIndex("createdAt", "createdAt");
+      }
+      if (!db.objectStoreNames.contains(STORES.progressAssessments)) {
+        const s = db.createObjectStore(STORES.progressAssessments, { keyPath: "id" });
+        s.createIndex("createdAt", "createdAt");
       }
     };
     req.onsuccess = () => resolve(req.result);

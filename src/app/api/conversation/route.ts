@@ -13,7 +13,7 @@ import { safeStr } from "@/lib/cards/intake";
 import { isProviderAvailable, resolveProvider } from "@/lib/cards/registry";
 import type { ConversationTurn, ProviderKind } from "@/lib/cards/provider";
 import { getDefaultProvider } from "@/server/aiSettings";
-import { isProviderKind, readJsonObject } from "@/server/http/validation";
+import { isHttpError, isProviderKind, readJsonObject } from "@/server/http/validation";
 import { MAX_CORRECTION_JSON_BYTES } from "@/lib/constants";
 import { logger } from "@/lib/logger";
 
@@ -81,6 +81,7 @@ export async function POST(req: NextRequest) {
     const targetLang = safeStr(obj.targetLang, "en", 16);
     const sourceLang = safeStr(obj.sourceLang, "pt", 16);
     const level = safeStr(obj.level, "", 8) || undefined;
+    const challenge = obj.challenge === true;
     const history = parseTurns(obj.history);
     const model = safeStr(obj.ollamaModel, "", 100) || undefined;
 
@@ -92,7 +93,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const provider = resolveProvider(kind, { learnerLang: sourceLang, model });
+    const provider = resolveProvider(kind, { learnerLang: sourceLang, targetLang, model });
     if (!provider.converse) {
       return NextResponse.json(
         {
@@ -103,9 +104,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const reply = await provider.converse(history, { scenario, targetLang, sourceLang, level });
+    const reply = await provider.converse(history, { scenario, targetLang, sourceLang, level, challenge });
     return NextResponse.json({ reply });
   } catch (err: unknown) {
+    if (isHttpError(err)) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     logger.error({ err }, "Conversation error");
     return NextResponse.json(
       { error: providerErrorMessage(err) ?? PUBLIC_CONVERSATION_ERROR },

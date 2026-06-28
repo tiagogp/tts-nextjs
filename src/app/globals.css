@@ -3,7 +3,7 @@
 @import "./desktop-shell.css";
 @variant dark (&:where(.dark, .dark *));
 
-/* Raw values are the single source of truth; next-themes flips `.dark`. */
+/* Raw values are the single source of truth; ThemeProvider flips `.dark`. */
 :root {
   --surface:       #faf9f6;
   --surface-card:  #ffffff;

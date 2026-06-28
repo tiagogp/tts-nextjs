@@ -1,5 +1,6 @@
-import type { Card, ErrorEvent } from "@/lib/cards/schema";
+import type { AdvancedReview, Card, ErrorEvent } from "@/lib/cards/schema";
 import type { ProviderKind } from "@/lib/cards/provider";
+import { getLearnerLangs } from "@/features/settings/learningProfile";
 
 export interface DeckGenerationResult {
   cards?: Card[];
@@ -28,14 +29,18 @@ export async function generateCorrectionDeck(input: {
   events: ErrorEvent[];
   signal: AbortSignal;
 }): Promise<DeckGenerationResult> {
+  const { nativeLang, targetLang, level } = getLearnerLangs();
   const response = await fetch("/api/cards/generate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       provider: input.provider,
       ollamaModel: input.selectedModel || undefined,
-      deck: "English - Corrections",
+      deck: "Corrections",
       persist: true,
+      sourceLang: nativeLang,
+      targetLang,
+      level,
       errors: input.events,
     }),
     signal: input.signal,
@@ -60,6 +65,7 @@ export async function evaluateCorrectionText(input: {
   /** CEFR level; B2+ gets target-language rationales. */
   level?: string;
 }): Promise<ErrorEvent[]> {
+  const { nativeLang, targetLang, level } = getLearnerLangs();
   const response = await fetch("/api/cards/correct", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -67,10 +73,10 @@ export async function evaluateCorrectionText(input: {
       provider: input.provider,
       ollamaModel: input.selectedModel || undefined,
       text: input.text,
-      sourceLang: "pt",
-      targetLang: "en",
+      sourceLang: nativeLang,
+      targetLang,
       context: input.context || undefined,
-      level: input.level || undefined,
+      level: input.level || level || undefined,
     }),
   });
   const data = (await response.json().catch(() => ({}))) as {
@@ -79,6 +85,40 @@ export async function evaluateCorrectionText(input: {
   };
   if (!response.ok) throw new Error(data.error ?? `Request failed (${response.status})`);
   return data.events ?? [];
+}
+
+export async function reviewAdvancedText(input: {
+  provider: ProviderKind;
+  selectedModel?: string;
+  text: string;
+  /** Situational context to stamp on mistakes/refinements found (e.g. "work", "travel"). */
+  context?: string;
+  /** CEFR level; B2+ gets target-language rationales. */
+  level?: string;
+}): Promise<AdvancedReview> {
+  const { nativeLang, targetLang, level } = getLearnerLangs();
+  const response = await fetch("/api/cards/review", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      provider: input.provider,
+      ollamaModel: input.selectedModel || undefined,
+      text: input.text,
+      sourceLang: nativeLang,
+      targetLang,
+      context: input.context || undefined,
+      level: input.level || level || undefined,
+    }),
+  });
+  const data = (await response.json().catch(() => ({}))) as Partial<AdvancedReview> & {
+    error?: string;
+  };
+  if (!response.ok) throw new Error(data.error ?? `Request failed (${response.status})`);
+  return {
+    errors: data.errors ?? [],
+    refinements: data.refinements ?? [],
+    overall: data.overall,
+  };
 }
 
 export async function transcribeAudio(blob: Blob, filename?: string): Promise<string> {

@@ -7,6 +7,7 @@ import { createApkgDebugId } from "./native/apkgDebug";
 import { dataDir } from "./native/data";
 import { audioPathFor, discoverArticle, discoverPdf, discoverYouTube } from "./native/discovery";
 import { ensureKokoroModel, kokoroInstalled, modelStatus } from "./native/models";
+import { assessPronunciation } from "./native/pronunciation";
 import { synthesize, transcribe } from "./native/speech";
 import { logger } from "@/lib/logger";
 
@@ -194,6 +195,32 @@ const handleTranscribe: RouteHandler = async (options) => {
   }
 };
 
+const handlePronunciationAssess: RouteHandler = async (options) => {
+  const body = Buffer.isBuffer(options.body)
+    ? options.body
+    : Buffer.from(options.body || "");
+  const targetText = decodeURIComponent(options.headers?.["X-Target-Text"] || "").trim();
+  if (!body.length) return response(400, { detail: "empty audio" });
+  if (!targetText) return response(400, { detail: "empty target" });
+  try {
+    const referenceDurationMs = Number(options.headers?.["X-Reference-Duration-Ms"] || 0);
+    return response(200, await assessPronunciation({
+      audio: body,
+      targetText,
+      targetLang: options.headers?.["X-Target-Lang"] || "en",
+      referenceDurationMs: Number.isFinite(referenceDurationMs) && referenceDurationMs > 0
+        ? referenceDurationMs
+        : undefined,
+    }));
+  } catch (error) {
+    logger.error({ err: error }, "Pronunciation assessment failed");
+    return response(500, {
+      detail: "pronunciation assessment failed",
+      code: "pronunciation_failed",
+    });
+  }
+};
+
 const handleDiscover: RouteHandler = async (options) => {
   const value = parseJson(options.body);
   return response(
@@ -284,6 +311,7 @@ export const POST_ROUTES: Record<string, RouteHandler> = {
   "/models/kokoro/ensure": handleKokoroEnsure,
   "/tts": handleTts,
   "/transcribe": handleTranscribe,
+  "/pronunciation/assess": handlePronunciationAssess,
   "/discover": handleDiscover,
   "/discover/article": handleDiscoverArticle,
   "/discover/pdf": handleDiscoverPdf,

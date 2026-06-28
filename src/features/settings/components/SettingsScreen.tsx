@@ -12,6 +12,8 @@ import { Field, Input } from "@/components/ui/Field";
 import { IconButton } from "@/components/ui/IconButton";
 import { Notice } from "@/components/ui/Notice";
 import { StatusPill, type StatusPillProps } from "@/components/ui/StatusPill";
+import { exportLocalBackup } from "@/lib/store/repository";
+import { useT } from "@/i18n/I18nProvider";
 
 type StatusTone = NonNullable<StatusPillProps["tone"]>;
 
@@ -40,7 +42,14 @@ function statusTone(provider: ProviderStatus): StatusTone {
   return "default";
 }
 
-export default function SettingsScreen({ onBack }: { onBack: () => void }) {
+export default function SettingsScreen({
+  onBack,
+  onOpenTools,
+}: {
+  onBack: () => void;
+  onOpenTools?: () => void;
+}) {
+  const { t } = useT();
   const { settings, loading, save, test, refresh } = useAiSettings();
   const [ollamaUrl, setOllamaUrl] = useState(settings.ollama.baseUrl);
   const [ollamaModel, setOllamaModel] = useState(settings.ollama.model);
@@ -67,7 +76,7 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
       text:
         result.detail ||
         result.error ||
-        (result.ok ? "Saved." : "Something went wrong."),
+        (result.ok ? t("Saved.") : t("Something went wrong.")),
     });
     setBusy(null);
   };
@@ -76,6 +85,28 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
     run("default", () =>
       save({ defaultProvider: defaultProvider as ProviderKind }),
     );
+
+  const downloadBackup = async () => {
+    setBusy("backup");
+    setNotice(null);
+    try {
+      const backup = await exportLocalBackup();
+      const blob = new Blob([`${JSON.stringify(backup, null, 2)}\n`], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `phraseloop-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      setNotice({ ok: true, text: t("Backup downloaded.") });
+    } catch {
+      setNotice({ ok: false, text: t("Could not export local data.") });
+    } finally {
+      setBusy(null);
+    }
+  };
 
   const testConnection = async (
     kind: ProviderKind,
@@ -117,15 +148,15 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
     return (
       <Disclosure
         title={provider?.label ?? kind}
-        description={PROVIDER_COPY[kind]}
+        description={t(PROVIDER_COPY[kind])}
         defaultOpen={settings.defaultProvider === kind}
         badge={
           shownStatus && (
-            <StatusPill tone={shownStatus.tone}>{shownStatus.label}</StatusPill>
+            <StatusPill tone={shownStatus.tone}>{t(shownStatus.label)}</StatusPill>
           )
         }
       >
-        <Field label="API key" htmlFor={`${kind}-key`}>
+        <Field label={t("API key")} htmlFor={`${kind}-key`}>
           <Input
             id={`${kind}-key`}
             type="password"
@@ -135,9 +166,9 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
             placeholder={
               provider?.configured
                 ? settings.storage === "system"
-                  ? "Saved securely — enter a new key to replace it"
-                  : "Saved locally — enter a new key to replace it"
-                : "Paste your API key"
+                  ? t("Saved securely — enter a new key to replace it")
+                  : t("Saved locally — enter a new key to replace it")
+                : t("Paste your API key")
             }
             disabled={!settings.writable || busy !== null}
           />
@@ -156,7 +187,7 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
               })
             }
           >
-            Save key
+            {t("Save key")}
           </Button>
           <Button
             variant="secondary"
@@ -172,7 +203,7 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
               )
             }
           >
-            Test connection
+            {t("Test connection")}
           </Button>
           {provider?.configured && (
             <Button
@@ -181,7 +212,7 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
               onClick={() => {
                 if (
                   !window.confirm(
-                    `Remove the saved ${provider.label} credential?`,
+                    t("Remove the saved {provider} credential?", { provider: provider.label }),
                   )
                 )
                   return;
@@ -190,7 +221,7 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
                 );
               }}
             >
-              Remove key
+              {t("Remove key")}
             </Button>
           )}
         </div>
@@ -201,13 +232,13 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
   return (
     <div className="mx-auto max-w-3xl px-4 py-6 sm:py-8">
       <div className="mb-6 flex items-center gap-3">
-        <IconButton onClick={onBack} aria-label="Back to PhraseLoop">
+        <IconButton onClick={onBack} aria-label={t("Back to PhraseLoop")}>
           ←
         </IconButton>
         <div>
-          <h2 className="text-xl font-semibold text-ink">Settings</h2>
+          <h2 className="text-xl font-semibold text-ink">{t("Settings")}</h2>
           <p className="text-sm text-ink-muted">
-            Choose how PhraseLoop uses AI.
+            {t("Choose how PhraseLoop uses AI.")}
           </p>
         </div>
       </div>
@@ -224,42 +255,59 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
 
       {!settings.writable && !loading && (
         <Notice role="note" className="mb-5">
-          Settings are read-only in the browser. Configure providers with
-          environment variables or open the desktop app.
+          {t("Settings are read-only in the browser. Configure providers with environment variables or open the desktop app.")}
         </Notice>
       )}
 
       <Card className="mb-4 p-5">
-        <h3 className="font-medium text-ink">Default AI provider</h3>
+        <h3 className="font-medium text-ink">{t("Default AI provider")}</h3>
         <p className="mb-4 mt-1 text-sm text-ink-muted">
-          Ollama stays local. Cloud providers are never selected automatically.
+          {t("Ollama stays local. Cloud providers are never selected automatically.")}
         </p>
         <Select
           value={settings.defaultProvider}
           onChange={chooseDefault}
           options={settings.providers.map((provider) => ({
             value: provider.kind,
-            label: `${provider.label}${provider.available ? "" : " — unavailable"}`,
+            label: `${provider.label}${provider.available ? "" : ` ${t("— unavailable")}`}`,
           }))}
           disabled={!settings.writable || loading || busy !== null}
         />
       </Card>
 
+      <Card className="mb-4 p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 className="font-medium text-ink">{t("Local data")}</h3>
+            <p className="mt-1 text-sm text-ink-muted">
+              {t("Download a JSON backup of cards, reviews, plans, conversations, and source material.")}
+            </p>
+          </div>
+          <Button
+            variant="secondary"
+            disabled={busy !== null}
+            onClick={() => void downloadBackup()}
+          >
+            {busy === "backup" ? t("Exporting...") : t("Download backup")}
+          </Button>
+        </div>
+      </Card>
+
       <Disclosure
         title="Ollama"
-        description={PROVIDER_COPY.ollama}
+        description={t(PROVIDER_COPY.ollama)}
         defaultOpen={settings.defaultProvider === "ollama"}
         className="mb-3"
         badge={
           settings.providers[0] &&
           (() => {
             const shown = renderedStatus(settings.providers[0]);
-            return <StatusPill tone={shown.tone}>{shown.label}</StatusPill>;
+            return <StatusPill tone={shown.tone}>{t(shown.label)}</StatusPill>;
           })()
         }
       >
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Server address" htmlFor="ollama-url">
+          <Field label={t("Server address")} htmlFor="ollama-url">
             <Input
               id="ollama-url"
               value={ollamaUrl}
@@ -267,7 +315,7 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
               disabled={!settings.writable || busy !== null}
             />
           </Field>
-          <Field label="Model" htmlFor="ollama-model">
+          <Field label={t("Model")} htmlFor="ollama-model">
             {settings.ollama.models.length > 0 ? (
               <Select
                 value={ollamaModel || settings.ollama.models[0]}
@@ -299,7 +347,7 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
               )
             }
           >
-            Save
+            {t("Save")}
           </Button>
           <Button
             variant="secondary"
@@ -311,14 +359,14 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
               })
             }
           >
-            Test connection
+            {t("Test connection")}
           </Button>
           <Button
             variant="secondary"
             disabled={busy !== null}
             onClick={() => void refresh()}
           >
-            Refresh models
+            {t("Refresh models")}
           </Button>
         </div>
       </Disclosure>
@@ -328,6 +376,22 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
         {cloudCard("claude", anthropicKey, setAnthropicKey)}
         {cloudCard("openai", openaiKey, setOpenaiKey)}
       </div>
+
+      {onOpenTools && (
+        <Card className="mt-4 p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="font-medium text-ink">{t("Tools")}</h3>
+              <p className="mt-1 text-sm text-ink-muted">
+                {t("Text-to-speech, theme phrase decks, and JSON-to-Anki export.")}
+              </p>
+            </div>
+            <Button variant="secondary" onClick={onOpenTools}>
+              {t("Open tools")}
+            </Button>
+          </div>
+        </Card>
+      )}
     </div>
   );
 }

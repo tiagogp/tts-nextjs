@@ -12,7 +12,7 @@ import { isProviderAvailable, resolveProvider } from "@/lib/cards/registry";
 import type { ProviderKind } from "@/lib/cards/provider";
 import type { ContentSource, TranscriptSegment } from "@/lib/cards/schema";
 import { getDefaultProvider } from "@/server/aiSettings";
-import { isProviderKind, readJsonObject, safeString } from "@/server/http/validation";
+import { isHttpError, isProviderKind, readJsonObject, safeString } from "@/server/http/validation";
 import { MAX_CARD_JSON_BYTES } from "@/lib/constants";
 import { logger } from "@/lib/logger";
 
@@ -72,22 +72,24 @@ export async function POST(req: NextRequest) {
     }
 
     const sourceId = safeString(obj.sourceId, "discover", 64);
+    const sourceLang = safeString(obj.sourceLang, "pt", 16);
+    const targetLang = safeString(obj.targetLang, "en", 16);
     const source: ContentSource = {
       id: sourceId,
       kind: safeSourceKind(obj.sourceKind),
       title: safeString(obj.title, "Discover source", 200),
       url: safeString(obj.url, "", 2048) || undefined,
-      lang: "en",
+      lang: targetLang,
       createdAt: Date.now(),
     };
 
     const model = safeString(obj.ollamaModel, "", 100) || undefined;
-    const provider = resolveProvider(kind, { model });
+    const provider = resolveProvider(kind, { learnerLang: sourceLang, targetLang, model });
     const candidates = await provider.mine(segments, {
       source,
       focus: safeString(obj.focus, "", 500) || undefined,
       targetLevel: safeLevel(obj.targetLevel),
-      targetLang: "en",
+      targetLang,
     });
 
     const selectedIndexes = Array.from(
@@ -107,6 +109,9 @@ export async function POST(req: NextRequest) {
       count: selectedIndexes.length,
     });
   } catch (err: unknown) {
+    if (isHttpError(err)) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     logger.error({ err }, "Card mining error");
     return NextResponse.json({ error: PUBLIC_MINE_ERROR }, { status: 500 });
   }

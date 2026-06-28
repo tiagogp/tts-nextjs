@@ -7,6 +7,7 @@ export interface PlanNavigationHandlers {
   onStudy?: () => void;
   onConverse?: () => void;
   onCorrect?: () => void;
+  onLesson?: (lessonId?: string) => void;
 }
 
 export type PlanTaskActionMap = Record<TaskType, (() => void) | undefined>;

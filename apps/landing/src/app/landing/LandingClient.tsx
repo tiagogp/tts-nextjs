@@ -13,10 +13,11 @@ import AppHeader from "@/components/app/AppHeader";
 import AppProviders from "@/components/app/AppProviders";
 import { HOME_TABS, type HomeTab } from "@/components/app/homeTabs";
 import { hoverLift, springSnappy, tapPress } from "@/lib/motion";
+import ConverseTab from "@/features/converse/components/ConverseTab";
 import CorrectTab from "@/features/correct/components/CorrectTab";
 import DiscoverTab from "@/features/discover/components/DiscoverTab";
-import PracticeTab from "@/features/practice/components/PracticeTab";
 import SettingsScreen from "@/features/settings/components/SettingsScreen";
+import StudyTab from "@/features/study/components/StudyTab";
 import SpeechTab from "@/features/speech/components/SpeechTab";
 import { YourSection } from "./YourSection";
 import { AsciiLoop } from "./AsciiLoop";
@@ -170,7 +171,6 @@ const privacyCards = [
   },
 ];
 
-type PracticeView = "study" | "conversation";
 type LandingSectionId = "workflow" | "inside" | "privacy";
 
 const landingNavItems: Array<{ id: LandingSectionId; label: string }> = [
@@ -459,8 +459,6 @@ function useLandingDemoApi() {
 
 function DemoTabContent({
   tab,
-  practiceView,
-  onPracticeViewChange,
   onOpenSettings,
   onOpenDiscover,
   onOpenPractice,
@@ -468,8 +466,6 @@ function DemoTabContent({
   onOpenCorrect,
 }: {
   tab: HomeTab;
-  practiceView: PracticeView;
-  onPracticeViewChange: (view: PracticeView) => void;
   onOpenSettings: () => void;
   onOpenDiscover: () => void;
   onOpenPractice: () => void;
@@ -477,25 +473,20 @@ function DemoTabContent({
   onOpenCorrect: () => void;
 }) {
   if (tab === "discover") {
+    return <DiscoverTab onOpenSettings={onOpenSettings} onStudyNow={onOpenPractice} />;
+  }
+
+  if (tab === "study") {
     return (
-      <DiscoverTab
-        onOpenSettings={onOpenSettings}
-        onStudyNow={onOpenPractice}
-        onSpeakNow={onOpenConversation}
-        onCorrectNow={onOpenCorrect}
+      <StudyTab
+        onDiscover={onOpenDiscover}
+        onConversation={onOpenConversation}
       />
     );
   }
 
-  if (tab === "converse") {
-    return (
-      <PracticeTab
-        onOpenSettings={onOpenSettings}
-        onOpenDiscover={onOpenDiscover}
-        view={practiceView}
-        onViewChange={onPracticeViewChange}
-      />
-    );
+  if (tab === "speak") {
+    return <ConverseTab onOpenSettings={onOpenSettings} />;
   }
 
   if (tab === "correct") {
@@ -507,24 +498,18 @@ function DemoTabContent({
   return <SpeechTab />;
 }
 
+// The landing preview has no "Hoje" home surface; it opens straight on Discover.
+const LANDING_TABS = HOME_TABS.filter((item) => item.id !== "hoje");
+
 function RealAppDemo() {
   useLandingDemoApi();
   const [tab, setTab] = useState<HomeTab>("discover");
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [practiceView, setPracticeView] = useState<PracticeView>("study");
 
   const changeTab = useCallback((next: HomeTab) => {
     setTab(next);
     setSettingsOpen(false);
   }, []);
-
-  const openPractice = useCallback(
-    (view: PracticeView) => {
-      setPracticeView(view);
-      changeTab("converse");
-    },
-    [changeTab],
-  );
 
   return (
     <motion.div
@@ -550,6 +535,7 @@ function RealAppDemo() {
             onTabChange={changeTab}
             settingsOpen={settingsOpen}
             onSettingsOpen={() => setSettingsOpen(true)}
+            tabs={LANDING_TABS}
           />
           <main className="min-h-0 flex-1">
             {settingsOpen ? (
@@ -562,7 +548,7 @@ function RealAppDemo() {
                 </div>
               </div>
             ) : (
-              HOME_TABS.map((item) => {
+              LANDING_TABS.map((item) => {
                 const active = tab === item.id;
                 return (
                   <section
@@ -584,12 +570,10 @@ function RealAppDemo() {
                     >
                       <DemoTabContent
                         tab={item.id}
-                        practiceView={practiceView}
-                        onPracticeViewChange={setPracticeView}
                         onOpenSettings={() => setSettingsOpen(true)}
                         onOpenDiscover={() => changeTab("discover")}
-                        onOpenPractice={() => openPractice("study")}
-                        onOpenConversation={() => openPractice("conversation")}
+                        onOpenPractice={() => changeTab("study")}
+                        onOpenConversation={() => changeTab("speak")}
                         onOpenCorrect={() => changeTab("correct")}
                       />
                     </motion.div>

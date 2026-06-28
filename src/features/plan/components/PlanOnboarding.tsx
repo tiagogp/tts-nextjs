@@ -10,6 +10,7 @@ import { Notice } from "@/components/ui/Notice";
 import { ENGLISH_LEVELS } from "@/features/discover/constants";
 import type { EnglishLevel } from "@/features/discover/types";
 import { getLearningProfile } from "@/features/settings/learningProfile";
+import { languageLabel } from "@/features/settings/languages";
 import { useProviderSelection } from "@/features/cards/hooks/useProviderSelection";
 import { generateAndSavePlan } from "@/features/plan/generator";
 import type { LearningPlan } from "@/features/plan/schema";
@@ -19,6 +20,7 @@ import {
   TARGET_LEVELS,
 } from "@/features/plan/constants";
 import type { PlanOnboardingStep } from "@/features/plan/types";
+import { useT } from "@/i18n/I18nProvider";
 
 interface PlanOnboardingProps {
   open: boolean;
@@ -27,12 +29,22 @@ interface PlanOnboardingProps {
   onOpenSettings?: () => void;
 }
 
+function levelIndex(level: EnglishLevel): number {
+  return ENGLISH_LEVELS.findIndex((option) => option.value === level);
+}
+
+function defaultTargetLevel(currentLevel: EnglishLevel): EnglishLevel {
+  const index = levelIndex(currentLevel);
+  return ENGLISH_LEVELS[Math.min(index + 1, ENGLISH_LEVELS.length - 1)]?.value ?? "B1";
+}
+
 export function PlanOnboarding({
   open,
   onClose,
   onPlanCreated,
   onOpenSettings,
 }: PlanOnboardingProps) {
+  const { t } = useT();
   const profile = getLearningProfile();
   const { provider, activeProvider, hasEvaluator, selectedModel } =
     useProviderSelection({
@@ -42,13 +54,21 @@ export function PlanOnboarding({
   const [step, setStep] = useState<PlanOnboardingStep>("goal");
   const [goal, setGoal] = useState("");
   const [currentLevel, setCurrentLevel] = useState<EnglishLevel>(profile.level);
-  const [targetLevel, setTargetLevel] = useState<EnglishLevel>("B2");
+  const [targetLevel, setTargetLevel] = useState<EnglishLevel>(() => defaultTargetLevel(profile.level));
   const [planDays, setPlanDays] = useState(90);
   const [availabilityMinutes, setAvailabilityMinutes] = useState(20);
   const [error, setError] = useState<string | null>(null);
 
   const goalTrimmed = goal.trim();
   const canGenerate = goalTrimmed.length >= 10 && hasEvaluator;
+  const updateCurrentLevel = (nextLevel: EnglishLevel) => {
+    setCurrentLevel(nextLevel);
+    setTargetLevel((currentTarget) =>
+      levelIndex(currentTarget) < levelIndex(nextLevel)
+        ? defaultTargetLevel(nextLevel)
+        : currentTarget,
+    );
+  };
 
   const generate = async () => {
     if (!canGenerate) return;
@@ -62,7 +82,7 @@ export function PlanOnboarding({
           targetLevel,
           availabilityMinutes,
           planDays,
-          language: "English",
+          language: languageLabel(profile.targetLang),
         },
         provider,
         ollamaModel: selectedModel,
@@ -73,7 +93,7 @@ export function PlanOnboarding({
       setError(
         err instanceof Error
           ? err.message
-          : "Couldn't generate the plan. Try again.",
+          : t("Couldn't generate the plan. Try again."),
       );
       setStep("availability");
     }
@@ -110,41 +130,40 @@ export function PlanOnboarding({
         <div className="space-y-5">
           <div>
             <p className="text-xs uppercase tracking-widest text-accent">
-              Learning plan
+              {t("Learning plan")}
             </p>
             <h2
               id="plan-onboarding-title"
               className="mt-1 text-xl font-semibold text-ink"
             >
-              What do you want to achieve?
+              {t("What do you want to achieve?")}
             </h2>
             <p className="mt-2 text-sm text-ink-soft">
-              Be specific — the more concrete your goal, the more focused your
-              daily tasks will be.
+              {t("Be specific — the more concrete your goal, the more focused your daily tasks will be.")}
             </p>
           </div>
 
           <Field
-            label="Your goal"
-            hint={`${goalTrimmed.length} / 10 characters minimum`}
+            label={t("Your goal")}
+            hint={t("{count} / 10 characters minimum", { count: goalTrimmed.length })}
           >
             <Textarea
               value={goal}
               onChange={(e) => setGoal(e.target.value)}
-              placeholder="e.g. I want to watch Netflix shows in English without subtitles in 90 days"
+              placeholder={t("e.g. I want to watch Netflix shows in English without subtitles in 90 days")}
               rows={3}
             />
           </Field>
 
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Current level">
+            <Field label={t("Current level")}>
               <Select
                 value={currentLevel}
-                onChange={(v) => setCurrentLevel(v as EnglishLevel)}
+                onChange={(v) => updateCurrentLevel(v as EnglishLevel)}
                 options={ENGLISH_LEVELS}
               />
             </Field>
-            <Field label="Target level">
+            <Field label={t("Target level")}>
               <Select
                 value={targetLevel}
                 onChange={(v) => setTargetLevel(v as EnglishLevel)}
@@ -155,30 +174,30 @@ export function PlanOnboarding({
 
           {!hasEvaluator && (
             <Notice tone="error">
-              A model-backed AI provider is required to generate a plan.{" "}
+              {t("A model-backed AI provider is required to generate a plan.")}{" "}
               {onOpenSettings ? (
                 <button
                   onClick={onOpenSettings}
                   className="underline hover:no-underline"
                 >
-                  Open Settings →
+                  {t("Open Settings →")}
                 </button>
               ) : (
-                "Open Settings to connect one."
+                t("Open Settings to connect one.")
               )}
             </Notice>
           )}
 
           <div className="flex justify-end gap-2">
             <Button variant="ghost" onClick={onClose}>
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button
               variant="primary"
               onClick={() => setStep("availability")}
               disabled={goalTrimmed.length < 10 || !hasEvaluator}
             >
-              Continue →
+              {t("Continue →")}
             </Button>
           </div>
         </div>
@@ -188,61 +207,63 @@ export function PlanOnboarding({
         <div className="space-y-5">
           <div>
             <p className="text-xs uppercase tracking-widest text-accent">
-              Learning plan
+              {t("Learning plan")}
             </p>
             <h2
               id="plan-onboarding-title"
               className="mt-1 text-xl font-semibold text-ink"
             >
-              How much time can you commit?
+              {t("How much time can you commit?")}
             </h2>
             <p className="mt-2 text-sm text-ink-soft">
-              Be honest — a consistent 15 min beats an ambitious 1 hour that
-              doesn&apos;t happen.
+              {t("Be honest — a consistent 15 min beats an ambitious 1 hour that doesn't happen.")}
             </p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Daily availability">
+            <Field label={t("Daily availability")}>
               <Select
                 value={String(availabilityMinutes)}
                 onChange={(v) => setAvailabilityMinutes(Number(v))}
-                options={AVAILABILITY_OPTIONS}
+                options={AVAILABILITY_OPTIONS.map((item) => ({ ...item, label: t(item.label) }))}
               />
             </Field>
-            <Field label="Plan length">
+            <Field label={t("Plan length")}>
               <Select
                 value={String(planDays)}
                 onChange={(v) => setPlanDays(Number(v))}
-                options={PLAN_DAYS_OPTIONS}
+                options={PLAN_DAYS_OPTIONS.map((item) => ({ ...item, label: t(item.label) }))}
               />
             </Field>
           </div>
 
           <div className="rounded border border-line bg-surface px-4 py-3 text-xs text-ink-soft">
-            The AI will create a {planDays}-day plan with {availabilityMinutes}{" "}
-            min of tasks per day, divided into phases that match your progress
-            from {currentLevel} toward {targetLevel}.
+            {t("The AI will create a {days}-day plan with {minutes} min of tasks per day, divided into phases that match your progress from {currentLevel} toward {targetLevel}.", {
+              days: planDays,
+              minutes: availabilityMinutes,
+              currentLevel,
+              targetLevel,
+            })}
           </div>
 
           {error && <Notice tone="error">{error}</Notice>}
 
           {hasEvaluator && (
             <p className="text-xs text-ink-muted">
-              Generated by {activeProvider?.label ?? provider}.
+              {t("Generated by {provider}.", { provider: activeProvider?.label ?? provider })}
             </p>
           )}
 
           <div className="flex justify-between gap-2">
             <Button variant="ghost" onClick={() => setStep("goal")}>
-              Back
+              {t("Back")}
             </Button>
             <Button
               variant="primary"
               onClick={() => void generate()}
               disabled={!canGenerate}
             >
-              Generate my plan
+              {t("Generate my plan")}
             </Button>
           </div>
         </div>
@@ -253,11 +274,10 @@ export function PlanOnboarding({
           <Spinner className="h-8 w-8 text-accent" />
           <div>
             <p className="text-sm font-semibold text-ink">
-              Building your {planDays}-day plan…
+              {t("Building your {days}-day plan…", { days: planDays })}
             </p>
             <p className="mt-1 text-xs text-ink-muted">
-              {activeProvider?.label ?? "The AI"} is designing your phases and
-              daily tasks.
+              {t("{provider} is designing your phases and daily tasks.", { provider: activeProvider?.label ?? t("The AI") })}
             </p>
           </div>
         </div>

@@ -1,5 +1,5 @@
 {
-  "name": "text-to-speech",
+  "name": "phraseloop",
   "version": "0.1.0",
   "desktopName": "PhraseLoop",
   "private": true,
@@ -10,7 +10,9 @@
   "scripts": {
     "postinstall": "node scripts/fix-native-rpaths.mjs",
     "dev": "next dev",
+    "prebuild": "yarn learn:audio",
     "build": "next build",
+    "learn:audio": "node scripts/generate-learn-audio.mjs",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
@@ -24,7 +26,7 @@
   },
   "main": "electron/main.js",
   "build": {
-    "appId": "com.tiago.texttospeech",
+    "appId": "com.tiago.phraseloop",
     "productName": "PhraseLoop",
     "files": [
       "electron/**/*",

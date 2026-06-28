@@ -4,7 +4,8 @@ import type { PhraseCandidate } from "@/lib/cards/schema";
 import { isProviderAvailable, resolveProvider } from "@/lib/cards/registry";
 import type { ProviderKind } from "@/lib/cards/provider";
 import { getDefaultProvider } from "@/server/aiSettings";
-import { isProviderKind, readJsonObject, safeString } from "@/server/http/validation";
+import { isHttpError, isProviderKind, readJsonObject, safeString } from "@/server/http/validation";
+import { languageLabel } from "@/features/settings/languages";
 import { MAX_CORRECTION_JSON_BYTES } from "@/lib/constants";
 import { logger } from "@/lib/logger";
 import { MAX_THEME_CHARS } from "@/app/api/cards/_lib/constants";
@@ -19,7 +20,15 @@ export const runtime = "nodejs";
 export const maxDuration = 120;
 
 export async function POST(req: NextRequest) {
-  const obj = await readJsonObject(req, { maxBytes: MAX_CORRECTION_JSON_BYTES });
+  let obj: Awaited<ReturnType<typeof readJsonObject>>;
+  try {
+    obj = await readJsonObject(req, { maxBytes: MAX_CORRECTION_JSON_BYTES });
+  } catch (err) {
+    if (isHttpError(err)) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
+    throw err;
+  }
   if (!obj) return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
 
   const theme = safeString(obj.theme, "", MAX_THEME_CHARS);
@@ -31,13 +40,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: `${kind} provider is unavailable.` }, { status: 400 });
   }
 
+  const sourceLang = safeString(obj.sourceLang, "pt", 16);
+  const targetLang = safeString(obj.targetLang, "en", 16);
+  const targetLabel = languageLabel(targetLang);
   const model = safeString(obj.ollamaModel, "", 100) || undefined;
-  const provider = resolveProvider(kind, { model });
+  const provider = resolveProvider(kind, { learnerLang: sourceLang, targetLang, model });
   let phrases: string[] = [];
 
   if (provider.converse) {
     const prompt = [
-      `Generate ${count} natural, useful English phrases for this theme: ${theme}.`,
+      `Generate ${count} natural, useful ${targetLabel} phrases for this theme: ${theme}.`,
       `Return exactly one phrase per line.`,
       `No numbering, no translations, no explanations.`,
       `Prefer phrases a learner can actually say in the situation.`,
@@ -45,9 +57,9 @@ export async function POST(req: NextRequest) {
     try {
       const text = await provider.converse([], {
         scenario: prompt,
-        targetLang: "en",
-        sourceLang: "pt",
-        level: safeString(obj.level, "B1", 8),
+        targetLang,
+        sourceLang,
+        level: safeString(obj.level, "A1", 8),
       }, { signal: req.signal, timeoutMs: 60_000 });
       phrases = linesFromText(text);
     } catch (error) {

@@ -34,10 +34,29 @@ export function DeckPreview({
   onDismiss,
   onExported,
 }: DeckPreviewProps) {
-  const [busy, setBusy] = useState<"apkg" | "anki" | null>(null);
+  const [busy, setBusy] = useState<"apkg" | "anki" | "save" | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const cards = data.cards ?? [];
   const filename = data.filename || defaultFilename;
+
+  // Local-first: saving to your own study set is the primary action; Anki export is secondary.
+  const saveAndStudy = async () => {
+    setBusy("save");
+    setNote(null);
+    try {
+      await persist(cards);
+      onExported?.();
+      if (onStudyNow) {
+        onStudyNow();
+      } else {
+        setNote(`Saved ${cards.length} card${cards.length === 1 ? "" : "s"} to study.`);
+      }
+    } catch (error) {
+      setNote(error instanceof Error ? error.message : "Could not save the deck.");
+    } finally {
+      setBusy(null);
+    }
+  };
 
   const exportDeck = async (preferAnkiConnect: boolean) => {
     setBusy(preferAnkiConnect ? "anki" : "apkg");
@@ -65,39 +84,51 @@ export function DeckPreview({
         <div className="min-w-0">
           <p className="truncate text-sm font-medium text-ink">{title}</p>
           <p className="text-xs text-ink-muted">
-            {cards.length} card{cards.length === 1 ? "" : "s"} ready to export
+            {cards.length} card{cards.length === 1 ? "" : "s"} ready to study
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {data.apkg && (
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={busy !== null}
+                onClick={() => void exportDeck(true)}
+              >
+                {busy === "anki" ? "Sending…" : "Send to Anki"}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={busy !== null}
+                onClick={() => void exportDeck(false)}
+              >
+                {busy === "apkg" ? "Exporting…" : "Export APKG"}
+              </Button>
+            </>
+          )}
           <Button
-            variant="secondary"
+            variant="ghost"
             size="sm"
             onClick={() => setNote(exportCardsCsv(cards, `${basename(filename, ".csv")}.csv`))}
           >
             CSV
           </Button>
           <Button
-            variant="secondary"
+            variant="ghost"
             size="sm"
             onClick={() => setNote(exportCardsText(cards, `${basename(filename, ".txt")}.txt`))}
           >
             Text
           </Button>
           <Button
-            variant="secondary"
-            size="sm"
-            disabled={busy !== null}
-            onClick={() => void exportDeck(true)}
-          >
-            {busy === "anki" ? "Sending…" : "Send to Anki"}
-          </Button>
-          <Button
             variant="primary"
             size="sm"
             disabled={busy !== null}
-            onClick={() => void exportDeck(false)}
+            onClick={() => void saveAndStudy()}
           >
-            {busy === "apkg" ? "Exporting…" : "Export APKG"}
+            {busy === "save" ? "Saving…" : onStudyNow ? "Save & study now" : "Save to study"}
           </Button>
           {onDismiss && (
             <Button variant="ghost" size="sm" onClick={onDismiss}>

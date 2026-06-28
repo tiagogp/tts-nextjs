@@ -13,8 +13,8 @@ import {
   type ReviewRecord,
 } from "@/lib/store/repository";
 import { computePerformance, computeWeeklyActivity, detectWeaknesses, type Weakness } from "@/lib/srs/analytics";
-import { getLearningProfile } from "@/features/settings/learningProfile";
-import { getWeeklyGoal } from "@/features/study/weeklyGoal";
+import { DEFAULT_LEARNING_PROFILE, getLearningProfile } from "@/features/settings/learningProfile";
+import { DEFAULT_WEEKLY_GOAL, getWeeklyGoal } from "@/features/study/weeklyGoal";
 
 export function HomeDashboard({
   onDiscover,
@@ -32,8 +32,8 @@ export function HomeDashboard({
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [topWeakness, setTopWeakness] = useState<Weakness | null>(null);
   const [now, setNow] = useState(0);
-  const [profile] = useState(getLearningProfile);
-  const [weeklyGoal] = useState(getWeeklyGoal);
+  const [profile, setProfile] = useState(DEFAULT_LEARNING_PROFILE);
+  const [weeklyGoal, setWeeklyGoal] = useState(DEFAULT_WEEKLY_GOAL);
 
   useEffect(() => {
     if (!isStoreAvailable()) return;
@@ -56,6 +56,16 @@ export function HomeDashboard({
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  useEffect(() => {
+    const loadProfile = () => {
+      setProfile(getLearningProfile());
+      setWeeklyGoal(getWeeklyGoal());
+    };
+    loadProfile();
+    window.addEventListener("phraseloop:profile-updated", loadProfile);
+    return () => window.removeEventListener("phraseloop:profile-updated", loadProfile);
   }, []);
 
   const referenceNow = now || reviews[0]?.reviewedAt || conversations[0]?.startedAt || 0;

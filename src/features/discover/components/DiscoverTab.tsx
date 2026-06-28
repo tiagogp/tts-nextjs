@@ -16,17 +16,15 @@ import { useDeckGeneration } from "@/features/cards/hooks/useDeckGeneration";
 import type { DeckPayload } from "@/features/cards/exportDeck";
 import { ProviderPicker } from "@/features/cards/components/ProviderPicker";
 import { DeckPreview } from "@/features/cards/components/DeckPreview";
-import { HomeDashboard } from "@/features/discover/components/HomeDashboard";
-import { TodayCard } from "@/features/plan/components/TodayCard";
-import { WeeklyEffortCard } from "@/features/plan/components/WeeklyEffortCard";
-import { PlanCalendar } from "@/features/plan/components/PlanCalendar";
 import { SourcePicker } from "@/features/discover/components/SourcePicker";
 import { TranscriptReview } from "@/features/discover/components/TranscriptReview";
 import { ENGLISH_LEVELS, GENERATION_TIMEOUT_MS } from "@/features/discover/constants";
 import type { DiscoverResult, DiscoverSourceKind, EnglishLevel, TranscriptSegment } from "@/features/discover/types";
 import { curateDiscoverSegments, extractDiscoverSource, generateDiscoverDeck } from "@/features/discover/api";
-import { getLearningProfile } from "@/features/settings/learningProfile";
+import { DEFAULT_LEARNING_PROFILE, getLearningProfile } from "@/features/settings/learningProfile";
+import { demoResult, demoDeckFor } from "@/features/discover/demo/demoFixture";
 import { emitActivity } from "@/lib/store/activityLog";
+import { useT } from "@/i18n/I18nProvider";
 
 function waitForAudioEvent(
   audio: HTMLAudioElement,
@@ -52,21 +50,17 @@ function waitForAudioEvent(
 export default function DiscoverTab({
   onOpenSettings,
   onStudyNow,
-  onSpeakNow,
-  onCorrectNow,
 }: {
   onOpenSettings?: () => void;
   onStudyNow?: () => void;
-  onSpeakNow?: () => void;
-  onCorrectNow?: () => void;
 }) {
+  const { t } = useT();
   const { loading: settingsLoading } = useAiSettings();
-  const [profile] = useState(getLearningProfile);
   const [sourceKind, setSourceKind] = useState<DiscoverSourceKind>("youtube");
   const [url, setUrl] = useState("");
   const [file, setFile] = useState<File | null>(null);
-  const [focus, setFocus] = useState(profile.focus);
-  const [targetLevel, setTargetLevel] = useState<EnglishLevel>(profile.level);
+  const [focus, setFocus] = useState(DEFAULT_LEARNING_PROFILE.focus);
+  const [targetLevel, setTargetLevel] = useState<EnglishLevel>(DEFAULT_LEARNING_PROFILE.level);
   const [loading, setLoading] = useState(false);
   const [curating, setCurating] = useState(false);
   const [downloadingModel, setDownloadingModel] = useState(false);
@@ -80,9 +74,12 @@ export default function DiscoverTab({
   } | null>(null);
   const [kept, setKept] = useState<Set<number>>(new Set());
   const [playing, setPlaying] = useState<number | null>(null);
+  // The "Try demo" run uses bundled phrases + cards and bypasses the AI provider
+  // entirely, so a new user can complete the loop with zero setup.
+  const [demoMode, setDemoMode] = useState(false);
 
   const selection = useProviderSelection();
-  const { provider, activeProvider, providerReady, selectedModel } = selection;
+  const { provider, providerReady, selectedModel } = selection;
 
   const generation = useDeckGeneration({
     timeoutMs: GENERATION_TIMEOUT_MS,
@@ -114,6 +111,17 @@ export default function DiscoverTab({
   const playRequestRef = useRef(0);
   const sourceInputRef = useRef<HTMLInputElement | null>(null);
 
+  useEffect(() => {
+    const loadProfile = () => {
+      const nextProfile = getLearningProfile();
+      setFocus(nextProfile.focus);
+      setTargetLevel(nextProfile.level);
+    };
+    loadProfile();
+    window.addEventListener("phraseloop:profile-updated", loadProfile);
+    return () => window.removeEventListener("phraseloop:profile-updated", loadProfile);
+  }, []);
+
   useEffect(
     () => () => {
       if (pollRef.current) window.clearInterval(pollRef.current);
@@ -133,8 +141,17 @@ export default function DiscoverTab({
         setPlaying(null);
       }
     };
+    // Bundled clips (demo) play to their natural end rather than to a timestamp.
+    const onEnded = () => {
+      stopAtRef.current = null;
+      setPlaying(null);
+    };
     audio.addEventListener("timeupdate", onTimeUpdate);
-    return () => audio.removeEventListener("timeupdate", onTimeUpdate);
+    audio.addEventListener("ended", onEnded);
+    return () => {
+      audio.removeEventListener("timeupdate", onTimeUpdate);
+      audio.removeEventListener("ended", onEnded);
+    };
   }, [result]);
 
   const playClip = useCallback(
@@ -148,6 +165,27 @@ export default function DiscoverTab({
         audio.pause();
         stopAtRef.current = null;
         setPlaying(null);
+        return;
+      }
+
+      // Bundled per-segment clip (demo): swap the source and play it whole.
+      if (seg.clipUrl) {
+        audio.pause();
+        stopAtRef.current = null;
+        setPlaying(null);
+        if (audio.src !== new URL(seg.clipUrl, window.location.href).href) {
+          audio.src = seg.clipUrl;
+          audio.load();
+          await waitForAudioEvent(audio, "loadedmetadata");
+          if (playRequestRef.current !== requestId) return;
+        }
+        audio.currentTime = 0;
+        try {
+          await audio.play();
+          if (playRequestRef.current === requestId) setPlaying(index);
+        } catch {
+          if (playRequestRef.current === requestId) setPlaying(null);
+        }
         return;
       }
 
@@ -185,11 +223,14 @@ export default function DiscoverTab({
   );
 
   const hasSource = sourceKind === "pdf" ? file !== null : url.trim().length > 0;
-  const canRun = hasSource && providerReady;
+  // Importing/transcribing a source never needs the AI provider — only curation
+  // (auto-picking phrases) and card generation do. Let people try the source step first.
+  const canRun = hasSource;
 
   const extract = useCallback(async () => {
     if (sourceKind === "pdf" ? !file : !url.trim()) return;
     setLoading(true);
+    setDemoMode(false);
     setError(null);
     setResult(null);
     setKept(new Set());
@@ -222,6 +263,13 @@ export default function DiscoverTab({
           : undefined,
       });
       setResult(data);
+
+      // Auto-curation needs the AI provider. Without it, still show the
+      // transcript so people can hand-pick phrases; cards stay gated later.
+      if (!providerReady) {
+        setCurationNote("Connect AI in Settings to auto-pick phrases. For now, tap the phrases you want to keep.");
+        return;
+      }
 
       setCurating(true);
       try {
@@ -258,7 +306,7 @@ export default function DiscoverTab({
       setDownloadingModel(false);
       setTranscribeProgress(null);
     }
-  }, [sourceKind, url, file, provider, selectedModel, focus, targetLevel, setGenError, setGenDone]);
+  }, [sourceKind, url, file, provider, providerReady, selectedModel, focus, targetLevel, setGenError, setGenDone]);
 
   const toggleKeep = (index: number) => {
     setKept((prev) => {
@@ -271,8 +319,55 @@ export default function DiscoverTab({
     setDeckPreview(null);
   };
 
+  // Drop the user straight into the review step with bundled phrases — no source,
+  // no model download, no AI provider. The aha is the loop itself.
+  const startDemo = useCallback(() => {
+    audioRef.current?.pause();
+    setError(null);
+    setGenError(null);
+    setGenDone(null);
+    setDeckPreview(null);
+    setPlaying(null);
+    setDemoMode(true);
+    setResult(demoResult);
+    setKept(new Set(demoResult.segments.map((_, i) => i)));
+    setCurationNote(t("Example content — tap to listen, then uncheck anything you don't want."));
+  }, [setGenError, setGenDone, t]);
+
+  // Clear the demo and return to the empty import state. Stable card ids mean a
+  // re-run overwrites rather than duplicates, but a learner who wants their own
+  // captures clean can wipe the sample's cards too via Settings → clear data.
+  const clearDemo = useCallback(() => {
+    audioRef.current?.pause();
+    setDemoMode(false);
+    setResult(null);
+    setKept(new Set());
+    setPlaying(null);
+    setCurationNote(null);
+    setDeckPreview(null);
+    setGenDone(null);
+    setGenError(null);
+  }, [setGenDone, setGenError]);
+
+  // Let the "Hoje" home start the demo by deep-linking into Discover.
+  useEffect(() => {
+    const onStartDemo = () => startDemo();
+    window.addEventListener("phraseloop:start-demo", onStartDemo);
+    return () => window.removeEventListener("phraseloop:start-demo", onStartDemo);
+  }, [startDemo]);
+
   const generateCards = useCallback(async () => {
-    if (!result || kept.size === 0 || !providerReady) return;
+    if (!result || kept.size === 0) return;
+
+    // Demo: build the deck from bundled cards instead of calling the provider.
+    if (demoMode) {
+      const { candidates, cards } = demoDeckFor(kept);
+      setDeckPreview({ data: { cards, count: cards.length }, candidates });
+      setGenDone(`${cards.length} card${cards.length === 1 ? "" : "s"} ready to preview.`);
+      return;
+    }
+
+    if (!providerReady) return;
 
     // Accepted phrases → PhraseCandidates (the source of truth we persist, D1).
     // Timestamps drive the native clip, so they only travel for audio sources;
@@ -298,34 +393,10 @@ export default function DiscoverTab({
       setDeckPreview({ data, candidates });
       return `${cardsCreated} card${cardsCreated === 1 ? "" : "s"} ready to preview.`;
     });
-  }, [result, kept, provider, providerReady, selectedModel, run]);
+  }, [result, kept, demoMode, provider, providerReady, selectedModel, run, setGenDone, setDeckPreview, url]);
 
   return (
     <div className="space-y-5">
-      <TodayCard
-        onDiscover={() => sourceInputRef.current?.focus()}
-        onStudy={onStudyNow}
-        onConverse={onSpeakNow}
-        onCorrect={onCorrectNow}
-        onOpenSettings={onOpenSettings}
-      />
-
-      <WeeklyEffortCard />
-
-      <PlanCalendar
-        onDiscover={() => sourceInputRef.current?.focus()}
-        onStudy={onStudyNow}
-        onConverse={onSpeakNow}
-        onCorrect={onCorrectNow}
-      />
-
-      <HomeDashboard
-        onDiscover={() => sourceInputRef.current?.focus()}
-        onStudy={onStudyNow}
-        onSpeak={onSpeakNow}
-        onCorrect={onCorrectNow}
-      />
-
       <Card className="space-y-4 p-5">
         <div className="space-y-1">
           <p className="text-sm font-semibold tracking-[-0.01em] text-ink">Turn real English into practice</p>
@@ -342,6 +413,7 @@ export default function DiscoverTab({
             setSourceKind(kind);
             setError(null);
             setResult(null);
+            setDemoMode(false);
             setCurationNote(null);
           }}
         />
@@ -406,14 +478,14 @@ export default function DiscoverTab({
         </Disclosure>
 
         {!providerReady && !settingsLoading && (
-          <Notice tone="error" role="status">
-            {activeProvider?.label ?? "The selected AI provider"} is unavailable.{" "}
+          <Notice tone="default" role="status">
+            You can import and read a source now. To auto-pick phrases and make cards, connect AI{" "}
             {onOpenSettings ? (
               <button onClick={onOpenSettings} className="underline hover:no-underline">
-                Open Settings →
+                in Settings →
               </button>
             ) : (
-              "Open Settings with the gear icon to connect it."
+              "in Settings (gear icon)."
             )}
           </Notice>
         )}
@@ -442,6 +514,25 @@ export default function DiscoverTab({
             "Find phrases to learn"
           )}
         </Button>
+
+        {!result && !loading && (
+          <div className="flex items-center gap-3 text-xs text-ink-muted">
+            <span className="h-px flex-1 bg-line" />
+            <span>{t("or")}</span>
+            <span className="h-px flex-1 bg-line" />
+          </div>
+        )}
+
+        {!result && !loading && (
+          <Button
+            variant="ghost"
+            size="lg"
+            className="min-h-10"
+            onClick={startDemo}
+          >
+            {t("Try an example")}
+          </Button>
+        )}
 
         {loading && transcribeProgress?.stage === "transcribe" && (
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-line">
@@ -476,6 +567,19 @@ export default function DiscoverTab({
         )}
       </Card>
 
+      {demoMode && result && (
+        <div className="flex items-center justify-between gap-3 rounded border border-line bg-surface px-3 py-2 text-xs text-ink-soft">
+          <span>{t("This is sample content, not your own captures.")}</span>
+          <button
+            type="button"
+            onClick={clearDemo}
+            className="shrink-0 underline transition-colors hover:text-ink hover:no-underline"
+          >
+            {t("Clear example")}
+          </button>
+        </div>
+      )}
+
       {result && (
         <TranscriptReview
           result={result}
@@ -488,7 +592,7 @@ export default function DiscoverTab({
           genDone={genDone}
           generationStage={generationStage}
           generationSeconds={generationSeconds}
-          providerReady={providerReady}
+          providerReady={providerReady || demoMode}
           onGenerate={generateCards}
           onCancel={cancelGeneration}
           onToggleKeep={toggleKeep}

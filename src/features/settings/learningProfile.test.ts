@@ -42,10 +42,14 @@ describe("learning profile", () => {
   it("returns defaults when storage is empty", () => {
     installStorage();
     expect(getLearningProfile()).toMatchObject({
-      level: "B2",
+      level: "A1",
+      nativeLang: "pt",
+      targetLang: "en",
+      track: "beginner",
       focus: "",
       goal: 3,
       onboardingCompleted: false,
+      unlockedTabTier: 0,
     });
   });
 
@@ -59,28 +63,52 @@ describe("learning profile", () => {
   it("persists and reloads level, focus, and completion", () => {
     installStorage();
     completeOnboarding({
-      level: "C1",
+      level: "A2",
       focus: "job interviews",
       goal: 4,
       createdAt: 123,
     });
     expect(isOnboardingComplete()).toBe(true);
     expect(getLearningProfile()).toMatchObject({
-      level: "C1",
+      level: "A2",
       focus: "job interviews",
       goal: 4,
       createdAt: 123,
       onboardingCompleted: true,
+      unlockedTabTier: 0,
     });
+  });
+
+  it("persists the monotonic unlocked tab tier", () => {
+    installStorage();
+    expect(saveLearningProfile({ unlockedTabTier: 2 }).unlockedTabTier).toBe(2);
+    expect(saveLearningProfile({ unlockedTabTier: 99 }).unlockedTabTier).toBe(3);
+    expect(saveLearningProfile({ unlockedTabTier: -1 }).unlockedTabTier).toBe(3);
   });
 
   it("falls back safely when localStorage is unavailable", () => {
     vi.stubGlobal("localStorage", undefined);
     expect(getLearningProfile()).toMatchObject({
-      level: "B2",
+      level: "A1",
       goal: 3,
       onboardingCompleted: false,
     });
     expect(() => saveLearningProfile({ focus: "travel" })).not.toThrow();
+  });
+
+  it("accepts every CEFR level while keeping the supported language scope", () => {
+    installStorage();
+    const profile = saveLearningProfile({
+      level: "C1",
+      nativeLang: "es",
+      targetLang: "fr",
+      track: "intermediate",
+    });
+    expect(profile).toMatchObject({
+      level: "C1",
+      nativeLang: "pt",
+      targetLang: "en",
+      track: "beginner",
+    });
   });
 });
