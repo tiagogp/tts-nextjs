@@ -296,7 +296,7 @@ function ProgressCheckInCard({
 
       {!hasEvaluator && (
         <p className="mt-2 text-xs text-ink-muted">
-          Connect an AI provider to evaluate the writing sample. Saving still records the measurable progress signals.
+          Connect IA to evaluate the writing sample. Saving still records the measurable progress signals.
         </p>
       )}
       {hasEvaluator && writing.trim().length > 0 && writing.trim().length < 40 && (
@@ -306,7 +306,7 @@ function ProgressCheckInCard({
       )}
       {hasEvaluator && (
         <p className="mt-2 text-xs text-ink-muted">
-          Provider: {activeProvider?.label ?? provider}
+          IA: {activeProvider?.label ?? provider}
         </p>
       )}
 

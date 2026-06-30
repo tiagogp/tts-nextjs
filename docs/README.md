@@ -261,12 +261,12 @@ surface; everything past it reuses the existing provider pipeline and `.apkg` en
 
 The current product sequencing is now owned by [product.md](product.md):
 
-1. Commit to one identity: Portuguese-speaking English learners, PT -> EN, desktop first.
+1. Commit to one identity: Portuguese-speaking serious self-study/Anki learners, PT -> EN, desktop first.
 2. Engineer the 5-minute zero-config wow: URL or bundled demo -> native-audio cards ->
    first review, with no keys and no Ollama required.
 3. Ship exactly one calm re-engagement pull.
-4. Refocus IA on Discover -> Study -> Correct; move Tools/Speech to secondary surfaces and
-   keep Converse/Plan/cycle UI as depth.
+4. Refocus IA on Discover -> Study -> Correct; keep provider setup, Tools/Speech, Anki export,
+   Converse/Plan/cycle UI hidden as depth until the core loop is understood.
 5. Scope review-anywhere for the SRS habit.
 6. Freeze new adaptive-difficulty work until 1-5 are real.
 7. Deepen the tutor only after the habit loop is working.

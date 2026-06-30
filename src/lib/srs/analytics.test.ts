@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { computeWeeklyActivity, detectWeaknesses } from "./analytics";
+import {
+  computeReturnAfterMiss,
+  computeWeeklyActivity,
+  detectWeaknesses,
+} from "./analytics";
 import { Rating, State, type Grade } from "./fsrs";
 import type { Conversation, ReviewRecord } from "@/lib/store/repository";
 
@@ -82,5 +86,55 @@ describe("computeWeeklyActivity", () => {
     expect(activity.conversations).toBe(2);
     expect(activity.turns).toBe(5); // 3 + 2 learner turns; assistant turns ignored
     expect(activity.reviews).toBe(1);
+  });
+});
+
+describe("computeReturnAfterMiss (W7)", () => {
+  const now = Date.parse("2026-06-28T12:00:00Z");
+  const dayMs = 86_400_000;
+  const daysAgo = (n: number) => now - n * dayMs;
+
+  it("reports a clean state with no review history", () => {
+    const r = computeReturnAfterMiss([], now);
+    expect(r.activeDays).toBe(0);
+    expect(r.missGaps).toBe(0);
+    expect(r.returnRate).toBe(1);
+    expect(r.currentlyMissing).toBe(true);
+  });
+
+  it("counts no miss gaps for consecutive daily reviews", () => {
+    const reviews = [0, 1, 2, 3].map((d) =>
+      review({ grade: Rating.Good, reviewedAt: daysAgo(d) }),
+    );
+    const r = computeReturnAfterMiss(reviews, now);
+    expect(r.activeDays).toBe(4);
+    expect(r.missGaps).toBe(0);
+    expect(r.longestGapDays).toBe(1);
+    expect(r.returnRate).toBe(1);
+    expect(r.daysSinceLastReview).toBe(0);
+    expect(r.currentlyMissing).toBe(false);
+  });
+
+  it("classifies a prompt return and a long-gap return", () => {
+    // active days (ago): 12, 9 (gap 3 → prompt), 8, 0 (gap 8 → long).
+    const reviews = [12, 9, 8, 0].map((d) =>
+      review({ grade: Rating.Good, reviewedAt: daysAgo(d) }),
+    );
+    const r = computeReturnAfterMiss(reviews, now);
+    expect(r.activeDays).toBe(4);
+    expect(r.missGaps).toBe(2);
+    expect(r.promptReturns).toBe(1);
+    expect(r.returnRate).toBeCloseTo(1 / 2);
+    expect(r.longestGapDays).toBe(8);
+    expect(r.daysSinceLastReview).toBe(0);
+  });
+
+  it("flags an active drop-off when the last review was days ago", () => {
+    const reviews = [review({ grade: Rating.Good, reviewedAt: daysAgo(4) })];
+    const r = computeReturnAfterMiss(reviews, now);
+    expect(r.daysSinceLastReview).toBe(4);
+    expect(r.currentlyMissing).toBe(true);
+    // a single active day has no consecutive gaps yet
+    expect(r.missGaps).toBe(0);
   });
 });

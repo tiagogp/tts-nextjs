@@ -7,8 +7,10 @@ import AppHeader from "@/components/app/AppHeader";
 import { type HomeTab } from "@/components/app/homeTabs";
 import AppProviders from "@/components/app/AppProviders";
 import { useUnlockedTabs } from "@/components/app/useUnlockedTabs";
+import { useDockDueBadge } from "@/components/app/useDockDueBadge";
 import ConverseTab from "@/features/converse/components/ConverseTab";
 import CorrectTab from "@/features/correct/components/CorrectTab";
+import { startFirstRunActivation } from "@/features/activation/firstRun";
 import DiscoverTab from "@/features/discover/components/DiscoverTab";
 import { LEVEL_RANK } from "@/features/discover/levels";
 import { HojeHome } from "@/features/home/components/HojeHome";
@@ -56,7 +58,7 @@ function TabContent({
   onOpenSettings: () => void;
   onOpenDiscover: () => void;
   onOpenPractice: () => void;
-  onOpenConversation: () => void;
+  onOpenConversation?: () => void;
   onOpenCorrect: () => void;
   onTryDemo: () => void;
   onOpenLesson: (lessonId?: string) => void;
@@ -64,13 +66,10 @@ function TabContent({
   if (tab === "hoje") {
     return (
       <HojeHome
-        onDiscover={onOpenDiscover}
         onStudy={onOpenPractice}
-        onSpeak={onOpenConversation}
         onCorrect={onOpenCorrect}
         onTryDemo={onTryDemo}
         onLesson={onOpenLesson}
-        onOpenSettings={onOpenSettings}
       />
     );
   }
@@ -78,12 +77,13 @@ function TabContent({
     return <DiscoverTab onOpenSettings={onOpenSettings} onStudyNow={onOpenPractice} />;
   }
   if (tab === "study") return <StudyTab onDiscover={onOpenDiscover} onConversation={onOpenConversation} />;
-  if (tab === "speak") return <ConverseTab onOpenSettings={onOpenSettings} />;
   if (tab === "correct") return <CorrectTab onOpenSettings={onOpenSettings} onStudyNow={onOpenPractice} />;
   return null;
 }
 
-type Overlay = "settings" | "tools" | null;
+// Conversation/VAD is demoted out of the primary tabs (W3) but stays fully
+// functional, reachable as an overlay rather than a phantom tab.
+type Overlay = "settings" | "tools" | "converse" | null;
 
 function HomeContent() {
   const { t } = useT();
@@ -91,8 +91,10 @@ function HomeContent() {
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [lessonId, setLessonId] = useState<string | null>(null);
   const lessonRequestRef = useRef(0);
-  const { tabs, announcement, clearAnnouncement } = useUnlockedTabs();
+  const { tabs, tier, announcement, clearAnnouncement } = useUnlockedTabs();
   const activeTab = tabs.some((item) => item.id === tab) ? tab : "hoje";
+  const advancedSurfacesUnlocked = tier >= 3;
+  useDockDueBadge();
 
   useEffect(() => {
     if (!announcement) return;
@@ -106,11 +108,17 @@ function HomeContent() {
     setLessonId(null);
   };
 
-  // "Hoje" → Try example: open the bundled B1 sample through the same lesson
-  // surface used by the beginner path.
+  // "Hoje" -> Start: open the learner's recommended bundled lesson through the
+  // same save -> review path used after custom discovery.
   const startDemo = () => {
     setOverlay(null);
-    setLessonId("b1-everyday-demo");
+    const requestId = lessonRequestRef.current + 1;
+    lessonRequestRef.current = requestId;
+    void recommendedLessonId().then((resolvedLessonId) => {
+      if (lessonRequestRef.current !== requestId) return;
+      startFirstRunActivation(resolvedLessonId);
+      setLessonId(resolvedLessonId);
+    });
   };
 
   const openLesson = (nextLessonId?: string) => {
@@ -158,7 +166,28 @@ function HomeContent() {
               </section>
             ) : overlay === "settings" ? (
               <div className="h-full overflow-y-auto pb-16 app-scroll-region sm:pb-20">
-                <SettingsScreen onBack={() => setOverlay(null)} onOpenTools={() => setOverlay("tools")} />
+                <SettingsScreen
+                  onBack={() => setOverlay(null)}
+                  onOpenTools={advancedSurfacesUnlocked ? () => setOverlay("tools") : undefined}
+                  showAdvancedAi={advancedSurfacesUnlocked}
+                />
+              </div>
+            ) : overlay === "converse" ? (
+              <div className="h-full overflow-y-auto pb-16 app-scroll-region sm:pb-20">
+                <div className="mx-auto max-w-5xl px-4 py-6 sm:py-8">
+                  <div className="mb-6 flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setOverlay(null)}
+                      className="rounded-md border border-line px-2.5 py-1.5 text-sm text-ink-soft transition-colors hover:text-ink"
+                      aria-label="Back"
+                    >
+                      ←
+                    </button>
+                    <h2 className="text-xl font-semibold text-ink">{t("Speak")}</h2>
+                  </div>
+                  <ConverseTab onOpenSettings={() => setOverlay("settings")} />
+                </div>
               </div>
             ) : overlay === "tools" ? (
               <div className="h-full overflow-y-auto pb-16 app-scroll-region sm:pb-20">
@@ -173,9 +202,9 @@ function HomeContent() {
                       ←
                     </button>
                     <div>
-                      <h2 className="text-xl font-semibold text-ink">Tools</h2>
+                      <h2 className="text-xl font-semibold text-ink">Advanced tools</h2>
                       <p className="text-sm text-ink-muted">
-                        Text-to-speech, theme phrase decks, and JSON-to-Anki export.
+                        Export to Anki, text-to-speech, and theme phrase lists.
                       </p>
                     </div>
                   </div>
@@ -208,7 +237,14 @@ function HomeContent() {
                         onOpenSettings={() => setOverlay("settings")}
                         onOpenDiscover={() => changeTab("discover")}
                         onOpenPractice={() => changeTab("study")}
-                        onOpenConversation={() => changeTab("speak")}
+                        onOpenConversation={
+                          advancedSurfacesUnlocked
+                            ? () => {
+                                setLessonId(null);
+                                setOverlay("converse");
+                              }
+                            : undefined
+                        }
                         onOpenCorrect={() => changeTab("correct")}
                         onTryDemo={startDemo}
                         onOpenLesson={openLesson}

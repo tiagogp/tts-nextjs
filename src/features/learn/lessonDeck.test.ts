@@ -21,8 +21,8 @@ describe("lessonDeck", () => {
     expect(first.cards.map((card) => card.id)).toEqual(second.cards.map((card) => card.id));
     expect(first.cards[0]).toMatchObject({
       id: `lesson-${lesson.id}-card-0`,
-      front: lesson.phrases[0].pt,
-      back: lesson.phrases[0].en,
+      front: lesson.phrases[0].en,
+      back: lesson.phrases[0].pt,
       source: { kind: "phrase", id: `lesson-${lesson.id}-0` },
       audioClipPath: lesson.phrases[0].clip,
     });

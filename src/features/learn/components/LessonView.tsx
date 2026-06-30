@@ -6,6 +6,7 @@ import { Card as PanelCard } from "@/components/ui/Card";
 import { Notice } from "@/components/ui/Notice";
 import { TranscriptReview } from "@/features/discover/components/TranscriptReview";
 import type { DiscoverResult, TranscriptSegment } from "@/features/discover/types";
+import { markFirstRunPhrasesSaved } from "@/features/activation/firstRun";
 import { buildDeckFromPhrases, firstLesson, lessonById, type Lesson } from "@/features/learn/lessonDeck";
 import { PronunciationCoach } from "@/features/pronunciation/components/PronunciationCoach";
 import { saveGeneratedDeck } from "@/lib/store/repository";
@@ -139,11 +140,16 @@ function LessonViewContent({
     try {
       const deck = buildDeckFromPhrases(`lesson-${lesson.id}`, lesson.phrases, kept);
       const result = await saveGeneratedDeck(deck.cards, deck.candidates);
-      void emitActivity("cards_created", { count: deck.cards.length, source: "learn" });
+      const activation = markFirstRunPhrasesSaved({ lessonId: lesson.id });
+      void emitActivity("cards_created", {
+        count: deck.cards.length,
+        source: "learn",
+        activation,
+      });
       setDone(
         result.added === 0
-          ? t("Lesson already saved. Study is ready.")
-          : t("{count} cards saved. Study is ready.", { count: result.added }),
+          ? t("Lesson already saved. Review is ready.")
+          : t("{count} practice phrases saved. Review is ready.", { count: result.added }),
       );
       window.dispatchEvent(new CustomEvent("phraseloop:lesson-saved", { detail: { lessonId: lesson.id } }));
     } catch (err: unknown) {
@@ -161,7 +167,7 @@ function LessonViewContent({
             <p className="text-xs uppercase tracking-[0.7px] text-accent">{t(lesson.level)} · {t(lesson.topic)}</p>
             <h2 className="mt-1 text-xl font-semibold tracking-[-0.01em] text-ink">{t(lesson.title)}</h2>
             <p className="mt-1 text-sm text-ink-soft">
-              {t("Listen, keep the phrases you want, then save them to Study. No AI setup needed.")}
+              {t("Listen, save the phrases you want, then review them. No AI setup needed.")}
             </p>
           </div>
           {onBack && (
@@ -175,7 +181,7 @@ function LessonViewContent({
             <span>{done}</span>
             {onStudyNow && (
               <button type="button" onClick={onStudyNow} className="font-medium underline hover:no-underline">
-                {t("Study now")}
+                {t("Review now")}
               </button>
             )}
           </div>
@@ -192,7 +198,7 @@ function LessonViewContent({
         generating={saving}
         genError={error}
         genDone={done}
-        generationStage={t("Saving lesson cards…")}
+        generationStage={t("Saving practice phrases…")}
         generationSeconds={0}
         providerReady
         generateLabel={t("Save and study")}

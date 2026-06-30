@@ -39,7 +39,7 @@ export function CorrectionList({
   onRemove,
   onOpenSettings,
 }: CorrectionListProps) {
-  const showSettingsLink = Boolean(genError?.toLowerCase().includes("faster provider") && onOpenSettings);
+  const showSettingsLink = Boolean(genError?.toLowerCase().includes("faster ai") && onOpenSettings);
 
   return (
     <Card className="overflow-hidden">
@@ -63,7 +63,7 @@ export function CorrectionList({
               Cancel
             </>
           ) : (
-            "Generate cards →"
+            "Save to study →"
           )}
         </Button>
       </div>
@@ -86,7 +86,7 @@ export function CorrectionList({
             <span className="generation-bar" />
           </div>
           <p className="mt-1.5 text-[11px] text-ink-muted">
-            Larger decks can take a little longer while audio is created. You can cancel safely.
+            Larger study lists can take a little longer while audio is created. You can cancel safely.
           </p>
         </motion.div>
       )}

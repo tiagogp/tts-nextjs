@@ -1,8 +1,37 @@
 # PhraseLoop
 
-PhraseLoop helps Portuguese-speaking English learners turn real English into native-audio review cards and a calm daily study habit on desktop first.
+PhraseLoop helps Portuguese-speaking English self-study learners turn real English into native-audio review cards and a calm daily study habit on desktop first.
 
-PhraseLoop starts from native material, helps you keep useful phrases, generates focused cards, schedules review, corrects your output, and lets you practice conversation. Speech generation and transcription are still built in, but they support the learning loop rather than defining the whole product.
+PhraseLoop starts with a zero-setup lesson, then helps you keep useful phrases from native material, review them daily, correct your output, and turn weak spots into more practice. Speech generation, Anki export, Speak, custom plans, and AI provider setup are still built in, but they stay behind the core loop rather than defining the first experience.
+
+## Why PhraseLoop (vs. Anki or a chatbot)
+
+Two things a manual flashcard app and a generic chatbot don't do for you:
+
+- **Native source audio** — phrases come from real English you chose (a YouTube
+  clip, an article, a PDF) and review cards keep that native audio, not a robotic
+  re-read. _Native clip → saved phrase → next-day review card._
+- **Your mistakes become drills** — a correction isn't a dead-end note. Each fix
+  turns into a review card, and your weak spots feed back into more practice.
+  _Writing/speech mistake → corrected phrase → weak-spot reinforcement._
+
+Everything else — local spaced repetition, zero-setup first lesson, Anki export,
+local-first storage — exists to keep that loop calm and daily. Launch validation is gated by
+W5: users must reach first review quickly, explain the loop without jargon, notice native
+audio or mistake drills, and name a repeated paid pain before billing moves forward.
+
+### Head to head
+
+| What you need | Manual Anki | Generic chatbot | PhraseLoop |
+| --- | --- | --- | --- |
+| Get from native material to a review card | Find audio, trim it, build the note, type both sides | Paste text, copy the answer, build the card yourself elsewhere | Keep a phrase from the clip you chose — card is made for you |
+| Audio on the card | Whatever you can source and attach by hand | None, or a robotic re-read | The native clip you heard, kept on the card |
+| Your own mistakes | A note you have to turn into a card yourself | Lost when the chat scrolls away | Become review cards and feed your weak spots |
+| Knowing what to study tomorrow | You schedule it | The model has no memory of your reviews | Local spaced repetition picks the due cards |
+| Where your history lives | Local (with sync add-ons) | On someone else's server | Local-first, with JSON backup and validated restore |
+
+The two rows competitors can't copy cheaply are **native source audio** and **your
+mistakes become drills** — the rest is table stakes that PhraseLoop keeps in one loop.
 
 ## Stack
 
@@ -68,13 +97,17 @@ npm run app:download
 
 This packages the native runtime and writes a drag-to-Applications disk image
 to `dist/PhraseLoop-mac-arm64.dmg`. Share that file: the recipient
-opens the `.dmg`, drags **PhraseLoop** to **Applications**, and opens it once
-(right-click → Open the first time, since the app is ad-hoc signed). No Terminal
-window and no install script — the app clears its own download quarantine on
-first launch.
+opens the `.dmg`, drags **PhraseLoop** to **Applications**, and double-clicks to
+launch. No Terminal window and no install script.
 
-The first-run lesson and local speech features work without AI keys or Ollama. Provider setup is
-only needed for AI mining, card generation from your own sources, correction, and conversation:
+> A build signed and notarized with a Developer ID (set `APPLE_DEVELOPER_ID`
+> plus the notarytool credentials before `app:download`) launches with a plain
+> double-click. A local ad-hoc/dev build is unsigned, so the first launch still
+> needs **right-click → Open** to clear Gatekeeper.
+
+The first-run lesson and daily review work without AI keys or Ollama. Provider setup is an
+advanced path for AI mining, card generation from your own sources, correction, conversation,
+and custom plans:
 
 - If Ollama is running locally, PhraseLoop detects it automatically (`http://localhost:11434`).
 - If Ollama is not available, add one of these keys to `phraseloop.env`, then restart the app:
@@ -96,17 +129,18 @@ OLLAMA_MODEL=llama3.1
 
 ## Features
 
-- **Discover** — import YouTube audio, articles, or PDFs and keep phrases worth learning
-- **Study** — review generated cards with local spaced repetition
-- **Correct** — turn writing or transcribed speech mistakes into reviewable cards
-- **Speak** — practice conversation and reuse mistakes as learning material
-- **Tools** — local Kokoro text-to-speech, batch audio generation, and Anki export
-- **Local-first storage** — cards, reviews, plans, conversations, and source material live in IndexedDB with a JSON backup export from Settings
+- **Review** — study saved phrases with local spaced repetition
+- **First lesson** — save and review bundled practice phrases with no provider setup
+- **Phrases** — import YouTube audio, articles, or PDFs and keep phrases worth learning
+- **Mistakes** — turn writing or transcribed speech corrections into reviewable phrases
+- **Speak** — advanced conversation practice that reuses mistakes as learning material after the core loop is clear
+- **Advanced tools** — hidden depth for local Kokoro text-to-speech, theme phrase lists, and Anki export
+- **Local-first storage** — cards, reviews, plans, conversations, and source material live in IndexedDB with JSON backup export and validated restore from Settings
 - Dark / light / system theme
 
-## Discover (YouTube → transcript → phrases)
+## Phrases (YouTube → transcript → review)
 
-The **Discover** tab turns native content into learning material. Paste a YouTube URL; the
+The **Phrases** tab turns native content into learning material. Paste a YouTube URL; the
 app downloads the **audio only** (no video) with YouTube.js and transcribes it locally with
 [whisper.cpp](https://github.com/ggml-org/whisper.cpp), producing a timestamped
 transcript. Each segment can be played back as its **native audio clip** and marked to keep.
@@ -118,12 +152,13 @@ Audio decoding uses in-process WebAssembly; Homebrew and ffmpeg are not required
 > [docs/product.md](docs/product.md). Architecture and shipped feature history live in
 > [docs/README.md](docs/README.md).
 
-## Card AI providers
+## Advanced AI Providers
 
 Card mining, generation, the quality critique, conversation, and free-text correction run through a
-pluggable provider. Open **Settings → AI Provider** to choose the global default, test a
-connection, or override the provider for one Discover/Correct task. Ollama is the default;
-PhraseLoop never sends content to a cloud provider unless you explicitly select it.
+pluggable provider. The first lesson and first review do not show provider setup. After the
+core loop is understood, **Settings → Advanced AI for custom content** lets you choose the global
+default, test a connection, or override the provider for one Discover/Correct task. Ollama is the
+default; PhraseLoop never sends content to a cloud provider unless you explicitly select it.
 
 | Provider | Evaluates free text? | How to enable |
 | --- | --- | --- |
@@ -147,7 +182,7 @@ to the local backend without restarting PhraseLoop. Ollama uses its OpenAI-compa
 depends on the model: prefer an instruction-tuned one that handles JSON well (e.g. `llama3.1`,
 `qwen2.5`).
 
-## Anki (CSV → Audio → Notes)
+## Advanced Anki Export
 
 Open the app and use **Anki Export** to upload CSV/JSON and download a modern
 `.apkg` containing Kokoro audio. CSV defaults to columns named `pt` and `en`:

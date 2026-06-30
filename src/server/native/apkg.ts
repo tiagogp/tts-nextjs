@@ -99,9 +99,10 @@ function mediaFilenamePart(value: string): string {
 }
 
 function basicModel(): Model {
+  const name = "Basic (TTS Import - English Front)";
   return new Model({
-    id: stableId("anki_model", "Basic (TTS Import)"),
-    name: "Basic (TTS Import)",
+    id: stableId("anki_model", name),
+    name,
     fields: [{ name: "Front" }, { name: "Back" }],
     templates: [{
       name: "Card 1",
@@ -113,9 +114,10 @@ function basicModel(): Model {
 }
 
 function cardModel(): Model {
+  const name = "PhraseLoop Cards (English Front)";
   return new Model({
-    id: stableId("anki_model", "PhraseLoop Cards"),
-    name: "PhraseLoop Cards",
+    id: stableId("anki_model", name),
+    name,
     fields: ["Front", "Back", "Audio", "Concept", "ErrorType", "Source"].map((name) => ({ name })),
     templates: [{
       name: "Card 1",

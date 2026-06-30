@@ -7,7 +7,7 @@ import type { useProviderSelection } from "@/features/cards/hooks/useProviderSel
 
 type Selection = ReturnType<typeof useProviderSelection>;
 
-/** AI provider + Ollama model pickers, shared by Discover and Correct. */
+/** IA + Ollama model pickers, shared by Discover and Correct. */
 export function ProviderPicker({ selection, disabled }: { selection: Selection; disabled?: boolean }) {
   const {
     providers,
@@ -32,7 +32,7 @@ export function ProviderPicker({ selection, disabled }: { selection: Selection; 
       {selectableProviders.length > 1 && (
         <div className="grid grid-rows-[1.625rem_auto] gap-1.5">
           <div className="flex min-w-0 items-center gap-2">
-            <label className="text-xs font-medium text-ink-muted">AI provider</label>
+            <label className="text-xs font-medium text-ink-muted">IA</label>
             {activeProvider && <ProviderBadge isLocal={activeProvider.isLocal} available={activeProvider.available} />}
           </div>
           <Select

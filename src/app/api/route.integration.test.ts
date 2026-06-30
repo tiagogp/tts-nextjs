@@ -126,7 +126,7 @@ describe("API route integration", () => {
       candidates: [{
         id: "candidate-1",
         sourceId: "source-1",
-        text: "Back",
+        text: "Front?",
         status: "accepted",
         createdAt: 0,
       }],
@@ -137,6 +137,67 @@ describe("API route integration", () => {
     expect(data.cards).toHaveLength(1);
     expect(data.apkg).toBe(Buffer.from("apkg").toString("base64"));
     expect(generateDeck).toHaveBeenCalledOnce();
+    expect(localJson).toHaveBeenCalledWith(
+      "/cards/apkg",
+      expect.objectContaining({
+        cards: [
+          expect.objectContaining({
+            front: "Front?",
+            back: "Back",
+          }),
+        ],
+      }),
+      expect.any(Object),
+    );
+  });
+
+  it("/api/cards/generate orients inverted cards before exporting and returning them", async () => {
+    const card: Card = {
+      id: "card-1",
+      front: "Tenho que ir",
+      back: "I have to get going",
+      concept: "have to",
+      source: { kind: "phrase", id: "candidate-1" },
+      createdAt: 0,
+    };
+    generateDeck.mockResolvedValueOnce({ cards: [card], failures: 0 });
+    localJson.mockResolvedValueOnce(localResponse(Buffer.from("apkg")));
+    const { POST } = await import("@/app/api/cards/generate/route");
+
+    const response = await POST(jsonRequest("/api/cards/generate", {
+      provider: "openrouter",
+      persist: true,
+      sourceId: "source-1",
+      targetLang: "en",
+      candidates: [{
+        id: "candidate-1",
+        sourceId: "source-1",
+        text: "I have to get going",
+        translation: "Tenho que ir",
+        status: "accepted",
+        createdAt: 0,
+      }],
+    }) as never);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.cards[0]).toMatchObject({
+      front: "I have to get going",
+      back: "Tenho que ir",
+    });
+    expect(localJson).toHaveBeenCalledWith(
+      "/cards/apkg",
+      expect.objectContaining({
+        cards: [
+          expect.objectContaining({
+            front: "I have to get going",
+            back: "Tenho que ir",
+            audioText: "I have to get going",
+          }),
+        ],
+      }),
+      expect.any(Object),
+    );
   });
 
   it("/api/pronunciation/assess validates missing audio", async () => {

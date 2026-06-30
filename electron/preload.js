@@ -5,6 +5,9 @@ contextBridge.exposeInMainWorld("phraseLoop", {
   toggleFullscreen() {
     ipcRenderer.send("phrase-loop:toggle-fullscreen");
   },
+  setDueCount(count) {
+    ipcRenderer.send("phrase-loop:set-due-count", count);
+  },
   aiSettings: {
     save(patch) {
       return ipcRenderer.invoke("phrase-loop:ai-settings-save", patch);

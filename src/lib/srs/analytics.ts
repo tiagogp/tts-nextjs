@@ -120,6 +120,80 @@ export function computeWeeklyActivity(
   return { conversations: conversationCount, turns, reviews: reviews7d };
 }
 
+/* ──────────────────────────── W7: return-after-miss ──────────────────────────── */
+
+/**
+ * W7 — habit/retention signal read from the review log. A "miss gap" is a stretch of one
+ * or more skipped days between two days the learner actually reviewed; a "prompt return"
+ * is a gap they closed within {@link RETURN_WINDOW_DAYS}. This is the in-app proxy for
+ * "did they come back after dropping off" — the thing W7 must move before adaptive scope
+ * reopens. Pure over the log so it stays testable and never touches IndexedDB.
+ */
+export interface ReturnAfterMiss {
+  /** Distinct calendar days with at least one review. */
+  activeDays: number;
+  /** Gaps of ≥1 skipped day between consecutive active days. */
+  missGaps: number;
+  /** Miss gaps the learner closed within {@link RETURN_WINDOW_DAYS}. */
+  promptReturns: number;
+  /** Share of miss gaps that were prompt returns, in [0, 1]. 1 when there were no misses. */
+  returnRate: number;
+  /** Largest gap between consecutive active days, in days (0 with <2 active days). */
+  longestGapDays: number;
+  /** Days since the most recent review (0 = reviewed today). */
+  daysSinceLastReview: number;
+  /** True when the learner is currently mid-miss (≥1 full day with no review). */
+  currentlyMissing: boolean;
+}
+
+/** A return within a week of going quiet is "prompt"; longer is a recovered drop-off. */
+const RETURN_WINDOW_DAYS = 7;
+
+function dayIndex(ms: number): number {
+  return Math.floor(ms / DAY_MS);
+}
+
+export function computeReturnAfterMiss(
+  reviews: ReviewRecord[],
+  now: number = Date.now(),
+): ReturnAfterMiss {
+  const days = [...new Set(reviews.map((r) => dayIndex(r.reviewedAt)))].sort((a, b) => a - b);
+  if (days.length === 0) {
+    return {
+      activeDays: 0,
+      missGaps: 0,
+      promptReturns: 0,
+      returnRate: 1,
+      longestGapDays: 0,
+      daysSinceLastReview: Infinity,
+      currentlyMissing: true,
+    };
+  }
+
+  let missGaps = 0;
+  let promptReturns = 0;
+  let longestGapDays = 0;
+  for (let i = 1; i < days.length; i++) {
+    const gap = days[i] - days[i - 1];
+    longestGapDays = Math.max(longestGapDays, gap);
+    if (gap >= 2) {
+      missGaps++;
+      if (gap <= RETURN_WINDOW_DAYS) promptReturns++;
+    }
+  }
+
+  const daysSinceLastReview = dayIndex(now) - days[days.length - 1];
+  return {
+    activeDays: days.length,
+    missGaps,
+    promptReturns,
+    returnRate: missGaps === 0 ? 1 : promptReturns / missGaps,
+    longestGapDays,
+    daysSinceLastReview,
+    currentlyMissing: daysSinceLastReview >= 1,
+  };
+}
+
 /* ──────────────────────────── D4: weakness detection ──────────────────────────── */
 
 /**

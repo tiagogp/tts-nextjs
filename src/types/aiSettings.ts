@@ -58,6 +58,8 @@ export interface AiSettingsSaveResult {
 
 export interface PhraseLoopBridge {
   toggleFullscreen: () => void;
+  /** Reflect the count of cards due for review on the desktop dock/menu-bar badge. */
+  setDueCount?: (count: number) => void;
   files?: {
     saveApkg: (
       filename: string,

@@ -6,10 +6,12 @@
 import type {
   AdvancedReview,
   Card,
+  CardSource,
   ErrorEvent,
   ErrorType,
   PhraseCandidate,
 } from "@/lib/cards/schema";
+import { orientCardsForTargetFront } from "@/lib/cards/orientation";
 import type { PronunciationAttempt } from "@/lib/pronunciation/types";
 import type { StoredProgressAssessment } from "@/features/progress/model";
 import type { ConversationTurn } from "@/lib/cards/provider";
@@ -77,12 +79,30 @@ export function getPhraseCandidates(): Promise<PhraseCandidate[]> {
 
 /* ──────────────────────────── cards + SRS ──────────────────────────── */
 
-export function getCards(): Promise<Card[]> {
-  return getAll<Card>(STORES.cards);
+async function getStoredCardSources(): Promise<CardSource[]> {
+  const [candidates, events] = await Promise.all([
+    getPhraseCandidates(),
+    getErrorEvents(),
+  ]);
+  return [
+    ...candidates.map((candidate): CardSource => ({ kind: "phrase", candidate })),
+    ...events.map((event): CardSource => ({ kind: "error", event })),
+  ];
 }
 
-export function getCard(id: string): Promise<Card | undefined> {
-  return get<Card>(STORES.cards, id);
+async function orientStoredCards(cards: Card[]): Promise<Card[]> {
+  if (cards.length === 0) return cards;
+  return orientCardsForTargetFront(cards, await getStoredCardSources(), "en");
+}
+
+export function getCards(): Promise<Card[]> {
+  return getAll<Card>(STORES.cards).then(orientStoredCards);
+}
+
+export async function getCard(id: string): Promise<Card | undefined> {
+  const card = await get<Card>(STORES.cards, id);
+  if (!card) return undefined;
+  return (await orientStoredCards([card]))[0];
 }
 
 export function getSrs(cardId: string): Promise<SrsRecord | undefined> {
@@ -143,12 +163,13 @@ export async function getDueCards(now: number = Date.now()): Promise<
     IDBKeyRange.upperBound(now),
   );
   due.sort((a, b) => a.due - b.due);
-  const out: { card: Card; srs: SrsRecord }[] = [];
+  const raw: { card: Card; srs: SrsRecord }[] = [];
   for (const srs of due) {
-    const card = await getCard(srs.cardId);
-    if (card) out.push({ card, srs });
+    const card = await get<Card>(STORES.cards, srs.cardId);
+    if (card) raw.push({ card, srs });
   }
-  return out;
+  const cards = await orientStoredCards(raw.map((item) => item.card));
+  return raw.map((item, index) => ({ ...item, card: cards[index] }));
 }
 
 /**
@@ -360,6 +381,88 @@ export interface LocalBackup {
   stores: Record<StoreName, unknown[]>;
 }
 
+export interface BackupValidationResult {
+  ok: boolean;
+  errors: string[];
+  counts: Record<StoreName, number>;
+  totalRecords: number;
+  exportedAt?: string;
+}
+
+function emptyBackupCounts(): Record<StoreName, number> {
+  return Object.fromEntries(
+    (Object.values(STORES) as StoreName[]).map((store) => [store, 0]),
+  ) as Record<StoreName, number>;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+export function validateLocalBackup(raw: unknown): BackupValidationResult {
+  const counts = emptyBackupCounts();
+  const errors: string[] = [];
+
+  if (!isRecord(raw)) {
+    return {
+      ok: false,
+      errors: ["Backup file must contain a JSON object."],
+      counts,
+      totalRecords: 0,
+    };
+  }
+
+  if (raw.app !== "PhraseLoop") errors.push("Backup is not a PhraseLoop export.");
+  if (raw.schemaVersion !== 1) errors.push("Backup schema version is not supported.");
+  if (!isRecord(raw.stores)) errors.push("Backup is missing its stores.");
+
+  if (isRecord(raw.stores)) {
+    const knownStores = new Set(Object.values(STORES) as StoreName[]);
+    for (const store of Object.keys(raw.stores)) {
+      if (!knownStores.has(store as StoreName)) errors.push(`Unknown store: ${store}.`);
+    }
+    for (const store of Object.values(STORES) as StoreName[]) {
+      const rows = raw.stores[store];
+      if (rows === undefined) continue;
+      if (!Array.isArray(rows)) {
+        errors.push(`${store} must be an array.`);
+        continue;
+      }
+      counts[store] = rows.length;
+      for (const [index, row] of rows.entries()) {
+        if (!isRecord(row)) {
+          errors.push(`${store}[${index}] must be an object.`);
+          continue;
+        }
+        if (typeof row.id !== "string" && store !== STORES.srs && store !== STORES.effortHistory) {
+          errors.push(`${store}[${index}] is missing an id.`);
+        }
+        if (store === STORES.srs && typeof row.cardId !== "string") {
+          errors.push(`${store}[${index}] is missing a cardId.`);
+        }
+        if (store === STORES.effortHistory && typeof row.weekOf !== "string") {
+          errors.push(`${store}[${index}] is missing a weekOf key.`);
+        }
+        if (errors.length >= 12) {
+          errors.push("More validation errors were omitted.");
+          break;
+        }
+      }
+    }
+  }
+
+  const totalRecords = Object.values(counts).reduce((sum, value) => sum + value, 0);
+  if (totalRecords === 0) errors.push("Backup contains no records to restore.");
+
+  return {
+    ok: errors.length === 0,
+    errors,
+    counts,
+    totalRecords,
+    exportedAt: typeof raw.exportedAt === "string" ? raw.exportedAt : undefined,
+  };
+}
+
 export async function exportLocalBackup(): Promise<LocalBackup> {
   const storeNames = Object.values(STORES) as StoreName[];
   const entries = await Promise.all(
@@ -372,4 +475,20 @@ export async function exportLocalBackup(): Promise<LocalBackup> {
     exportedAt: new Date().toISOString(),
     stores: Object.fromEntries(entries) as Record<StoreName, unknown[]>,
   };
+}
+
+export async function restoreLocalBackup(raw: unknown): Promise<BackupValidationResult> {
+  const validation = validateLocalBackup(raw);
+  if (!validation.ok || !isRecord(raw) || !isRecord(raw.stores)) return validation;
+
+  for (const store of Object.values(STORES) as StoreName[]) {
+    const rows = raw.stores[store];
+    if (Array.isArray(rows) && rows.length > 0) await putMany(store, rows);
+  }
+
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("phraseloop:backup-restored"));
+    window.dispatchEvent(new CustomEvent("phraseloop:activity"));
+  }
+  return validation;
 }

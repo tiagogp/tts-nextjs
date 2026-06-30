@@ -372,6 +372,14 @@ ipcMain.on("phrase-loop:toggle-fullscreen", (event) => {
   window.setFullScreen(!window.isFullScreen());
 });
 
+// One calm re-engagement pull: reflect the due-review count on the dock badge.
+// No notifications, no framework — just a quiet number the learner can ignore.
+ipcMain.on("phrase-loop:set-due-count", (_event, rawCount) => {
+  if (process.platform !== "darwin" || !app.dock) return;
+  const count = Number.isFinite(rawCount) ? Math.max(0, Math.floor(rawCount)) : 0;
+  app.dock.setBadge(count > 0 ? String(count) : "");
+});
+
 ipcMain.handle("phrase-loop:ai-settings-save", async (event, rawPatch) => {
   try {
     if (!event.senderFrame?.url.startsWith(FRONTEND_URL)) throw new Error("Untrusted settings request.");

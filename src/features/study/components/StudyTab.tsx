@@ -30,6 +30,7 @@ import type { Grade, SrsRecord } from "@/lib/srs/fsrs";
 import type { PronunciationAttempt } from "@/lib/pronunciation/types";
 import {
   computePerformance,
+  computeReturnAfterMiss,
   computeWeeklyActivity,
   detectWeaknesses,
   type Weakness,
@@ -38,6 +39,7 @@ import { deriveSkillStates } from "@/lib/srs/skillState";
 import { cn } from "@/lib/cn";
 import type { Card } from "@/lib/cards/schema";
 import { useAiSettings } from "@/features/settings/context/AiSettingsContext";
+import { markFirstRunReviewCompleted } from "@/features/activation/firstRun";
 import { getWeeklyGoal } from "@/features/study/weeklyGoal";
 import { ProgressOverview } from "@/features/progress/components/ProgressOverview";
 import { emitActivity } from "@/lib/store/activityLog";
@@ -175,7 +177,12 @@ export default function StudyTab({
         hintUsed: scaffold.hintUsed,
         scaffoldLevel: scaffold.scaffoldLevel,
       });
-      void emitActivity("cards_reviewed", { count: 1, cardIds: [current.card.id] });
+      const activation = markFirstRunReviewCompleted();
+      void emitActivity("cards_reviewed", {
+        count: 1,
+        cardIds: [current.card.id],
+        activation,
+      });
       setSessionResults((prev) => [...prev, { cardId: current.card.id, grade: g, srs: next }]);
       // P1 #4 — track the running window and raise the cooldown prompt on a genuine bad
       // streak. Only in a standard session; a light round is already the gentle path.
@@ -275,7 +282,7 @@ export default function StudyTab({
     async (w: Weakness) => {
       const key = `${w.kind}:${w.label}`;
       if (!defaultProvider?.available) {
-        setGenError(`${defaultProvider?.label ?? "The default AI provider"} is unavailable. Open Settings to connect it.`);
+        setGenError(`${defaultProvider?.label ?? "The selected AI"} is unavailable. Open Settings to connect it.`);
         return;
       }
       setGenError(null);
@@ -286,7 +293,7 @@ export default function StudyTab({
           kind: w.kind,
         });
         if (candidates.length === 0 && errors.length === 0) {
-          setGenError(`No source material left for "${w.label}" to generate from.`);
+          setGenError(`No saved material left for "${w.label}" to generate from.`);
           return;
         }
         const res = await fetch("/api/cards/reinforce", {
@@ -303,7 +310,7 @@ export default function StudyTab({
           | { cards?: Card[]; error?: string }
           | null;
         if (!res.ok || !data?.cards?.length) {
-          setGenError(data?.error ?? "Couldn't generate reinforcement cards.");
+          setGenError(data?.error ?? "Couldn't create new practice phrases.");
           return;
         }
         await saveCards(data.cards);
@@ -311,7 +318,7 @@ export default function StudyTab({
         // Drill everything for this concept now — the new variants included.
         await startReinforcement(w);
       } catch {
-        setGenError("Couldn't reach the generator. Try again.");
+        setGenError("Couldn't reach IA. Try again.");
       } finally {
         setGeneratingKey(null);
       }
@@ -332,9 +339,11 @@ export default function StudyTab({
   }
 
   const stats = computePerformance(reviews);
+  const retention = computeReturnAfterMiss(reviews);
   const activity = computeWeeklyActivity(conversations, reviews);
   const weaknesses = detectWeaknesses(reviews, errorEvents);
   const weeklyGoal = getWeeklyGoal();
+  const showAdaptiveDepth = reviews.length >= 5;
 
   // P2 #5 — derive the three-path cycle plan from per-skill state + due + light availability.
   const skillStates = deriveSkillStates(reviews, cardsWithSrs, pronAttempts, errorEvents);
@@ -363,7 +372,7 @@ export default function StudyTab({
       {mode === "light" && (
         <div className="flex items-center justify-between gap-3 rounded-lg border border-accent/40 bg-accent/10 px-4 py-2.5">
           <p className="text-xs text-ink">
-            Light round · <span className="font-medium">{queue.length} easy card{queue.length === 1 ? "" : "s"}</span> to ease off
+            Light session · <span className="font-medium">{queue.length} easy phrase{queue.length === 1 ? "" : "s"}</span>
           </p>
           <button
             type="button"
@@ -386,7 +395,7 @@ export default function StudyTab({
       />
 
       {/* P2 #5 — three honest paths (challenge / review / light) with a pre-selected default. */}
-      {counts.cards > 0 && mode === "standard" && !reinforcing && !cooldown && (
+      {showAdaptiveDepth && counts.cards > 0 && mode === "standard" && !reinforcing && !cooldown && (
         <CyclePicker plan={cyclePlan} onStart={startPath} />
       )}
 
@@ -394,14 +403,14 @@ export default function StudyTab({
       {cooldown && (
         <UiCard className="flex flex-wrap items-center justify-between gap-3 p-4">
           <p className="text-xs text-ink-soft">
-            Nice work — this is a good place to bank these and stop, or ease off with one light round.
+            Nice work. This is a good place to stop, or take one light session.
           </p>
           <div className="flex shrink-0 gap-2">
             <Button variant="ghost" size="sm" onClick={stopSession}>
-              Bank &amp; stop
+              Stop here
             </Button>
             <Button variant="secondary" size="sm" onClick={() => void startLight()}>
-              One light round
+              Light session
             </Button>
           </div>
         </UiCard>
@@ -423,13 +432,13 @@ export default function StudyTab({
         onDiscover={onDiscover ?? (() => {})}
       />
 
-      <PerformanceStats cardsCount={counts.cards} stats={stats} />
+      <PerformanceStats cardsCount={counts.cards} stats={stats} retention={retention} />
 
-      {counts.cards > 0 && bandGate && <BandGateNote gate={bandGate} />}
+      {showAdaptiveDepth && counts.cards > 0 && bandGate && <BandGateNote gate={bandGate} />}
 
-      <ProgressOverview showCheckIn />
+      {showAdaptiveDepth && <ProgressOverview showCheckIn />}
 
-      <ExposureMeter activity={activity} />
+      {showAdaptiveDepth && <ExposureMeter activity={activity} />}
 
       <WeaknessList
         weaknesses={weaknesses}
@@ -461,25 +470,25 @@ function MethodCoach({
   onDiscover?: () => void;
   onConversation?: () => void;
 }) {
-  const remainingConversations = Math.max(0, weeklyGoal - conversations);
+  const remainingConversations = onConversation ? Math.max(0, weeklyGoal - conversations) : 0;
   const next = cards === 0
     ? {
-        title: "Capture your first source",
-        text: "Start with one video, article, or PDF. Keep a small set so review stays light.",
+        title: "Save your first phrases",
+        text: "Start with the demo or one source. Keep a small set so review stays light.",
         action: "Open Discover",
         onClick: onDiscover,
       }
     : due > 0
       ? {
           title: "Review before adding more",
-          text: `${due} card${due === 1 ? "" : "s"} due now. Clear the queue, then produce language.`,
+          text: `${due} practice phrase${due === 1 ? "" : "s"} due now. Review first, then add more.`,
           action: null,
           onClick: undefined,
         }
       : topWeakness
         ? {
             title: `Reinforce ${topWeakness.label}`,
-            text: "Use the weak spots list below to drill existing cards or create new variants.",
+            text: "Use the weak spots list below to practice saved phrases or create new variants.",
             action: null,
             onClick: undefined,
           }
@@ -533,7 +542,7 @@ function BandGateNote({ gate }: { gate: BandGateResult }) {
   return (
     <UiCard className="space-y-2 p-4">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-xs uppercase tracking-[0.7px] text-ink-soft">Difficulty band</p>
+        <p className="text-xs uppercase tracking-[0.7px] text-ink-soft">Review order</p>
         <span
           className={cn(
             "rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide",
@@ -546,7 +555,7 @@ function BandGateNote({ gate }: { gate: BandGateResult }) {
       <p className="text-xs text-ink-muted">{gate.note}</p>
       {gate.verdict === "adopt" && (
         <p className="text-[11px] text-ink-soft">
-          Due cards are ordered toward the ~72% recall sweet spot first; FSRS still decides which are due.
+          Due phrases are ordered toward the best recall zone first.
         </p>
       )}
     </UiCard>
@@ -564,11 +573,11 @@ function CyclePicker({ plan, onStart }: { plan: CyclePlan; onStart: (path: Cycle
     <UiCard className="space-y-4 p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs uppercase tracking-[0.7px] text-accent">How to spend this session</p>
-          <p className="mt-1 text-xs text-ink-muted">Pick a path, or just start the recommended one.</p>
+          <p className="text-xs uppercase tracking-[0.7px] text-accent">Today&apos;s next step</p>
+          <p className="mt-1 text-xs text-ink-muted">Start with the recommended path.</p>
         </div>
         <Button size="sm" onClick={() => onStart(plan.recommended)}>
-          Just start · {rec.load}
+          Start · {rec.load}
         </Button>
       </div>
       <div className="grid gap-2 sm:grid-cols-3">

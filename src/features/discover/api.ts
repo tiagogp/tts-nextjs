@@ -105,7 +105,7 @@ export async function curateDiscoverSegments(input: {
     count?: number;
     error?: string;
   };
-  if (!response.ok) throw new Error(data.error ?? "Curation failed.");
+  if (!response.ok) throw new Error(data.error ?? "Auto-selection failed.");
   const selectedIndexes = (data.selectedIndexes ?? []).filter(
     (index) => Number.isInteger(index) && index >= 0 && index < input.result.segments.length,
   );

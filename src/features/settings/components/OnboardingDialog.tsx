@@ -8,7 +8,6 @@ import { Field } from "@/components/ui/Field";
 import { Segmented } from "@/components/ui/Segmented";
 import { ENGLISH_LEVELS } from "@/features/discover/constants";
 import type { EnglishLevel } from "@/features/discover/types";
-import { ensureDefaultPlan } from "@/features/plan/defaultPlans";
 import { NATIVE_LANGUAGES } from "@/features/settings/languages";
 import {
   completeOnboarding,
@@ -29,7 +28,8 @@ const GOAL_OPTIONS = [
   { value: "media", label: "Movies & podcasts" },
 ] as const;
 
-export default function OnboardingDialog({ onOpenSettings }: Readonly<{ onOpenSettings: () => void }>) {
+export default function OnboardingDialog({ onOpenSettings: _onOpenSettings }: Readonly<{ onOpenSettings: () => void }>) {
+  void _onOpenSettings;
   const [dismissed, setDismissed] = useState(false);
   const [step, setStep] = useState<Step>("welcome");
   const [profile] = useState(getLearningProfile);
@@ -49,9 +49,9 @@ export default function OnboardingDialog({ onOpenSettings }: Readonly<{ onOpenSe
   const t = (en: string, vars?: Record<string, string | number>) => translate(uiLang, en, vars);
   const languageOptions = NATIVE_LANGUAGES.map((l) => ({ value: l.code, label: t(l.label) }));
 
-  const finish = async (openSettings: boolean) => {
+  const finish = async () => {
     const focus = GOAL_OPTIONS.find((item) => item.value === focusPreset)?.label || "";
-    const savedProfile = completeOnboarding({
+    completeOnboarding({
       track: "beginner",
       level,
       nativeLang,
@@ -60,12 +60,6 @@ export default function OnboardingDialog({ onOpenSettings }: Readonly<{ onOpenSe
       goal: profile.goal,
     });
     setDismissed(true);
-    try {
-      await ensureDefaultPlan(savedProfile);
-    } catch (err) {
-      console.warn("Could not install the default learning plan.", err);
-    }
-    if (openSettings) onOpenSettings();
   };
 
   const currentIndex = STEPS.indexOf(step);
@@ -73,7 +67,7 @@ export default function OnboardingDialog({ onOpenSettings }: Readonly<{ onOpenSe
   const canContinue = currentIndex < STEPS.length - 1;
 
   return (
-    <Modal open={open} onClose={() => void finish(false)} labelledBy="welcome-title" className="w-[min(100%,34rem)]">
+    <Modal open={open} onClose={() => void finish()} labelledBy="welcome-title" className="w-[min(100%,34rem)]">
       <div className="mb-5 flex gap-1.5" aria-hidden="true">
         {STEPS.map((item) => (
           <span
@@ -91,13 +85,13 @@ export default function OnboardingDialog({ onOpenSettings }: Readonly<{ onOpenSe
           </h2>
           <p className="mt-2 text-sm text-ink-soft">
             {t(
-              "PhraseLoop turns real English, your writing, and your speaking into one daily routine: capture useful phrases, study them, then practice using them.",
+              "PhraseLoop turns useful English phrases into one daily routine: save them, review them, then practice using them.",
             )}
           </p>
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
-            <MethodTile title={t("Real input")} text={t("Mine useful language from videos, articles, and PDFs.")} />
-            <MethodTile title={t("Active recall")} text={t("Generate focused cards that test understanding.")} />
-            <MethodTile title={t("Output")} text={t("Practice speaking or correct what you wrote.")} />
+            <MethodTile title={t("Native audio")} text={t("Start with phrases you can hear, then bring videos, articles, or PDFs later.")} />
+            <MethodTile title={t("Active recall")} text={t("Review a few practice phrases each day.")} />
+            <MethodTile title={t("Mistake drills")} text={t("Correct one phrase you wrote, then save the fix for review.")} />
           </div>
         </div>
       )}
@@ -161,11 +155,8 @@ export default function OnboardingDialog({ onOpenSettings }: Readonly<{ onOpenSe
             </Button>
           ) : (
             <>
-              <Button variant="secondary" onClick={() => void finish(false)}>
-                {t("Start with Discover")}
-              </Button>
-              <Button variant="primary" onClick={() => void finish(true)}>
-                {t("Set up AI first")}
+              <Button variant="primary" onClick={() => void finish()}>
+                {t("Start a demo lesson")}
               </Button>
             </>
           )}

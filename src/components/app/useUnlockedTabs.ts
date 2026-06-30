@@ -23,9 +23,7 @@ export function computeUnlockedTabTier(signals: UnlockSignals, storedTier = 0): 
 }
 
 export function tabsForUnlockTier(tier: number): HomeTab[] {
-  const visible = new Set<HomeTab>(["hoje", "study"]);
-  if (tier >= 1) visible.add("discover");
-  if (tier >= 2) visible.add("speak");
+  const visible = new Set<HomeTab>(["hoje", "discover", "study"]);
   if (tier >= 3) visible.add("correct");
   return HOME_TABS.map((tab) => tab.id).filter((id) => visible.has(id));
 }
@@ -33,8 +31,6 @@ export function tabsForUnlockTier(tier: number): HomeTab[] {
 function highestNewTab(previousTier: number, nextTier: number): HomeTab | null {
   if (nextTier <= previousTier) return null;
   if (nextTier >= 3 && previousTier < 3) return "correct";
-  if (nextTier >= 2 && previousTier < 2) return "speak";
-  if (nextTier >= 1 && previousTier < 1) return "discover";
   return null;
 }
 

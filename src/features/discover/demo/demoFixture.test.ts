@@ -20,8 +20,8 @@ describe("demoFixture", () => {
     expect(candidates.map((c) => c.segmentIndex)).toEqual([0, 2]);
 
     const [first] = cards;
-    expect(first.front).toBe(DEMO_PHRASES[0].pt);
-    expect(first.back).toBe(DEMO_PHRASES[0].en);
+    expect(first.front).toBe(DEMO_PHRASES[0].en);
+    expect(first.back).toBe(DEMO_PHRASES[0].pt);
     expect(first.source).toEqual({ kind: "phrase", id: `${DEMO_SOURCE_ID}-0` });
     expect(first.audioClipPath).toBe(DEMO_PHRASES[0].clip);
 

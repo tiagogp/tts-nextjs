@@ -26,7 +26,7 @@ function basename(filename: string, extension: string): string {
 }
 
 export function DeckPreview({
-  title = "Deck preview",
+  title = "Study list preview",
   data,
   defaultFilename,
   persist,
@@ -49,10 +49,10 @@ export function DeckPreview({
       if (onStudyNow) {
         onStudyNow();
       } else {
-        setNote(`Saved ${cards.length} card${cards.length === 1 ? "" : "s"} to study.`);
+        setNote(`Saved ${cards.length} practice phrase${cards.length === 1 ? "" : "s"} to study.`);
       }
     } catch (error) {
-      setNote(error instanceof Error ? error.message : "Could not save the deck.");
+      setNote(error instanceof Error ? error.message : "Could not save the study list.");
     } finally {
       setBusy(null);
     }
@@ -70,7 +70,7 @@ export function DeckPreview({
       setNote(message);
       onExported?.();
     } catch (error) {
-      setNote(error instanceof Error ? error.message : "Could not export the deck.");
+      setNote(error instanceof Error ? error.message : "Could not export to Anki.");
     } finally {
       setBusy(null);
     }
@@ -84,7 +84,7 @@ export function DeckPreview({
         <div className="min-w-0">
           <p className="truncate text-sm font-medium text-ink">{title}</p>
           <p className="text-xs text-ink-muted">
-            {cards.length} card{cards.length === 1 ? "" : "s"} ready to study
+            {cards.length} practice phrase{cards.length === 1 ? "" : "s"} ready to study
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -96,7 +96,7 @@ export function DeckPreview({
                 disabled={busy !== null}
                 onClick={() => void exportDeck(true)}
               >
-                {busy === "anki" ? "Sending…" : "Send to Anki"}
+                {busy === "anki" ? "Sending…" : "Export to Anki"}
               </Button>
               <Button
                 variant="ghost"
@@ -104,7 +104,7 @@ export function DeckPreview({
                 disabled={busy !== null}
                 onClick={() => void exportDeck(false)}
               >
-                {busy === "apkg" ? "Exporting…" : "Export APKG"}
+                {busy === "apkg" ? "Exporting…" : "Export for Anki"}
               </Button>
             </>
           )}
@@ -128,7 +128,7 @@ export function DeckPreview({
             disabled={busy !== null}
             onClick={() => void saveAndStudy()}
           >
-            {busy === "save" ? "Saving…" : onStudyNow ? "Save & study now" : "Save to study"}
+            {busy === "save" ? "Saving…" : onStudyNow ? "Save & review now" : "Save to study"}
           </Button>
           {onDismiss && (
             <Button variant="ghost" size="sm" onClick={onDismiss}>
@@ -143,7 +143,7 @@ export function DeckPreview({
           <span>{note}</span>
           {onStudyNow && (
             <button type="button" onClick={onStudyNow} className="font-medium text-accent underline hover:no-underline">
-              Study now →
+              Review now →
             </button>
           )}
         </div>

@@ -1,4 +1,5 @@
 import { nanoid } from "nanoid";
+import type { ActivationTiming } from "@/features/activation/firstRun";
 import { STORES, get, getAll, getAllFromIndex, put } from "./db";
 
 export type ActivityEventType =
@@ -12,6 +13,7 @@ export type ActivityEventType =
 export interface CardsReviewedPayload {
   count: number;
   cardIds: string[];
+  activation?: ActivationTiming;
 }
 
 export interface VideoProcessedPayload {
@@ -33,6 +35,7 @@ export interface CorrectionGeneratedPayload {
 export interface CardsCreatedPayload {
   count: number;
   source: "discover" | "correct" | "converse" | "learn";
+  activation?: ActivationTiming;
 }
 
 export interface ProgressCheckinPayload {

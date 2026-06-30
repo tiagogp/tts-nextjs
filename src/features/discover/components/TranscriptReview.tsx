@@ -49,7 +49,7 @@ export function TranscriptReview({
   generationStage,
   generationSeconds,
   providerReady,
-  generateLabel = "Generate cards →",
+  generateLabel = "Save practice phrases →",
   cancelLabel = "Cancel",
   onGenerate,
   onCancel,
@@ -57,7 +57,7 @@ export function TranscriptReview({
   onPlay,
   onOpenSettings,
 }: TranscriptReviewProps) {
-  const showSettingsLink = Boolean(genError?.toLowerCase().includes("faster provider") && onOpenSettings);
+  const showSettingsLink = Boolean(genError?.toLowerCase().includes("faster ai") && onOpenSettings);
 
   return (
     <Card className="overflow-hidden">
@@ -80,7 +80,7 @@ export function TranscriptReview({
         <div className="min-w-0">
           <p className="truncate text-sm font-medium text-ink">{result.title}</p>
           <p className="text-xs text-ink-muted">
-            {result.segments.length} segments · {kept.size} kept
+            {result.segments.length} phrases · {kept.size} saved
             {curationNote ? ` · ${curationNote}` : ""}
           </p>
         </div>
@@ -196,7 +196,7 @@ function SegmentRow({ index, segment, hasAudio, isKept, isPlaying, onPlay, onTog
       </div>
 
       <Chip active={isKept} className="mt-0.5 shrink-0" onClick={() => onToggleKeep(index)}>
-        {isKept ? "Kept" : "Keep"}
+        {isKept ? "Saved" : "Save"}
       </Chip>
     </li>
   );

@@ -13,7 +13,6 @@ import AppHeader from "@/components/app/AppHeader";
 import AppProviders from "@/components/app/AppProviders";
 import { HOME_TABS, type HomeTab } from "@/components/app/homeTabs";
 import { hoverLift, springSnappy, tapPress } from "@/lib/motion";
-import ConverseTab from "@/features/converse/components/ConverseTab";
 import CorrectTab from "@/features/correct/components/CorrectTab";
 import DiscoverTab from "@/features/discover/components/DiscoverTab";
 import SettingsScreen from "@/features/settings/components/SettingsScreen";
@@ -95,9 +94,9 @@ const flowSteps = [
     body: "Generate cards with context, audio, and prompts tuned to your weak spots.",
   },
   {
-    label: "Study / Anki",
+    label: "Review / drill",
     title: "Practice the loop",
-    body: "Study inside PhraseLoop or export an audio-ready .apkg deck for Anki.",
+    body: "Review inside PhraseLoop, then turn weak spots into the next small drill.",
   },
 ];
 
@@ -111,8 +110,8 @@ const features = [
     body: "Transcription, TTS, SRS, and saved cards live on your device by default. Claude, OpenAI, and Ollama are explicit choices.",
   },
   {
-    title: "Anki export with audio",
-    body: "Package selected cards, media, and context into an .apkg deck that is ready to review anywhere.",
+    title: "Mistakes become drills",
+    body: "Corrections do not disappear into notes. They become practice phrases you can review tomorrow.",
   },
   {
     title: "Weakness detection and reinforcement",
@@ -485,10 +484,6 @@ function DemoTabContent({
     );
   }
 
-  if (tab === "speak") {
-    return <ConverseTab onOpenSettings={onOpenSettings} />;
-  }
-
   if (tab === "correct") {
     return (
       <CorrectTab onOpenSettings={onOpenSettings} onStudyNow={onOpenPractice} />
@@ -544,7 +539,7 @@ function RealAppDemo() {
                 style={{ overscrollBehavior: "auto" }}
               >
                 <div className="mx-auto max-w-5xl px-4 py-5">
-                  <SettingsScreen onBack={() => setSettingsOpen(false)} />
+                  <SettingsScreen onBack={() => setSettingsOpen(false)} showAdvancedAi={false} />
                 </div>
               </div>
             ) : (
@@ -573,7 +568,7 @@ function RealAppDemo() {
                         onOpenSettings={() => setSettingsOpen(true)}
                         onOpenDiscover={() => changeTab("discover")}
                         onOpenPractice={() => changeTab("study")}
-                        onOpenConversation={() => changeTab("speak")}
+                        onOpenConversation={() => changeTab("discover")}
                         onOpenCorrect={() => changeTab("correct")}
                       />
                     </motion.div>
@@ -845,7 +840,7 @@ export default function LandingPage() {
                 className="mb-4 text-sm font-semibold text-accent"
                 variants={listItem}
               >
-                Local-first. Native audio. Anki-ready.
+                Local-first. Native audio. Review-ready.
               </motion.p>
               <motion.h1
                 className="brand-wordmark text-6xl font-normal leading-[0.9] text-ink sm:text-7xl lg:text-8xl"
@@ -857,7 +852,7 @@ export default function LandingPage() {
                 className="mx-auto mt-5 max-w-3xl text-xl leading-8 text-ink-soft sm:text-2xl sm:leading-9"
                 variants={listItem}
               >
-                Real English goes in. Audio flashcards, Anki decks, and targeted
+                Real English goes in. Audio flashcards, daily review, and targeted
                 drills come out - locally by default.
               </motion.p>
               <motion.div
@@ -886,8 +881,8 @@ export default function LandingPage() {
                 className="mt-4 text-sm text-ink-muted"
                 variants={listItem}
               >
-                You choose the source. PhraseLoop keeps the loop: discover,
-                keep, generate, review, reinforce.
+                Built for serious self-study: choose a source, keep the lines
+                that matter, review them, then drill what still breaks.
               </motion.p>
             </motion.div>
 
@@ -1014,7 +1009,7 @@ export default function LandingPage() {
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
               {[
                 ["Input", "YouTube, articles, PDFs, writing, loose phrases"],
-                ["Output", "Audio cards, app practice, .apkg export, drills"],
+                ["Output", "Audio cards, app practice, mistake drills"],
               ].map(([label, body]) => (
                 <motion.div
                   key={label}

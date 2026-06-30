@@ -51,8 +51,8 @@ export function buildDeckFromPhrases(
     const phrase = phrases[i];
     return {
       id: `${sourceId}-card-${i}`,
-      front: phrase.pt,
-      back: phrase.en,
+      front: phrase.en,
+      back: phrase.pt,
       concept: phrase.concept,
       source: { kind: "phrase", id: `${sourceId}-${i}` },
       audioClipPath: phrase.clip,

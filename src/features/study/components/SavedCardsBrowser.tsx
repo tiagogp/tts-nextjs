@@ -23,21 +23,21 @@ export function SavedCardsBrowser({ cards }: { cards: Card[] }) {
     <UiCard className="p-5">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold tracking-[-0.01em] text-ink">Saved cards</p>
+          <p className="text-sm font-semibold tracking-[-0.01em] text-ink">Saved practice phrases</p>
           <p className="text-xs text-ink-muted">{cards.length} total</p>
         </div>
         <Input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search cards"
+          placeholder="Search phrases"
           className="h-9 max-w-xs text-sm"
         />
       </div>
 
       {cards.length === 0 ? (
-        <p className="text-xs text-ink-muted">Cards you generate will appear here.</p>
+        <p className="text-xs text-ink-muted">Practice phrases you save will appear here.</p>
       ) : filtered.length === 0 ? (
-        <p className="text-xs text-ink-muted">No cards match that search.</p>
+        <p className="text-xs text-ink-muted">No phrases match that search.</p>
       ) : (
         <ul className="max-h-72 divide-y divide-line overflow-y-auto">
           {filtered.map((card) => (

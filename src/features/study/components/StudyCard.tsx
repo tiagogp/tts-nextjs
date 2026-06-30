@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { GradeButtons } from "./GradeButtons";
@@ -76,6 +76,20 @@ export function StudyCard({
 
   const markScaffold = (level: number) => setScaffoldLevel((prev) => Math.max(prev, level));
 
+  useEffect(() => {
+    const el = audioRef.current;
+    if (!el || !nativeClip || flipped) return;
+
+    el.pause();
+    el.playbackRate = 1;
+    el.currentTime = 0;
+    void el.play().catch(() => {});
+
+    return () => {
+      el.pause();
+    };
+  }, [cardId, nativeClip, flipped]);
+
   const playClip = (rate: number, level: number) => {
     const el = audioRef.current;
     if (!el) return;
@@ -95,29 +109,29 @@ export function StudyCard({
     <Card className="p-6 sm:p-8">
       {totalCards === 0 ? (
         <div className="space-y-1 py-8 text-center">
-          <p className="text-sm font-medium text-ink">No cards yet</p>
+          <p className="text-sm font-medium text-ink">No practice phrases yet</p>
           <p className="text-xs text-ink-muted">
-            Start with one real source in Discover. Keep a small set of phrases, then review them here.
+            Start with the demo in Discover. Save a small set of phrases, then review them here.
           </p>
           <Button variant="secondary" size="sm" className="mt-3" onClick={onDiscover}>
-            Discover new content
+            Open Discover
           </Button>
         </div>
       ) : !current ? (
         <div className="space-y-1 py-8 text-center">
           <p className="text-sm font-medium text-ink">You&apos;re all caught up</p>
           <p className="text-xs text-ink-muted">
-            Add a small batch only when you are ready for more.
+            Tomorrow you review these phrases. Add more only when you want fresh material.
           </p>
           <Button variant="secondary" size="sm" className="mt-3" onClick={onDiscover}>
-            Discover new content
+            Find new phrases
           </Button>
         </div>
       ) : (
         <div className="space-y-5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium uppercase tracking-[0.8px] text-ink-muted">
-              {current.card.concept || "Card"}
+              {current.card.concept || "Practice phrase"}
             </span>
             <span className="text-xs tabular-nums text-ink-muted">{queueLength} in today&apos;s queue</span>
           </div>
@@ -140,7 +154,7 @@ export function StudyCard({
                   <PronunciationCoach
                     source="study"
                     cardId={current.card.id}
-                    targetText={current.card.back}
+                    targetText={current.card.front}
                     referenceAudioUrl={nativeClip}
                     compact
                   />

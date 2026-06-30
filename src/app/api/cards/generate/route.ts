@@ -15,6 +15,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { contentDispositionAttachment } from "@/server/anki";
 import { localJson } from "@/server/localRuntime";
 import { generateDeck, isAbortError } from "@/lib/cards/provider";
+import { orientCardsForTargetFront } from "@/lib/cards/orientation";
 import { isProviderAvailable, resolveProvider } from "@/lib/cards/registry";
 import type { ProviderKind } from "@/lib/cards/provider";
 import type { CardSource, ErrorEvent, PhraseCandidate } from "@/lib/cards/schema";
@@ -130,11 +131,12 @@ export async function POST(req: NextRequest) {
         errors: errors.length,
         timeoutMs: PROVIDER_CALL_TIMEOUT_MS,
       });
-      const { cards, failures } = await generateDeck(provider, sources, {
+      const { cards: generatedCards, failures } = await generateDeck(provider, sources, {
         signal: scope.signal,
         timeoutMs: PROVIDER_CALL_TIMEOUT_MS,
         debug: (event, details = {}) => writeApkgDebug(debugId, event, details),
       });
+      const cards = orientCardsForTargetFront(generatedCards, sources, targetLang);
       writeApkgDebug(debugId, "cards-api-provider-finished", {
         cards: cards.length,
         failures,
@@ -171,7 +173,7 @@ export async function POST(req: NextRequest) {
         audioText:
           card.source.kind === "phrase"
             ? (candidateById.get(card.source.id)?.text ?? card.back)
-            : card.back,
+            : card.front,
         clip:
           card.source.kind === "phrase"
             ? clipByPhraseId.get(card.source.id) ?? undefined

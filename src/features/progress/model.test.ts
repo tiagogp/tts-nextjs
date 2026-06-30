@@ -86,7 +86,7 @@ describe("computeProgressSnapshot", () => {
   it("turns local learning signals into achieved milestones", () => {
     const snapshot = computeProgressSnapshot({
       profileLevel: "A2",
-      reviews: Array.from({ length: 12 }, (_, index) => review(index, Rating.Good)),
+      reviews: Array.from({ length: 15 }, (_, index) => review(index, Rating.Good)),
       errorEvents: [error(24), error(20), error(3, "recent")],
       conversations: [conversation(2, 14), conversation(4, 12)],
       pronunciationAttempts: [attempt(1, 86), attempt(3, 82), attempt(6, 84)],

@@ -89,12 +89,12 @@ export default function CorrectTab({
   const generation = useDeckGeneration({
     timeoutMs: DECK_GENERATION_TIMEOUT_MS,
     timeoutMessage:
-      "This is taking longer than expected. Try a shorter clip or switch to a faster provider.",
+      "This is taking longer than expected. Try a shorter clip or switch to a faster AI.",
     cancelMessage: "Generation cancelled. Your corrections are still here.",
     stages: [
-      { untilSeconds: 10, label: "Creating focused cards…" },
-      { untilSeconds: 40, label: "Reviewing card quality…" },
-      { untilSeconds: 90, label: "Preparing audio and the Anki deck…" },
+      { untilSeconds: 10, label: "Creating focused practice phrases…" },
+      { untilSeconds: 40, label: "Reviewing phrase quality…" },
+      { untilSeconds: 90, label: "Preparing audio and Anki export…" },
       { untilSeconds: Infinity, label: "Still working — local models are slow with several corrections. Hang tight…" },
     ],
     // The voice model wasn't ready: the server just kicked off the download, so start
@@ -184,7 +184,8 @@ export default function CorrectTab({
     await run(async (signal) => {
       const data = await generateCorrectionDeck({ provider, selectedModel, events: sourceEvents, signal });
       setDeckPreview({ data, events: sourceEvents });
-      return `${data.count ?? data.cards?.length ?? 0} card${(data.count ?? data.cards?.length ?? 0) === 1 ? "" : "s"} ready to preview.`;
+      const count = data.count ?? data.cards?.length ?? 0;
+      return `${count} practice phrase${count === 1 ? "" : "s"} ready to save.`;
     });
   }, [events, provider, providerReady, selectedModel, run]);
 
@@ -219,7 +220,7 @@ export default function CorrectTab({
   }, [aiText, context, evaluating, hasEvaluator, provider, selectedModel, setGenDone]);
 
   const evaluatorHint = !hasEvaluator
-    ? `${activeProvider?.label ?? "No provider"} is unavailable. Open Settings with the gear button to connect one.`
+    ? `${activeProvider?.label ?? "IA"} is unavailable. Open Settings with the gear button to connect one.`
     : null;
   const ollamaOffline = provider === "ollama" && ollamaModels.length === 0;
 
@@ -237,7 +238,7 @@ export default function CorrectTab({
           <div className="min-w-0">
             <p className="text-sm font-semibold tracking-[-0.01em] text-ink">Turn mistakes into review</p>
             <p className="mt-0.5 text-xs text-ink-muted">
-              Paste, speak, or enter what you produced. Keep only the corrections that are worth drilling.
+              Paste, speak, or enter what you produced. Save only the corrections worth reviewing.
             </p>
           </div>
           <Segmented<CorrectionInputMode>
@@ -303,7 +304,7 @@ export default function CorrectTab({
 
         <Disclosure
           title="Advanced options"
-          description="Import correction JSON or temporarily change the AI provider."
+          description="Import correction JSON or temporarily change the IA."
           badge={activeProvider ? <ProviderBadge isLocal={activeProvider.isLocal} available={activeProvider.available} /> : undefined}
           nested
         >
@@ -346,7 +347,7 @@ export default function CorrectTab({
 
       {deckPreview && (
         <DeckPreview
-          title="Correction deck preview"
+          title="Correction study list preview"
           data={deckPreview.data}
           defaultFilename="English - Corrections.apkg"
           persist={async (cards) => {

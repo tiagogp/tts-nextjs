@@ -56,11 +56,46 @@ rm -rf "$APP_NEXT/node_modules"
 cp -R .next/standalone/node_modules "$APP_NEXT/node_modules"
 test -d "$APP_NEXT/node_modules/next"
 
-echo "→ Signing native addons and PhraseLoop…"
-find "$APP_NEXT/node_modules" -type f \( -name '*.node' -o -name '*.dylib' \) -exec codesign --force --sign - {} \;
-codesign --remove-signature "$APP" 2>/dev/null || true
-codesign --force --deep --sign - "$APP"
-codesign --verify --deep --strict "$APP"
+ENTITLEMENTS="electron/entitlements.mac.plist"
+
+if [ -n "${APPLE_DEVELOPER_ID:-}" ]; then
+  # Release path: Developer ID signing + notarization.
+  # Requires APPLE_DEVELOPER_ID plus notarytool credentials in the env, e.g.
+  #   APPLE_DEVELOPER_ID="Developer ID Application: Name (TEAMID)"
+  #   APPLE_ID / APPLE_APP_SPECIFIC_PASSWORD / APPLE_TEAM_ID  (or NOTARY_PROFILE)
+  echo "→ Signing native addons and PhraseLoop with Developer ID ($APPLE_DEVELOPER_ID)…"
+  find "$APP_NEXT/node_modules" -type f \( -name '*.node' -o -name '*.dylib' \) \
+    -exec codesign --force --timestamp --options runtime \
+    --entitlements "$ENTITLEMENTS" --sign "$APPLE_DEVELOPER_ID" {} \;
+  codesign --remove-signature "$APP" 2>/dev/null || true
+  codesign --force --deep --timestamp --options runtime \
+    --entitlements "$ENTITLEMENTS" --sign "$APPLE_DEVELOPER_ID" "$APP"
+  codesign --verify --deep --strict "$APP"
+
+  echo "→ Notarizing (notarytool)…"
+  ZIP="dist/PhraseLoop-notarize.zip"
+  ditto -c -k --keepParent "$APP" "$ZIP"
+  if [ -n "${NOTARY_PROFILE:-}" ]; then
+    xcrun notarytool submit "$ZIP" --keychain-profile "$NOTARY_PROFILE" --wait
+  else
+    xcrun notarytool submit "$ZIP" \
+      --apple-id "$APPLE_ID" \
+      --password "$APPLE_APP_SPECIFIC_PASSWORD" \
+      --team-id "$APPLE_TEAM_ID" --wait
+  fi
+  rm -f "$ZIP"
+  echo "→ Stapling notarization ticket…"
+  xcrun stapler staple "$APP"
+  xcrun stapler validate "$APP"
+else
+  # Dev path: ad-hoc signing. First launch still needs the right-click → Open
+  # workaround documented in the README until a Developer ID build lands.
+  echo "→ Signing native addons and PhraseLoop (ad-hoc — not notarized)…"
+  find "$APP_NEXT/node_modules" -type f \( -name '*.node' -o -name '*.dylib' \) -exec codesign --force --sign - {} \;
+  codesign --remove-signature "$APP" 2>/dev/null || true
+  codesign --force --deep --sign - "$APP"
+  codesign --verify --deep --strict "$APP"
+fi
 
 echo "→ Bundle size report…"
 du -sh "$APP"

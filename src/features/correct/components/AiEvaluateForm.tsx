@@ -42,7 +42,7 @@ export function AiEvaluateForm({
       <Textarea
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        placeholder="Write or record a few sentences in English. The AI will find what a native speaker would say differently."
+        placeholder="Write or record a few sentences in English. IA will find what a native speaker would say differently."
         rows={6}
         disabled={evaluating}
         className="px-4 py-3 leading-relaxed"
@@ -96,7 +96,7 @@ export function AiEvaluateForm({
           disabled={!value.trim() || evaluating || transcribing || evaluatorHint !== null}
           className="ml-auto h-10"
         >
-          {evaluating ? "Evaluating…" : "Evaluate with AI →"}
+          {evaluating ? "Evaluating…" : "Check with IA →"}
         </Button>
       </div>
       {evaluatorHint && (
@@ -111,7 +111,7 @@ export function AiEvaluateForm({
       )}
       {ollamaOffline && (
         <p className="text-xs text-danger">
-          Ollama is offline or has no installed models.{" "}
+          Local AI is offline or has no installed models.{" "}
           {onOpenSettings ? (
             <button onClick={onOpenSettings} className="underline hover:no-underline">
               Open Settings →

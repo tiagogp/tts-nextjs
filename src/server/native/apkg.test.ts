@@ -1,7 +1,35 @@
+import { createRequire } from "node:module";
 import { describe, expect, it, vi } from "vitest";
 import JSZip from "jszip";
+import type initSqlJsType from "sql.js";
 import { wav } from "./audio";
 import { buildCardsDeck, buildCsvDeck } from "./apkg";
+
+const require = createRequire(import.meta.url);
+const initSqlJs = require("sql.js/dist/sql-asm.js") as typeof initSqlJsType;
+
+async function noteTypesFromApkg(packageBytes: Buffer): Promise<Array<{
+  name: string;
+  fields: string[];
+}>> {
+  const zip = await JSZip.loadAsync(packageBytes);
+  const collection = zip.file("collection.anki2") ?? zip.file("collection.anki21");
+  if (!collection) throw new Error("collection database not found");
+  const SQL = await initSqlJs();
+  const db = new SQL.Database(await collection.async("uint8array"));
+  try {
+    const result = db.exec("select id, name from notetypes order by name")[0];
+    return (result?.values ?? []).map(([id, name]) => {
+      const fields = db.exec("select name from fields where ntid = ? order by ord", [id])[0];
+      return {
+        name: String(name),
+        fields: (fields?.values ?? []).map(([field]) => String(field)),
+      };
+    });
+  } finally {
+    db.close();
+  }
+}
 
 describe("Anki package generation", () => {
   it("turns header CSV into an APKG without Python or native SQLite", async () => {
@@ -27,6 +55,10 @@ describe("Anki package generation", () => {
     expect(Object.values(media)).toHaveLength(1);
     expect(Object.values(media)[0]).toMatch(/^anki_tts_en_[a-f0-9]{12}\.wav$/);
     expect(zip.file("0")).toBeTruthy();
+
+    const noteTypes = await noteTypesFromApkg(packageBytes);
+    const noteType = noteTypes.find((m) => m.name === "Basic (TTS Import - English Front)");
+    expect(noteType?.fields).toEqual(["Front", "Back"]);
   });
 
   it("decodes each source audio once when exporting several clips", async () => {
@@ -74,6 +106,10 @@ describe("Anki package generation", () => {
       "clip_source-1_0_500.wav",
       "clip_source-1_500_1000.wav",
     ]);
+
+    const noteTypes = await noteTypesFromApkg(packageBytes);
+    const noteType = noteTypes.find((m) => m.name === "PhraseLoop Cards (English Front)");
+    expect(noteType?.fields.slice(0, 2)).toEqual(["Front", "Back"]);
   });
 
   it("fails instead of exporting an empty deck", async () => {

@@ -92,7 +92,7 @@ export function deriveCyclePlan(
     recommended = "challenge";
   }
 
-  const dueLabel = due === 1 ? "1 card due" : `${due} cards due`;
+  const dueLabel = due === 1 ? "1 phrase due" : `${due} phrases due`;
 
   const options: CycleOption[] = [
     {
@@ -113,7 +113,7 @@ export function deriveCyclePlan(
     },
     {
       path: "light",
-      title: "Light",
+      title: "Light session",
       description: "A short, easy round to keep the rhythm without the load.",
       load: minutesLabel(LIGHT_MINUTES, "light"),
       recommended: recommended === "light",

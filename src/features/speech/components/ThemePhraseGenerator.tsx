@@ -170,7 +170,7 @@ export default function ThemePhraseGenerator({ embedded = false }: { embedded?: 
               disabled={keptCandidates.length === 0 || generating}
               onClick={() => void generateDeck()}
             >
-              {generating ? "Generating…" : `Make deck (${keptCandidates.length})`}
+              {generating ? "Creating…" : `Make study list (${keptCandidates.length})`}
             </Button>
           </div>
           <ul className="divide-y divide-line">
@@ -181,7 +181,7 @@ export default function ThemePhraseGenerator({ embedded = false }: { embedded?: 
                   {candidate.note && <p className="text-xs text-ink-muted">{candidate.note}</p>}
                 </div>
                 <Chip active={kept.has(candidate.id)} onClick={() => toggle(candidate.id)}>
-                  {kept.has(candidate.id) ? "Kept" : "Keep"}
+                  {kept.has(candidate.id) ? "Saved" : "Save"}
                 </Chip>
               </li>
             ))}
@@ -191,9 +191,9 @@ export default function ThemePhraseGenerator({ embedded = false }: { embedded?: 
 
       {deckPreview && (
         <DeckPreview
-          title="Theme deck preview"
+          title="Theme study list preview"
           data={deckPreview.data}
-          defaultFilename={`${result?.title || "Theme deck"}.apkg`}
+          defaultFilename={`${result?.title || "Theme study list"}.apkg`}
           persist={(cards) => saveGeneratedDeck(cards, deckPreview.candidates)}
           onDismiss={() => setDeckPreview(null)}
         />

@@ -152,6 +152,21 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
     nl: "Leer met een lus, niet met een stapel kaarten",
     zh: "用循环学习，而不是一堆卡片",
   },
+  "PhraseLoop turns useful English phrases into one daily routine: save them, review them, then practice using them.": {
+    pt: "O PhraseLoop transforma frases úteis em inglês numa rotina diária: salvar, revisar e praticar o uso.",
+  },
+  "Start with a demo, then bring videos, articles, or PDFs later.": {
+    pt: "Comece com um demo; depois, traga vídeos, artigos ou PDFs.",
+  },
+  "Start with phrases you can hear, then bring videos, articles, or PDFs later.": {
+    pt: "Comece com frases que você pode ouvir; depois, traga vídeos, artigos ou PDFs.",
+  },
+  "Review a few practice phrases each day.": {
+    pt: "Revise algumas frases para praticar todos os dias.",
+  },
+  "Correct one phrase you wrote, then save the fix for review.": {
+    pt: "Corrija uma frase sua e salve a versão certa para revisar.",
+  },
   "Calibrate the first week": {
     de: "Kalibriere die erste Woche",
     es: "Calibra la primera semana",
@@ -205,6 +220,8 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
     zh: "PhraseLoop 把真实英语、你的写作和口语变成一个每日流程：收集、记住、输出，然后强化仍然薄弱的部分。",
   },
   "Real input": { de: "Echter Input", es: "Input real", fr: "Entrée réelle", ja: "本物のインプット", pt: "Input real", ar: "مدخلات حقيقية", cs: "Skutečný vstup", it: "Input reale", ko: "실제 입력", nl: "Echte input", zh: "真实输入" },
+  "Native audio": { pt: "Áudio nativo" },
+  "Mistake drills": { pt: "Treino de erros" },
   "Mine useful language from videos, articles, and PDFs.": {
     de: "Gewinne nützliche Sprache aus Videos, Artikeln und PDFs.",
     es: "Extrae lenguaje útil de videos, artículos y PDF.",
@@ -452,9 +469,14 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "Couldn't generate the plan. Try again.": { pt: "Não foi possível gerar o plano. Tente novamente." },
   "Choose how PhraseLoop uses AI.": { pt: "Escolha como o PhraseLoop usa IA." },
   "Back to PhraseLoop": { pt: "Voltar para o PhraseLoop" },
+  "Manage your local PhraseLoop data.": { pt: "Gerencie seus dados locais do PhraseLoop." },
   "Settings are read-only in the browser. Configure providers with environment variables or open the desktop app.": { pt: "As configurações são somente leitura no navegador. Configure provedores com variáveis de ambiente ou abra o app desktop." },
   "Default AI provider": { pt: "Provedor de IA padrão" },
+  "Default IA": { pt: "IA padrão" },
   "Ollama stays local. Cloud providers are never selected automatically.": { pt: "O Ollama fica local. Provedores em nuvem nunca são selecionados automaticamente." },
+  "The demo and review work without IA setup. Custom content can use local or cloud IA.": {
+    pt: "O demo e a revisão funcionam sem configurar IA. Conteúdo personalizado pode usar IA local ou em nuvem.",
+  },
   "— unavailable": { pt: "— indisponível" },
   "Private and on-device. Recommended for the default PhraseLoop experience.": { pt: "Privado e no próprio dispositivo. Recomendado para a experiência padrão do PhraseLoop." },
   "Cloud AI from Anthropic. Your learning content is sent to Anthropic.": { pt: "IA em nuvem da Anthropic. Seu conteúdo de estudo é enviado para a Anthropic." },
@@ -477,13 +499,24 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   Model: { pt: "Modelo" },
   Save: { pt: "Salvar" },
   "Refresh models": { pt: "Atualizar modelos" },
+  "IA model": { pt: "Modelo da IA" },
+  "Download a backup of practice phrases, reviews, and source material.": {
+    pt: "Baixe um backup das frases para praticar, revisões e materiais de origem.",
+  },
+  "Text-to-speech, theme phrase lists, and export to Anki.": {
+    pt: "Texto para fala, listas temáticas de frases e exportação para Anki.",
+  },
   "Saved.": { pt: "Salvo." },
   "Something went wrong.": { pt: "Algo deu errado." },
 
   /* ── try demo (Discover) ────────────────────────────────── */
   Today: { pt: "Hoje" },
+  Phrases: { pt: "Frases" },
+  Review: { pt: "Revisar" },
+  Mistakes: { pt: "Erros" },
   or: { pt: "ou" },
   "Try an example": { pt: "Testar com um exemplo" },
+  "Start a demo lesson": { pt: "Começar uma lição demo" },
   "Example content — tap to listen, then uncheck anything you don't want.": {
     pt: "Conteúdo de exemplo — toque para ouvir e desmarque o que não quiser.",
   },
@@ -504,10 +537,12 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "Review anyway": { pt: "Revisar mesmo assim" },
   "Find new phrases": { pt: "Buscar novas frases" },
   "{count} cards to review": { pt: "{count} cartões para revisar" },
+  "{count} practice phrases due": { pt: "{count} frases para praticar esperando revisão" },
   "Review these before adding more, so nothing piles up.": {
     pt: "Revise estes antes de adicionar mais, para nada acumular.",
   },
   "Study now": { pt: "Estudar agora" },
+  "Review now": { pt: "Revisar agora" },
   "You're caught up": { pt: "Você está em dia" },
   "Nothing to review right now": { pt: "Nada para revisar agora" },
   "Add a new source to find more phrases, or come back when cards are due.": {
@@ -515,6 +550,9 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   },
   "Start here": { pt: "Comece por aqui" },
   "Learn your first phrases in 2 minutes": { pt: "Aprenda suas primeiras frases em 2 minutos" },
+  "Hear real phrases, save the useful ones, then review them — no setup needed.": {
+    pt: "Ouça frases reais, salve as úteis e revise — sem configurar nada.",
+  },
   "See real phrases, keep the useful ones, and study them — no setup needed.": {
     pt: "Veja frases reais, guarde as úteis e estude — sem configurar nada.",
   },
@@ -526,15 +564,29 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "Continue the guided path, or come back when cards are due.": {
     pt: "Continue a trilha guiada ou volte quando houver cartões para revisar.",
   },
+  "Tomorrow you review these phrases. Today you can practice one more.": {
+    pt: "Amanhã você revisa essas frases. Hoje ainda dá para praticar mais uma.",
+  },
   "Start lesson": { pt: "Começar lição" },
+  "Practice a phrase": { pt: "Praticar uma frase" },
+  "Correct mistakes": { pt: "Corrigir erros" },
+  "Save your mistakes for study": { pt: "Salve seus erros para estudar" },
+  "Turn recent corrections into phrases you can review tomorrow.": {
+    pt: "Transforme correções recentes em frases para revisar amanhã.",
+  },
+  "Save to study": { pt: "Salvar para estudar" },
   "New section unlocked: {section}": { pt: "Nova seção desbloqueada: {section}" },
   "day streak": { pt: "dias seguidos" },
   "to review": { pt: "para revisar" },
   "cards saved": { pt: "cartões salvos" },
+  "practice phrases": { pt: "frases para praticar" },
 
   /* ── bundled lessons ───────────────────────────────────── */
   "Listen, keep the phrases you want, then save them to Study. No AI setup needed.": {
     pt: "Ouça, mantenha as frases que quiser e salve no Estudar. Sem configurar IA.",
+  },
+  "Listen, save the phrases you want, then review them. No AI setup needed.": {
+    pt: "Ouça, salve as frases que quiser e revise. Sem configurar IA.",
   },
   "Bundled lesson — all phrases are selected by default.": {
     pt: "Lição incluída — todas as frases já vêm selecionadas.",
@@ -542,8 +594,13 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "Save and study": { pt: "Salvar e estudar" },
   "Saving…": { pt: "Salvando…" },
   "Saving lesson cards…": { pt: "Salvando cartões da lição…" },
+  "Saving practice phrases…": { pt: "Salvando frases para praticar…" },
   "Lesson already saved. Study is ready.": { pt: "A lição já foi salva. O Estudar está pronto." },
+  "Lesson already saved. Review is ready.": { pt: "A lição já foi salva. A revisão está pronta." },
   "{count} cards saved. Study is ready.": { pt: "{count} cartões salvos. O Estudar está pronto." },
+  "{count} practice phrases saved. Review is ready.": {
+    pt: "{count} frases para praticar salvas. A revisão está pronta.",
+  },
   "Could not save this lesson.": { pt: "Não foi possível salvar esta lição." },
   "Lesson 1 — Greetings": { pt: "Lição 1 — Cumprimentos" },
   "Lesson 2 — Names": { pt: "Lição 2 — Nomes" },

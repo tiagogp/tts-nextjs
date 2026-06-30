@@ -84,12 +84,12 @@ export default function DiscoverTab({
   const generation = useDeckGeneration({
     timeoutMs: GENERATION_TIMEOUT_MS,
     timeoutMessage:
-      "This is taking longer than expected. Try a shorter clip or switch to a faster provider.",
+      "This is taking longer than expected. Try a shorter clip or switch to a faster AI.",
     cancelMessage: "Generation cancelled. Your selected phrases are still here.",
     stages: [
-      { untilSeconds: 8, label: "Creating focused cards…" },
-      { untilSeconds: 25, label: "Reviewing card quality…" },
-      { untilSeconds: 90, label: "Preparing audio and the Anki deck…" },
+      { untilSeconds: 8, label: "Creating focused practice phrases…" },
+      { untilSeconds: 25, label: "Reviewing phrase quality…" },
+      { untilSeconds: 90, label: "Preparing audio and Anki export…" },
       { untilSeconds: Infinity, label: "Still working — local models and audio clips can take a while…" },
     ],
   });
@@ -291,8 +291,8 @@ export default function DiscoverTab({
       } catch (mineErr: unknown) {
         setCurationNote(
           mineErr instanceof Error
-            ? `Curation skipped: ${mineErr.message}`
-            : "Curation skipped.",
+            ? `Auto-selection skipped: ${mineErr.message}`
+            : "Auto-selection skipped.",
         );
       } finally {
         setCurating(false);
@@ -363,7 +363,7 @@ export default function DiscoverTab({
     if (demoMode) {
       const { candidates, cards } = demoDeckFor(kept);
       setDeckPreview({ data: { cards, count: cards.length }, candidates });
-      setGenDone(`${cards.length} card${cards.length === 1 ? "" : "s"} ready to preview.`);
+      setGenDone(`${cards.length} practice phrase${cards.length === 1 ? "" : "s"} ready to save.`);
       return;
     }
 
@@ -391,7 +391,7 @@ export default function DiscoverTab({
       const cardsCreated = data.count ?? data.cards?.length ?? 0;
       void emitActivity("video_processed", { sourceUrl: url || result.sourceId, cardsCreated });
       setDeckPreview({ data, candidates });
-      return `${cardsCreated} card${cardsCreated === 1 ? "" : "s"} ready to preview.`;
+      return `${cardsCreated} practice phrase${cardsCreated === 1 ? "" : "s"} ready to save.`;
     });
   }, [result, kept, demoMode, provider, providerReady, selectedModel, run, setGenDone, setDeckPreview, url]);
 
@@ -399,139 +399,142 @@ export default function DiscoverTab({
     <div className="space-y-5">
       <Card className="space-y-4 p-5">
         <div className="space-y-1">
-          <p className="text-sm font-semibold tracking-[-0.01em] text-ink">Turn real English into practice</p>
+          <p className="text-sm font-semibold tracking-[-0.01em] text-ink">Turn useful phrases into daily practice</p>
           <p className="text-xs text-ink-muted">
-            Import one source, keep the useful phrases, then generate a small deck you can study immediately.
+            Start with the bundled demo, or bring one source when you want your own material.
           </p>
         </div>
 
-        <SourcePicker
-          value={sourceKind}
-          disabled={loading}
-          onChange={(kind) => {
-            if (result && !window.confirm("Discard the current Discover results?")) return;
-            setSourceKind(kind);
-            setError(null);
-            setResult(null);
-            setDemoMode(false);
-            setCurationNote(null);
-          }}
-        />
-
-        {sourceKind === "pdf" ? (
-          <Field label="PDF file" htmlFor="discover-pdf-input">
-            <input
-              ref={sourceInputRef}
-              id="discover-pdf-input"
-              type="file"
-              accept="application/pdf,.pdf"
-              onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-              className="w-full text-sm text-ink-soft file:mr-3 file:cursor-pointer file:rounded file:border-0 file:px-4 file:py-2 file:text-xs file:font-medium"
-            />
-          </Field>
-        ) : (
-          <Field label={sourceKind === "article" ? "Article URL" : "YouTube URL"} htmlFor="discover-url-input">
-            <Input
-              ref={sourceInputRef}
-              id="discover-url-input"
-              type="url"
-              value={url}
-              onChange={(event) => setUrl(event.target.value)}
-              placeholder={
-                sourceKind === "article" ? "https://example.com/some-article" : "https://www.youtube.com/watch?v=…"
-              }
-            />
-          </Field>
-        )}
-
-        <Field label="English level" className="max-w-52">
-          <Select
-            value={targetLevel}
-            onChange={(value) => setTargetLevel(value as EnglishLevel)}
-            options={ENGLISH_LEVELS}
-            disabled={loading}
-          />
-        </Field>
-
-        <Disclosure
-          title="Advanced options"
-          description="Guide curation or temporarily use a different AI model."
-          nested
-        >
-          <div className="space-y-4">
-            <Field
-              label={
-                <>
-                  Focus <span className="opacity-70">— optional</span>
-                </>
-              }
-            >
-              <Input
-                type="text"
-                value={focus}
-                onChange={(event) => setFocus(event.target.value)}
-                placeholder="e.g. phrasal verbs, business vocabulary…"
-              />
-            </Field>
-            <ProviderPicker selection={selection} disabled={loading} />
-          </div>
-        </Disclosure>
-
-        {!providerReady && !settingsLoading && (
-          <Notice tone="default" role="status">
-            You can import and read a source now. To auto-pick phrases and make cards, connect AI{" "}
-            {onOpenSettings ? (
-              <button onClick={onOpenSettings} className="underline hover:no-underline">
-                in Settings →
-              </button>
-            ) : (
-              "in Settings (gear icon)."
-            )}
-          </Notice>
-        )}
-
-        <Button
-          variant="primary"
-          size="lg"
-          className="flex min-h-10 items-center justify-center gap-2"
-          onClick={extract}
-          disabled={loading || !canRun}
-        >
-          {loading ? (
-            <>
-              <Spinner className="h-3.5 w-3.5" />
-              {curating
-                ? "Curating…"
-                : transcribeProgress?.stage === "transcribe"
-                  ? `Transcribing… ${transcribeProgress.percent}%`
-                  : transcribeProgress?.stage === "download"
-                    ? "Downloading audio…"
-                    : sourceKind === "youtube"
-                      ? "Starting…"
-                      : "Extracting…"}
-            </>
-          ) : (
-            "Find phrases to learn"
-          )}
-        </Button>
-
-        {!result && !loading && (
-          <div className="flex items-center gap-3 text-xs text-ink-muted">
-            <span className="h-px flex-1 bg-line" />
-            <span>{t("or")}</span>
-            <span className="h-px flex-1 bg-line" />
-          </div>
-        )}
-
         {!result && !loading && (
           <Button
-            variant="ghost"
+            variant="primary"
             size="lg"
             className="min-h-10"
             onClick={startDemo}
           >
-            {t("Try an example")}
+            {t("Start a demo lesson")}
           </Button>
+        )}
+
+        {!result && !loading && (
+          <Disclosure
+            title="Use custom content"
+            description="YouTube, article, and PDF import are here when you choose to bring your own material."
+            nested
+            defaultOpen={hasSource}
+          >
+            <div className="space-y-4">
+              <SourcePicker
+                value={sourceKind}
+                disabled={loading}
+                onChange={(kind) => {
+                  if (result && !window.confirm("Discard the current Discover results?")) return;
+                  setSourceKind(kind);
+                  setError(null);
+                  setResult(null);
+                  setDemoMode(false);
+                  setCurationNote(null);
+                }}
+              />
+
+              {sourceKind === "pdf" ? (
+                <Field label="PDF file" htmlFor="discover-pdf-input">
+                  <input
+                    ref={sourceInputRef}
+                    id="discover-pdf-input"
+                    type="file"
+                    accept="application/pdf,.pdf"
+                    onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+                    className="w-full text-sm text-ink-soft file:mr-3 file:cursor-pointer file:rounded file:border-0 file:px-4 file:py-2 file:text-xs file:font-medium"
+                  />
+                </Field>
+              ) : (
+                <Field label={sourceKind === "article" ? "Article URL" : "YouTube URL"} htmlFor="discover-url-input">
+                  <Input
+                    ref={sourceInputRef}
+                    id="discover-url-input"
+                    type="url"
+                    value={url}
+                    onChange={(event) => setUrl(event.target.value)}
+                    placeholder={
+                      sourceKind === "article" ? "https://example.com/some-article" : "https://www.youtube.com/watch?v=…"
+                    }
+                  />
+                </Field>
+              )}
+
+              <Field label="English level" className="max-w-52">
+                <Select
+                  value={targetLevel}
+                  onChange={(value) => setTargetLevel(value as EnglishLevel)}
+                  options={ENGLISH_LEVELS}
+                  disabled={loading}
+                />
+              </Field>
+
+              <Disclosure
+                title="Advanced options"
+                description="Focus, IA, and model choices for custom material."
+                nested
+              >
+                <div className="space-y-4">
+                  <Field
+                    label={
+                      <>
+                        Focus <span className="opacity-70">— optional</span>
+                      </>
+                    }
+                  >
+                    <Input
+                      type="text"
+                      value={focus}
+                      onChange={(event) => setFocus(event.target.value)}
+                      placeholder="e.g. phrasal verbs, business vocabulary…"
+                    />
+                  </Field>
+                  <ProviderPicker selection={selection} disabled={loading} />
+                </div>
+              </Disclosure>
+
+              {!providerReady && !settingsLoading && (
+                <Notice tone="default" role="status">
+                  You can import and read a source now. To auto-pick phrases and save practice phrases, connect IA{" "}
+                  {onOpenSettings ? (
+                    <button onClick={onOpenSettings} className="underline hover:no-underline">
+                      in Settings →
+                    </button>
+                  ) : (
+                    "in Settings (gear icon)."
+                  )}
+                </Notice>
+              )}
+
+              <Button
+                variant="secondary"
+                size="lg"
+                className="flex min-h-10 items-center justify-center gap-2"
+                onClick={extract}
+                disabled={loading || !canRun}
+              >
+                {loading ? (
+                  <>
+                    <Spinner className="h-3.5 w-3.5" />
+                    {curating
+                      ? "Curating…"
+                      : transcribeProgress?.stage === "transcribe"
+                        ? `Transcribing… ${transcribeProgress.percent}%`
+                        : transcribeProgress?.stage === "download"
+                          ? "Downloading audio…"
+                          : sourceKind === "youtube"
+                            ? "Starting…"
+                            : "Extracting…"}
+                  </>
+                ) : (
+                  "Find phrases to learn"
+                )}
+              </Button>
+            </div>
+          </Disclosure>
         )}
 
         {loading && transcribeProgress?.stage === "transcribe" && (
@@ -556,15 +559,6 @@ export default function DiscoverTab({
           </Notice>
         )}
 
-        {!result && !loading && !hasSource && (
-          <div className="rounded border border-line bg-surface px-3 py-2.5 text-xs text-ink-soft">
-            {sourceKind === "pdf"
-              ? "Choose a PDF file to get started."
-              : sourceKind === "article"
-                ? "Paste an article URL to get started, for example https://example.com/english-learning."
-                : "Paste a YouTube URL to get started, for example https://www.youtube.com/watch?v=VIDEO_ID."}
-          </div>
-        )}
       </Card>
 
       {demoMode && result && (
@@ -603,9 +597,9 @@ export default function DiscoverTab({
 
       {deckPreview && (
         <DeckPreview
-          title="Discover deck preview"
+          title="Practice phrase preview"
           data={deckPreview.data}
-          defaultFilename={`${result?.title || "deck"}.apkg`}
+          defaultFilename={`${result?.title || "study-list"}.apkg`}
           persist={async (cards) => {
             await saveGeneratedDeck(cards, deckPreview.candidates);
             void emitActivity("cards_created", { count: cards.length, source: "discover" });

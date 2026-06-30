@@ -640,9 +640,329 @@
     ]
   },
   {
+    "id": "a2-shopping",
+    "level": "A2",
+    "title": "Lesson 11 — Shopping",
+    "topic": "Shopping and prices",
+    "phrases": [
+      {
+        "en": "I'm just looking, thanks.",
+        "pt": "Só estou olhando, obrigado.",
+        "concept": "just looking",
+        "note": "A polite reply to a salesperson.",
+        "clip": "/learn/audio/a2-shopping/01.wav"
+      },
+      {
+        "en": "How much is this?",
+        "pt": "Quanto custa isto?",
+        "concept": "how much",
+        "note": "Use how much to ask a price.",
+        "clip": "/learn/audio/a2-shopping/02.wav"
+      },
+      {
+        "en": "Do you have this in blue?",
+        "pt": "Você tem isto em azul?",
+        "concept": "do you have",
+        "note": "Ask about another color or option.",
+        "clip": "/learn/audio/a2-shopping/03.wav"
+      },
+      {
+        "en": "Can I try it on?",
+        "pt": "Posso experimentar?",
+        "concept": "try on",
+        "note": "Try on is for clothes.",
+        "clip": "/learn/audio/a2-shopping/04.wav"
+      },
+      {
+        "en": "It's a bit too expensive.",
+        "pt": "Está um pouco caro demais.",
+        "concept": "too expensive",
+        "note": "Too means more than you want.",
+        "clip": "/learn/audio/a2-shopping/05.wav"
+      },
+      {
+        "en": "Do you take cards?",
+        "pt": "Vocês aceitam cartão?",
+        "concept": "take cards",
+        "note": "Ask about the payment method.",
+        "clip": "/learn/audio/a2-shopping/06.wav"
+      },
+      {
+        "en": "Can I get a receipt?",
+        "pt": "Posso pegar um recibo?",
+        "concept": "get a receipt",
+        "note": "Ask for proof of purchase.",
+        "clip": "/learn/audio/a2-shopping/07.wav"
+      },
+      {
+        "en": "I'll take it.",
+        "pt": "Vou levar.",
+        "concept": "take it (buy)",
+        "note": "Say yes, you will buy it.",
+        "clip": "/learn/audio/a2-shopping/08.wav"
+      }
+    ]
+  },
+  {
+    "id": "a2-past",
+    "level": "A2",
+    "title": "Lesson 12 — Last Weekend",
+    "topic": "Simple past for everyday stories",
+    "phrases": [
+      {
+        "en": "I went to the beach last weekend.",
+        "pt": "Eu fui à praia no fim de semana passado.",
+        "concept": "went (go)",
+        "note": "Went is the past of go.",
+        "clip": "/learn/audio/a2-past/01.wav"
+      },
+      {
+        "en": "We had a great time.",
+        "pt": "Nós nos divertimos muito.",
+        "concept": "had a great time",
+        "note": "Had is the past of have.",
+        "clip": "/learn/audio/a2-past/02.wav"
+      },
+      {
+        "en": "I saw an old friend.",
+        "pt": "Eu vi um amigo antigo.",
+        "concept": "saw (see)",
+        "note": "Saw is the past of see.",
+        "clip": "/learn/audio/a2-past/03.wav"
+      },
+      {
+        "en": "We ate at a nice restaurant.",
+        "pt": "Nós comemos em um restaurante legal.",
+        "concept": "ate (eat)",
+        "note": "Ate is the past of eat.",
+        "clip": "/learn/audio/a2-past/04.wav"
+      },
+      {
+        "en": "It rained on Sunday.",
+        "pt": "Choveu no domingo.",
+        "concept": "rained",
+        "note": "Regular past adds -ed.",
+        "clip": "/learn/audio/a2-past/05.wav"
+      },
+      {
+        "en": "I didn't do much on Saturday.",
+        "pt": "Eu não fiz muita coisa no sábado.",
+        "concept": "didn't do",
+        "note": "Use didn't + the base verb.",
+        "clip": "/learn/audio/a2-past/06.wav"
+      },
+      {
+        "en": "Did you go out last night?",
+        "pt": "Você saiu ontem à noite?",
+        "concept": "did you go",
+        "note": "Make past questions with did.",
+        "clip": "/learn/audio/a2-past/07.wav"
+      },
+      {
+        "en": "I stayed home and relaxed.",
+        "pt": "Eu fiquei em casa e relaxei.",
+        "concept": "stayed",
+        "note": "Regular past for everyday actions.",
+        "clip": "/learn/audio/a2-past/08.wav"
+      }
+    ]
+  },
+  {
+    "id": "a2-plans",
+    "level": "A2",
+    "title": "Lesson 13 — Making Plans",
+    "topic": "Inviting, suggesting, and confirming",
+    "phrases": [
+      {
+        "en": "Would you like to grab a coffee?",
+        "pt": "Você gostaria de tomar um café?",
+        "concept": "would you like to",
+        "note": "A polite invitation.",
+        "clip": "/learn/audio/a2-plans/01.wav"
+      },
+      {
+        "en": "How about Saturday afternoon?",
+        "pt": "Que tal sábado à tarde?",
+        "concept": "how about",
+        "note": "Suggest a time or idea.",
+        "clip": "/learn/audio/a2-plans/02.wav"
+      },
+      {
+        "en": "Let's meet at seven.",
+        "pt": "Vamos nos encontrar às sete.",
+        "concept": "let's",
+        "note": "Let's makes a suggestion for us.",
+        "clip": "/learn/audio/a2-plans/03.wav"
+      },
+      {
+        "en": "I'd love to, but I'm busy.",
+        "pt": "Eu adoraria, mas estou ocupado.",
+        "concept": "soft refusal",
+        "note": "Decline politely with a reason.",
+        "clip": "/learn/audio/a2-plans/04.wav"
+      },
+      {
+        "en": "Sounds good to me.",
+        "pt": "Por mim, parece ótimo.",
+        "concept": "agreeing to a plan",
+        "note": "A casual yes.",
+        "clip": "/learn/audio/a2-plans/05.wav"
+      },
+      {
+        "en": "Can we make it a bit later?",
+        "pt": "Podemos deixar um pouco mais tarde?",
+        "concept": "make it (a time)",
+        "note": "Ask to change the time.",
+        "clip": "/learn/audio/a2-plans/06.wav"
+      },
+      {
+        "en": "Do you want to join us?",
+        "pt": "Você quer vir com a gente?",
+        "concept": "join us",
+        "note": "Invite someone to come along.",
+        "clip": "/learn/audio/a2-plans/07.wav"
+      },
+      {
+        "en": "See you on Friday, then.",
+        "pt": "Então, até sexta.",
+        "concept": "confirming",
+        "note": "Close the plan with a day.",
+        "clip": "/learn/audio/a2-plans/08.wav"
+      }
+    ]
+  },
+  {
+    "id": "a2-travel",
+    "level": "A2",
+    "title": "Lesson 14 — Getting around",
+    "topic": "Travel and public transport",
+    "phrases": [
+      {
+        "en": "Which platform does the train leave from?",
+        "pt": "De qual plataforma o trem sai?",
+        "concept": "which platform",
+        "note": "Ask where to wait for a train.",
+        "clip": "/learn/audio/a2-travel/01.wav"
+      },
+      {
+        "en": "How do I get to the airport?",
+        "pt": "Como eu chego ao aeroporto?",
+        "concept": "how do I get to",
+        "note": "Ask for directions to a place.",
+        "clip": "/learn/audio/a2-travel/02.wav"
+      },
+      {
+        "en": "Is this the right bus for downtown?",
+        "pt": "Este é o ônibus certo para o centro?",
+        "concept": "the right bus",
+        "note": "Check before you get on.",
+        "clip": "/learn/audio/a2-travel/03.wav"
+      },
+      {
+        "en": "A one-way ticket, please.",
+        "pt": "Uma passagem só de ida, por favor.",
+        "concept": "one-way ticket",
+        "note": "One-way means no return.",
+        "clip": "/learn/audio/a2-travel/04.wav"
+      },
+      {
+        "en": "What time does the next train leave?",
+        "pt": "Que horas sai o próximo trem?",
+        "concept": "what time does",
+        "note": "Ask about a schedule.",
+        "clip": "/learn/audio/a2-travel/05.wav"
+      },
+      {
+        "en": "Could you call me a taxi?",
+        "pt": "Você poderia chamar um táxi para mim?",
+        "concept": "call a taxi",
+        "note": "A polite request for help.",
+        "clip": "/learn/audio/a2-travel/06.wav"
+      },
+      {
+        "en": "I think I missed my stop.",
+        "pt": "Acho que perdi a minha parada.",
+        "concept": "miss a stop",
+        "note": "Use it when you went too far.",
+        "clip": "/learn/audio/a2-travel/07.wav"
+      },
+      {
+        "en": "How long does the trip take?",
+        "pt": "Quanto tempo dura a viagem?",
+        "concept": "how long does it take",
+        "note": "Ask about duration.",
+        "clip": "/learn/audio/a2-travel/08.wav"
+      }
+    ]
+  },
+  {
+    "id": "a2-health",
+    "level": "A2",
+    "title": "Lesson 15 — At the doctor",
+    "topic": "Health and feeling unwell",
+    "phrases": [
+      {
+        "en": "I don't feel well.",
+        "pt": "Não estou me sentindo bem.",
+        "concept": "feel well",
+        "note": "Say that you are sick.",
+        "clip": "/learn/audio/a2-health/01.wav"
+      },
+      {
+        "en": "I have a headache.",
+        "pt": "Estou com dor de cabeça.",
+        "concept": "have a headache",
+        "note": "Use have + ache for pain.",
+        "clip": "/learn/audio/a2-health/02.wav"
+      },
+      {
+        "en": "It hurts here.",
+        "pt": "Dói aqui.",
+        "concept": "it hurts",
+        "note": "Point and say where.",
+        "clip": "/learn/audio/a2-health/03.wav"
+      },
+      {
+        "en": "I'd like to see a doctor.",
+        "pt": "Eu gostaria de ver um médico.",
+        "concept": "see a doctor",
+        "note": "Ask for an appointment.",
+        "clip": "/learn/audio/a2-health/04.wav"
+      },
+      {
+        "en": "How often should I take this?",
+        "pt": "Com que frequência devo tomar isto?",
+        "concept": "how often",
+        "note": "Ask about medicine timing.",
+        "clip": "/learn/audio/a2-health/05.wav"
+      },
+      {
+        "en": "I'm allergic to penicillin.",
+        "pt": "Sou alérgico a penicilina.",
+        "concept": "allergic to",
+        "note": "An important safety phrase.",
+        "clip": "/learn/audio/a2-health/06.wav"
+      },
+      {
+        "en": "I've had a fever since yesterday.",
+        "pt": "Estou com febre desde ontem.",
+        "concept": "since (a time)",
+        "note": "Since marks when it started.",
+        "clip": "/learn/audio/a2-health/07.wav"
+      },
+      {
+        "en": "Do I need a prescription?",
+        "pt": "Preciso de uma receita?",
+        "concept": "prescription",
+        "note": "Ask if you need a note for medicine.",
+        "clip": "/learn/audio/a2-health/08.wav"
+      }
+    ]
+  },
+  {
     "id": "b1-opinions",
     "level": "B1",
-    "title": "Lesson 11 — Opinions and Agreement",
+    "title": "Lesson 16 — Opinions and Agreement",
     "topic": "Giving opinions and reacting to them",
     "phrases": [
       {
@@ -706,7 +1026,7 @@
   {
     "id": "b1-experiences",
     "level": "B1",
-    "title": "Lesson 12 — Past Experiences",
+    "title": "Lesson 17 — Past Experiences",
     "topic": "Present perfect for life experiences",
     "phrases": [
       {
@@ -770,7 +1090,7 @@
   {
     "id": "b1-future",
     "level": "B1",
-    "title": "Lesson 13 — Future Plans",
+    "title": "Lesson 18 — Future Plans",
     "topic": "Talking about plans and predictions",
     "phrases": [
       {
@@ -834,7 +1154,7 @@
   {
     "id": "b1-work",
     "level": "B1",
-    "title": "Lesson 14 — At Work",
+    "title": "Lesson 19 — At Work",
     "topic": "Everyday phrases for the workplace",
     "phrases": [
       {
@@ -892,6 +1212,134 @@
         "concept": "keep in touch",
         "note": "Use it to stay connected with someone.",
         "clip": "/learn/audio/b1-work/08.wav"
+      }
+    ]
+  },
+  {
+    "id": "b1-problems",
+    "level": "B1",
+    "title": "Lesson 20 — Sorting out problems",
+    "topic": "Complaints and finding a solution",
+    "phrases": [
+      {
+        "en": "There seems to be a problem with my order.",
+        "pt": "Parece haver um problema com o meu pedido.",
+        "concept": "there seems to be",
+        "note": "A soft way to raise an issue.",
+        "clip": "/learn/audio/b1-problems/01.wav"
+      },
+      {
+        "en": "I'd like to make a complaint.",
+        "pt": "Eu gostaria de fazer uma reclamação.",
+        "concept": "make a complaint",
+        "note": "A formal way to complain.",
+        "clip": "/learn/audio/b1-problems/02.wav"
+      },
+      {
+        "en": "This isn't what I ordered.",
+        "pt": "Isto não é o que eu pedi.",
+        "concept": "what I ordered",
+        "note": "Point out the mistake clearly.",
+        "clip": "/learn/audio/b1-problems/03.wav"
+      },
+      {
+        "en": "Could you sort this out for me?",
+        "pt": "Você poderia resolver isto para mim?",
+        "concept": "sort out",
+        "note": "Ask someone to fix a problem.",
+        "clip": "/learn/audio/b1-problems/04.wav"
+      },
+      {
+        "en": "Is there anything you can do?",
+        "pt": "Há algo que você possa fazer?",
+        "concept": "anything you can do",
+        "note": "Ask for a solution politely.",
+        "clip": "/learn/audio/b1-problems/05.wav"
+      },
+      {
+        "en": "I'd appreciate a refund.",
+        "pt": "Eu agradeceria um reembolso.",
+        "concept": "would appreciate",
+        "note": "A polite way to ask for money back.",
+        "clip": "/learn/audio/b1-problems/06.wav"
+      },
+      {
+        "en": "Let me check what went wrong.",
+        "pt": "Deixe-me verificar o que deu errado.",
+        "concept": "what went wrong",
+        "note": "Offer to look into a problem.",
+        "clip": "/learn/audio/b1-problems/07.wav"
+      },
+      {
+        "en": "Sorry for the inconvenience.",
+        "pt": "Desculpe pelo transtorno.",
+        "concept": "the inconvenience",
+        "note": "Apologize for trouble caused.",
+        "clip": "/learn/audio/b1-problems/08.wav"
+      }
+    ]
+  },
+  {
+    "id": "b1-phone",
+    "level": "B1",
+    "title": "Lesson 21 — On the phone",
+    "topic": "Handling everyday phone calls",
+    "phrases": [
+      {
+        "en": "Could I speak to the manager, please?",
+        "pt": "Eu poderia falar com o gerente, por favor?",
+        "concept": "speak to",
+        "note": "Ask for a specific person.",
+        "clip": "/learn/audio/b1-phone/01.wav"
+      },
+      {
+        "en": "Who's calling, please?",
+        "pt": "Quem está falando, por favor?",
+        "concept": "who's calling",
+        "note": "Ask who is on the line.",
+        "clip": "/learn/audio/b1-phone/02.wav"
+      },
+      {
+        "en": "Could you hold on a moment?",
+        "pt": "Você poderia aguardar um momento?",
+        "concept": "hold on",
+        "note": "Ask someone to wait.",
+        "clip": "/learn/audio/b1-phone/03.wav"
+      },
+      {
+        "en": "I'm calling about my appointment.",
+        "pt": "Estou ligando sobre a minha consulta.",
+        "concept": "calling about",
+        "note": "State the reason for your call.",
+        "clip": "/learn/audio/b1-phone/04.wav"
+      },
+      {
+        "en": "Could you put me through to sales?",
+        "pt": "Você poderia me transferir para vendas?",
+        "concept": "put through",
+        "note": "Ask to be connected to a department.",
+        "clip": "/learn/audio/b1-phone/05.wav"
+      },
+      {
+        "en": "Can I leave a message?",
+        "pt": "Posso deixar um recado?",
+        "concept": "leave a message",
+        "note": "Use it when the person is away.",
+        "clip": "/learn/audio/b1-phone/06.wav"
+      },
+      {
+        "en": "Sorry, you've got the wrong number.",
+        "pt": "Desculpe, você ligou para o número errado.",
+        "concept": "wrong number",
+        "note": "A polite correction.",
+        "clip": "/learn/audio/b1-phone/07.wav"
+      },
+      {
+        "en": "Could you call me back later?",
+        "pt": "Você poderia me ligar de volta mais tarde?",
+        "concept": "call back",
+        "note": "Ask for a return call.",
+        "clip": "/learn/audio/b1-phone/08.wav"
       }
     ]
   },
@@ -990,7 +1438,7 @@
   {
     "id": "b2-arguments",
     "level": "B2",
-    "title": "Lesson 15 — Making Arguments",
+    "title": "Lesson 22 — Making Arguments",
     "topic": "Debating and defending a position",
     "phrases": [
       {
@@ -1054,7 +1502,7 @@
   {
     "id": "b2-conditionals",
     "level": "B2",
-    "title": "Lesson 16 — Hypotheticals",
+    "title": "Lesson 23 — Hypotheticals",
     "topic": "Conditionals and unreal situations",
     "phrases": [
       {
@@ -1118,7 +1566,7 @@
   {
     "id": "b2-negotiation",
     "level": "B2",
-    "title": "Lesson 17 — Negotiating",
+    "title": "Lesson 24 — Negotiating",
     "topic": "Reaching an agreement",
     "phrases": [
       {
@@ -1182,7 +1630,7 @@
   {
     "id": "b2-trends",
     "level": "B2",
-    "title": "Lesson 18 — Trends and Data",
+    "title": "Lesson 25 — Trends and Data",
     "topic": "Describing changes and numbers",
     "phrases": [
       {
@@ -1246,7 +1694,7 @@
   {
     "id": "c1-nuance",
     "level": "C1",
-    "title": "Lesson 19 — Nuance and Stance",
+    "title": "Lesson 26 — Nuance and Stance",
     "topic": "Expressing precise attitudes and reservations",
     "phrases": [
       {
@@ -1310,7 +1758,7 @@
   {
     "id": "c1-register",
     "level": "C1",
-    "title": "Lesson 20 — Register and Professional Tone",
+    "title": "Lesson 27 — Register and Professional Tone",
     "topic": "Adjusting tone in professional contexts",
     "phrases": [
       {
@@ -1374,7 +1822,7 @@
   {
     "id": "c2-precision",
     "level": "C2",
-    "title": "Lesson 21 — Precision and Emphasis",
+    "title": "Lesson 28 — Precision and Emphasis",
     "topic": "Making exact claims with controlled emphasis",
     "phrases": [
       {
@@ -1438,7 +1886,7 @@
   {
     "id": "c2-rhetoric",
     "level": "C2",
-    "title": "Lesson 22 — Rhetorical Control",
+    "title": "Lesson 29 — Rhetorical Control",
     "topic": "Controlling argument flow and emphasis",
     "phrases": [
       {

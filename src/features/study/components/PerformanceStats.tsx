@@ -3,20 +3,36 @@
 import { Card } from "@/components/ui/Card";
 import Disclosure from "@/components/ui/Disclosure";
 import { cn } from "@/lib/cn";
-import type { computePerformance } from "@/lib/srs/analytics";
+import type { computePerformance, computeReturnAfterMiss } from "@/lib/srs/analytics";
 
 type Performance = ReturnType<typeof computePerformance>;
+type Retention = ReturnType<typeof computeReturnAfterMiss>;
 
-export function PerformanceStats({ cardsCount, stats }: { cardsCount: number; stats: Performance }) {
+export function PerformanceStats({
+  cardsCount,
+  stats,
+  retention,
+}: {
+  cardsCount: number;
+  stats: Performance;
+  retention?: Retention;
+}) {
   return (
     <Card className="p-5">
       <p className="mb-4 text-sm font-semibold tracking-[-0.01em] text-ink">Performance</p>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <Stat label="Cards" value={String(cardsCount)} />
+        <Stat label="Phrases" value={String(cardsCount)} />
         <Stat label="Reviews" value={String(stats.totalReviews)} />
         <Stat label="Accuracy" value={`${Math.round(stats.accuracy * 100)}%`} />
         <Stat label="Streak" value={`${stats.streakDays}d`} />
       </div>
+
+      {retention && retention.missGaps > 0 && (
+        <p className="mt-4 text-xs text-ink-muted">
+          You’ve come back {retention.promptReturns} of {retention.missGaps}{" "}
+          {retention.missGaps === 1 ? "time" : "times"} within a week of a break.
+        </p>
+      )}
 
       {stats.totalReviews > 0 && (
         <Disclosure

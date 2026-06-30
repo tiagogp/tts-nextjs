@@ -45,9 +45,9 @@ export function SessionSummary({
   return (
     <Card className="space-y-5 p-6 text-center sm:p-8">
       <div className="space-y-1">
-        <p className="text-sm font-semibold text-ink">Session complete</p>
+        <p className="text-sm font-semibold text-ink">Review complete</p>
         <p className="text-xs text-ink-muted">
-          {reviewed} card{reviewed === 1 ? "" : "s"} reviewed this session.
+          {reviewed} phrase{reviewed === 1 ? "" : "s"} reviewed today.
         </p>
       </div>
 
@@ -55,18 +55,18 @@ export function SessionSummary({
         <div>
           <p className="text-2xl font-semibold tabular-nums text-ink">{accuracy}%</p>
           <p className="mt-0.5 text-xs uppercase tracking-[0.8px] text-ink-muted">Now</p>
-          <p className="mt-1 text-[11px] leading-snug text-ink-muted">graded well this round</p>
+          <p className="mt-1 text-[11px] leading-snug text-ink-muted">went well this round</p>
         </div>
         <div>
           <p className="text-2xl font-semibold tabular-nums text-ink">{stable}</p>
           <p className="mt-0.5 text-xs uppercase tracking-[0.8px] text-ink-muted">Tomorrow</p>
-          <p className="mt-1 text-[11px] leading-snug text-ink-muted">predicted stable in 24h</p>
+          <p className="mt-1 text-[11px] leading-snug text-ink-muted">ready for tomorrow</p>
         </div>
       </div>
 
       {streakDays > 1 && (
         <p className="text-xs text-ink-soft">
-          {streakDays} days in a row — keep the rhythm.
+          {streakDays} days in a row. Tomorrow you review the next phrases.
         </p>
       )}
     </Card>
