@@ -1,14 +1,21 @@
 import { nanoid } from "nanoid";
-import type { ActivationTiming } from "@/features/activation/firstRun";
+import type { ActivationTiming, FirstRunActivationSource } from "@/features/activation/firstRun";
 import { STORES, get, getAll, getAllFromIndex, put } from "./db";
 
 export type ActivityEventType =
+  | "first_run_started"
   | "cards_reviewed"
   | "video_processed"
   | "conversation_turn"
+  | "mistake_submitted"
   | "correction_generated"
   | "cards_created"
   | "progress_checkin";
+
+export interface FirstRunStartedPayload {
+  source: FirstRunActivationSource;
+  sourceId?: string;
+}
 
 export interface CardsReviewedPayload {
   count: number;
@@ -27,9 +34,15 @@ export interface ConversationTurnPayload {
   turnIndex: number;
 }
 
+/** The learner submitted a sentence to be corrected (the W5 "mistake" step). */
+export interface MistakeSubmittedPayload {
+  source: "lesson" | "correct";
+  lessonId?: string;
+}
+
 export interface CorrectionGeneratedPayload {
   cardsCreated: number;
-  source: "manual" | "json" | "ai";
+  source: "manual" | "json" | "ai" | "lesson";
 }
 
 export interface CardsCreatedPayload {
@@ -45,9 +58,11 @@ export interface ProgressCheckinPayload {
 }
 
 type PayloadMap = {
+  first_run_started: FirstRunStartedPayload;
   cards_reviewed: CardsReviewedPayload;
   video_processed: VideoProcessedPayload;
   conversation_turn: ConversationTurnPayload;
+  mistake_submitted: MistakeSubmittedPayload;
   correction_generated: CorrectionGeneratedPayload;
   cards_created: CardsCreatedPayload;
   progress_checkin: ProgressCheckinPayload;

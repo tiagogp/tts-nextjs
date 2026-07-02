@@ -53,9 +53,21 @@ export default function W5ValidationCard() {
 
   const ttfrTone: Tone =
     metrics?.ttfrUnderTarget == null ? "default" : metrics.ttfrUnderTarget ? "success" : "danger";
+  const loopTone: Tone =
+    metrics?.firstLoopUnderTarget == null
+      ? "default"
+      : metrics.firstLoopUnderTarget
+        ? "success"
+        : "danger";
 
   const returnTone = (returned: boolean): Tone => (returned ? "success" : "default");
   const returnLabel = (returned: boolean) => (returned ? t("Returned") : t("No return yet"));
+  const activationSourceLabel = metrics?.activationSource === "own_source"
+    ? t("Own source")
+    : metrics?.activationSource === "bundled_lesson"
+      ? t("Bundled lesson")
+      : t("Not yet");
+  const dropoffLabel = metrics?.dropoffStep ? dropoffStepLabel(metrics.dropoffStep, t) : t("Complete");
 
   return (
     <Card className="mt-4 p-5">
@@ -74,6 +86,7 @@ export default function W5ValidationCard() {
         </p>
       ) : (
         <dl className="mt-4 grid gap-2 sm:grid-cols-2">
+          <MetricRow label={t("Activation source")} value={activationSourceLabel} />
           <MetricRow label={t("Time to saved phrase")} value={duration(metrics?.timeToSavedPhraseMs ?? null)} />
           <MetricRow
             label={t("Time to first review")}
@@ -83,6 +96,23 @@ export default function W5ValidationCard() {
                 ? undefined
                 : { tone: ttfrTone, label: metrics.ttfrUnderTarget ? t("Under 2m") : t("Over 2m") }
             }
+          />
+          <MetricRow
+            label={t("Time to first loop")}
+            value={duration(metrics?.timeToFirstLoopMs ?? null)}
+            pill={
+              metrics?.timeToFirstLoopMs == null
+                ? { tone: "default", label: t("Incomplete") }
+                : { tone: loopTone, label: metrics.firstLoopUnderTarget ? t("Under 2m") : t("Over 2m") }
+            }
+          />
+          <MetricRow
+            label={t("Dropoff step")}
+            value={dropoffLabel}
+            pill={{
+              tone: metrics?.firstLoopCompleted ? "success" : "default",
+              label: metrics?.firstLoopCompleted ? t("Complete") : t("Open"),
+            }}
           />
           <MetricRow
             label={t("D+1 return")}
@@ -106,6 +136,26 @@ export default function W5ValidationCard() {
       )}
     </Card>
   );
+}
+
+function dropoffStepLabel(
+  step: NonNullable<W5Metrics["dropoffStep"]>,
+  t: (en: string, vars?: Record<string, string | number>) => string,
+) {
+  switch (step) {
+    case "clip":
+      return t("Clip");
+    case "save_phrase":
+      return t("Save phrase");
+    case "review":
+      return t("Review");
+    case "mistake":
+      return t("Mistake");
+    case "correction":
+      return t("Correction");
+    case "own_source":
+      return t("Own source");
+  }
 }
 
 function MetricRow({

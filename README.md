@@ -1,10 +1,12 @@
 # PhraseLoop
 
-PhraseLoop helps Portuguese-speaking English self-study learners turn real English into native-audio review cards and a calm daily study habit on desktop first.
+PhraseLoop helps Brazilian A2-B1 self-study learners who already use real English and find Anki/card creation too manual turn that material and their mistakes into native-audio review cards on Mac.
 
-PhraseLoop starts with a zero-setup lesson, then helps you keep useful phrases from native material, review them daily, correct your output, and turn weak spots into more practice. Speech generation, Anki export, Speak, custom plans, and AI provider setup are still built in, but they stay behind the core loop rather than defining the first experience.
+PhraseLoop starts with one Home-led loop: hear a curated native clip, save one useful phrase, review it immediately, correct your own sentence, and turn that correction into tomorrow's practice. Speech generation, Anki export, Speak, custom plans, and AI provider setup are still built in, but they stay behind the core loop rather than defining the first experience.
 
 ## Why PhraseLoop (vs. Anki or a chatbot)
+
+Five-second promise: **turn real English and your mistakes into native-audio review cards in 2 minutes.**
 
 Two things a manual flashcard app and a generic chatbot don't do for you:
 
@@ -17,7 +19,7 @@ Two things a manual flashcard app and a generic chatbot don't do for you:
 
 Everything else — local spaced repetition, zero-setup first lesson, Anki export,
 local-first storage — exists to keep that loop calm and daily. Launch validation is gated by
-W5: users must reach first review quickly, explain the loop without jargon, notice native
+W5: users must complete the first loop quickly, explain it without jargon, notice native
 audio or mistake drills, and name a repeated paid pain before billing moves forward.
 
 ### Head to head
@@ -30,8 +32,15 @@ audio or mistake drills, and name a repeated paid pain before billing moves forw
 | Knowing what to study tomorrow | You schedule it | The model has no memory of your reviews | Local spaced repetition picks the due cards |
 | Where your history lives | Local (with sync add-ons) | On someone else's server | Local-first, with JSON backup and validated restore |
 
-The two rows competitors can't copy cheaply are **native source audio** and **your
-mistakes become drills** — the rest is table stakes that PhraseLoop keeps in one loop.
+The switching bet is speed: PhraseLoop must make the path from source material to a reviewed
+native-audio card take under 2 minutes with less friction than doing the same work by hand in Anki,
+Migaku, or LingQ. Speak and ELSA are stronger for speaking confidence and pronunciation.
+PhraseLoop's launch wedge is the combined desktop loop of source audio, local review, and personal
+mistakes becoming tomorrow's practice.
+
+Launch status: this is a research-to-launch candidate. It should not be treated as broadly
+launch-ready until W5 proves activation, explain-back, D+1/D+7 return, differentiation, and one
+repeated paid pain.
 
 ## Stack
 
@@ -130,7 +139,7 @@ OLLAMA_MODEL=llama3.1
 ## Features
 
 - **Review** — study saved phrases with local spaced repetition
-- **First lesson** — save and review bundled practice phrases with no provider setup
+- **First lesson** — save and review bundled practice phrases from Home with no provider setup
 - **Phrases** — import YouTube audio, articles, or PDFs and keep phrases worth learning
 - **Mistakes** — turn writing or transcribed speech corrections into reviewable phrases
 - **Speak** — advanced conversation practice that reuses mistakes as learning material after the core loop is clear

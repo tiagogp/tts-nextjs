@@ -17,8 +17,9 @@ Use:
 
 ## Produto Em Uma Frase
 
-PhraseLoop ajuda brasileiros aprendendo ingles a transformar ingles real em frases com audio
-nativo para revisao, producao e reforco diario, com uma experiencia desktop local-first.
+PhraseLoop ajuda brasileiros A2-B1 que estudam ingles sozinhos, ja consomem conteudo real e
+acham criacao de cards manual demais a transformar esse ingles e seus proprios erros em revisao
+diaria com audio nativo no Mac.
 
 Essa frase e a fonte de verdade para README, onboarding, landing copy, release notes e roadmap.
 
@@ -37,32 +38,42 @@ estudaveis, agenda revisoes, detecta fraquezas e gera reforco a partir dos erros
 ## Guardrails De Launch
 
 Antes do launch, o roadmap fica subordinado a evidencia do W5. As decisoes de escopo, segmento
-inicial e monetizacao devem seguir os sinais de TTFR, explain-back, diferenciacao espontanea e
-retorno D+1/D+7.
+inicial e monetizacao devem seguir os sinais de TTFR (`first_run_started` -> `first_loop_completed`),
+explain-back, diferenciacao espontanea e retorno D+1/D+7.
 
 Decisoes de launch:
 
 1. Rodar o W5 exatamente como escrito antes de reabrir novas superficies de produto.
-2. Reduzir a experiencia visivel a um loop: demo ou Discover -> salvar frases -> Study ->
-   Correct -> treino a partir do erro.
+2. Reduzir a experiencia visivel a um loop guiado: ouvir um clip nativo curado -> salvar uma frase
+   -> revisar agora -> escrever uma frase -> corrigir -> salvar a correcao para amanha.
 3. Fazer os dois diferenciais reais aparecerem na primeira sessao: audio nativo de material real
    e erros pessoais virando drills de revisao.
-4. Primeiro cliente escolhido para launch: autodidata/usuario de Anki que traz fontes reais,
+4. Primeiro cliente escolhido para launch: autodidata A2-B1 / Anki-adjacent que traz fontes reais,
    entende revisao e sente a dor de transformar material real em pratica.
 5. Empacotar monetizacao em uma dor concreta, nao em um pacote generico de possibilidades.
 
 ## Usuario-Alvo
 
-O recorte de v1 e deliberadamente estreito:
+O recorte de v1 e deliberadamente estreito. O ICP de launch e:
 
 - Brasileiro falante de portugues aprendendo ingles.
-- Nivel A1/A2 no inicio, com caminho para B1+.
-- Desktop primeiro, macOS Apple Silicon primeiro.
-- Quer aprender sem configurar infraestrutura tecnica antes da primeira recompensa.
+- Nivel A2-B1.
+- Ja estuda sozinho, assiste/le textos em ingles e tentou Anki, flashcards ou um fluxo parecido.
+- Tem Mac Apple Silicon e aceita desktop como primeiro ambiente.
+- Sente que criar cards, limpar frases, adicionar audio e revisar erros manualmente e trabalhoso.
 
-O primeiro cliente de launch e **autodidata/Anki**: quem traz fontes reais, entende revisao e
-valoriza reduzir o trabalho manual de transformar material em pratica diaria. O iniciante guiado
-continua suportado pela licao demo e por licoes bundled, mas nao e a narrativa primaria de launch.
+O primeiro cliente de launch e **autodidata A2-B1 / Anki-adjacent**: quem traz fontes reais,
+entende revisao e valoriza reduzir o trabalho manual de transformar material em pratica diaria.
+O iniciante A1 continua suportado por licoes bundled, mas nao e a narrativa primaria de launch.
+
+Nao servimos em v1:
+
+- Iniciantes A1 que precisam de curriculo guiado antes de input real.
+- Usuarios mobile-only.
+- Usuarios casuais de Duolingo que nao sentem dor de card creation.
+- Escolas, empresas e compradores com necessidade de admin/reporting.
+- Alunos que querem pronuncia/confianca oral como dor primaria.
+- Power users que ja tem um fluxo Migaku/Anki perfeito.
 
 O W5 continua soberano: se os resultados mostrarem ativacao, explain-back, retorno D+1/D+7 e
 diferenciacao claramente melhores em iniciantes guiados, a narrativa e o onboarding devem mudar
@@ -71,7 +82,8 @@ para esse segmento antes do launch publico.
 Consequencias de produto:
 
 - PT-BR deve ser a lingua primaria da interface.
-- O primeiro valor precisa acontecer em ate 5 minutos.
+- O primeiro valor precisa acontecer em ate 5 minutos; no W5, TTFR do primeiro loop completo
+  precisa ficar abaixo de 2 minutos.
 - Provedor de IA nao pode ser requisito para a primeira sessao.
 - Termos como `deck`, `provider`, `APKG` e `curation` devem ficar fora do caminho principal,
   mesmo para o publico Anki; eles podem aparecer so depois do loop principal ser compreendido.
@@ -111,6 +123,16 @@ Validacao: perguntas de disposicao a pagar e "pelo que voce pagaria" entram nas 
 (ver [w5-validation-protocol.md](w5-validation-protocol.md)). So transformar billing em roadmap depois que um candidato
 pago aparecer como substituicao concreta em entrevistas.
 
+Perguntas obrigatorias de monetizacao:
+
+1. "O que voce ja paga hoje para aprender ingles?"
+2. "Qual destes voce pagaria R$19-39/mes para remover?"
+3. Opcoes: geracao melhor sem setup local, review no celular com sync, conteudo graduado curado,
+   ou nenhum/so usaria gratis.
+
+Regra de corte: se pelo menos 3/10 usuarios do ICP nao escolherem a mesma dor paga com linguagem
+concreta, billing continua fora do roadmap.
+
 ## Diferenciais
 
 | Diferencial | Por que importa |
@@ -121,6 +143,30 @@ pago aparecer como substituicao concreta em entrevistas.
 | Erros viram treino | Correct e Speak alimentam o mesmo pipeline de cards, SRS e fraquezas. |
 | Geracao plugavel | Ollama, OpenRouter, Claude e OpenAI usam o mesmo contrato de pipeline. |
 | Ciclo adaptativo | Revisao, scaffold, cooldown e dificuldade sao tratados como ciclo de aprendizagem. |
+
+## Posicionamento Competitivo
+
+O motivo para trocar ou adicionar PhraseLoop nao e "mais um app de flashcards". O motivo e reduzir
+drasticamente o caminho de **fonte real -> frase salva -> revisao com audio -> erro corrigido vira
+treino**.
+
+Promessa mensuravel: PhraseLoop so ganha se o learner sair de um clip/artigo real para um card com
+audio nativo revisado em menos de 2 minutos, com menos friccao que Anki/Migaku/LingQ.
+
+| Competidor | Onde ganha | Onde PhraseLoop precisa ganhar |
+| --- | --- | --- |
+| Anki | Gratuito, maduro, cross-platform, sync e decks enormes. | Menos trabalho manual para criar cards com audio da fonte e erros proprios. |
+| LingQ | Conteudo importado, contexto e SRS. | Primeiro loop desktop local-first mais direto para frase + audio + erro pessoal. |
+| Migaku | Captura de cards no navegador/video. | Fluxo PT-BR desktop com revisao interna e erros virando treino. |
+| FluentU | Video autentico polido e conteudo curado. | Material escolhido pelo usuario e dados locais. |
+| Speak/ELSA | Fala, confianca e feedback de pronuncia. | Revisao de longo prazo a partir de fontes e erros reais. |
+| Chatbots | Conversa flexivel e baixo atrito. | Memoria local de revisoes, clipes nativos e cards derivados automaticamente. |
+
+Nao estamos tentando vencer o Anki como engine de repeticao. Estamos tentando vencer o passo antes
+do Anki: encontrar, extrair, limpar, adicionar audio, revisar e reutilizar os erros.
+
+Se usuarios do W5 nao disserem, sem coaching, que usariam PhraseLoop no lugar do fluxo atual de
+criar material de revisao pelos proximos 7 dias, a diferenciacao ainda nao esta pronta para launch.
 
 ## Estado Atual
 
@@ -165,8 +211,8 @@ Detalhes completos ficam em [docs/README.md](README.md).
 
 | Prioridade | Decisao | Escopo |
 | --- | --- | --- |
-| 1 | W5 manda no roadmap | TTFR, explain-back, diferenciacao espontanea e D+1/D+7 decidem o proximo ciclo. |
-| 2 | Uma espinha visivel | Demo ou Discover -> salvar frases -> Study -> Correct -> treino do erro. |
+| 1 | W5 manda no roadmap | TTFR do primeiro loop, explain-back, diferenciacao espontanea e D+1/D+7 decidem o proximo ciclo. |
+| 2 | Uma espinha visivel | Ouvir/trazer ingles -> salvar frases -> Study -> Correct -> treino do erro. |
 | 3 | Diferenciais no primeiro uso | Audio nativo de material real e erro pessoal virando drill precisam aparecer sem explicacao. |
 | 4 | Primeiro cliente escolhido | Launch para autodidata/Anki que traz fontes reais; W5 pode sobrescrever se iniciantes vencerem claramente. |
 | 5 | Monetizacao por uma dor | Escolher entre nuvem gerenciada, review-anywhere sync ou conteudo graduado curado. |
@@ -175,26 +221,37 @@ Detalhes completos ficam em [docs/README.md](README.md).
 
 ## Roadmap Imediato
 
-1. **W5 como gate.** Rodar o protocolo sem coaching e travar roadmap em TTFR, explain-back,
-   diferenciacao espontanea e retorno D+1/D+7.
-2. **Loop unico de launch.** Fazer o caminho default ser zero-config: demo ou Discover -> salvar
-   frases com audio -> Study -> Correct -> drill a partir de um erro.
-3. **Diferenciais visiveis.** Garantir que a primeira sessao mostre audio nativo de material real
-   e erro pessoal virando revisao, sem depender de explicacao do moderador.
-4. **Segmento escolhido.** Fazer o launch falar com autodidatas/usuarios de Anki que trazem fontes
-   reais; mudar apenas se o W5 mostrar vencedor claro em iniciantes guiados.
-5. **Oferta paga unica.** Escolher um candidato de monetizacao: nuvem gerenciada, review-anywhere
-   sync ou conteudo graduado curado.
+PhraseLoop nao lanca amplamente ate 10 usuarios do ICP completarem um primeiro loop guiado,
+entenderem o valor sem jargao e mostrarem retorno inicial. O primeiro loop precisa provar o wedge:
+ingles real e erros do usuario viram cards de revisao com audio nativo. Todo o resto fica escondido
+ou congelado.
+
+| Prioridade | Task | Why |
+| --- | --- | --- |
+| P0 | Reescrever Home/onboarding em torno do loop real | Clareza instantanea do produto |
+| P0 | Construir um primeiro loop guiado com clip nativo curado | Prova valor em menos de 2 minutos |
+| P0 | Adicionar metricas de ativacao e dropoff | Torna W5 mensuravel |
+| P0 | Esconder termos avancados de provider/deck/model/export | Reduz friccao antes da ativacao |
+| P1 | Melhorar audio nativo bundled | Primeira impressao |
+| P1 | Mostrar own-source como proximo passo depois do loop | Mostra a magia real sem arriscar ativacao |
+| P1 | Adicionar campos W5 de paid pain e replacement workflow | Valida monetizacao e troca de fluxo |
+| P2 | Polir backup/restore | Confianca local-first |
+| P2 | Polir falhas de import/YouTube | Evita frustracao quando o usuario traz fonte propria |
 
 Fora do escopo do proximo ciclo:
 
+- Speak mode.
+- Planos de 90 dias.
+- Configuracao avancada de provedores.
+- APKG/export como fluxo primario.
+- Suporte amplo a idiomas.
 - Novo trilho de adaptive difficulty.
-- Expansao ampla de task types.
+- Gerenciamento complexo de decks.
+- Billing antes de uma dor paga unica aparecer em validacao.
+- Features para escolas/empresas.
+- App mobile completo.
 - Social/growth mechanics.
 - Framework geral de notificacoes.
-- Onboarding centrado em provedor.
-- Billing antes de uma dor paga unica aparecer em validacao.
-- Promover Converse/Plan/Tools, Anki export, TTS ou provedores como caminho principal de launch.
 
 ## Tracker De Produto
 
@@ -220,11 +277,26 @@ Proximo passe recomendado:
 
 ## Revisao UX De Primeira Experiencia
 
+Primeira sessao v1, uma unica trilha:
+
+1. Usuario ouve um clip curto de ingles real curado.
+2. App destaca 2-3 frases uteis.
+3. Usuario salva uma frase.
+4. Usuario revisa essa frase imediatamente com audio nativo.
+5. Usuario escreve uma frase usando a expressao.
+6. App corrige a frase.
+7. Correcao vira card de revisao de amanha.
+8. Tela final confirma: "Voce criou 2 cards de revisao: um de ingles real, um do seu proprio erro."
+
+So depois dessa conclusao aparece o proximo passo: "Agora teste com seu proprio video do YouTube
+ou artigo." Import proprio nunca deve ser a primeira prova do produto, porque pode falhar, demorar
+ou exigir conceitos antes da ativacao.
+
 | Item | Impacto | Status | Decisao |
 | --- | --- | --- | --- |
 | Home "Hoje" | High | Done | Primeira tela com uma proxima acao clara. |
 | Discover sem bloquear por IA | High | Done | Import/transcricao nao dependem de provedor. |
-| Try demo | High | Done | Exemplo bundled entra no mesmo fluxo de review/save/study. |
+| Try demo | High | Done | Home abre a licao bundled recomendada; Discover nao deve ter um segundo demo concorrente. |
 | Reduzir calendario no inicio | Med | Done | Dashboard so aparece com progresso real. |
 | Linguagem de aprendiz | Med | Planned | Trocar jargoes por "frases para praticar", "salvar para estudar" etc. |
 | Study local > Anki | Med | Done | CTA principal salva e estuda; Anki fica avancado e escondido ate o loop ser entendido. |
@@ -232,7 +304,18 @@ Proximo passe recomendado:
 | Settings de IA guiado | Med | Partial | Provedores estao em Advanced AI; falta copy "Local no computador" vs "Nuvem mais facil". |
 | Coaching contextual | Low | Planned | Explicar o proximo passo no momento certo. |
 | Tools fora da nav primaria | Low | Done | Ferramentas em Settings/Advanced. |
-| Ativacao sem setup | High | Partial | Licoes bundled landed; primeira tela abre a licao recomendada e mede save/review; falta substituir WAVs placeholder por Kokoro. |
+| Ativacao sem setup | High | Partial | Licoes bundled landed; o loop guiado completa offline (salvar -> escrever frase -> correcao local -> revisar) sem provedor. Falta o audio bundled real: gravar/licenciar clipes nativos, nao Kokoro TTS — TTS contradiz o diferencial "audio nativo, nao releitura robotica" que o W5 mede. |
+
+Checklist de launch antes de publico:
+
+1. Build assinado/notarizado sem workaround de Gatekeeper para participantes reais.
+2. Audio bundled real validado com usuarios; sem placeholder audivel.
+3. Auditoria PT-BR da primeira sessao e termos avancados fora do caminho principal.
+4. Restore validado em sessao real com dados de longo prazo.
+5. Taxonomia HTTP para falhas de provedor, timeout/abort e input invalido.
+6. Fallback claro para falha de YouTube/import sem bloquear licao bundled e Study.
+7. Usuario consegue deletar dados locais.
+8. Usuario entende onde os dados ficam armazenados.
 
 Historico de ativacao shipped:
 
@@ -315,14 +398,51 @@ Ainda pendente: validacao D+1/D+7 para confirmar se scaffold e band gate melhora
 
 ## Metricas
 
-- Time-to-first-card: alvo menor que 5 min, ideal menor que 2 min no demo.
-- Loop completion: capturar -> estudar -> produzir -> reforcar.
-- Retencao D+1/D+7/D+30 de itens revisados.
-- Recall previsto vs recall real.
-- Uso de dica, latencia e abandono depois de erro.
-- Percentual de UI em PT-BR.
-- Incidentes de perda de dados: alvo zero.
-- 7-day retention proxy e sobrevivencia de streak sem pressao.
+Gate W5 para launch amplo, em 10 usuarios do ICP:
+
+- Pelo menos 6/10 completam o primeiro loop sem ajuda.
+- TTFR do primeiro loop completo abaixo de 2 minutos.
+- Pelo menos 7/10 explicam PhraseLoop como "transforma ingles real e meus erros em cards de
+  revisao" sem prompt.
+- Pelo menos 40% retornam D+1 e 25% retornam D+7.
+- Pelo menos 3/10 dizem que usariam PhraseLoop no lugar do fluxo atual de Anki/card-making pelos
+  proximos 7 dias.
+- Pelo menos 3/10 nomeiam a mesma dor paga; caso contrario, billing continua congelado.
+
+Eventos minimos de ativacao:
+
+```ts
+first_run_started
+clip_played
+phrase_saved
+review_started
+review_completed
+mistake_submitted
+correction_saved
+first_loop_completed
+own_source_started
+own_source_completed
+day_1_returned
+day_7_returned
+```
+
+Metricas derivadas:
+
+```ts
+activation = first_loop_completed
+ttfr = first_loop_completed.ts - first_run_started.ts
+dropoff_step =
+  | "clip"
+  | "save_phrase"
+  | "review"
+  | "mistake"
+  | "correction"
+  | "own_source"
+```
+
+Metricas secundarias continuam validas depois do gate: recall previsto vs recall real, uso de dica,
+latencia, abandono depois de erro, percentual de UI em PT-BR, incidentes de perda de dados e
+retencao D+30.
 
 ## Riscos
 
@@ -336,6 +456,7 @@ Ainda pendente: validacao D+1/D+7 para confirmar se scaffold e band gate melhora
 | Performance IndexedDB | Medium | Query helpers e summaries. |
 | Variabilidade de provedor | Medium | Taxonomia de erro e modelos recomendados. |
 | Drift de identidade | Medium | Manter English-first e PT -> EN para v1. |
+| Diferenciacao fraca | High | W5 precisa capturar substituicao do fluxo atual e diferenciador espontaneo. |
 
 ## Metodo De Trabalho
 
@@ -351,7 +472,7 @@ Definition of Done:
 ## Decisao Final
 
 PhraseLoop nao precisa provar que o motor funciona; precisa terminar a ponte entre esse motor e
-um iniciante real. A sequencia correta e:
+um autodidata real que ja tenta transformar ingles real em pratica. A sequencia correta e:
 
 1. Foco e ativacao sem setup.
 2. Linguagem PT-BR simples.

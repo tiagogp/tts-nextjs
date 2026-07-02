@@ -7,7 +7,8 @@ import { Notice } from "@/components/ui/Notice";
 import { TranscriptReview } from "@/features/discover/components/TranscriptReview";
 import type { DiscoverResult, TranscriptSegment } from "@/features/discover/types";
 import { markFirstRunPhrasesSaved } from "@/features/activation/firstRun";
-import { buildDeckFromPhrases, firstLesson, lessonById, type Lesson } from "@/features/learn/lessonDeck";
+import { buildDeckFromPhrases, firstLesson, lessonById, type Lesson, type LessonPhrase } from "@/features/learn/lessonDeck";
+import { MistakeStep } from "@/features/learn/components/MistakeStep";
 import { PronunciationCoach } from "@/features/pronunciation/components/PronunciationCoach";
 import { saveGeneratedDeck } from "@/lib/store/repository";
 import { emitActivity } from "@/lib/store/activityLog";
@@ -78,6 +79,9 @@ function LessonViewContent({
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [exercisePhrase, setExercisePhrase] = useState<LessonPhrase | null>(null);
+  const [savedPhraseCount, setSavedPhraseCount] = useState(0);
+  const [mistakeSaved, setMistakeSaved] = useState<{ hadMistake: boolean } | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const playRequestRef = useRef(0);
 
@@ -140,7 +144,7 @@ function LessonViewContent({
     try {
       const deck = buildDeckFromPhrases(`lesson-${lesson.id}`, lesson.phrases, kept);
       const result = await saveGeneratedDeck(deck.cards, deck.candidates);
-      const activation = markFirstRunPhrasesSaved({ lessonId: lesson.id });
+      const activation = markFirstRunPhrasesSaved({ sourceId: lesson.id });
       void emitActivity("cards_created", {
         count: deck.cards.length,
         source: "learn",
@@ -148,9 +152,12 @@ function LessonViewContent({
       });
       setDone(
         result.added === 0
-          ? t("Lesson already saved. Review is ready.")
-          : t("{count} practice phrases saved. Review is ready.", { count: result.added }),
+          ? t("Lesson already saved. Now write one sentence of your own below.")
+          : t("{count} practice phrases saved. Now write one sentence of your own below.", { count: result.added }),
       );
+      setSavedPhraseCount(deck.cards.length);
+      const firstKept = Math.min(...[...kept]);
+      setExercisePhrase(lesson.phrases[firstKept] ?? lesson.phrases[0]);
       window.dispatchEvent(new CustomEvent("phraseloop:lesson-saved", { detail: { lessonId: lesson.id } }));
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : t("Could not save this lesson."));
@@ -178,7 +185,16 @@ function LessonViewContent({
         </div>
         {done && (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded border border-emerald-500/30 bg-emerald-500/8 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-300">
-            <span>{done}</span>
+            <span>
+              {mistakeSaved
+                ? t(
+                    mistakeSaved.hadMistake
+                      ? "You created {count} review cards: {phrases} from real English and 1 from your own mistake."
+                      : "You created {count} review cards: {phrases} from real English and 1 you wrote yourself.",
+                    { count: savedPhraseCount + 1, phrases: savedPhraseCount },
+                  )
+                : done}
+            </span>
             {onStudyNow && (
               <button type="button" onClick={onStudyNow} className="font-medium underline hover:no-underline">
                 {t("Review now")}
@@ -209,6 +225,17 @@ function LessonViewContent({
         onPlay={(index, segment) => void playClip(index, segment)}
       />
 
+      {done && exercisePhrase && !mistakeSaved && (
+        <MistakeStep
+          lessonId={lesson.id}
+          phrase={exercisePhrase}
+          onSaved={(hadMistake) => setMistakeSaved({ hadMistake })}
+        />
+      )}
+
+      {/* Depth, not the front door: pronunciation practice appears only after the
+          save → write → correct loop is complete, so the first run stays one story. */}
+      {mistakeSaved && (
       <PanelCard className="space-y-3 p-5">
         <div>
           <p className="text-sm font-semibold tracking-[-0.01em] text-ink">{t("Practice pronunciation")}</p>
@@ -231,6 +258,7 @@ function LessonViewContent({
           ))}
         </div>
       </PanelCard>
+      )}
     </div>
   );
 }

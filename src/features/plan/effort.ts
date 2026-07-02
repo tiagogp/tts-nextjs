@@ -1,15 +1,18 @@
 import { getActivitySince } from "@/lib/store/activityLog";
-import type { ActivityEvent, ActivityEventType, CardsReviewedPayload, ConversationTurnPayload } from "@/lib/store/activityLog";
+import type { ActivityEvent, ActivityEventType, CardsReviewedPayload, ConversationTurnPayload, CorrectionGeneratedPayload } from "@/lib/store/activityLog";
 import type { LearningPlan, EffortSnapshot } from "./schema";
 import { getIsoWeek, saveEffortSnapshot } from "./store";
 import { dateString } from "./utils";
 
 /** Approximate cost in minutes for each activity event type. */
 const MINUTES_PER_EVENT: Record<ActivityEventType, (event: ActivityEvent) => number> = {
+  first_run_started: () => 0,
   cards_reviewed: (e) => ((e.payload as CardsReviewedPayload).count ?? 1) * 1,
   video_processed: () => 20,
   conversation_turn: () => 1.5,
-  correction_generated: () => 15,
+  mistake_submitted: () => 0, // overlap with correction_generated — don't double-count
+  correction_generated: (e) =>
+    (e.payload as CorrectionGeneratedPayload).source === "lesson" ? 3 : 15,
   cards_created: () => 0, // overlap with other events — don't double-count
   progress_checkin: () => 5,
 };

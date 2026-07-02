@@ -8,7 +8,7 @@ import { Field, Input } from "@/components/ui/Field";
 import { Notice } from "@/components/ui/Notice";
 import { Spinner } from "@/components/ui/Spinner";
 import Disclosure from "@/components/ui/Disclosure";
-import { saveGeneratedDeck } from "@/lib/store/repository";
+import { getCounts, saveGeneratedDeck } from "@/lib/store/repository";
 import { useAiSettings } from "@/features/settings/context/AiSettingsContext";
 import type { PhraseCandidate } from "@/lib/cards/schema";
 import { useProviderSelection } from "@/features/cards/hooks/useProviderSelection";
@@ -22,7 +22,7 @@ import { ENGLISH_LEVELS, GENERATION_TIMEOUT_MS } from "@/features/discover/const
 import type { DiscoverResult, DiscoverSourceKind, EnglishLevel, TranscriptSegment } from "@/features/discover/types";
 import { curateDiscoverSegments, extractDiscoverSource, generateDiscoverDeck } from "@/features/discover/api";
 import { DEFAULT_LEARNING_PROFILE, getLearningProfile } from "@/features/settings/learningProfile";
-import { demoResult, demoDeckFor } from "@/features/discover/demo/demoFixture";
+import { markFirstRunPhrasesSaved, startFirstRunActivation } from "@/features/activation/firstRun";
 import { emitActivity } from "@/lib/store/activityLog";
 import { useT } from "@/i18n/I18nProvider";
 
@@ -74,10 +74,6 @@ export default function DiscoverTab({
   } | null>(null);
   const [kept, setKept] = useState<Set<number>>(new Set());
   const [playing, setPlaying] = useState<number | null>(null);
-  // The "Try demo" run uses bundled phrases + cards and bypasses the AI provider
-  // entirely, so a new user can complete the loop with zero setup.
-  const [demoMode, setDemoMode] = useState(false);
-
   const selection = useProviderSelection();
   const { provider, providerReady, selectedModel } = selection;
 
@@ -89,8 +85,8 @@ export default function DiscoverTab({
     stages: [
       { untilSeconds: 8, label: "Creating focused practice phrases…" },
       { untilSeconds: 25, label: "Reviewing phrase quality…" },
-      { untilSeconds: 90, label: "Preparing audio and Anki export…" },
-      { untilSeconds: Infinity, label: "Still working — local models and audio clips can take a while…" },
+      { untilSeconds: 90, label: "Preparing audio and review cards…" },
+      { untilSeconds: Infinity, label: "Still working — local processing and audio clips can take a while…" },
     ],
   });
   const {
@@ -230,7 +226,6 @@ export default function DiscoverTab({
   const extract = useCallback(async () => {
     if (sourceKind === "pdf" ? !file : !url.trim()) return;
     setLoading(true);
-    setDemoMode(false);
     setError(null);
     setResult(null);
     setKept(new Set());
@@ -240,6 +235,20 @@ export default function DiscoverTab({
     setGenDone(null);
     setDeckPreview(null);
     setTranscribeProgress(null);
+
+    try {
+      const counts = await getCounts();
+      if (counts.cards === 0 && counts.reviews === 0) {
+        const sourceId = sourceKind === "pdf" ? file?.name : url.trim();
+        startFirstRunActivation({
+          source: "own_source",
+          sourceId,
+        });
+        void emitActivity("first_run_started", { source: "own_source", sourceId });
+      }
+    } catch {
+      // Activation timing is diagnostic only; never block source import.
+    }
 
     // Only the YouTube path may download the one-time Whisper model.
     if (sourceKind === "youtube") {
@@ -319,53 +328,8 @@ export default function DiscoverTab({
     setDeckPreview(null);
   };
 
-  // Drop the user straight into the review step with bundled phrases — no source,
-  // no model download, no AI provider. The aha is the loop itself.
-  const startDemo = useCallback(() => {
-    audioRef.current?.pause();
-    setError(null);
-    setGenError(null);
-    setGenDone(null);
-    setDeckPreview(null);
-    setPlaying(null);
-    setDemoMode(true);
-    setResult(demoResult);
-    setKept(new Set(demoResult.segments.map((_, i) => i)));
-    setCurationNote(t("Example content — tap to listen, then uncheck anything you don't want."));
-  }, [setGenError, setGenDone, t]);
-
-  // Clear the demo and return to the empty import state. Stable card ids mean a
-  // re-run overwrites rather than duplicates, but a learner who wants their own
-  // captures clean can wipe the sample's cards too via Settings → clear data.
-  const clearDemo = useCallback(() => {
-    audioRef.current?.pause();
-    setDemoMode(false);
-    setResult(null);
-    setKept(new Set());
-    setPlaying(null);
-    setCurationNote(null);
-    setDeckPreview(null);
-    setGenDone(null);
-    setGenError(null);
-  }, [setGenDone, setGenError]);
-
-  // Let the "Hoje" home start the demo by deep-linking into Discover.
-  useEffect(() => {
-    const onStartDemo = () => startDemo();
-    window.addEventListener("phraseloop:start-demo", onStartDemo);
-    return () => window.removeEventListener("phraseloop:start-demo", onStartDemo);
-  }, [startDemo]);
-
   const generateCards = useCallback(async () => {
     if (!result || kept.size === 0) return;
-
-    // Demo: build the deck from bundled cards instead of calling the provider.
-    if (demoMode) {
-      const { candidates, cards } = demoDeckFor(kept);
-      setDeckPreview({ data: { cards, count: cards.length }, candidates });
-      setGenDone(`${cards.length} practice phrase${cards.length === 1 ? "" : "s"} ready to save.`);
-      return;
-    }
 
     if (!providerReady) return;
 
@@ -393,35 +357,24 @@ export default function DiscoverTab({
       setDeckPreview({ data, candidates });
       return `${cardsCreated} practice phrase${cardsCreated === 1 ? "" : "s"} ready to save.`;
     });
-  }, [result, kept, demoMode, provider, providerReady, selectedModel, run, setGenDone, setDeckPreview, url]);
+  }, [result, kept, provider, providerReady, selectedModel, run, setDeckPreview, url]);
 
   return (
     <div className="space-y-5">
       <Card className="space-y-4 p-5">
         <div className="space-y-1">
-          <p className="text-sm font-semibold tracking-[-0.01em] text-ink">Turn useful phrases into daily practice</p>
+          <p className="text-sm font-semibold tracking-[-0.01em] text-ink">{t("Turn useful phrases into daily practice")}</p>
           <p className="text-xs text-ink-muted">
-            Start with the bundled demo, or bring one source when you want your own material.
+            {t("Bring one video, article, or PDF when you want practice from your own material.")}
           </p>
         </div>
 
         {!result && !loading && (
-          <Button
-            variant="primary"
-            size="lg"
-            className="min-h-10"
-            onClick={startDemo}
-          >
-            {t("Start a demo lesson")}
-          </Button>
-        )}
-
-        {!result && !loading && (
           <Disclosure
-            title="Use custom content"
-            description="YouTube, article, and PDF import are here when you choose to bring your own material."
+            title={t("Use your own content")}
+            description={t("YouTube, article, and PDF import for the source you already care about.")}
             nested
-            defaultOpen={hasSource}
+            defaultOpen
           >
             <div className="space-y-4">
               <SourcePicker
@@ -432,7 +385,6 @@ export default function DiscoverTab({
                   setSourceKind(kind);
                   setError(null);
                   setResult(null);
-                  setDemoMode(false);
                   setCurationNote(null);
                 }}
               />
@@ -474,7 +426,7 @@ export default function DiscoverTab({
 
               <Disclosure
                 title="Advanced options"
-                description="Focus, IA, and model choices for custom material."
+                description="Optional focus and IA choices for custom material."
                 nested
               >
                 <div className="space-y-4">
@@ -561,19 +513,6 @@ export default function DiscoverTab({
 
       </Card>
 
-      {demoMode && result && (
-        <div className="flex items-center justify-between gap-3 rounded border border-line bg-surface px-3 py-2 text-xs text-ink-soft">
-          <span>{t("This is sample content, not your own captures.")}</span>
-          <button
-            type="button"
-            onClick={clearDemo}
-            className="shrink-0 underline transition-colors hover:text-ink hover:no-underline"
-          >
-            {t("Clear example")}
-          </button>
-        </div>
-      )}
-
       {result && (
         <TranscriptReview
           result={result}
@@ -586,7 +525,7 @@ export default function DiscoverTab({
           genDone={genDone}
           generationStage={generationStage}
           generationSeconds={generationSeconds}
-          providerReady={providerReady || demoMode}
+          providerReady={providerReady}
           onGenerate={generateCards}
           onCancel={cancelGeneration}
           onToggleKeep={toggleKeep}
@@ -602,7 +541,8 @@ export default function DiscoverTab({
           defaultFilename={`${result?.title || "study-list"}.apkg`}
           persist={async (cards) => {
             await saveGeneratedDeck(cards, deckPreview.candidates);
-            void emitActivity("cards_created", { count: cards.length, source: "discover" });
+            const activation = markFirstRunPhrasesSaved({ sourceId: result?.sourceId });
+            void emitActivity("cards_created", { count: cards.length, source: "discover", activation });
           }}
           onStudyNow={onStudyNow}
           onDismiss={() => setDeckPreview(null)}

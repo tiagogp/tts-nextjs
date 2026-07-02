@@ -14,7 +14,7 @@ import { getLearningProfile } from "@/features/settings/learningProfile";
 interface HojeHomeProps {
   onStudy: () => void;
   onCorrect: () => void;
-  onTryDemo: () => void;
+  onFirstLesson: () => void;
   onLesson: (lessonId?: string) => void;
 }
 
@@ -30,9 +30,9 @@ interface NextAction {
  * "Hoje" — the app's front door. It answers a single question for the learner:
  * what is the one next thing to do right now? Resolution order: (a) today's first
  * due phrases → Study, mistakes → Correct, practice → next phrase, or a
- * brand-new user with no saved phrases → bundled demo. One CTA, never a dashboard.
+ * brand-new user with no saved phrases → bundled first lesson. One CTA, never a dashboard.
  */
-export function HojeHome({ onStudy, onCorrect, onTryDemo, onLesson }: HojeHomeProps) {
+export function HojeHome({ onStudy, onCorrect, onFirstLesson, onLesson }: HojeHomeProps) {
   const { t } = useT();
   const [counts, setCounts] = useState({ cards: 0, reviews: 0, due: 0, errors: 0 });
   const [streakDays, setStreakDays] = useState(0);
@@ -70,7 +70,7 @@ export function HojeHome({ onStudy, onCorrect, onTryDemo, onLesson }: HojeHomePr
     t,
     counts,
     onStudy,
-    onTryDemo,
+    onFirstLesson,
     onCorrect,
     onLesson,
     nextLesson,
@@ -115,7 +115,7 @@ function resolveNextAction({
   t,
   counts,
   onStudy,
-  onTryDemo,
+  onFirstLesson,
   onCorrect,
   onLesson,
   nextLesson,
@@ -123,7 +123,7 @@ function resolveNextAction({
   t: (en: string, vars?: Record<string, string | number>) => string;
   counts: { cards: number; reviews: number; due: number; errors: number };
   onStudy: () => void;
-  onTryDemo: () => void;
+  onFirstLesson: () => void;
   onCorrect: () => void;
   onLesson: (lessonId?: string) => void;
   nextLesson: Lesson;
@@ -161,13 +161,13 @@ function resolveNextAction({
     };
   }
 
-  // Brand-new user, no saved phrases yet → start with the bundled demo.
+  // Brand-new user, no saved phrases yet → start with the bundled first lesson.
   return {
     eyebrow: t("Start here"),
-    title: t("Learn your first phrases in 2 minutes"),
-    detail: t("Hear real phrases, save the useful ones, then review them — no setup needed."),
-    cta: t("Start a demo lesson"),
-    onClick: onTryDemo,
+    title: t("Turn real English into review cards in 2 minutes"),
+    detail: t("Practice phrases from a native clip and your own mistake — no setup needed."),
+    cta: t("Start first lesson"),
+    onClick: onFirstLesson,
   };
 }
 

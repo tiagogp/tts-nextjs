@@ -152,8 +152,14 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
     nl: "Leer met een lus, niet met een stapel kaarten",
     zh: "用循环学习，而不是一堆卡片",
   },
+  "Turn real English into daily practice": {
+    pt: "Transforme inglês real em prática diária",
+  },
   "PhraseLoop turns useful English phrases into one daily routine: save them, review them, then practice using them.": {
     pt: "O PhraseLoop transforma frases úteis em inglês numa rotina diária: salvar, revisar e praticar o uso.",
+  },
+  "PhraseLoop turns English you watch or read, plus mistakes you make, into one daily routine: save, review, fix, repeat.": {
+    pt: "O PhraseLoop transforma o inglês que você assiste ou lê, mais os erros que você comete, numa rotina diária: salvar, revisar, corrigir e repetir.",
   },
   "Start with a demo, then bring videos, articles, or PDFs later.": {
     pt: "Comece com um demo; depois, traga vídeos, artigos ou PDFs.",
@@ -161,6 +167,8 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "Start with phrases you can hear, then bring videos, articles, or PDFs later.": {
     pt: "Comece com frases que você pode ouvir; depois, traga vídeos, artigos ou PDFs.",
   },
+  "Source audio": { pt: "Áudio da fonte" },
+  "Daily review": { pt: "Revisão diária" },
   "Review a few practice phrases each day.": {
     pt: "Revise algumas frases para praticar todos os dias.",
   },
@@ -516,7 +524,7 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   Mistakes: { pt: "Erros" },
   or: { pt: "ou" },
   "Try an example": { pt: "Testar com um exemplo" },
-  "Start a demo lesson": { pt: "Começar uma lição demo" },
+  "Start first lesson": { pt: "Começar primeira lição" },
   "Example content — tap to listen, then uncheck anything you don't want.": {
     pt: "Conteúdo de exemplo — toque para ouvir e desmarque o que não quiser.",
   },
@@ -524,6 +532,16 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
     pt: "Este é um conteúdo de exemplo, não as suas próprias capturas.",
   },
   "Clear example": { pt: "Limpar exemplo" },
+  "Turn useful phrases into daily practice": {
+    pt: "Transforme frases úteis em prática diária",
+  },
+  "Bring one video, article, or PDF when you want practice from your own material.": {
+    pt: "Traga um vídeo, artigo ou PDF quando quiser praticar com o seu próprio material.",
+  },
+  "Use your own content": { pt: "Usar seu próprio conteúdo" },
+  "YouTube, article, and PDF import for the source you already care about.": {
+    pt: "Importe YouTube, artigo ou PDF da fonte que você já quer entender.",
+  },
 
   /* ── Hoje home ──────────────────────────────────────────── */
   "Loading your day…": { pt: "Carregando o seu dia…" },
@@ -550,8 +568,20 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   },
   "Start here": { pt: "Comece por aqui" },
   "Learn your first phrases in 2 minutes": { pt: "Aprenda suas primeiras frases em 2 minutos" },
+  "Turn useful English into review in 2 minutes": {
+    pt: "Transforme inglês útil em revisão em 2 minutos",
+  },
+  "Turn real English into review cards in 2 minutes": {
+    pt: "Transforme inglês real em cartões de revisão em 2 minutos",
+  },
   "Hear real phrases, save the useful ones, then review them — no setup needed.": {
     pt: "Ouça frases reais, salve as úteis e revise — sem configurar nada.",
+  },
+  "Hear native audio, save a few phrases, and review right away — no setup needed.": {
+    pt: "Ouça áudio nativo, salve algumas frases e revise na hora — sem configurar nada.",
+  },
+  "Practice phrases from a native clip and your own mistake — no setup needed.": {
+    pt: "Pratique frases de um clipe nativo e de um erro seu — sem configurar nada.",
   },
   "See real phrases, keep the useful ones, and study them — no setup needed.": {
     pt: "Veja frases reais, guarde as úteis e estude — sem configurar nada.",
@@ -580,6 +610,37 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "to review": { pt: "para revisar" },
   "cards saved": { pt: "cartões salvos" },
   "practice phrases": { pt: "frases para praticar" },
+  "Activation source": { pt: "Origem da ativação" },
+  "Own source": { pt: "Fonte própria" },
+  "Bundled lesson": { pt: "Lição incluída" },
+  "W5 validation": { pt: "Validação W5" },
+  "First-run activation and return signal recorded on this device. Use it to score a session against the validation protocol.": {
+    pt: "Ativação inicial e sinal de retorno registrados neste dispositivo. Use para pontuar a sessão contra o protocolo de validação.",
+  },
+  "Local activity data is unavailable in this build.": {
+    pt: "Os dados locais de atividade não estão disponíveis nesta build.",
+  },
+  "Time to saved phrase": { pt: "Tempo até salvar frase" },
+  "Time to first review": { pt: "Tempo até primeira revisão" },
+  "Time to first loop": { pt: "Tempo até primeiro loop" },
+  "Dropoff step": { pt: "Ponto de abandono" },
+  "Under 2m": { pt: "Menos de 2min" },
+  "Over 2m": { pt: "Mais de 2min" },
+  Incomplete: { pt: "Incompleto" },
+  Complete: { pt: "Completo" },
+  Open: { pt: "Aberto" },
+  "Not yet": { pt: "Ainda não" },
+  Returned: { pt: "Retornou" },
+  "No return yet": { pt: "Sem retorno ainda" },
+  "D+1 return": { pt: "Retorno D+1" },
+  "D+7 return": { pt: "Retorno D+7" },
+  Clip: { pt: "Clipe" },
+  "Save phrase": { pt: "Salvar frase" },
+  Mistake: { pt: "Erro" },
+  Correction: { pt: "Correção" },
+  "Active days since first session: {days}": {
+    pt: "Dias ativos desde a primeira sessão: {days}",
+  },
 
   /* ── bundled lessons ───────────────────────────────────── */
   "Listen, keep the phrases you want, then save them to Study. No AI setup needed.": {
@@ -596,12 +657,45 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "Saving lesson cards…": { pt: "Salvando cartões da lição…" },
   "Saving practice phrases…": { pt: "Salvando frases para praticar…" },
   "Lesson already saved. Study is ready.": { pt: "A lição já foi salva. O Estudar está pronto." },
-  "Lesson already saved. Review is ready.": { pt: "A lição já foi salva. A revisão está pronta." },
   "{count} cards saved. Study is ready.": { pt: "{count} cartões salvos. O Estudar está pronto." },
-  "{count} practice phrases saved. Review is ready.": {
-    pt: "{count} frases para praticar salvas. A revisão está pronta.",
+  "Lesson already saved. Now write one sentence of your own below.": {
+    pt: "A lição já foi salva. Agora escreva uma frase sua aqui embaixo.",
+  },
+  "{count} practice phrases saved. Now write one sentence of your own below.": {
+    pt: "{count} frases para praticar salvas. Agora escreva uma frase sua aqui embaixo.",
+  },
+  "You created {count} review cards: {phrases} from real English and 1 from your own mistake.": {
+    pt: "Você criou {count} cards de revisão: {phrases} de inglês real e 1 do seu próprio erro.",
+  },
+  "You created {count} review cards: {phrases} from real English and 1 you wrote yourself.": {
+    pt: "Você criou {count} cards de revisão: {phrases} de inglês real e 1 que você mesmo escreveu.",
   },
   "Could not save this lesson.": { pt: "Não foi possível salvar esta lição." },
+
+  /* ── first-loop mistake step ───────────────────────────── */
+  "Your turn": { pt: "Sua vez" },
+  "Write one sentence in English": { pt: "Escreva uma frase em inglês" },
+  'Use "{phrase}" in your own sentence. The corrected version becomes tomorrow\'s review card.': {
+    pt: 'Use "{phrase}" em uma frase sua. A versão corrigida vira seu card de revisão de amanhã.',
+  },
+  "Write your sentence here…": { pt: "Escreva sua frase aqui…" },
+  "Check my sentence": { pt: "Corrigir minha frase" },
+  "Check again": { pt: "Corrigir de novo" },
+  "Nothing to fix — nice work.": { pt: "Nada para corrigir — mandou bem." },
+  "You wrote": { pt: "Você escreveu" },
+  "Corrected version": { pt: "Versão corrigida" },
+  'Tip: try using "{phrase}" in your sentence.': {
+    pt: 'Dica: tente usar "{phrase}" na sua frase.',
+  },
+  "Save the correction for tomorrow": { pt: "Salvar a correção para amanhã" },
+  "Save your sentence for tomorrow": { pt: "Salvar sua frase para amanhã" },
+  "Could not save your sentence.": { pt: "Não foi possível salvar sua frase." },
+  "Check the spelling of the lesson phrase.": { pt: "Confira a escrita da frase da lição." },
+  'In English, "I" is always capitalized.': { pt: 'Em inglês, "I" é sempre maiúsculo.' },
+  "Start the sentence with a capital letter.": { pt: "Comece a frase com letra maiúscula." },
+  "End the sentence with punctuation (like . or ?).": {
+    pt: "Termine a frase com pontuação (como . ou ?).",
+  },
   "Lesson 1 — Greetings": { pt: "Lição 1 — Cumprimentos" },
   "Lesson 2 — Names": { pt: "Lição 2 — Nomes" },
   "Lesson 3 — Countries and Cities": { pt: "Lição 3 — Países e cidades" },

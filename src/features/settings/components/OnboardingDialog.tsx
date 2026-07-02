@@ -81,16 +81,16 @@ export default function OnboardingDialog({ onOpenSettings: _onOpenSettings }: Re
         <div>
           <p className="text-xs uppercase tracking-widest text-accent">{t("Welcome")}</p>
           <h2 id="welcome-title" className="mt-1 text-xl font-semibold text-ink">
-            {t("Learn with a loop, not a pile of cards")}
+            {t("Turn real English into daily practice")}
           </h2>
           <p className="mt-2 text-sm text-ink-soft">
             {t(
-              "PhraseLoop turns useful English phrases into one daily routine: save them, review them, then practice using them.",
+              "PhraseLoop turns English you watch or read, plus mistakes you make, into one daily routine: save, review, fix, repeat.",
             )}
           </p>
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
-            <MethodTile title={t("Native audio")} text={t("Start with phrases you can hear, then bring videos, articles, or PDFs later.")} />
-            <MethodTile title={t("Active recall")} text={t("Review a few practice phrases each day.")} />
+            <MethodTile title={t("Source audio")} text={t("Start with phrases you can hear, then bring videos, articles, or PDFs later.")} />
+            <MethodTile title={t("Daily review")} text={t("Review a few practice phrases each day.")} />
             <MethodTile title={t("Mistake drills")} text={t("Correct one phrase you wrote, then save the fix for review.")} />
           </div>
         </div>
@@ -156,7 +156,7 @@ export default function OnboardingDialog({ onOpenSettings: _onOpenSettings }: Re
           ) : (
             <>
               <Button variant="primary" onClick={() => void finish()}>
-                {t("Start a demo lesson")}
+                {t("Start first lesson")}
               </Button>
             </>
           )}

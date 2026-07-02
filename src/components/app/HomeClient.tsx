@@ -23,6 +23,7 @@ import SpeechTab from "@/features/speech/components/SpeechTab";
 import StudyTab from "@/features/study/components/StudyTab";
 import { useT } from "@/i18n/I18nProvider";
 import { isStoreAvailable } from "@/lib/store/db";
+import { emitActivity } from "@/lib/store/activityLog";
 import { getCards } from "@/lib/store/repository";
 
 async function recommendedLessonId(): Promise<string> {
@@ -51,7 +52,7 @@ function TabContent({
   onOpenPractice,
   onOpenConversation,
   onOpenCorrect,
-  onTryDemo,
+  onFirstLesson,
   onOpenLesson,
 }: {
   tab: HomeTab;
@@ -60,7 +61,7 @@ function TabContent({
   onOpenPractice: () => void;
   onOpenConversation?: () => void;
   onOpenCorrect: () => void;
-  onTryDemo: () => void;
+  onFirstLesson: () => void;
   onOpenLesson: (lessonId?: string) => void;
 }) {
   if (tab === "hoje") {
@@ -68,7 +69,7 @@ function TabContent({
       <HojeHome
         onStudy={onOpenPractice}
         onCorrect={onOpenCorrect}
-        onTryDemo={onTryDemo}
+        onFirstLesson={onFirstLesson}
         onLesson={onOpenLesson}
       />
     );
@@ -110,13 +111,14 @@ function HomeContent() {
 
   // "Hoje" -> Start: open the learner's recommended bundled lesson through the
   // same save -> review path used after custom discovery.
-  const startDemo = () => {
+  const startFirstLesson = () => {
     setOverlay(null);
     const requestId = lessonRequestRef.current + 1;
     lessonRequestRef.current = requestId;
     void recommendedLessonId().then((resolvedLessonId) => {
       if (lessonRequestRef.current !== requestId) return;
-      startFirstRunActivation(resolvedLessonId);
+      startFirstRunActivation({ source: "bundled_lesson", sourceId: resolvedLessonId });
+      void emitActivity("first_run_started", { source: "bundled_lesson", sourceId: resolvedLessonId });
       setLessonId(resolvedLessonId);
     });
   };
@@ -246,7 +248,7 @@ function HomeContent() {
                             : undefined
                         }
                         onOpenCorrect={() => changeTab("correct")}
-                        onTryDemo={startDemo}
+                        onFirstLesson={startFirstLesson}
                         onOpenLesson={openLesson}
                       />
                     </motion.div>

@@ -1,17 +1,19 @@
 const STORAGE_KEY = "phraseloop:first-run-activation";
 
+export type FirstRunActivationSource = "bundled_lesson" | "own_source";
+
 export interface FirstRunActivation {
-  source: "demo_lesson";
-  lessonId?: string;
+  source: FirstRunActivationSource;
+  sourceId?: string;
   startedAt: number;
   phrasesSavedAt?: number;
   firstReviewAt?: number;
 }
 
 export interface ActivationTiming {
-  source: "demo_lesson";
-  lessonId?: string;
-  zeroSetup: true;
+  source: FirstRunActivationSource;
+  sourceId?: string;
+  zeroSetup: boolean;
   startedAt: number;
   elapsedMs: number;
 }
@@ -31,11 +33,20 @@ function read(storage = getStorage()): FirstRunActivation | null {
   try {
     const raw = storage.getItem(STORAGE_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as Partial<FirstRunActivation>;
-    if (parsed.source !== "demo_lesson" || typeof parsed.startedAt !== "number") return null;
+    const parsed = JSON.parse(raw) as {
+      source?: string;
+      sourceId?: string;
+      lessonId?: string;
+      startedAt?: unknown;
+      phrasesSavedAt?: unknown;
+      firstReviewAt?: unknown;
+    };
+    if (typeof parsed.startedAt !== "number") return null;
+    const source = parsed.source === "demo_lesson" ? "bundled_lesson" : parsed.source;
+    if (source !== "bundled_lesson" && source !== "own_source") return null;
     return {
-      source: "demo_lesson",
-      lessonId: parsed.lessonId,
+      source,
+      sourceId: parsed.sourceId ?? parsed.lessonId,
       startedAt: parsed.startedAt,
       phrasesSavedAt: typeof parsed.phrasesSavedAt === "number" ? parsed.phrasesSavedAt : undefined,
       firstReviewAt: typeof parsed.firstReviewAt === "number" ? parsed.firstReviewAt : undefined,
@@ -57,31 +68,39 @@ function write(session: FirstRunActivation, storage = getStorage()): void {
 function timing(session: FirstRunActivation, at: number): ActivationTiming {
   return {
     source: session.source,
-    lessonId: session.lessonId,
-    zeroSetup: true,
+    sourceId: session.sourceId,
+    zeroSetup: session.source === "bundled_lesson",
     startedAt: session.startedAt,
     elapsedMs: Math.max(0, at - session.startedAt),
   };
 }
 
-export function startFirstRunActivation(
-  lessonId: string,
-  at = Date.now(),
-  storage = getStorage(),
-): void {
-  write({ source: "demo_lesson", lessonId, startedAt: at }, storage);
+export function startFirstRunActivation(input: {
+  source: FirstRunActivationSource;
+  sourceId?: string;
+  at?: number;
+  storage?: StorageLike | null;
+}): void {
+  write(
+    {
+      source: input.source,
+      sourceId: input.sourceId,
+      startedAt: input.at ?? Date.now(),
+    },
+    input.storage ?? getStorage(),
+  );
 }
 
 export function markFirstRunPhrasesSaved(input: {
-  lessonId: string;
+  sourceId?: string;
   at?: number;
   storage?: StorageLike | null;
 }): ActivationTiming | undefined {
   const at = input.at ?? Date.now();
   const storage = input.storage ?? getStorage();
   const session = read(storage);
-  if (!session || session.source !== "demo_lesson") return undefined;
-  const next = { ...session, lessonId: input.lessonId, phrasesSavedAt: at };
+  if (!session) return undefined;
+  const next = { ...session, sourceId: input.sourceId ?? session.sourceId, phrasesSavedAt: at };
   write(next, storage);
   return timing(next, at);
 }

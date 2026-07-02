@@ -111,10 +111,10 @@ export function StudyCard({
         <div className="space-y-1 py-8 text-center">
           <p className="text-sm font-medium text-ink">No practice phrases yet</p>
           <p className="text-xs text-ink-muted">
-            Start with the demo in Discover. Save a small set of phrases, then review them here.
+            Start from Home with the first lesson. If you already have a source, bring it in Phrases.
           </p>
           <Button variant="secondary" size="sm" className="mt-3" onClick={onDiscover}>
-            Open Discover
+            Open Phrases
           </Button>
         </div>
       ) : !current ? (
