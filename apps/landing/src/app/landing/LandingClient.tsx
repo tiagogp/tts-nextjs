@@ -3,6 +3,7 @@
 import {
   useCallback,
   useEffect,
+  type FormEvent,
   useState,
   type MouseEvent,
   type ReactNode,
@@ -170,13 +171,21 @@ const privacyCards = [
   },
 ];
 
-type LandingSectionId = "workflow" | "inside" | "privacy";
+type LandingSectionId = "workflow" | "inside" | "privacy" | "waitlist";
 
 const landingNavItems: Array<{ id: LandingSectionId; label: string }> = [
   { id: "workflow", label: "Workflow" },
   { id: "inside", label: "Inside" },
   { id: "privacy", label: "Privacy" },
+  { id: "waitlist", label: "Waitlist" },
 ];
+
+const platformOptions = [
+  "Mac Apple Silicon",
+  "Mac Intel",
+  "Windows",
+  "Linux",
+] as const;
 
 const demoDiscoverResult = {
   sourceId: "landing-demo-interview",
@@ -673,6 +682,104 @@ function MiniScreen({ title }: { title: string }) {
   );
 }
 
+function WaitlistForm() {
+  const [email, setEmail] = useState("");
+  const [platform, setPlatform] = useState<(typeof platformOptions)[number] | "">("");
+  const [workflow, setWorkflow] = useState("");
+  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setStatus("saving");
+    try {
+      const response = await fetch("/api/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, platform, workflow }),
+      });
+      if (!response.ok) throw new Error("waitlist failed");
+      setStatus("saved");
+    } catch {
+      setStatus("error");
+    }
+  };
+
+  return (
+    <form onSubmit={submit} className="space-y-4">
+      <label className="block">
+        <span className="text-xs font-semibold uppercase text-[#d8d3ca]">
+          Email
+        </span>
+        <input
+          required
+          type="email"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          className="mt-1 w-full rounded border border-white/15 bg-white/8 px-3 py-2 text-sm text-white placeholder:text-[#8f8980] focus:outline-none focus:ring-2 focus:ring-accent/50"
+          placeholder="voce@email.com"
+        />
+      </label>
+
+      <label className="block">
+        <span className="text-xs font-semibold uppercase text-[#d8d3ca]">
+          Qual computador você usa?
+        </span>
+        <select
+          required
+          value={platform}
+          onChange={(event) => setPlatform(event.target.value as (typeof platformOptions)[number] | "")}
+          className="mt-1 w-full rounded border border-white/15 bg-[#151515] px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-accent/50"
+        >
+          <option value="">Escolha uma opção</option>
+          {platformOptions.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <label className="block">
+        <span className="text-xs font-semibold uppercase text-[#d8d3ca]">
+          Como você transforma conteúdo em inglês em prática hoje?
+        </span>
+        <textarea
+          required
+          minLength={8}
+          value={workflow}
+          onChange={(event) => setWorkflow(event.target.value)}
+          rows={3}
+          className="mt-1 w-full resize-none rounded border border-white/15 bg-white/8 px-3 py-2 text-sm text-white placeholder:text-[#8f8980] focus:outline-none focus:ring-2 focus:ring-accent/50"
+          placeholder="Ex.: salvo frases no Anki, faço resumos, uso caderno..."
+        />
+      </label>
+
+      <button
+        type="submit"
+        disabled={status === "saving" || status === "saved"}
+        className="inline-flex w-full items-center justify-center rounded border border-accent bg-accent px-5 py-3 text-sm font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-70"
+      >
+        {status === "saving"
+          ? "Enviando..."
+          : status === "saved"
+            ? "Entrou na lista"
+            : "Entrar na lista"}
+      </button>
+
+      {status === "error" && (
+        <p className="text-xs text-[#ffb199]">
+          Não consegui salvar agora. Tente de novo em alguns segundos.
+        </p>
+      )}
+      {status === "saved" && (
+        <p className="text-xs text-[#b7e4bf]">
+          Obrigado. Vou priorizar convites para quem usa Mac Apple Silicon nesta rodada.
+        </p>
+      )}
+    </form>
+  );
+}
+
 export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState<LandingSectionId | null>(
@@ -840,7 +947,7 @@ export default function LandingPage() {
                 className="mb-4 text-sm font-semibold text-accent"
                 variants={listItem}
               >
-                Local-first. Native audio. Review-ready.
+                Inglês real. Áudio original. Revisão pronta.
               </motion.p>
               <motion.h1
                 className="brand-wordmark text-6xl font-normal leading-[0.9] text-ink sm:text-7xl lg:text-8xl"
@@ -852,8 +959,9 @@ export default function LandingPage() {
                 className="mx-auto mt-5 max-w-3xl text-xl leading-8 text-ink-soft sm:text-2xl sm:leading-9"
                 variants={listItem}
               >
-                Real English goes in. Audio flashcards, daily review, and targeted
-                drills come out - locally by default.
+                Cole um vídeo do YouTube. Em 2 minutos, as melhores frases viram
+                cards de revisão com o áudio original — e os seus próprios erros viram
+                o treino de amanhã.
               </motion.p>
               <motion.div
                 className="mt-7 flex flex-col justify-center gap-3 sm:flex-row"
@@ -865,7 +973,7 @@ export default function LandingPage() {
                   whileTap={tapPress}
                   className="inline-flex items-center justify-center rounded border border-accent bg-accent px-5 py-3 text-sm font-semibold text-white"
                 >
-                  Download for macOS
+                  Baixar para macOS
                 </motion.a>
                 <motion.a
                   href="#workflow"
@@ -874,15 +982,15 @@ export default function LandingPage() {
                   whileTap={tapPress}
                   className="inline-flex items-center justify-center rounded border border-line bg-card px-5 py-3 text-sm font-semibold text-ink"
                 >
-                  See how it works
+                  Ver como funciona
                 </motion.a>
               </motion.div>
               <motion.p
                 className="mt-4 text-sm text-ink-muted"
                 variants={listItem}
               >
-                Built for serious self-study: choose a source, keep the lines
-                that matter, review them, then drill what still breaks.
+                Para brasileiros A2-B1 que estudam sozinhos: uma etapa antes do
+                Anki, em português, no seu Mac.
               </motion.p>
             </motion.div>
 
@@ -1189,6 +1297,31 @@ export default function LandingPage() {
               </motion.div>
             ))}
           </motion.div>
+        </Reveal>
+      </section>
+
+      <section
+        id="waitlist"
+        className="scroll-mt-24 border-t border-[#2b2926] bg-[#111111] px-4 py-16 text-[#faf9f6] sm:px-6 lg:px-8"
+        style={darkPatternStyle}
+      >
+        <Reveal className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1fr_0.9fr] lg:items-start">
+          <div>
+            <p className="mb-3 text-xs font-semibold uppercase text-accent">
+              Lista de espera
+            </p>
+            <h2 className="brand-wordmark text-4xl font-normal leading-[0.95] sm:text-5xl">
+              Quer testar com seus vídeos e seus erros?
+            </h2>
+            <p className="mt-4 max-w-2xl text-lg leading-8 text-[#d8d3ca]">
+              A rodada W5 está procurando usuários de Mac Apple Silicon que já
+              tentam transformar inglês real em prática. Responda as duas
+              perguntas para eu saber se você entra no grupo certo.
+            </p>
+          </div>
+          <div className="rounded-lg border border-white/15 bg-white/6 p-5">
+            <WaitlistForm />
+          </div>
         </Reveal>
       </section>
 
