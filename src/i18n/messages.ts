@@ -228,7 +228,6 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
     zh: "PhraseLoop 把真实英语、你的写作和口语变成一个每日流程：收集、记住、输出，然后强化仍然薄弱的部分。",
   },
   "Real input": { de: "Echter Input", es: "Input real", fr: "Entrée réelle", ja: "本物のインプット", pt: "Input real", ar: "مدخلات حقيقية", cs: "Skutečný vstup", it: "Input reale", ko: "실제 입력", nl: "Echte input", zh: "真实输入" },
-  "Native audio": { pt: "Áudio nativo" },
   "Mistake drills": { pt: "Treino de erros" },
   "Mine useful language from videos, articles, and PDFs.": {
     de: "Gewinne nützliche Sprache aus Videos, Artikeln und PDFs.",
@@ -517,6 +516,63 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "Saved.": { pt: "Salvo." },
   "Something went wrong.": { pt: "Algo deu errado." },
 
+  /* ── local data / backup (Settings) ─────────────────────── */
+  "Local data": { pt: "Dados locais" },
+  "Back up or restore practice phrases, reviews, and source material.": {
+    pt: "Faça backup ou restaure frases, revisões e materiais de origem.",
+  },
+  "Download backup": { pt: "Baixar backup" },
+  "Exporting...": { pt: "Exportando..." },
+  "Validate restore": { pt: "Validar restauração" },
+  "Backup downloaded.": { pt: "Backup baixado." },
+  "Could not export local data.": { pt: "Não consegui exportar os dados locais." },
+  "Backup validated. Review the dry run before restoring.": {
+    pt: "Backup validado. Revise a simulação antes de restaurar.",
+  },
+  "Backup could not be validated.": { pt: "O backup não pôde ser validado." },
+  "Could not read this backup file.": { pt: "Não consegui ler esse arquivo de backup." },
+  "Restore this backup? Matching records will be updated, and nothing will be deleted.": {
+    pt: "Restaurar este backup? Registros correspondentes serão atualizados e nada será apagado.",
+  },
+  "Backup could not be restored.": { pt: "O backup não pôde ser restaurado." },
+  "{count} records restored.": { pt: "{count} registros restaurados." },
+  "Could not restore local data.": { pt: "Não consegui restaurar os dados locais." },
+  "Dry run passed: {count} records can be restored.": {
+    pt: "Simulação aprovada: {count} registros podem ser restaurados.",
+  },
+  "Dry run failed. Fix the backup file before restoring.": {
+    pt: "A simulação falhou. Corrija o arquivo de backup antes de restaurar.",
+  },
+  "Exported at {date}": { pt: "Exportado em {date}" },
+  "Restore backup": { pt: "Restaurar backup" },
+  "Restoring...": { pt: "Restaurando..." },
+  "Restore adds or updates matching records by ID. It does not delete anything currently in PhraseLoop.": {
+    pt: "A restauração adiciona ou atualiza registros pelo ID. Nada que já está no PhraseLoop é apagado.",
+  },
+  "Manage local data, advanced AI, and export tools.": {
+    pt: "Gerencie dados locais, IA avançada e ferramentas de exportação.",
+  },
+
+  /* ── data transparency (Settings) ───────────────────────── */
+  "Where your data lives": { pt: "Onde seus dados ficam" },
+  "Everything stays on this computer. Practice phrases, reviews, mistakes, and progress live in the app's local database — nothing is sent anywhere unless you connect a cloud AI.": {
+    pt: "Tudo fica neste computador. Frases, revisões, erros e progresso ficam no banco de dados local do app — nada é enviado para lugar nenhum, a menos que você conecte uma IA em nuvem.",
+  },
+  "Imported audio and downloaded voice models are kept in this folder:": {
+    pt: "Áudios importados e modelos de voz baixados ficam nesta pasta:",
+  },
+  "Deleting removes everything above from this computer. Downloaded voice models stay — they are not personal data.": {
+    pt: "Apagar remove tudo acima deste computador. Os modelos de voz baixados permanecem — eles não são dados pessoais.",
+  },
+  "Delete all local data": { pt: "Apagar todos os dados locais" },
+  "Deleting...": { pt: "Apagando..." },
+  "Delete ALL local data? Practice phrases, reviews, mistakes, progress, and preferences will be permanently removed from this computer. Download a backup first if you might want them back.": {
+    pt: "Apagar TODOS os dados locais? Frases, revisões, erros, progresso e preferências serão removidos deste computador para sempre. Baixe um backup antes se quiser poder voltar atrás.",
+  },
+  "Could not delete all local data. Try again.": {
+    pt: "Não consegui apagar todos os dados. Tente de novo.",
+  },
+
   /* ── try demo (Discover) ────────────────────────────────── */
   Today: { pt: "Hoje" },
   Phrases: { pt: "Frases" },
@@ -542,6 +598,58 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "YouTube, article, and PDF import for the source you already care about.": {
     pt: "Importe YouTube, artigo ou PDF da fonte que você já quer entender.",
   },
+  "English level": { pt: "Nível de inglês" },
+  "Advanced options": { pt: "Opções avançadas" },
+  "Optional focus and AI choice for your own material.": {
+    pt: "Foco opcional e escolha de IA para material próprio.",
+  },
+  optional: { pt: "opcional" },
+  "e.g., phrasal verbs, work vocabulary…": { pt: "ex.: phrasal verbs, vocabulário de trabalho…" },
+  "Connect an AI in Settings to pick phrases automatically. For now, tap the phrases you want to keep.": {
+    pt: "Conecte uma IA em Configurações para escolher frases automaticamente. Por enquanto, toque nas frases que quer manter.",
+  },
+  "PDF file": { pt: "Arquivo PDF" },
+  "Article link": { pt: "Link do artigo" },
+  "YouTube link": { pt: "Link do YouTube" },
+  "Discard the current Discover results?": {
+    pt: "Descartar os resultados atuais do Descobrir?",
+  },
+  "Selecting…": { pt: "Selecionando…" },
+  "Transcribing… {percent}%": { pt: "Transcrevendo… {percent}%" },
+  "Downloading audio…": { pt: "Baixando áudio…" },
+  "Extracting…": { pt: "Extraindo…" },
+  "Find phrases to learn": { pt: "Buscar frases para aprender" },
+  "You can import a source and save hand-picked phrases now — no setup needed. To pick phrases automatically and add translations, connect an AI": {
+    pt: "Você pode importar uma fonte e salvar frases escolhidas à mão agora — sem configuração. Para escolher frases automaticamente e adicionar traduções, conecte uma IA",
+  },
+  "Say what it means, then try using it in your own sentence.": {
+    pt: "Diga o que significa e depois tente usar em uma frase sua.",
+  },
+  "1 phrase saved for review. Find it in Study.": {
+    pt: "1 frase salva para revisão. Encontre-a em Estudar.",
+  },
+  "{count} phrases saved for review. Find them in Study.": {
+    pt: "{count} frases salvas para revisão. Encontre-as em Estudar.",
+  },
+  "Could not save these phrases.": { pt: "Não consegui salvar essas frases." },
+  "The local voice model (Kokoro, about 349 MB) needs to be downloaded once before audio can be generated.": {
+    pt: "O modelo de voz local (Kokoro, cerca de 349 MB) precisa ser baixado uma vez antes de gerar áudio.",
+  },
+  "Downloading voice model… {percent}%": { pt: "Baixando o modelo de voz… {percent}%" },
+  "Preparing voice model download…": { pt: "Preparando o download do modelo de voz…" },
+  "Download voice model": { pt: "Baixar modelo de voz" },
+  "in Settings →": { pt: "em Configurações →" },
+  "in Settings.": { pt: "em Configurações." },
+  "Preparing audio discovery for the first time. This can take a minute.": {
+    pt: "Preparando a descoberta por áudio pela primeira vez. Pode levar um minuto.",
+  },
+  "1 passage pre-selected for {level}.": { pt: "1 trecho pré-selecionado para {level}." },
+  "{count} passages pre-selected for {level}.": {
+    pt: "{count} trechos pré-selecionados para {level}.",
+  },
+  "No passages pre-selected for {level}.": { pt: "Nenhum trecho pré-selecionado para {level}." },
+  "Automatic selection skipped: {message}": { pt: "Seleção automática pulada: {message}" },
+  "Automatic selection skipped.": { pt: "Seleção automática pulada." },
 
   /* ── Hoje home ──────────────────────────────────────────── */
   "Loading your day…": { pt: "Carregando o seu dia…" },
@@ -556,6 +664,16 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "Find new phrases": { pt: "Buscar novas frases" },
   "{count} cards to review": { pt: "{count} cartões para revisar" },
   "{count} practice phrases due": { pt: "{count} frases para praticar esperando revisão" },
+  "{count} cards for today — 1 came from your mistake yesterday": {
+    pt: "{count} cards para hoje — 1 veio do seu erro de ontem",
+  },
+  "{count} cards for today — {mistakes} came from your mistakes yesterday": {
+    pt: "{count} cards para hoje — {mistakes} vieram dos seus erros de ontem",
+  },
+  "Review while yesterday is still fresh.": {
+    pt: "Revise enquanto o que aconteceu ontem ainda está fresco.",
+  },
+  "Start today's review": { pt: "Revisar agora" },
   "Review these before adding more, so nothing piles up.": {
     pt: "Revise estes antes de adicionar mais, para nada acumular.",
   },
@@ -573,6 +691,12 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   },
   "Turn real English into review cards in 2 minutes": {
     pt: "Transforme inglês real em cartões de revisão em 2 minutos",
+  },
+  "Turn real English into tomorrow's practice": {
+    pt: "Transforme inglês real no treino de amanhã",
+  },
+  "Paste a YouTube video. In 2 minutes, the best phrases become review cards with the original audio — and your own mistakes become tomorrow's practice.": {
+    pt: "Cole um vídeo do YouTube. Em 2 minutos, as melhores frases viram cards de revisão com o áudio original — e os seus próprios erros viram o treino de amanhã.",
   },
   "Hear real phrases, save the useful ones, then review them — no setup needed.": {
     pt: "Ouça frases reais, salve as úteis e revise — sem configurar nada.",
@@ -638,6 +762,17 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "Save phrase": { pt: "Salvar frase" },
   Mistake: { pt: "Erro" },
   Correction: { pt: "Correção" },
+  "Own source funnel": { pt: "Funil de fonte própria" },
+  Completed: { pt: "Concluído" },
+  Attempted: { pt: "Tentado" },
+  "Not attempted": { pt: "Não tentado" },
+  "Learner profile": { pt: "Perfil de aprendizado" },
+  "Adjust your English level as you progress. Lessons and corrections follow it.": {
+    pt: "Ajuste seu nível de inglês conforme você progride. Lições e correções acompanham o nível.",
+  },
+  "From B1 the interface switches to English.": {
+    pt: "A partir do B1, a interface muda para inglês.",
+  },
   "Active days since first session: {days}": {
     pt: "Dias ativos desde a primeira sessão: {days}",
   },
@@ -649,8 +784,14 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "Listen, save the phrases you want, then review them. No AI setup needed.": {
     pt: "Ouça, salve as frases que quiser e revise. Sem configurar IA.",
   },
+  "Listen to the audio, save the phrases you want, then review them. No setup needed.": {
+    pt: "Ouça o áudio, salve as frases que quiser e revise. Sem configuração.",
+  },
   "Bundled lesson — all phrases are selected by default.": {
     pt: "Lição incluída — todas as frases já vêm selecionadas.",
+  },
+  "All phrases are selected by default.": {
+    pt: "Todas as frases já vêm selecionadas.",
   },
   "Save and study": { pt: "Salvar e estudar" },
   "Saving…": { pt: "Salvando…" },
@@ -671,6 +812,15 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
     pt: "Você criou {count} cards de revisão: {phrases} de inglês real e 1 que você mesmo escreveu.",
   },
   "Could not save this lesson.": { pt: "Não foi possível salvar esta lição." },
+  "Now try a video of your own": { pt: "Agora teste com um vídeo seu" },
+  "Use a short video to turn real phrases into review with the original audio.": {
+    pt: "Use um vídeo curto para transformar frases reais em revisão com o áudio original.",
+  },
+  "Try a suggested video": { pt: "Testar com vídeo sugerido" },
+  "Practice pronunciation": { pt: "Praticar pronúncia" },
+  "Repeat the lesson phrases and get local feedback.": {
+    pt: "Repita as frases da lição e receba feedback local.",
+  },
 
   /* ── first-loop mistake step ───────────────────────────── */
   "Your turn": { pt: "Sua vez" },
@@ -741,4 +891,179 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "Review Lesson 10 — Directions": { pt: "Revise a Lição 10 — Direções" },
   "Review Lesson 5 — Jobs and help": { pt: "Revise a Lição 5 — Trabalhos e ajuda" },
   "Review Lesson 1 — Greetings": { pt: "Revise a Lição 1 — Cumprimentos" },
+
+  // Study/Review tab (StudyTab, StudyCard, GradeButtons, PerformanceStats,
+  // SavedCardsBrowser, SessionSummary) and PronunciationCoach.
+  "Again": { pt: "De novo" },
+  "Hard": { pt: "Difícil" },
+  "Good": { pt: "Bom" },
+  "Easy": { pt: "Fácil" },
+  "No practice phrases yet": { pt: "Ainda não há frases para praticar" },
+  "Start from Home with the first lesson. If you already have a source, bring it in Phrases.": {
+    pt: "Comece pela Início, com a primeira lição. Se já tem um material, importe em Frases.",
+  },
+  "Open Phrases": { pt: "Abrir Frases" },
+  "You're all caught up": { pt: "Você está em dia" },
+  "Tomorrow you review these phrases. Add more only when you want fresh material.": {
+    pt: "Amanhã você revisa essas frases. Adicione mais só quando quiser material novo.",
+  },
+  "Practice phrase": { pt: "Frase para praticar" },
+  "{count} in today's queue": { pt: "{count} na fila de hoje" },
+  "Show answer": { pt: "Mostrar resposta" },
+  "Listen & repeat": { pt: "Ouvir e repetir" },
+  "You've struggled with this one — hear it first, then say it back.": {
+    pt: "Você tem tido dificuldade com esta — ouça primeiro, depois repita em voz alta.",
+  },
+  "Need a hint?": { pt: "Precisa de uma dica?" },
+  "Hint": { pt: "Dica" },
+  "Replay 0.75×": { pt: "Repetir em 0.75×" },
+  "Review complete": { pt: "Revisão concluída" },
+  "{count} phrases reviewed today.": { pt: "{count} frases revisadas hoje." },
+  "Now": { pt: "Agora" },
+  "went well this round": { pt: "foi bem nesta rodada" },
+  "Tomorrow": { pt: "Amanhã" },
+  "ready for tomorrow": { pt: "prontas para amanhã" },
+  "{count} days in a row. Tomorrow you review the next phrases.": {
+    pt: "{count} dias seguidos. Amanhã você revisa as próximas frases.",
+  },
+  "Performance": { pt: "Desempenho" },
+  "Reviews": { pt: "Revisões" },
+  "Accuracy": { pt: "Acerto" },
+  "Streak": { pt: "Sequência" },
+  "You've come back {returns} of {gaps} time within a week of a break.": {
+    pt: "Você voltou {returns} de {gaps} vez dentro de uma semana após uma pausa.",
+  },
+  "You've come back {returns} of {gaps} times within a week of a break.": {
+    pt: "Você voltou {returns} de {gaps} vezes dentro de uma semana após uma pausa.",
+  },
+  "Review activity": { pt: "Atividade de revisão" },
+  "Last 14 days · {count} today": { pt: "Últimos 14 dias · {count} hoje" },
+  "Error types": { pt: "Tipos de erro" },
+  "Accuracy by recurring correction category": { pt: "Acerto por categoria de correção recorrente" },
+  "{count} rev": { pt: "{count} rev" },
+  "Saved practice phrases": { pt: "Frases salvas" },
+  "{count} total": { pt: "{count} no total" },
+  "Search phrases": { pt: "Buscar frases" },
+  "Practice phrases you save will appear here.": { pt: "As frases que você salvar aparecem aqui." },
+  "No phrases match that search.": { pt: "Nenhuma frase corresponde a essa busca." },
+  "Loading…": { pt: "Carregando…" },
+  "Local storage isn't available in this browser, so studying is disabled.": {
+    pt: "O armazenamento local não está disponível neste navegador, então a revisão está desativada.",
+  },
+  "Reinforcing": { pt: "Reforçando" },
+  "{count} remaining": { pt: "{count} restantes" },
+  "Exit": { pt: "Sair" },
+  "Light session": { pt: "Sessão leve" },
+  "{count} easy phrases": { pt: "{count} frases fáceis" },
+  "Stop": { pt: "Parar" },
+  "Nice work. This is a good place to stop, or take one light session.": {
+    pt: "Bom trabalho. É um bom momento para parar, ou fazer uma sessão leve.",
+  },
+  "Stop here": { pt: "Parar por aqui" },
+  "Today's method": { pt: "Método de hoje" },
+  "Save your first phrases": { pt: "Salve suas primeiras frases" },
+  "Start with the demo or one source. Keep a small set so review stays light.": {
+    pt: "Comece com a demonstração ou uma fonte. Mantenha um conjunto pequeno para a revisão ficar leve.",
+  },
+  "Open Discover": { pt: "Abrir Descobrir" },
+  "Review before adding more": { pt: "Revise antes de adicionar mais" },
+  "{count} practice phrases due now. Review first, then add more.": {
+    pt: "{count} frases para praticar esperando agora. Revise primeiro, depois adicione mais.",
+  },
+  "Reinforce {label}": { pt: "Reforçar {label}" },
+  "Use the weak spots list below to practice saved phrases or create new variants.": {
+    pt: "Use a lista de pontos fracos abaixo para praticar frases salvas ou criar novas variações.",
+  },
+  "Produce language this week": { pt: "Produza inglês esta semana" },
+  "{count} conversations left for your weekly rhythm.": {
+    pt: "{count} conversas restantes para o seu ritmo semanal.",
+  },
+  "Start conversation": { pt: "Iniciar conversa" },
+  "Add the next small batch": { pt: "Adicione o próximo lote pequeno" },
+  "You are caught up. Add fresh input only when you want more material.": {
+    pt: "Você está em dia. Adicione material novo só quando quiser mais conteúdo.",
+  },
+  "{provider} is unavailable. Open Settings to connect it.": {
+    pt: "{provider} está indisponível. Abra Configurações para conectar.",
+  },
+  "The selected AI": { pt: "A IA selecionada" },
+  'No saved material left for "{label}" to generate from.': {
+    pt: 'Não há mais material salvo de "{label}" para gerar a partir dele.',
+  },
+  "Couldn't create new practice phrases.": { pt: "Não foi possível criar novas frases para praticar." },
+  "Couldn't reach IA. Try again.": { pt: "Não foi possível conectar à IA. Tente novamente." },
+  "Review order": { pt: "Ordem de revisão" },
+  "Active": { pt: "Ativo" },
+  "Holding": { pt: "Aguardando" },
+  "Gathering data": { pt: "Coletando dados" },
+  "Due phrases are ordered toward the best recall zone first.": {
+    pt: "As frases pendentes são ordenadas priorizando a melhor faixa de retenção.",
+  },
+  "Today's next step": { pt: "Próximo passo de hoje" },
+  "Start with the recommended path.": { pt: "Comece pelo caminho recomendado." },
+  "Start · {load}": { pt: "Começar · {load}" },
+  "Recommended": { pt: "Recomendado" },
+  "Pronunciation": { pt: "Pronúncia" },
+  "Listen, repeat, then check what was heard.": { pt: "Ouça, repita e depois veja o que foi reconhecido." },
+  "Playing...": { pt: "Tocando..." },
+  "Listen": { pt: "Ouvir" },
+  "Checking...": { pt: "Verificando..." },
+  "Try again": { pt: "Tentar de novo" },
+  "Record": { pt: "Gravar" },
+  "Completeness": { pt: "Completude" },
+  "Rhythm": { pt: "Ritmo" },
+  "Heard: {transcript}": { pt: "Reconhecido: {transcript}" },
+  "Couldn't play the reference audio.": { pt: "Não foi possível tocar o áudio de referência." },
+  "Couldn't make out any speech in that clip.": { pt: "Não foi possível reconhecer fala nesse áudio." },
+  "Pronunciation assessment failed.": { pt: "A avaliação de pronúncia falhou." },
+  "Couldn't access the microphone. Check the browser's permission.": {
+    pt: "Não foi possível acessar o microfone. Verifique a permissão do navegador.",
+  },
+
+  // Onboarding welcome screen — states the two differentiators up front (validation-action-plan.md Phase 1).
+  "The audio is real. So are your mistakes.": {
+    pt: "O áudio é real. Os seus erros também.",
+  },
+  "Original audio": { pt: "Áudio original" },
+  "Import a video and each phrase keeps its original audio, cut straight from the source.": {
+    pt: "Importe um vídeo e cada frase mantém o áudio original, recortado direto da fonte.",
+  },
+  "Your own mistakes": { pt: "Os seus próprios erros" },
+  "Correct one phrase you wrote — it becomes tomorrow's practice.": {
+    pt: "Corrija uma frase que você escreveu — ela vira o treino de amanhã.",
+  },
+
+  // Onboarding profile step + TranscriptReview (bundled lesson phrase list, also used by Discover).
+  "Three choices are enough to start. You can tune the rest later.": {
+    pt: "Três escolhas já bastam para começar. Você pode ajustar o resto depois.",
+  },
+  "{segments} phrases · {kept} saved": { pt: "{segments} frases · {kept} salvas" },
+  "Save practice phrases →": { pt: "Salvar frases para praticar →" },
+  "Pause clip": { pt: "Pausar áudio" },
+  "Play clip": { pt: "Tocar áudio" },
+  "Saved": { pt: "Salva" },
+
+  // WeaknessList (always rendered on the Study tab, not gated behind a review threshold).
+  "Weak spots to reinforce": { pt: "Pontos fracos para reforçar" },
+  "The app ranks concepts, error types, and situations from your reviews. Practice saved phrases, or create fresh variants from the same sources.": {
+    pt: "O app ordena conceitos, tipos de erro e situações a partir das suas revisões. Pratique frases salvas ou crie novas variações a partir das mesmas fontes.",
+  },
+  "No patterns detected yet. Review a few phrases or run a correction session first.": {
+    pt: "Ainda não há padrões detectados. Revise algumas frases ou faça uma correção primeiro.",
+  },
+  "error type": { pt: "tipo de erro" },
+  "concept": { pt: "conceito" },
+  "situation": { pt: "situação" },
+  "{count} reviews": { pt: "{count} revisões" },
+  "Drill": { pt: "Treinar" },
+  "Create new practice phrases for this weak spot from existing sources": {
+    pt: "Criar novas frases para praticar este ponto fraco a partir das fontes existentes",
+  },
+  "New phrases": { pt: "Novas frases" },
+  "Fewer errors of this type in your writing over time": {
+    pt: "Menos erros desse tipo na sua escrita ao longo do tempo",
+  },
+  "More errors of this type in your writing over time": {
+    pt: "Mais erros desse tipo na sua escrita ao longo do tempo",
+  },
 };
