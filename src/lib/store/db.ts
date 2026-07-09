@@ -129,6 +129,21 @@ export async function get<T>(store: StoreName, key: IDBValidKey): Promise<T | un
   return reqToPromise(db.transaction(store, "readonly").objectStore(store).get(key));
 }
 
+/**
+ * Fetch many records by key in a single readonly transaction. The result keeps the
+ * order of `keys`; missing records come back as `undefined` so callers can pair
+ * results with their inputs positionally.
+ */
+export async function getMany<T>(
+  store: StoreName,
+  keys: IDBValidKey[],
+): Promise<(T | undefined)[]> {
+  if (keys.length === 0) return [];
+  const db = await openDb();
+  const os = db.transaction(store, "readonly").objectStore(store);
+  return Promise.all(keys.map((key) => reqToPromise<T | undefined>(os.get(key))));
+}
+
 export async function getAll<T>(store: StoreName): Promise<T[]> {
   const db = await openDb();
   return reqToPromise(db.transaction(store, "readonly").objectStore(store).getAll());
@@ -158,6 +173,18 @@ export async function del(store: StoreName, key: IDBValidKey): Promise<void> {
 export async function count(store: StoreName): Promise<number> {
   const db = await openDb();
   return reqToPromise(db.transaction(store, "readonly").objectStore(store).count());
+}
+
+/** Count records matching an index range without materializing them. */
+export async function countFromIndex(
+  store: StoreName,
+  index: string,
+  query?: IDBKeyRange | IDBValidKey,
+): Promise<number> {
+  const db = await openDb();
+  return reqToPromise(
+    db.transaction(store, "readonly").objectStore(store).index(index).count(query),
+  );
 }
 
 export async function clearAll(): Promise<void> {

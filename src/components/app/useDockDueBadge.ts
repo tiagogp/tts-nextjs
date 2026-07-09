@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { getElectronBridge } from "@/platform/electron/bridge";
 import { isStoreAvailable } from "@/lib/store/db";
-import { getCounts } from "@/lib/store/repository";
+import { countDueCards } from "@/lib/store/repository";
 
 /**
  * Keeps the desktop dock badge in sync with the number of cards due for review —
@@ -23,7 +23,7 @@ export function useDockDueBadge(): void {
         return;
       }
       try {
-        const { due } = await getCounts();
+        const due = await countDueCards();
         if (!cancelled) bridge.setDueCount?.(due);
       } catch {
         // The badge is a courtesy; never surface store errors through it.

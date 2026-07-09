@@ -17,13 +17,16 @@ import type { StoredProgressAssessment } from "@/features/progress/model";
 import type { ConversationTurn } from "@/lib/cards/provider";
 import {
   STORES,
+  clearAll,
+  count,
+  countFromIndex,
+  del,
   get,
   getAll,
   getAllFromIndex,
+  getMany,
   put,
   putMany,
-  del,
-  count,
   type StoreName,
 } from "@/lib/store/db";
 import { initialSrs, type Grade, type SrsRecord, type State } from "@/lib/srs/fsrs";
@@ -79,20 +82,31 @@ export function getPhraseCandidates(): Promise<PhraseCandidate[]> {
 
 /* ──────────────────────────── cards + SRS ──────────────────────────── */
 
-async function getStoredCardSources(): Promise<CardSource[]> {
+/** Only the sources the given cards actually reference — not the whole stores. */
+async function getSourcesForCards(cards: Card[]): Promise<CardSource[]> {
+  const phraseIds = new Set<string>();
+  const errorIds = new Set<string>();
+  for (const card of cards) {
+    if (card.source.kind === "phrase") phraseIds.add(card.source.id);
+    else errorIds.add(card.source.id);
+  }
   const [candidates, events] = await Promise.all([
-    getPhraseCandidates(),
-    getErrorEvents(),
+    getMany<PhraseCandidate>(STORES.phraseCandidates, [...phraseIds]),
+    getMany<ErrorEvent>(STORES.errorEvents, [...errorIds]),
   ]);
   return [
-    ...candidates.map((candidate): CardSource => ({ kind: "phrase", candidate })),
-    ...events.map((event): CardSource => ({ kind: "error", event })),
+    ...candidates
+      .filter((candidate): candidate is PhraseCandidate => candidate !== undefined)
+      .map((candidate): CardSource => ({ kind: "phrase", candidate })),
+    ...events
+      .filter((event): event is ErrorEvent => event !== undefined)
+      .map((event): CardSource => ({ kind: "error", event })),
   ];
 }
 
 async function orientStoredCards(cards: Card[]): Promise<Card[]> {
   if (cards.length === 0) return cards;
-  return orientCardsForTargetFront(cards, await getStoredCardSources(), "en");
+  return orientCardsForTargetFront(cards, await getSourcesForCards(cards), "en");
 }
 
 export function getCards(): Promise<Card[]> {
@@ -116,11 +130,13 @@ async function persistCardsWithSrs(cards: Card[]): Promise<{ added: number }> {
   await putMany(STORES.cards, cards);
 
   const now = new Date();
-  const newSrs: SrsRecord[] = [];
-  for (const card of cards) {
-    const existing = await getSrs(card.id);
-    if (!existing) newSrs.push(initialSrs(card.id, now));
-  }
+  const existing = await getMany<SrsRecord>(
+    STORES.srs,
+    cards.map((card) => card.id),
+  );
+  const newSrs = cards
+    .filter((_, index) => !existing[index])
+    .map((card) => initialSrs(card.id, now));
   await putMany(STORES.srs, newSrs);
   return { added: newSrs.length };
 }
@@ -163,13 +179,26 @@ export async function getDueCards(now: number = Date.now()): Promise<
     IDBKeyRange.upperBound(now),
   );
   due.sort((a, b) => a.due - b.due);
+  const dueCards = await getMany<Card>(
+    STORES.cards,
+    due.map((srs) => srs.cardId),
+  );
   const raw: { card: Card; srs: SrsRecord }[] = [];
-  for (const srs of due) {
-    const card = await get<Card>(STORES.cards, srs.cardId);
+  for (const [index, srs] of due.entries()) {
+    const card = dueCards[index];
     if (card) raw.push({ card, srs });
   }
   const cards = await orientStoredCards(raw.map((item) => item.card));
   return raw.map((item, index) => ({ ...item, card: cards[index] }));
+}
+
+/**
+ * How many cards are due right now, straight off the `due` index — no cards,
+ * sources, or orientation are loaded. This is what badges and "what's next"
+ * surfaces should call; `getDueCards` is for actually starting a session.
+ */
+export function countDueCards(now: number = Date.now()): Promise<number> {
+  return countFromIndex(STORES.srs, "due", IDBKeyRange.upperBound(now));
 }
 
 /**
@@ -223,6 +252,19 @@ export function getReviews(): Promise<ReviewRecord[]> {
   return getAll<ReviewRecord>(STORES.reviews);
 }
 
+/**
+ * Reviews graded at or after `since`, straight off the `reviewedAt` index. Prefer this
+ * over `getReviews()` for windowed stats (weekly activity, recent-days charts) — the
+ * full log grows without bound under daily use.
+ */
+export function getReviewsSince(since: number): Promise<ReviewRecord[]> {
+  return getAllFromIndex<ReviewRecord>(
+    STORES.reviews,
+    "reviewedAt",
+    IDBKeyRange.lowerBound(since),
+  );
+}
+
 /** Which weakness dimension a card is matched on. */
 export type WeaknessRef = { label: string; kind: "concept" | "errorType" | "context" };
 
@@ -243,9 +285,13 @@ export async function getReinforcementCards(
 ): Promise<{ card: Card; srs: SrsRecord }[]> {
   const cards = await getCards();
   const matches = cards.filter((c) => cardMatchesWeakness(c, weakness));
+  const srsRecords = await getMany<SrsRecord>(
+    STORES.srs,
+    matches.map((card) => card.id),
+  );
   const out: { card: Card; srs: SrsRecord }[] = [];
-  for (const card of matches) {
-    const srs = await getSrs(card.id);
+  for (const [index, card] of matches.entries()) {
+    const srs = srsRecords[index];
     if (srs) out.push({ card, srs });
   }
   return out;
@@ -363,7 +409,7 @@ export async function getCounts(): Promise<{
   const [cards, reviews, due] = await Promise.all([
     count(STORES.cards),
     count(STORES.reviews),
-    getDueCards().then((d) => d.length),
+    countDueCards(),
   ]);
   return { cards, reviews, due };
 }
