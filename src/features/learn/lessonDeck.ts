@@ -67,6 +67,13 @@ export function lessonById(id: string): Lesson | undefined {
   return LESSONS.find((lesson) => lesson.id === id);
 }
 
+/**
+ * Card-id prefix for the learner's own sentence saved at the end of the lesson
+ * loop (MistakeStep), on both the mistake and the no-mistake path. Its presence
+ * marks the guided loop as completed, independent of whether an ErrorEvent exists.
+ */
+export const OWN_SENTENCE_CARD_PREFIX = "own-sentence-";
+
 export function lessonCardIds(lesson: Lesson): string[] {
   return lesson.phrases.map((_, i) => `lesson-${lesson.id}-card-${i}`);
 }

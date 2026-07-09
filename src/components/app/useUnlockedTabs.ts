@@ -2,14 +2,21 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { HOME_TABS, type HomeTab } from "@/components/app/homeTabs";
-import { getErrorEvents, getCounts } from "@/lib/store/repository";
+import { getCards, getErrorEvents, getCounts } from "@/lib/store/repository";
 import { isStoreAvailable } from "@/lib/store/db";
 import { getLearningProfile, saveLearningProfile } from "@/features/settings/learningProfile";
+import { OWN_SENTENCE_CARD_PREFIX } from "@/features/learn/lessonDeck";
 
 export interface UnlockSignals {
   cards: number;
   reviews: number;
   errorEvents: number;
+  /**
+   * Own sentences written at the end of the lesson loop. Counts toward tier 3 so
+   * a learner whose first sentence had nothing to fix (no ErrorEvent) still
+   * unlocks Correct and the AI settings.
+   */
+  ownSentences?: number;
 }
 
 export const MAX_UNLOCK_TIER = 3;
@@ -18,7 +25,7 @@ export function computeUnlockedTabTier(signals: UnlockSignals, storedTier = 0): 
   let tier = 0;
   if (signals.cards > 0) tier = 1;
   if (signals.reviews > 0) tier = 2;
-  if (signals.errorEvents > 0) tier = 3;
+  if (signals.errorEvents > 0 || (signals.ownSentences ?? 0) > 0) tier = 3;
   return Math.max(0, Math.min(MAX_UNLOCK_TIER, Math.max(storedTier, tier)));
 }
 
@@ -53,11 +60,12 @@ export function useUnlockedTabs(): {
         return;
       }
 
-      const [counts, errors] = await Promise.all([getCounts(), getErrorEvents()]);
+      const [counts, errors, cards] = await Promise.all([getCounts(), getErrorEvents(), getCards()]);
       if (cancelled) return;
 
+      const ownSentences = cards.filter((card) => card.id.startsWith(OWN_SENTENCE_CARD_PREFIX)).length;
       const nextTier = computeUnlockedTabTier(
-        { cards: counts.cards, reviews: counts.reviews, errorEvents: errors.length },
+        { cards: counts.cards, reviews: counts.reviews, errorEvents: errors.length, ownSentences },
         profile.unlockedTabTier,
       );
       const newlyUnlocked = highestNewTab(profile.unlockedTabTier, nextTier);

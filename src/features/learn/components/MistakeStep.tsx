@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Card as PanelCard } from "@/components/ui/Card";
 import { Notice } from "@/components/ui/Notice";
 import { correctSentenceLocally, type LocalCorrectionResult } from "@/features/learn/localCorrection";
-import type { LessonPhrase } from "@/features/learn/lessonDeck";
+import { OWN_SENTENCE_CARD_PREFIX, type LessonPhrase } from "@/features/learn/lessonDeck";
 import type { Card, ErrorEvent, ErrorType, PhraseCandidate } from "@/lib/cards/schema";
 import { saveCorrectionDeck, saveGeneratedDeck } from "@/lib/store/repository";
 import { emitActivity } from "@/lib/store/activityLog";
@@ -55,7 +55,7 @@ export function MistakeStep({
       const id = crypto.randomUUID();
       const now = Date.now();
       const card: Card = {
-        id: `own-sentence-${id}`,
+        id: `${OWN_SENTENCE_CARD_PREFIX}${id}`,
         front: result.corrected,
         back: phrase.pt,
         concept: phrase.concept,
