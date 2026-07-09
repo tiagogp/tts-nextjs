@@ -47,6 +47,7 @@ understands, returns, and names value faster, make that segment the launch narra
 - [Consent script](w5/consent-script.md)
 - [Moderator run-sheet](w5/moderator-run-sheet.md)
 - [Follow-up messages](w5/followup-messages.md)
+- [Capture table](w5/capture-table.md)
 
 ## Test Setup
 
