@@ -18,5 +18,5 @@
   height: 100%;
   border-radius: inherit;
   background: var(--accent);
-  animation: generation-slide 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation: generation-slide 1.6s linear infinite;
 }

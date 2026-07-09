@@ -2,7 +2,7 @@ import "fake-indexeddb/auto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Card } from "@/lib/cards/schema";
 import { Rating } from "@/lib/srs/fsrs";
-import { clearAll } from "./db";
+import { STORES, clearAll, getAll, putMany, type StoreName } from "./db";
 import {
   exportLocalBackup,
   getCards,
@@ -122,6 +122,179 @@ describe("local backup round-trip (W6)", () => {
     expect(cards.map((c) => c.id).sort()).toEqual(["card-1", "card-2"]);
     // card-1 is overwritten by the backup copy (merge-by-id).
     expect(cards.find((c) => c.id === "card-1")?.back).toBe("original");
+  });
+});
+
+/**
+ * Phase 4 "Trust & Proof" — zero-loss backup on weeks-scale organic data.
+ *
+ * The moderated [backup-restore protocol](../../../docs/w5/backup-restore-validation.md)
+ * proves zero loss on ONE real participant. This test proves the same property
+ * automatically, across ALL 11 stores, through the exact real path a user hits:
+ * export → serialize to a JSON file → parse the file back → dry-run validate →
+ * restore. It fills every store with weeks of data (not the handful the high-level
+ * API touches) and asserts each record survives byte-for-byte, including FSRS due
+ * dates — the protocol's step-6 "due count must survive, not reset" check.
+ */
+describe("local backup round-trip — weeks-scale zero-loss proof (Phase 4)", () => {
+  beforeEach(() => clearAll());
+  afterEach(() => clearAll());
+
+  const DAY = 86_400_000;
+  const START = Date.UTC(2026, 5, 1); // 3 weeks of history, deterministic.
+  /** The keyPath field per store — used to sort before comparing (getAll is key-ordered). */
+  const KEY_FIELD: Record<StoreName, string> = {
+    [STORES.errorEvents]: "id",
+    [STORES.phraseCandidates]: "id",
+    [STORES.cards]: "id",
+    [STORES.srs]: "cardId",
+    [STORES.reviews]: "id",
+    [STORES.conversations]: "id",
+    [STORES.activityLog]: "id",
+    [STORES.learningPlan]: "id",
+    [STORES.effortHistory]: "weekOf",
+    [STORES.pronunciationAttempts]: "id",
+    [STORES.progressAssessments]: "id",
+  };
+
+  function buildSeed(): Record<StoreName, Record<string, unknown>[]> {
+    const cards = Array.from({ length: 40 }, (_, i) => ({
+      id: `card-${i}`,
+      front: `front ${i}`,
+      back: `back ${i}`,
+      concept: `concept ${i % 7}`,
+      source: { kind: "phrase", id: `phrase-${i}` },
+      createdAt: START + i * (DAY / 2),
+    }));
+    return {
+      [STORES.errorEvents]: Array.from({ length: 25 }, (_, i) => ({
+        id: `error-${i}`,
+        text: `I has a mistake ${i}`,
+        errorType: ["grammar", "vocab", "spelling"][i % 3],
+        createdAt: START + i * (DAY / 2),
+      })),
+      [STORES.phraseCandidates]: Array.from({ length: 30 }, (_, i) => ({
+        id: `phrase-${i}`,
+        sourceId: `source-${i % 5}`,
+        text: `phrase text ${i}`,
+        translation: `tradução ${i}`,
+        status: i % 2 ? "accepted" : "pending",
+        createdAt: START + i * (DAY / 3),
+      })),
+      [STORES.cards]: cards,
+      // FSRS scheduling: due dates spread across (and past) the 3-week window.
+      // These are the values step 6 of the protocol insists must survive, not reset.
+      [STORES.srs]: cards.map((c, i) => ({
+        cardId: c.id,
+        due: START + (i + 1) * DAY,
+        stability: 3 + i * 0.5,
+        difficulty: 5 + (i % 5),
+        elapsed_days: i % 4,
+        scheduled_days: (i % 10) + 1,
+        reps: i % 6,
+        lapses: i % 3,
+        state: i % 4,
+        last_review: START + i * (DAY / 3),
+      })),
+      [STORES.reviews]: cards.flatMap((c, i) =>
+        Array.from({ length: 3 }, (_, r) => ({
+          id: `review-${i}-${r}`,
+          cardId: c.id,
+          grade: (r % 4) + 1,
+          reviewedAt: START + i * DAY + r * (DAY / 4),
+          previousState: r % 4,
+          scheduledDays: r + 1,
+          concept: c.concept,
+        })),
+      ),
+      [STORES.conversations]: Array.from({ length: 5 }, (_, i) => ({
+        id: `conv-${i}`,
+        createdAt: START + i * DAY,
+        turns: [
+          { role: "user", text: `hi ${i}` },
+          { role: "assistant", text: `hello ${i}` },
+        ],
+      })),
+      [STORES.activityLog]: Array.from({ length: 60 }, (_, i) => ({
+        id: `act-${i}`,
+        type: ["own_source_started", "own_source_completed", "first_loop_completed", "review"][
+          i % 4
+        ],
+        at: START + i * (DAY / 4),
+      })),
+      [STORES.learningPlan]: [
+        { id: "plan-current", createdAt: START, weeks: [{ focus: "prepositions" }] },
+      ],
+      [STORES.effortHistory]: Array.from({ length: 3 }, (_, i) => ({
+        weekOf: `2026-W${22 + i}`,
+        reviews: 40 + i * 10,
+        minutes: 30 + i * 5,
+      })),
+      [STORES.pronunciationAttempts]: Array.from({ length: 12 }, (_, i) => ({
+        id: `pron-${i}`,
+        cardId: `card-${i}`,
+        score: 60 + i,
+        createdAt: START + i * DAY,
+      })),
+      [STORES.progressAssessments]: Array.from({ length: 6 }, (_, i) => ({
+        id: `assess-${i}`,
+        createdAt: START + i * 3 * DAY,
+        levelEstimate: ["A2", "B1"][i % 2],
+      })),
+    };
+  }
+
+  const sortByKey = (store: StoreName, rows: Record<string, unknown>[]) =>
+    [...rows].sort((a, b) =>
+      String(a[KEY_FIELD[store]]).localeCompare(String(b[KEY_FIELD[store]])),
+    );
+
+  it("loses nothing across all 11 stores through export → JSON file → restore", async () => {
+    const seed = buildSeed();
+    const storeNames = Object.values(STORES) as StoreName[];
+
+    // Guard: the proof is only meaningful if every store is exercised.
+    for (const store of storeNames) {
+      expect(seed[store].length, `seed for ${store}`).toBeGreaterThan(0);
+      await putMany(store, seed[store]);
+    }
+
+    const backup = await exportLocalBackup();
+
+    // Faithful to the real flow: the backup is written to a .json file and read back.
+    const fromFile = JSON.parse(JSON.stringify(backup)) as unknown;
+
+    // Dry run (Settings → "Validar restauração"): counts must match ground truth.
+    const dryRun = validateLocalBackup(fromFile);
+    expect(dryRun.ok, dryRun.errors.join("; ")).toBe(true);
+    for (const store of storeNames) {
+      expect(dryRun.counts[store], `dry-run count for ${store}`).toBe(seed[store].length);
+    }
+    const expectedTotal = storeNames.reduce((sum, store) => sum + seed[store].length, 0);
+    expect(dryRun.totalRecords).toBe(expectedTotal);
+
+    // Catastrophic local data loss.
+    await clearAll();
+    for (const store of storeNames) {
+      expect(await getAll(store)).toHaveLength(0);
+    }
+
+    const result = await restoreLocalBackup(fromFile);
+    expect(result.ok).toBe(true);
+    expect(result.totalRecords).toBe(expectedTotal);
+
+    // Zero loss: every store's records survive byte-for-byte.
+    for (const store of storeNames) {
+      const restored = await getAll<Record<string, unknown>>(store);
+      expect(sortByKey(store, restored), `restored ${store}`).toEqual(
+        sortByKey(store, seed[store]),
+      );
+    }
+
+    // Protocol step 6, explicit: FSRS due dates survive, not reset to "now".
+    const restoredSrs = sortByKey(STORES.srs, await getAll(STORES.srs));
+    const seededSrs = sortByKey(STORES.srs, seed[STORES.srs]);
+    expect(restoredSrs.map((row) => row.due)).toEqual(seededSrs.map((row) => row.due));
   });
 });
 

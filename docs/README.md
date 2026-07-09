@@ -2,8 +2,9 @@
 
 Technical source of truth for the card pipeline, architecture, and shipped build history.
 Product direction and active priorities live in [product.md](product.md); visual/UI rules live
-in [design-system.md](design-system.md); user-facing setup and the feature list live in the
-[root README](../README.md).
+in [design-system.md](design-system.md); repo layout and module ownership live in
+[project-structure.md](project-structure.md); user-facing setup and the feature list live
+in the [root README](../README.md).
 
 **Contents**
 
@@ -63,9 +64,11 @@ native-correction tool ─────────►  (keep | rewrite | drop)  
 
 The mp4 is dead weight — only the audio carries learning value.
 
-- **Download:** `yt-dlp -x --audio-format mp3` (or `bestaudio`). Faster, smaller, no video.
-- **Transcript + timing:** YouTube captions when present, else Whisper for word/segment
-  timestamps.
+- **Download:** external `yt-dlp` binary (`bestaudio`, extracted to m4a when ffmpeg is
+  available). youtubei.js can no longer decipher stream URLs, so yt-dlp is a hard requirement
+  for YouTube import (`brew install yt-dlp`). Faster, smaller, no video.
+- **Transcript + timing:** Whisper for segment timestamps (the YouTube.js captions fast path
+  was removed along with stream deciphering).
 - **The payoff:** with timestamps we cut the *exact* native audio clip for each phrase and
   embed it in the card — authentic intonation and rhythm, far better than TTS for learning,
   and something no competitor does. Reuses the existing media plumbing in the `.apkg` engine.
@@ -140,8 +143,9 @@ into a tutor. Status against that vision:
 
 ### ✅ Done — foundation
 - [x] **Contract / schema** — `schema.ts`, `provider.ts` (the interface every stage agrees on).
-- [x] **Discovery ingestion** — local TypeScript runtime: YouTube.js audio-only + whisper.cpp →
-      `TranscriptSegment[]` with timestamps. Verified end-to-end.
+- [x] **Discovery ingestion** — local TypeScript runtime: yt-dlp audio-only + whisper.cpp →
+      `TranscriptSegment[]` with timestamps. Verified end-to-end. (Originally YouTube.js;
+      switched to the external yt-dlp binary when YouTube.js stopped deciphering stream URLs.)
 - [x] **`.apkg` export engine** with TTS audio (genanki).
 - [x] **Tabs UI** + transcript with native-clip playback + manual "Keep".
 
@@ -192,10 +196,9 @@ the answer audio — the native-clip slicing is reserved for the audio path.
 - [x] **C2. Article / URL** text extraction — `POST /discover/article` → Mozilla Readability
       main-text + title extraction → sentence segmentation. Proxy at
       `src/app/api/discover/article/route.ts`.
-- [x] **C3. YouTube captions** fast path — the local discovery service reads caption tracks
-      returned by YouTube.js and builds timestamped segments directly, skipping Whisper. Falls
-      back to `transcribe()` when no usable captions exist. Audio is still cached either way, so
-      native clips work.
+- [x] ~~**C3. YouTube captions** fast path~~ — removed together with the YouTube.js download
+      path (stream deciphering broke). Every YouTube import now transcribes with Whisper;
+      audio is still cached, so native clips work.
 
 ### ✅ Persistence & study (the long-game)
 Local-first and browser-only: everything lives in IndexedDB (`src/lib/store/db.ts`), nothing

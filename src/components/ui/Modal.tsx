@@ -48,10 +48,10 @@ export function Modal({
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-[100] grid place-items-center p-4"
-          initial={{ opacity: 0, backdropFilter: "blur(0px)", backgroundColor: "rgb(0 0 0 / 0%)" }}
-          animate={{ opacity: 1, backdropFilter: "blur(4px)", backgroundColor: "rgb(0 0 0 / 45%)" }}
-          exit={{ opacity: 0, backdropFilter: "blur(0px)", backgroundColor: "rgb(0 0 0 / 0%)" }}
+          className="fixed inset-0 z-[100] grid place-items-center bg-black/45 p-4 backdrop-blur-xs"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
           transition={tweenSmooth}
           onMouseDown={(event) => {
             if (closeOnBackdrop && event.target === event.currentTarget) onClose?.();

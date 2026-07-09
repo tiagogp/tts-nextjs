@@ -339,6 +339,21 @@ override what the scorer says.
 
 ## Phase 4 — Trust & Proof (gated on a W5 pass)
 
+**Status (2026-07-09):** the two code items in this phase are complete and re-verified green
+today — HTTP/provider error taxonomy and Data transparency (`yarn vitest run
+src/server/http/providerFailure.test.ts src/lib/store/repository.backup.test.ts`, 17/17). The
+backup/restore/wipe machinery the validation session depends on (`exportLocalBackup`,
+`validateLocalBackup` dry run, `restoreLocalBackup`, `wipeLocalData`) is store-agnostic and
+covers all 11 stores in the [backup-restore capture table](w5/backup-restore-validation.md);
+the round trip is proven by `repository.backup.test.ts` (export → wipe → restore intact,
+merge-by-id without deletion, full wipe) — now including a **weeks-scale zero-loss proof**
+that fills all 11 stores with ~3 weeks of data and asserts every record survives byte-for-byte
+through the real export → JSON file → dry-run → restore path, FSRS due dates included. The two
+open items are **not code** — the demo
+recording (blocked by the Phase 1 native-clips honesty gate) and the moderated backup/restore
+session (needs a real 2+-week participant) — and the phase stays **gated on a W5 pass**, which
+has not run (decision record pending `0/10`).
+
 - [ ] **Record the 90-second demo video.**
       Real loop, real native audio, real own-source import. This is the trust artifact and the
       marketing artifact in one; it also goes on the landing page.
@@ -355,7 +370,13 @@ override what the scorer says.
       _Implementation status:_ moderated protocol with a per-store zero-loss capture table
       written (2026-07-03) in [w5/backup-restore-validation.md](w5/backup-restore-validation.md);
       the wipe step the protocol needs now exists in Settings (see data transparency below).
-      The session with a real 2+-week participant is the outstanding step.
+      A weeks-scale automated proof was added (2026-07-09,
+      `repository.backup.test.ts` → "weeks-scale zero-loss proof"): it fills all 11 stores with
+      ~3 weeks of data and asserts every record survives byte-for-byte through the real
+      export → JSON file → dry-run validate → restore path, with FSRS due dates preserved (the
+      protocol's step-6 "due count must survive, not reset" check). This de-risks the session
+      but does not replace it — the session with a real 2+-week participant on organic data is
+      still the outstanding _Done when_ step.
 
 - [x] **HTTP/provider error taxonomy.**
       Typed 502/504/abort/invalid-input handling; every user-visible failure in PT-BR, never a
@@ -451,7 +472,8 @@ way back.
       narrative.
 - [ ] **A1 and C1-C2 band mechanisms** (graduated input + L1 scaffolding for A1;
       naturalness/register/collocation feedback for C1) before "A1-C2" appears in any public
-      copy.
+      copy. See [c1-phase-proposal.md](c1-phase-proposal.md) for the C1 side, written out in
+      full — concept-stage, gated on this phase opening.
 - [ ] **Multi-language expansion** only after the English wedge retains at D+30 — the
       pipeline is language-agnostic, the validated experience is not.
 

@@ -73,7 +73,9 @@ Start the Electron app and its standalone Next server with a single command:
 ```
 
 Speech inference runs inside the Next Node process through native addons. No
-Python, ffmpeg executable, helper app, or auxiliary Dock icon is used.
+Python, helper app, or auxiliary Dock icon is used. The only external binary is
+`yt-dlp`, needed for YouTube import only (`brew install yt-dlp`; ffmpeg is
+optional and improves the audio format).
 
 ## Building the macOS app
 
@@ -150,12 +152,14 @@ OLLAMA_MODEL=llama3.1
 ## Phrases (YouTube → transcript → review)
 
 The **Phrases** tab turns native content into learning material. Paste a YouTube URL; the
-app downloads the **audio only** (no video) with YouTube.js and transcribes it locally with
+app downloads the **audio only** (no video) with [yt-dlp](https://github.com/yt-dlp/yt-dlp)
+(YouTube.js can no longer decipher stream URLs) and transcribes it locally with
 [whisper.cpp](https://github.com/ggml-org/whisper.cpp), producing a timestamped
 transcript. Each segment can be played back as its **native audio clip** and marked to keep.
 
-Runs 100% locally — the speech-recognition model (`small`, ~480 MB) downloads on first use.
-Audio decoding uses in-process WebAssembly; Homebrew and ffmpeg are not required.
+Transcription runs 100% locally — the speech-recognition model (`small`, ~480 MB) downloads
+on first use and audio decoding uses in-process WebAssembly. YouTube import requires
+`yt-dlp` (`brew install yt-dlp`); ffmpeg is optional. Article and PDF import need neither.
 
 > Product direction, active priorities, and research-backed roadmap live in
 > [docs/product.md](docs/product.md). Architecture and shipped feature history live in
@@ -206,8 +210,15 @@ to Kokoro audio otherwise. Import the result with Anki's `File → Import`.
 
 ## Project Structure
 
+See [docs/project-structure.md](docs/project-structure.md) for the canonical
+map of app boundaries, module ownership, and where new work should go.
+
 ```
 .
+├── apps/
+│   └── landing/              # Vercel landing page and waitlist
+├── electron/                 # Electron shell and desktop packaging
+├── native-audio/             # Source recordings for bundled native clips
 ├── src/
 │   ├── app/
 │   │   ├── page.tsx           # Server entry that renders the desktop client shell

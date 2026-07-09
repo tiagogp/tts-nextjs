@@ -365,7 +365,9 @@ Historico de ativacao shipped:
 
 ### Avancados
 
-- C1 precisa naturalidade, registro, idiomaticidade e colocacao, nao so erro gramatical.
+- C1 precisa naturalidade, registro, idiomaticidade e colocacao, nao so erro gramatical. Ver
+  [c1-phase-proposal.md](c1-phase-proposal.md) para a proposta detalhada (fase 6, ainda nao
+  iniciada).
 - FSRS/flashcards perdem valor se o conteudo for trivial.
 - Conversa precisa ser menos enlatada e mais aberta.
 - Falta feedback de discurso longo.

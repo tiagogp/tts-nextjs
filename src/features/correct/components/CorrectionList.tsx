@@ -117,9 +117,9 @@ export function CorrectionList({
             <motion.li
               key={event.id}
               layout
-              initial={{ opacity: 0, height: 0, filter: `blur(${BLUR}px)` }}
-              animate={{ opacity: 1, height: "auto", filter: "blur(0px)", transition: springSoft }}
-              exit={{ opacity: 0, height: 0, filter: `blur(${BLUR}px)`, transition: tweenSmooth }}
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto", transition: springSoft }}
+              exit={{ opacity: 0, height: 0, transition: tweenSmooth }}
               className="flex items-start gap-3 overflow-hidden border-b border-line px-5 py-3 transition-colors hover:bg-accent/3"
             >
               <div className="min-w-0 flex-1 space-y-1">

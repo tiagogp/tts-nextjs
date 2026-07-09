@@ -3,7 +3,7 @@
 import { useId, useState, type ReactNode } from "react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/cn";
-import { easeOut, tweenSmooth } from "@/lib/motion";
+import { easeOut } from "@/lib/motion";
 
 export interface DisclosureProps {
   title: string;
@@ -69,7 +69,7 @@ export default function Disclosure({
       <motion.div
         initial={false}
         animate={{ height: open ? "auto" : 0, opacity: open ? 1 : 0 }}
-        transition={tweenSmooth}
+        transition={{ duration: 0.22, ease: easeOut }}
         className="overflow-hidden"
       >
         <div id={contentId} className="border-t border-line/65 px-4 pb-4 pt-4" aria-hidden={!open} inert={!open}>

@@ -265,14 +265,15 @@ export default function CorrectTab({
           />
         </Field>
 
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key={mode}
-            variants={fadeRise}
-            initial="hidden"
-            animate="show"
-            exit="exit"
-          >
+        <div className="relative">
+          <AnimatePresence mode="popLayout" initial={false}>
+            <motion.div
+              key={mode}
+              variants={fadeRise}
+              initial="hidden"
+              animate="show"
+              exit="exit"
+            >
             {mode === "ai" ? (
               <AiEvaluateForm
                 value={aiText}
@@ -299,8 +300,9 @@ export default function CorrectTab({
                 onAdd={addDraft}
               />
             )}
-          </motion.div>
-        </AnimatePresence>
+            </motion.div>
+          </AnimatePresence>
+        </div>
 
         <Disclosure
           title="Advanced options"
