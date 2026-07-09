@@ -13,6 +13,7 @@
     "prebuild": "yarn learn:audio",
     "build": "next build",
     "learn:audio": "node scripts/generate-learn-audio.mjs",
+    "learn:audio:verify": "node scripts/generate-learn-audio.mjs --verify",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
