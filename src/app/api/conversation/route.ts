@@ -14,6 +14,11 @@ import { isProviderAvailable, resolveProvider } from "@/lib/cards/registry";
 import type { ConversationTurn, ProviderKind } from "@/lib/cards/provider";
 import { getDefaultProvider } from "@/server/aiSettings";
 import { isHttpError, isProviderKind, readJsonObject } from "@/server/http/validation";
+import {
+  classifyProviderFailure,
+  failureResponse,
+  providerFailure,
+} from "@/server/http/providerFailure";
 import { MAX_CORRECTION_JSON_BYTES } from "@/lib/constants";
 import { logger } from "@/lib/logger";
 
@@ -24,28 +29,6 @@ export const maxDuration = 120;
 const MAX_TURNS = 60;
 const MAX_TURN_CHARS = 2000;
 const MAX_SCENARIO_CHARS = 300;
-const PUBLIC_CONVERSATION_ERROR =
-  "Couldn't continue the conversation right now. Try again in a moment.";
-
-function providerErrorMessage(error: unknown): string | null {
-  if (!(error instanceof Error)) return null;
-  const message = error.message.trim();
-  if (!message) return null;
-  if (
-    message.includes("Ollama") ||
-    message.includes("OpenAI") ||
-    message.includes("Claude") ||
-    message.includes("Anthropic") ||
-    message.includes("API key") ||
-    message.includes("timed out") ||
-    message.includes("timeout") ||
-    message.includes("connect") ||
-    message.includes("ECONNREFUSED")
-  ) {
-    return message;
-  }
-  return null;
-}
 
 function conversationProviderKind(raw: unknown): ProviderKind {
   return isProviderKind(raw) ? raw : getDefaultProvider();
@@ -70,12 +53,14 @@ export async function POST(req: NextRequest) {
   try {
     const obj = await readJsonObject(req, { maxBytes: MAX_CORRECTION_JSON_BYTES });
     if (!obj) {
-      return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+      return failureResponse(providerFailure("invalid_input"));
     }
 
     const scenario = safeStr(obj.scenario, "", MAX_SCENARIO_CHARS);
     if (!scenario) {
-      return NextResponse.json({ error: "Pick a scenario first." }, { status: 400 });
+      return failureResponse(
+        providerFailure("invalid_input", "Escolha uma situação primeiro para praticar."),
+      );
     }
 
     const targetLang = safeStr(obj.targetLang, "en", 16);
@@ -87,20 +72,16 @@ export async function POST(req: NextRequest) {
 
     const kind = conversationProviderKind(obj.provider);
     if (!isProviderAvailable(kind)) {
-      return NextResponse.json(
-        { error: `${kind} provider is not configured. Set the key in .env.local or pick Ollama.` },
-        { status: 400 },
-      );
+      return failureResponse(providerFailure("provider_not_configured"));
     }
 
     const provider = resolveProvider(kind, { learnerLang: sourceLang, targetLang, model });
     if (!provider.converse) {
-      return NextResponse.json(
-        {
-          error:
-            "This provider can't hold a conversation. Pick OpenRouter, Ollama, Claude, or GPT to practice speaking.",
-        },
-        { status: 422 },
+      return failureResponse(
+        providerFailure(
+          "provider_not_configured",
+          "Esta IA não consegue conversar. Escolha outra IA em Configurações para praticar.",
+        ),
       );
     }
 
@@ -108,12 +89,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ reply });
   } catch (err: unknown) {
     if (isHttpError(err)) {
-      return NextResponse.json({ error: err.message }, { status: err.status });
+      return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });
     }
-    logger.error({ err }, "Conversation error");
-    return NextResponse.json(
-      { error: providerErrorMessage(err) ?? PUBLIC_CONVERSATION_ERROR },
-      { status: 500 },
-    );
+    const failure = classifyProviderFailure(err, { signal: req.signal });
+    logger.error({ err, code: failure.code }, "Conversation error");
+    return failureResponse(failure);
   }
 }

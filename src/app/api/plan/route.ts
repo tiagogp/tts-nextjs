@@ -12,7 +12,12 @@ import { safeStr } from "@/lib/cards/intake";
 import { isProviderAvailable, resolveProvider } from "@/lib/cards/registry";
 import type { ProviderKind } from "@/lib/cards/provider";
 import { getDefaultProvider } from "@/server/aiSettings";
-import { isProviderKind, readJsonObject } from "@/server/http/validation";
+import { isHttpError, isProviderKind, readJsonObject } from "@/server/http/validation";
+import {
+  classifyProviderFailure,
+  failureResponse,
+  providerFailure,
+} from "@/server/http/providerFailure";
 import { logger } from "@/lib/logger";
 import { extractJsonObject, validatePlanResult } from "@/features/plan/contract";
 import { buildPlanPrompt } from "@/features/plan/prompts";
@@ -28,12 +33,14 @@ export async function POST(req: NextRequest) {
   try {
     const obj = await readJsonObject(req, { maxBytes: 4096 });
     if (!obj) {
-      return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+      return failureResponse(providerFailure("invalid_input"));
     }
 
     const goal = safeStr(obj.goal, "", 400).trim();
     if (!goal) {
-      return NextResponse.json({ error: "A goal is required to generate a plan." }, { status: 400 });
+      return failureResponse(
+        providerFailure("invalid_input", "Defina um objetivo primeiro para gerar o plano."),
+      );
     }
 
     const currentLevel = safeStr(obj.currentLevel, "A1", 4);
@@ -48,17 +55,16 @@ export async function POST(req: NextRequest) {
 
     const kind = planProviderKind(obj.provider);
     if (!isProviderAvailable(kind)) {
-      return NextResponse.json(
-        { error: `${kind} provider is not configured. Set the API key or use Ollama.` },
-        { status: 400 },
-      );
+      return failureResponse(providerFailure("provider_not_configured"));
     }
 
     const provider = resolveProvider(kind, { model });
     if (!provider.complete) {
-      return NextResponse.json(
-        { error: "This provider can't generate a plan. Pick OpenRouter, Ollama, Claude, or GPT." },
-        { status: 422 },
+      return failureResponse(
+        providerFailure(
+          "provider_not_configured",
+          "Esta IA não consegue gerar um plano. Escolha outra IA em Configurações.",
+        ),
       );
     }
 
@@ -70,27 +76,24 @@ export async function POST(req: NextRequest) {
       parsed = extractJsonObject(raw);
     } catch {
       logger.error({ raw }, "Plan generation: failed to extract JSON from LLM response");
-      return NextResponse.json(
-        { error: "The AI returned an unexpected response. Please try again." },
-        { status: 500 },
-      );
+      return failureResponse(providerFailure("provider_failed"));
     }
 
     const plan = validatePlanResult(parsed);
     if (!plan) {
       logger.error({ parsed }, "Plan generation: JSON did not match expected schema");
-      return NextResponse.json(
-        { error: "The AI returned a malformed plan. Please try again." },
-        { status: 500 },
+      return failureResponse(
+        providerFailure("provider_failed", "A IA montou um plano incompleto. Tente de novo."),
       );
     }
 
     return NextResponse.json({ plan });
   } catch (err: unknown) {
-    logger.error({ err }, "Plan generation error");
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Couldn't generate the plan right now." },
-      { status: 500 },
-    );
+    if (isHttpError(err)) {
+      return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });
+    }
+    const failure = classifyProviderFailure(err, { signal: req.signal });
+    logger.error({ err, code: failure.code }, "Plan generation error");
+    return failureResponse(failure);
   }
 }

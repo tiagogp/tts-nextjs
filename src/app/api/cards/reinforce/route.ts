@@ -22,7 +22,12 @@ import {
 import { getDefaultProvider } from "@/server/aiSettings";
 import { safeStr, toCandidate, toErrorEvent } from "@/lib/cards/intake";
 import type { CardSource, ErrorEvent, PhraseCandidate } from "@/lib/cards/schema";
-import { isProviderKind, readJsonObject } from "@/server/http/validation";
+import { isHttpError, isProviderKind, readJsonObject } from "@/server/http/validation";
+import {
+  classifyProviderFailure,
+  failureResponse,
+  providerFailure,
+} from "@/server/http/providerFailure";
 import { MAX_CARD_JSON_BYTES } from "@/lib/constants";
 import { logger } from "@/lib/logger";
 
@@ -30,24 +35,19 @@ export const runtime = "nodejs";
 export const maxDuration = 300;
 
 const MAX_SOURCES = 50;
-const PUBLIC_REINFORCE_ERROR =
-  "Couldn't generate reinforcement cards right now. Try again in a moment.";
 
 export async function POST(req: NextRequest) {
   try {
     const obj = await readJsonObject(req, { maxBytes: MAX_CARD_JSON_BYTES });
     if (!obj) {
-      return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+      return failureResponse(providerFailure("invalid_input"));
     }
 
     // Respect the explicit/global choice. Never send content to a different provider.
     const requested = isProviderKind(obj.provider) ? obj.provider : null;
     const kind: ProviderKind = requested ?? getDefaultProvider();
     if (!isProviderAvailable(kind)) {
-      return NextResponse.json(
-        { error: `${kind} is unavailable. Open Settings and connect it before generating.` },
-        { status: 400 },
-      );
+      return failureResponse(providerFailure("provider_not_configured"));
     }
 
     const rawCandidates = Array.isArray(obj.candidates) ? obj.candidates : [];
@@ -67,9 +67,11 @@ export async function POST(req: NextRequest) {
       .filter((e): e is ErrorEvent => e !== null);
 
     if (candidates.length === 0 && errors.length === 0) {
-      return NextResponse.json(
-        { error: "No usable sources to reinforce from." },
-        { status: 400 },
+      return failureResponse(
+        providerFailure(
+          "invalid_input",
+          "Nenhuma frase ou correção salva para reforçar ainda. Estude alguns cards primeiro.",
+        ),
       );
     }
 
@@ -82,23 +84,26 @@ export async function POST(req: NextRequest) {
     const { cards, failures } = await generateDeck(provider, sources);
 
     if (cards.length === 0) {
-      return NextResponse.json(
-        {
-          error:
-            failures > 0
-              ? "Generation failed — likely a provider/network error. Try again."
-              : "The quality gate dropped every variant. Nothing new to add right now.",
-        },
-        { status: failures > 0 ? 502 : 422 },
+      return failureResponse(
+        failures > 0
+          ? providerFailure(
+              "provider_failed",
+              "A IA não conseguiu gerar cards de reforço desta vez — pode ser instabilidade na conexão. Tente de novo em instantes.",
+            )
+          : providerFailure(
+              "empty_result",
+              "Nenhuma variação nova desta vez. Continue estudando e tente de novo mais tarde.",
+            ),
       );
     }
 
     return NextResponse.json({ cards, count: cards.length, failed: failures });
   } catch (err: unknown) {
-    logger.error({ err }, "Reinforcement generation error");
-    return NextResponse.json(
-      { error: PUBLIC_REINFORCE_ERROR },
-      { status: 500 },
-    );
+    if (isHttpError(err)) {
+      return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });
+    }
+    const failure = classifyProviderFailure(err, { signal: req.signal });
+    logger.error({ err, code: failure.code }, "Reinforcement generation error");
+    return failureResponse(failure);
   }
 }

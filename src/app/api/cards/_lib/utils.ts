@@ -11,26 +11,6 @@ export function cardProviderKind(raw: unknown): ProviderKind {
   return isProviderKind(raw) ? raw : getDefaultProvider();
 }
 
-export function providerErrorMessage(error: unknown): string | null {
-  if (!(error instanceof Error)) return null;
-  const message = error.message.trim();
-  if (!message) return null;
-  if (
-    message.includes("Ollama") ||
-    message.includes("OpenAI") ||
-    message.includes("Claude") ||
-    message.includes("Anthropic") ||
-    message.includes("API key") ||
-    message.includes("timed out") ||
-    message.includes("timeout") ||
-    message.includes("connect") ||
-    message.includes("ECONNREFUSED")
-  ) {
-    return message;
-  }
-  return null;
-}
-
 export function readExportError(body: Buffer): ExportErrorPayload {
   try {
     const parsed = JSON.parse(body.toString("utf8") || "{}");
@@ -64,10 +44,6 @@ export function combinedSignal(signal: AbortSignal, timeoutMs: number): {
       signal.removeEventListener("abort", abortFromRequest);
     },
   };
-}
-
-export function isTimeoutError(error: unknown): boolean {
-  return error instanceof Error && error.name === "TimeoutError";
 }
 
 export function parseThemePhraseCount(value: unknown): number {

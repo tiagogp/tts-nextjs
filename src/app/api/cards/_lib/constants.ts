@@ -4,16 +4,10 @@ export const MAX_GENERATION_CANDIDATES = 200;
 export const MAX_GENERATION_ERRORS = 200;
 
 export const PUBLIC_CARD_EXPORT_ERROR =
-  "Couldn't export the deck right now. Try again in a moment.";
-export const PUBLIC_CARD_GENERATION_ERROR =
-  "Couldn't generate cards right now. Try again in a moment.";
-export const PUBLIC_CARD_TIMEOUT_ERROR =
-  "Generation took too long. Try fewer phrases or another provider.";
+  "Não consegui exportar os cards agora. Tente de novo em instantes.";
 
 /** Cap input so one paste can't blow the model's context or the request timeout. */
 export const MAX_CORRECTION_TEXT_CHARS = 8000;
-export const PUBLIC_CORRECTION_ERROR =
-  "Couldn't evaluate the text right now. Try again in a moment.";
 
 export const MAX_THEME_CHARS = 200;
 export const MAX_THEME_PHRASES = 20;

@@ -13,6 +13,7 @@ import type { ProviderKind } from "@/lib/cards/provider";
 import type { ContentSource, TranscriptSegment } from "@/lib/cards/schema";
 import { getDefaultProvider } from "@/server/aiSettings";
 import { isHttpError, isProviderKind, readJsonObject, safeString } from "@/server/http/validation";
+import { classifyProviderFailure, failureResponse, providerFailure } from "@/server/http/providerFailure";
 import { MAX_CARD_JSON_BYTES } from "@/lib/constants";
 import { logger } from "@/lib/logger";
 
@@ -20,8 +21,6 @@ export const runtime = "nodejs";
 export const maxDuration = 120;
 
 const MAX_SEGMENTS = 400;
-const PUBLIC_MINE_ERROR =
-  "Couldn't preselect segments right now. You can still choose them manually.";
 
 function safeSourceKind(v: unknown): ContentSource["kind"] {
   return v === "article" || v === "pdf" || v === "youtube" ? v : "youtube";
@@ -50,17 +49,12 @@ export async function POST(req: NextRequest) {
   try {
     const obj = await readJsonObject(req, { maxBytes: MAX_CARD_JSON_BYTES });
     if (!obj) {
-      return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+      return failureResponse(providerFailure("invalid_input"));
     }
 
     const kind: ProviderKind = isProviderKind(obj.provider) ? obj.provider : getDefaultProvider();
     if (!isProviderAvailable(kind)) {
-      return NextResponse.json(
-        {
-          error: `${kind} provider has no API key configured.`,
-        },
-        { status: 400 },
-      );
+      return failureResponse(providerFailure("provider_not_configured"));
     }
 
     const segments = (Array.isArray(obj.segments) ? obj.segments : [])
@@ -68,7 +62,12 @@ export async function POST(req: NextRequest) {
       .map(toSegment)
       .filter((s): s is TranscriptSegment => s !== null);
     if (segments.length === 0) {
-      return NextResponse.json({ error: "No transcript segments to curate." }, { status: 400 });
+      return failureResponse(
+        providerFailure(
+          "invalid_input",
+          "Nenhuma frase para selecionar. Importe um vídeo, artigo ou PDF primeiro.",
+        ),
+      );
     }
 
     const sourceId = safeString(obj.sourceId, "discover", 64);
@@ -110,9 +109,10 @@ export async function POST(req: NextRequest) {
     });
   } catch (err: unknown) {
     if (isHttpError(err)) {
-      return NextResponse.json({ error: err.message }, { status: err.status });
+      return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });
     }
-    logger.error({ err }, "Card mining error");
-    return NextResponse.json({ error: PUBLIC_MINE_ERROR }, { status: 500 });
+    const failure = classifyProviderFailure(err, { signal: req.signal });
+    logger.error({ err, code: failure.code }, "Card mining error");
+    return failureResponse(failure);
   }
 }

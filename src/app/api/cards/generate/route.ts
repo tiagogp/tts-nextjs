@@ -14,7 +14,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { contentDispositionAttachment } from "@/server/anki";
 import { localJson } from "@/server/localRuntime";
-import { generateDeck, isAbortError } from "@/lib/cards/provider";
+import { generateDeck } from "@/lib/cards/provider";
 import { orientCardsForTargetFront } from "@/lib/cards/orientation";
 import { isProviderAvailable, resolveProvider } from "@/lib/cards/registry";
 import type { ProviderKind } from "@/lib/cards/provider";
@@ -22,6 +22,11 @@ import type { CardSource, ErrorEvent, PhraseCandidate } from "@/lib/cards/schema
 import { safeStr, toCandidate, toErrorEvent } from "@/lib/cards/intake";
 import { getDefaultProvider } from "@/server/aiSettings";
 import { isHttpError, isProviderKind, readJsonObject } from "@/server/http/validation";
+import {
+  classifyProviderFailure,
+  failureResponse,
+  providerFailure,
+} from "@/server/http/providerFailure";
 import {
   APKG_EXPORT_TIMEOUT_MS,
   CARD_GENERATION_TIMEOUT_MS,
@@ -39,14 +44,8 @@ import {
   MAX_GENERATION_CANDIDATES,
   MAX_GENERATION_ERRORS,
   PUBLIC_CARD_EXPORT_ERROR,
-  PUBLIC_CARD_GENERATION_ERROR,
-  PUBLIC_CARD_TIMEOUT_ERROR,
 } from "@/app/api/cards/_lib/constants";
-import {
-  combinedSignal,
-  isTimeoutError,
-  readExportError,
-} from "@/app/api/cards/_lib/utils";
+import { combinedSignal, readExportError } from "@/app/api/cards/_lib/utils";
 
 export const runtime = "nodejs";
 // Local LLM (Ollama) decks of several corrections run generate + critique sequentially and
@@ -59,17 +58,12 @@ export async function POST(req: NextRequest) {
   try {
     const obj = await readJsonObject(req, { maxBytes: MAX_CARD_JSON_BYTES });
     if (!obj) {
-      return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+      return failureResponse(providerFailure("invalid_input"), { debugId, debugLog });
     }
 
     const kind: ProviderKind = isProviderKind(obj.provider) ? obj.provider : getDefaultProvider();
     if (!isProviderAvailable(kind)) {
-      return NextResponse.json(
-        {
-          error: `${kind} provider has no API key configured. Set the key in .env.local or pick Ollama.`,
-        },
-        { status: 400 },
-      );
+      return failureResponse(providerFailure("provider_not_configured"), { debugId, debugLog });
     }
 
     const sourceId = safeStr(obj.sourceId, "", 64);
@@ -93,9 +87,12 @@ export async function POST(req: NextRequest) {
     const rawCandidates = Array.isArray(obj.candidates) ? obj.candidates : [];
     const rawErrors = Array.isArray(obj.errors) ? obj.errors : [];
     if (rawCandidates.length === 0 && rawErrors.length === 0) {
-      return NextResponse.json(
-        { error: "No accepted phrases or corrections to generate from." },
-        { status: 400 },
+      return failureResponse(
+        providerFailure(
+          "invalid_input",
+          "Nenhuma frase aceita ou correção para gerar cards. Selecione frases primeiro.",
+        ),
+        { debugId, debugLog },
       );
     }
     const candidates = rawCandidates
@@ -108,9 +105,12 @@ export async function POST(req: NextRequest) {
       .map(toErrorEvent)
       .filter((e): e is ErrorEvent => e !== null);
     if (candidates.length === 0 && errors.length === 0) {
-      return NextResponse.json(
-        { error: "No usable phrases or corrections in the request." },
-        { status: 400 },
+      return failureResponse(
+        providerFailure(
+          "invalid_input",
+          "As frases enviadas não puderam ser usadas. Selecione frases mais completas e tente de novo.",
+        ),
+        { debugId, debugLog },
       );
     }
 
@@ -143,14 +143,17 @@ export async function POST(req: NextRequest) {
       });
 
       if (cards.length === 0) {
-        return NextResponse.json(
-          {
-            error:
-              failures > 0
-                ? `Generation failed for all ${failures} source(s) — likely a provider/network error. Try again, or pick another provider.`
-                : "The quality gate dropped every source. Try keeping longer, more complete phrases, or fuller corrections.",
-          },
-          { status: failures > 0 ? 502 : 422 },
+        return failureResponse(
+          failures > 0
+            ? providerFailure(
+                "provider_failed",
+                "A IA não conseguiu gerar cards desta vez — pode ser instabilidade na conexão. Tente de novo em instantes ou troque a IA em Configurações.",
+              )
+            : providerFailure(
+                "empty_result",
+                "Nenhuma frase virou card desta vez. Tente manter frases mais longas e completas, ou correções inteiras.",
+              ),
+          { debugId, debugLog },
         );
       }
 
@@ -215,7 +218,8 @@ export async function POST(req: NextRequest) {
       if (!validation.ok) {
         return NextResponse.json(
           {
-            error: "The deck was generated, but the .apkg failed internal validation.",
+            error:
+              "Os cards foram gerados, mas o arquivo de export falhou na validação interna. Tente de novo em instantes.",
             code: "apkg_validation_failed",
             debugId,
             debugLog,
@@ -267,46 +271,30 @@ export async function POST(req: NextRequest) {
       scope.dispose();
     }
   } catch (err: unknown) {
+    const debugHeaders = {
+      "X-PhraseLoop-Apkg-Debug-Id": debugId,
+      "X-PhraseLoop-Apkg-Debug-Log": debugLog,
+    };
     if (isHttpError(err)) {
       return NextResponse.json(
-        { error: err.message, debugId, debugLog },
-        {
-          status: err.status,
-          headers: {
-            "X-PhraseLoop-Apkg-Debug-Id": debugId,
-            "X-PhraseLoop-Apkg-Debug-Log": debugLog,
-          },
-        },
+        { error: err.message, code: err.code, debugId, debugLog },
+        { status: err.status, headers: debugHeaders },
       );
     }
-    if (isAbortError(err) || isTimeoutError(err)) {
+    // req.signal tells a user cancel (499) apart from our own generation deadline (504).
+    const failure = classifyProviderFailure(err, { signal: req.signal });
+    if (failure.code === "aborted" || failure.code === "provider_timeout") {
       writeApkgDebug(debugId, "cards-api-timeout-or-abort", {
         error: err instanceof Error ? err.message : "unknown",
+        code: failure.code,
       });
-      return NextResponse.json(
-        { error: PUBLIC_CARD_TIMEOUT_ERROR, debugId, debugLog },
-        {
-          status: 504,
-          headers: {
-            "X-PhraseLoop-Apkg-Debug-Id": debugId,
-            "X-PhraseLoop-Apkg-Debug-Log": debugLog,
-          },
-        },
-      );
+    } else {
+      logger.error({ err, code: failure.code }, "Card generation error");
+      writeApkgDebug(debugId, "cards-api-error", {
+        error: err instanceof Error ? err.message : "unknown",
+        code: failure.code,
+      });
     }
-    logger.error({ err }, "Card generation error");
-    writeApkgDebug(debugId, "cards-api-error", {
-      error: err instanceof Error ? err.message : "unknown",
-    });
-    return NextResponse.json(
-      { error: PUBLIC_CARD_GENERATION_ERROR, debugId, debugLog },
-      {
-        status: 500,
-        headers: {
-          "X-PhraseLoop-Apkg-Debug-Id": debugId,
-          "X-PhraseLoop-Apkg-Debug-Log": debugLog,
-        },
-      },
-    );
+    return failureResponse(failure, { debugId, debugLog }, debugHeaders);
   }
 }

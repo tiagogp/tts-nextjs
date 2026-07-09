@@ -5,6 +5,7 @@ import { isProviderAvailable, resolveProvider } from "@/lib/cards/registry";
 import type { ProviderKind } from "@/lib/cards/provider";
 import { getDefaultProvider } from "@/server/aiSettings";
 import { isHttpError, isProviderKind, readJsonObject, safeString } from "@/server/http/validation";
+import { failureResponse, providerFailure } from "@/server/http/providerFailure";
 import { languageLabel } from "@/features/settings/languages";
 import { MAX_CORRECTION_JSON_BYTES } from "@/lib/constants";
 import { logger } from "@/lib/logger";
@@ -25,19 +26,21 @@ export async function POST(req: NextRequest) {
     obj = await readJsonObject(req, { maxBytes: MAX_CORRECTION_JSON_BYTES });
   } catch (err) {
     if (isHttpError(err)) {
-      return NextResponse.json({ error: err.message }, { status: err.status });
+      return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });
     }
     throw err;
   }
-  if (!obj) return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+  if (!obj) return failureResponse(providerFailure("invalid_input"));
 
   const theme = safeString(obj.theme, "", MAX_THEME_CHARS);
-  if (!theme) return NextResponse.json({ error: "Enter a theme first." }, { status: 400 });
+  if (!theme) {
+    return failureResponse(providerFailure("invalid_input", "Digite um tema primeiro."));
+  }
 
   const count = parseThemePhraseCount(obj.count);
   const kind: ProviderKind = isProviderKind(obj.provider) ? obj.provider : getDefaultProvider();
   if (!isProviderAvailable(kind)) {
-    return NextResponse.json({ error: `${kind} provider is unavailable.` }, { status: 400 });
+    return failureResponse(providerFailure("provider_not_configured"));
   }
 
   const sourceLang = safeString(obj.sourceLang, "pt", 16);

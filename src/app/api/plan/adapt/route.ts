@@ -11,7 +11,12 @@ import { safeStr } from "@/lib/cards/intake";
 import { isProviderAvailable, resolveProvider } from "@/lib/cards/registry";
 import type { ProviderKind } from "@/lib/cards/provider";
 import { getDefaultProvider } from "@/server/aiSettings";
-import { isProviderKind, readJsonObject } from "@/server/http/validation";
+import { isHttpError, isProviderKind, readJsonObject } from "@/server/http/validation";
+import {
+  classifyProviderFailure,
+  failureResponse,
+  providerFailure,
+} from "@/server/http/providerFailure";
 import { logger } from "@/lib/logger";
 import type { Phase, PlanMeta, EffortSnapshot } from "@/features/plan/schema";
 import { extractJsonObject, validateGeneratedDays } from "@/features/plan/contract";
@@ -28,13 +33,13 @@ export async function POST(req: NextRequest) {
   try {
     const obj = await readJsonObject(req, { maxBytes: 32768 });
     if (!obj) {
-      return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+      return failureResponse(providerFailure("invalid_input"));
     }
 
     const meta = obj.meta as PlanMeta | undefined;
     const phases = obj.phases as Phase[] | undefined;
     if (!meta || !phases) {
-      return NextResponse.json({ error: "Plan meta and phases are required." }, { status: 400 });
+      return failureResponse(providerFailure("invalid_input"));
     }
 
     const remainingDays = typeof obj.remainingDays === "number" ? Math.max(1, Math.min(180, obj.remainingDays)) : 30;
@@ -47,17 +52,16 @@ export async function POST(req: NextRequest) {
 
     const kind = adaptProviderKind(obj.provider);
     if (!isProviderAvailable(kind)) {
-      return NextResponse.json(
-        { error: `${kind} provider is not configured.` },
-        { status: 400 },
-      );
+      return failureResponse(providerFailure("provider_not_configured"));
     }
 
     const provider = resolveProvider(kind, { model });
     if (!provider.converse) {
-      return NextResponse.json(
-        { error: "This provider can't revise a plan. Pick OpenRouter, Ollama, Claude, or GPT." },
-        { status: 422 },
+      return failureResponse(
+        providerFailure(
+          "provider_not_configured",
+          "Esta IA não consegue revisar um plano. Escolha outra IA em Configurações.",
+        ),
       );
     }
 
@@ -69,7 +73,7 @@ export async function POST(req: NextRequest) {
       parsed = extractJsonObject(raw);
     } catch {
       logger.error({ raw }, "Plan adapt: failed to extract JSON");
-      return NextResponse.json({ error: "The AI returned an unexpected response." }, { status: 500 });
+      return failureResponse(providerFailure("provider_failed"));
     }
 
     const days = parsed && typeof parsed === "object"
@@ -77,15 +81,18 @@ export async function POST(req: NextRequest) {
       : null;
     if (!days) {
       logger.error({ parsed }, "Plan adapt: JSON did not match expected schema");
-      return NextResponse.json({ error: "The AI returned a malformed plan revision." }, { status: 500 });
+      return failureResponse(
+        providerFailure("provider_failed", "A IA montou uma revisão incompleta. Tente de novo."),
+      );
     }
 
     return NextResponse.json({ days, newAvailabilityMinutes });
   } catch (err: unknown) {
-    logger.error({ err }, "Plan adapt error");
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Couldn't revise the plan right now." },
-      { status: 500 },
-    );
+    if (isHttpError(err)) {
+      return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });
+    }
+    const failure = classifyProviderFailure(err, { signal: req.signal });
+    logger.error({ err, code: failure.code }, "Plan adapt error");
+    return failureResponse(failure);
   }
 }

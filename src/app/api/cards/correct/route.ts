@@ -13,16 +13,15 @@ import { safeStr } from "@/lib/cards/intake";
 import { normalizeContext } from "@/lib/cards/context";
 import { isProviderAvailable, resolveProvider } from "@/lib/cards/registry";
 import { isHttpError, readJsonObject } from "@/server/http/validation";
+import {
+  classifyProviderFailure,
+  failureResponse,
+  providerFailure,
+} from "@/server/http/providerFailure";
 import { MAX_CORRECTION_JSON_BYTES } from "@/lib/constants";
 import { logger } from "@/lib/logger";
-import {
-  MAX_CORRECTION_TEXT_CHARS,
-  PUBLIC_CORRECTION_ERROR,
-} from "@/app/api/cards/_lib/constants";
-import {
-  cardProviderKind,
-  providerErrorMessage,
-} from "@/app/api/cards/_lib/utils";
+import { MAX_CORRECTION_TEXT_CHARS } from "@/app/api/cards/_lib/constants";
+import { cardProviderKind } from "@/app/api/cards/_lib/utils";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -31,20 +30,19 @@ export async function POST(req: NextRequest) {
   try {
     const obj = await readJsonObject(req, { maxBytes: MAX_CORRECTION_JSON_BYTES });
     if (!obj) {
-      return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+      return failureResponse(providerFailure("invalid_input"));
     }
 
     const text = safeStr(obj.text, "", MAX_CORRECTION_TEXT_CHARS);
     if (!text) {
-      return NextResponse.json({ error: "Nothing to correct." }, { status: 400 });
+      return failureResponse(
+        providerFailure("invalid_input", "Escreva ou fale uma frase primeiro para eu corrigir."),
+      );
     }
 
     const kind = cardProviderKind(obj.provider);
     if (!isProviderAvailable(kind)) {
-      return NextResponse.json(
-        { error: `${kind} provider is not configured. Set the key in .env.local or pick Ollama.` },
-        { status: 400 },
-      );
+      return failureResponse(providerFailure("provider_not_configured"));
     }
 
     const sourceLang = safeStr(obj.sourceLang, "pt", 16);
@@ -55,12 +53,11 @@ export async function POST(req: NextRequest) {
 
     const provider = resolveProvider(kind, { learnerLang: sourceLang, targetLang, model });
     if (!provider.correct) {
-      return NextResponse.json(
-        {
-          error:
-            "This provider can't evaluate free text. Pick OpenRouter, Ollama, Claude, or GPT to have the AI find your mistakes.",
-        },
-        { status: 422 },
+      return failureResponse(
+        providerFailure(
+          "provider_not_configured",
+          "Esta IA não consegue corrigir texto livre. Escolha outra IA em Configurações.",
+        ),
       );
     }
 
@@ -69,12 +66,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ events, count: events.length });
   } catch (err: unknown) {
     if (isHttpError(err)) {
-      return NextResponse.json({ error: err.message }, { status: err.status });
+      return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });
     }
-    logger.error({ err }, "Correction error");
-    return NextResponse.json(
-      { error: providerErrorMessage(err) ?? PUBLIC_CORRECTION_ERROR },
-      { status: 500 },
-    );
+    const failure = classifyProviderFailure(err, { signal: req.signal });
+    logger.error({ err, code: failure.code }, "Correction error");
+    return failureResponse(failure);
   }
 }
