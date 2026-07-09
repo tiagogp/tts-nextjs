@@ -96,7 +96,8 @@ describe("computeW5Metrics", () => {
     expect(m.timeToFirstLoopMs).toBe(95_000);
     expect(m.firstLoopUnderTarget).toBe(true);
     expect(m.firstLoopCompleted).toBe(true);
-    expect(m.dropoffStep).toBeNull();
+    // The loop is complete, so the funnel's next missing step is own source.
+    expect(m.dropoffStep).toBe("own_source");
   });
 
   it("completes the loop when the guided lesson corrects before the first review", () => {
@@ -120,7 +121,7 @@ describe("computeW5Metrics", () => {
     const m = computeW5Metrics(events);
     expect(m.firstLoopCompleted).toBe(true);
     expect(m.timeToFirstLoopMs).toBe(100_000);
-    expect(m.dropoffStep).toBeNull();
+    expect(m.dropoffStep).toBe("own_source");
   });
 
   it("ignores corrections saved before the first-run handover", () => {
@@ -154,6 +155,68 @@ describe("computeW5Metrics", () => {
     expect(m.activationSource).toBe("own_source");
     expect(m.startedAt).toBe(start);
     expect(m.dropoffStep).toBe("save_phrase");
+    // A legacy own-source first run counts as an own-source attempt.
+    expect(m.ownSourceStarted).toBe(true);
+    expect(m.ownSourceCompleted).toBe(false);
+  });
+
+  it("keeps the dropoff on own source until the learner's own material completes", () => {
+    const start = Date.UTC(2026, 5, 1, 12, 0, 0);
+    const loop = [
+      event("first_run_started", start, { source: "bundled_lesson", sourceId: "lesson-1" }),
+      event("cards_created", start + 30_000, {
+        count: 3,
+        source: "learn",
+        activation: { source: "bundled_lesson", zeroSetup: true, startedAt: start, elapsedMs: 30_000 },
+      }),
+      event("cards_reviewed", start + 60_000, {
+        count: 1,
+        cardIds: ["c1"],
+        activation: { source: "bundled_lesson", zeroSetup: true, startedAt: start, elapsedMs: 60_000 },
+      }),
+      event("correction_generated", start + 95_000, { cardsCreated: 1, source: "lesson" }),
+    ];
+
+    const untouched = computeW5Metrics(loop);
+    expect(untouched.ownSourceStarted).toBe(false);
+    expect(untouched.ownSourceCompleted).toBe(false);
+    expect(untouched.dropoffStep).toBe("own_source");
+
+    const attempted = computeW5Metrics([
+      ...loop,
+      event("own_source_started", start + 120_000, {
+        sourceKind: "youtube",
+        sourceId: "https://www.youtube.com/watch?v=jNQXAC9IVRw",
+      }),
+    ]);
+    expect(attempted.ownSourceStarted).toBe(true);
+    expect(attempted.ownSourceCompleted).toBe(false);
+    expect(attempted.dropoffStep).toBe("own_source");
+
+    const completed = computeW5Metrics([
+      ...loop,
+      event("own_source_started", start + 120_000, { sourceKind: "youtube" }),
+      event("own_source_completed", start + 200_000, { cardsCreated: 4 }),
+    ]);
+    expect(completed.ownSourceStarted).toBe(true);
+    expect(completed.ownSourceCompleted).toBe(true);
+    expect(completed.dropoffStep).toBeNull();
+  });
+
+  it("scores legacy logs through the old discover signals", () => {
+    const start = Date.UTC(2026, 5, 1, 12, 0, 0);
+
+    const attempted = computeW5Metrics([
+      event("video_processed", start, { sourceUrl: "https://example.com/v", cardsCreated: 3 }),
+    ]);
+    expect(attempted.ownSourceStarted).toBe(true);
+    expect(attempted.ownSourceCompleted).toBe(false);
+
+    const completed = computeW5Metrics([
+      event("cards_created", start, { count: 3, source: "discover" }),
+    ]);
+    expect(completed.ownSourceStarted).toBe(true);
+    expect(completed.ownSourceCompleted).toBe(true);
   });
 
   it("flags TTFR over the 2-minute activation gate", () => {

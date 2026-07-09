@@ -14,6 +14,8 @@ const MINUTES_PER_EVENT: Record<ActivityEventType, (event: ActivityEvent) => num
   correction_generated: (e) =>
     (e.payload as CorrectionGeneratedPayload).source === "lesson" ? 3 : 15,
   cards_created: () => 0, // overlap with other events — don't double-count
+  own_source_started: () => 0, // overlap with video_processed — don't double-count
+  own_source_completed: () => 0, // overlap with cards_created — don't double-count
   progress_checkin: () => 5,
 };
 

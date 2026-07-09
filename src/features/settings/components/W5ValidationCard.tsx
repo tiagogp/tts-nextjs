@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { Card } from "@/components/ui/Card";
 import { StatusPill, type StatusPillProps } from "@/components/ui/StatusPill";
 import { useT } from "@/i18n/I18nProvider";
@@ -14,13 +14,42 @@ import { isStoreAvailable } from "@/lib/store/db";
 
 type Tone = NonNullable<StatusPillProps["tone"]>;
 
+const MODERATOR_FLAG_KEY = "phraseloop.w5Moderator";
+const subscribeNever = () => () => {};
+let moderatorParamApplied = false;
+
+/**
+ * The readout is research instrumentation, not product: end users should never
+ * see it. A moderator enables it once per machine by opening the app with
+ * `?w5=1` (and disables it with `?w5=0`); the choice persists in localStorage.
+ */
+function readModeratorFlag(): boolean {
+  try {
+    if (!moderatorParamApplied) {
+      moderatorParamApplied = true;
+      const param = new URLSearchParams(window.location.search).get("w5");
+      if (param === "1") window.localStorage.setItem(MODERATOR_FLAG_KEY, "1");
+      if (param === "0") window.localStorage.removeItem(MODERATOR_FLAG_KEY);
+    }
+    return window.localStorage.getItem(MODERATOR_FLAG_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function useW5ModeratorFlag(): boolean {
+  return useSyncExternalStore(subscribeNever, readModeratorFlag, () => false);
+}
+
 /**
  * Moderator-facing readout for the W5 first-run round (docs/w5-validation-protocol.md).
  * It surfaces the activation and retention gate metrics that the app already records
  * on this device, so a session can be scored from real local data instead of a stopwatch.
+ * Hidden unless the moderator flag is set (see `useW5ModeratorFlag`).
  */
 export default function W5ValidationCard() {
   const { t } = useT();
+  const moderator = useW5ModeratorFlag();
   const [metrics, setMetrics] = useState<W5Metrics | null>(null);
   const [available, setAvailable] = useState(true);
 
@@ -69,6 +98,8 @@ export default function W5ValidationCard() {
       : t("Not yet");
   const dropoffLabel = metrics?.dropoffStep ? dropoffStepLabel(metrics.dropoffStep, t) : t("Complete");
 
+  if (!moderator) return null;
+
   return (
     <Card className="mt-4 p-5">
       <div>
@@ -112,6 +143,20 @@ export default function W5ValidationCard() {
             pill={{
               tone: metrics?.firstLoopCompleted ? "success" : "default",
               label: metrics?.firstLoopCompleted ? t("Complete") : t("Open"),
+            }}
+          />
+          <MetricRow
+            label={t("Own source funnel")}
+            value={
+              metrics?.ownSourceCompleted
+                ? t("Completed")
+                : metrics?.ownSourceStarted
+                  ? t("Attempted")
+                  : t("Not attempted")
+            }
+            pill={{
+              tone: metrics?.ownSourceCompleted ? "success" : "default",
+              label: metrics?.ownSourceCompleted ? t("Yes") : t("No"),
             }}
           />
           <MetricRow

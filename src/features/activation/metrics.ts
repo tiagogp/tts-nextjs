@@ -43,7 +43,11 @@ export interface W5Metrics {
   firstLoopUnderTarget: boolean | null;
   /** Activation gate: review plus correction saved from the first loop. */
   firstLoopCompleted: boolean;
-  /** Earliest missing protocol step (save → review → mistake → correction). */
+  /** Own-source funnel: an import of the learner's own material was started. */
+  ownSourceStarted: boolean;
+  /** Own-source funnel: cards from the learner's own material were saved. */
+  ownSourceCompleted: boolean;
+  /** Earliest missing protocol step (save → review → mistake → correction → own source). */
   dropoffStep: W5DropoffStep | null;
   /** Distinct local-calendar days with activity, offset from the first active day. */
   activeDayOffsets: number[];
@@ -77,6 +81,8 @@ function emptyMetrics(): W5Metrics {
     timeToFirstLoopMs: null,
     firstLoopUnderTarget: null,
     firstLoopCompleted: false,
+    ownSourceStarted: false,
+    ownSourceCompleted: false,
     dropoffStep: null,
     activeDayOffsets: [],
     returnedDay1: false,
@@ -127,9 +133,28 @@ export function computeW5Metrics(events: ActivityEvent[]): W5Metrics {
       ? Math.max(0, Math.max(reviewEvent.ts, correctionEvent.ts) - startedAt)
       : null;
   const firstLoopCompleted = timeToFirstLoopMs !== null;
+  // Own-source funnel (first_loop_completed → started → completed). New builds
+  // emit explicit own_source_* events; older logs still score via the legacy
+  // discover signals so past sessions don't read as "not attempted".
+  const ownSourceCompleted = sorted.some(
+    (e) =>
+      e.type === "own_source_completed" ||
+      (e.type === "cards_created" && (e.payload as CardsCreatedPayload).source === "discover"),
+  );
+  const ownSourceStarted =
+    ownSourceCompleted ||
+    sorted.some(
+      (e) =>
+        e.type === "own_source_started" ||
+        e.type === "video_processed" ||
+        (e.type === "first_run_started" &&
+          (e.payload as FirstRunStartedPayload).source === "own_source"),
+    );
   const dropoffStep: W5DropoffStep | null =
     firstLoopCompleted
-      ? null
+      ? ownSourceCompleted
+        ? null
+        : "own_source"
       : startedAt === null
         ? "clip"
         : !savedTiming
@@ -156,6 +181,8 @@ export function computeW5Metrics(events: ActivityEvent[]): W5Metrics {
     timeToFirstLoopMs,
     firstLoopUnderTarget: timeToFirstLoopMs === null ? null : timeToFirstLoopMs <= TTFR_TARGET_MS,
     firstLoopCompleted,
+    ownSourceStarted,
+    ownSourceCompleted,
     dropoffStep,
     activeDayOffsets,
     // Classic day-1 retention: a return on day 3 alone is not a D+1 return, and

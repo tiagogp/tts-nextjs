@@ -10,6 +10,8 @@ export type ActivityEventType =
   | "mistake_submitted"
   | "correction_generated"
   | "cards_created"
+  | "own_source_started"
+  | "own_source_completed"
   | "progress_checkin";
 
 export interface FirstRunStartedPayload {
@@ -51,6 +53,17 @@ export interface CardsCreatedPayload {
   activation?: ActivationTiming;
 }
 
+/** The learner kicked off an own-source import (any run, not just the first). */
+export interface OwnSourceStartedPayload {
+  sourceKind: "youtube" | "article" | "pdf";
+  sourceId?: string;
+}
+
+/** Own-source cards were saved — the W5 funnel's completion step. */
+export interface OwnSourceCompletedPayload {
+  cardsCreated: number;
+}
+
 export interface ProgressCheckinPayload {
   assessmentId: string;
   levelEstimate: string;
@@ -65,6 +78,8 @@ type PayloadMap = {
   mistake_submitted: MistakeSubmittedPayload;
   correction_generated: CorrectionGeneratedPayload;
   cards_created: CardsCreatedPayload;
+  own_source_started: OwnSourceStartedPayload;
+  own_source_completed: OwnSourceCompletedPayload;
   progress_checkin: ProgressCheckinPayload;
 };
 
