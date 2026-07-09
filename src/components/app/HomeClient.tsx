@@ -54,6 +54,7 @@ function TabContent({
   onOpenCorrect,
   onFirstLesson,
   onOpenLesson,
+  discoverPrefill,
 }: {
   tab: HomeTab;
   onOpenSettings: () => void;
@@ -63,6 +64,7 @@ function TabContent({
   onOpenCorrect: () => void;
   onFirstLesson: () => void;
   onOpenLesson: (lessonId?: string) => void;
+  discoverPrefill?: { url: string; nonce: number } | null;
 }) {
   if (tab === "hoje") {
     return (
@@ -75,7 +77,14 @@ function TabContent({
     );
   }
   if (tab === "discover") {
-    return <DiscoverTab onOpenSettings={onOpenSettings} onStudyNow={onOpenPractice} />;
+    return (
+      <DiscoverTab
+        key={discoverPrefill?.nonce ?? "discover"}
+        onOpenSettings={onOpenSettings}
+        onStudyNow={onOpenPractice}
+        prefill={discoverPrefill}
+      />
+    );
   }
   if (tab === "study") return <StudyTab onDiscover={onOpenDiscover} onConversation={onOpenConversation} />;
   if (tab === "correct") return <CorrectTab onOpenSettings={onOpenSettings} onStudyNow={onOpenPractice} />;
@@ -90,7 +99,11 @@ function HomeContent() {
   const { t } = useT();
   const [tab, setTab] = useState<HomeTab>("hoje");
   const [overlay, setOverlay] = useState<Overlay>(null);
+  // "Connect an AI" links must land on a Settings screen that actually shows
+  // the AI section, even before the tier unlock reveals it by default.
+  const [settingsAiIntent, setSettingsAiIntent] = useState(false);
   const [lessonId, setLessonId] = useState<string | null>(null);
+  const [discoverPrefill, setDiscoverPrefill] = useState<{ url: string; nonce: number } | null>(null);
   const lessonRequestRef = useRef(0);
   const { tabs, tier, announcement, clearAnnouncement } = useUnlockedTabs();
   const activeTab = tabs.some((item) => item.id === tab) ? tab : "hoje";
@@ -107,6 +120,13 @@ function HomeContent() {
     setTab(tabs.some((item) => item.id === next) ? next : "hoje");
     setOverlay(null);
     setLessonId(null);
+  };
+
+  const openDiscoverWithSource = (url: string) => {
+    setLessonId(null);
+    setOverlay(null);
+    setDiscoverPrefill({ url, nonce: Date.now() });
+    setTab(tabs.some((item) => item.id === "discover") ? "discover" : "hoje");
   };
 
   // "Hoje" -> Start: open the learner's recommended bundled lesson through the
@@ -145,6 +165,7 @@ function HomeContent() {
             settingsOpen={overlay === "settings"}
             onSettingsOpen={() => {
               setLessonId(null);
+              setSettingsAiIntent(false);
               setOverlay("settings");
             }}
             tabs={tabs}
@@ -163,6 +184,7 @@ function HomeContent() {
                     lessonId={lessonId}
                     onBack={() => setLessonId(null)}
                     onStudyNow={() => changeTab("study")}
+                    onTryOwnSource={openDiscoverWithSource}
                   />
                 </motion.div>
               </section>
@@ -171,7 +193,7 @@ function HomeContent() {
                 <SettingsScreen
                   onBack={() => setOverlay(null)}
                   onOpenTools={advancedSurfacesUnlocked ? () => setOverlay("tools") : undefined}
-                  showAdvancedAi={advancedSurfacesUnlocked}
+                  showAdvancedAi={advancedSurfacesUnlocked || settingsAiIntent}
                 />
               </div>
             ) : overlay === "converse" ? (
@@ -188,7 +210,12 @@ function HomeContent() {
                     </button>
                     <h2 className="text-xl font-semibold text-ink">{t("Speak")}</h2>
                   </div>
-                  <ConverseTab onOpenSettings={() => setOverlay("settings")} />
+                  <ConverseTab
+                    onOpenSettings={() => {
+                      setSettingsAiIntent(true);
+                      setOverlay("settings");
+                    }}
+                  />
                 </div>
               </div>
             ) : overlay === "tools" ? (
@@ -236,7 +263,10 @@ function HomeContent() {
                     >
                       <TabContent
                         tab={item.id}
-                        onOpenSettings={() => setOverlay("settings")}
+                        onOpenSettings={() => {
+                          setSettingsAiIntent(true);
+                          setOverlay("settings");
+                        }}
                         onOpenDiscover={() => changeTab("discover")}
                         onOpenPractice={() => changeTab("study")}
                         onOpenConversation={
@@ -250,6 +280,7 @@ function HomeContent() {
                         onOpenCorrect={() => changeTab("correct")}
                         onFirstLesson={startFirstLesson}
                         onOpenLesson={openLesson}
+                        discoverPrefill={discoverPrefill}
                       />
                     </motion.div>
                   </section>

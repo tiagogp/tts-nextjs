@@ -56,6 +56,13 @@ export function toCandidate(raw: unknown, sourceId: string): PhraseCandidate | n
     status: "accepted",
     startMs: Number.isFinite(startMs) ? Math.max(0, Math.round(startMs)) : undefined,
     endMs: Number.isFinite(endMs) ? Math.max(0, Math.round(endMs)) : undefined,
+    // App-relative clip path only — Study refuses any other audio source.
+    audioClipPath:
+      typeof raw.audioClipPath === "string" &&
+      raw.audioClipPath.startsWith("/") &&
+      raw.audioClipPath.length <= 300
+        ? raw.audioClipPath
+        : undefined,
     createdAt: Date.now(),
   };
 }

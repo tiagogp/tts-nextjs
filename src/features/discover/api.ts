@@ -3,6 +3,10 @@ import type { ProviderKind } from "@/lib/cards/provider";
 import type { DiscoverResult, DiscoverSourceKind, EnglishLevel } from "@/features/discover/types";
 import { getLearnerLangs } from "@/features/settings/learningProfile";
 
+/** Shown only when the server couldn't produce its own typed PT-BR copy. */
+const CONNECTION_FALLBACK_ERROR =
+  "Não consegui falar com o app agora. Tente de novo em instantes.";
+
 export async function extractDiscoverSource(input: {
   sourceKind: DiscoverSourceKind;
   url: string;
@@ -14,7 +18,7 @@ export async function extractDiscoverSource(input: {
     form.append("file", input.file as File);
     const response = await fetch("/api/discover/pdf", { method: "POST", body: form });
     const data = (await response.json()) as DiscoverResult & { error?: string };
-    if (!response.ok) throw new Error(data.error ?? `Request failed (${response.status})`);
+    if (!response.ok) throw new Error(data.error ?? CONNECTION_FALLBACK_ERROR);
     return data;
   }
 
@@ -25,7 +29,7 @@ export async function extractDiscoverSource(input: {
       body: JSON.stringify({ url: input.url.trim() }),
     });
     const data = (await response.json()) as DiscoverResult & { error?: string };
-    if (!response.ok) throw new Error(data.error ?? `Request failed (${response.status})`);
+    if (!response.ok) throw new Error(data.error ?? CONNECTION_FALLBACK_ERROR);
     return data;
   }
 
@@ -37,7 +41,7 @@ export async function extractDiscoverSource(input: {
   });
   if (!response.ok || !response.body) {
     const data = (await response.json().catch(() => ({}))) as { error?: string };
-    throw new Error(data.error ?? `Request failed (${response.status})`);
+    throw new Error(data.error ?? CONNECTION_FALLBACK_ERROR);
   }
 
   const reader = response.body.getReader();
@@ -65,12 +69,12 @@ export async function extractDiscoverSource(input: {
       } else if (event.type === "done" && event.result) {
         return event.result;
       } else if (event.type === "error") {
-        throw new Error(event.message ?? "Couldn't process this source right now.");
+        throw new Error(event.message ?? CONNECTION_FALLBACK_ERROR);
       }
     }
   }
 
-  throw new Error("Stream ended without a result.");
+  throw new Error("A importação foi interrompida antes de terminar. Tente de novo.");
 }
 
 export async function curateDiscoverSegments(input: {
@@ -105,7 +109,7 @@ export async function curateDiscoverSegments(input: {
     count?: number;
     error?: string;
   };
-  if (!response.ok) throw new Error(data.error ?? "Auto-selection failed.");
+  if (!response.ok) throw new Error(data.error ?? "Seleção automática falhou.");
   const selectedIndexes = (data.selectedIndexes ?? []).filter(
     (index) => Number.isInteger(index) && index >= 0 && index < input.result.segments.length,
   );
@@ -154,8 +158,9 @@ export async function generateDiscoverDeck(input: {
     debugLog?: string;
   };
   if (!response.ok) {
-    const debug = data.debugId ? ` Debug: ${data.debugId}` : "";
-    throw new Error(`${data.error ?? `Request failed (${response.status})`}${debug}`);
+    // The debug id stays in the console for support; the user sees only the copy.
+    if (data.debugId) console.error("Deck generation failed. Debug:", data.debugId, data.debugLog);
+    throw new Error(data.error ?? CONNECTION_FALLBACK_ERROR);
   }
   return data;
 }

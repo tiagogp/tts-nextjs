@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { cn } from "@/lib/cn";
 import type { DiscoverResult, TranscriptSegment } from "@/features/discover/types";
+import { useT } from "@/i18n/I18nProvider";
 
 function formatTime(ms: number): string {
   const total = Math.floor(ms / 1000);
@@ -27,7 +28,6 @@ interface TranscriptReviewProps {
   genDone: string | null;
   generationStage: string;
   generationSeconds: number;
-  providerReady: boolean;
   generateLabel?: string;
   cancelLabel?: string;
   onGenerate: () => void;
@@ -48,16 +48,17 @@ export function TranscriptReview({
   genDone,
   generationStage,
   generationSeconds,
-  providerReady,
-  generateLabel = "Save practice phrases →",
-  cancelLabel = "Cancel",
+  generateLabel,
+  cancelLabel,
   onGenerate,
   onCancel,
   onToggleKeep,
   onPlay,
   onOpenSettings,
 }: TranscriptReviewProps) {
-  const showSettingsLink = Boolean(genError?.toLowerCase().includes("faster ai") && onOpenSettings);
+  const { t } = useT();
+  const settingsHint = /faster ai|ia mais rápida/i;
+  const showSettingsLink = Boolean(genError && settingsHint.test(genError) && onOpenSettings);
 
   return (
     <Card className="overflow-hidden">
@@ -78,9 +79,9 @@ export function TranscriptReview({
 
       <div className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3 border-b border-line bg-card px-5 py-3">
         <div className="min-w-0">
-          <p className="truncate text-sm font-medium text-ink">{result.title}</p>
+          <p className="truncate text-sm font-medium text-ink">{t(result.title)}</p>
           <p className="text-xs text-ink-muted">
-            {result.segments.length} phrases · {kept.size} saved
+            {t("{segments} phrases · {kept} saved", { segments: result.segments.length, kept: kept.size })}
             {curationNote ? ` · ${curationNote}` : ""}
           </p>
         </div>
@@ -89,15 +90,15 @@ export function TranscriptReview({
           size="sm"
           className="shrink-0"
           onClick={generating ? onCancel : onGenerate}
-          disabled={!generating && (kept.size === 0 || !providerReady)}
+          disabled={!generating && kept.size === 0}
         >
           {generating ? (
             <>
               <span aria-hidden="true">×</span>
-              {cancelLabel}
+              {cancelLabel ?? t("Cancel")}
             </>
           ) : (
-            generateLabel
+            generateLabel ?? t("Save practice phrases →")
           )}
         </Button>
       </div>
@@ -129,7 +130,7 @@ export function TranscriptReview({
             <>
               {" "}
               <button type="button" onClick={onOpenSettings} className="font-medium underline hover:no-underline">
-                Open Settings →
+                {t("Open Settings →")}
               </button>
             </>
           )}
@@ -165,13 +166,14 @@ interface SegmentRowProps {
 }
 
 function SegmentRow({ index, segment, hasAudio, isKept, isPlaying, onPlay, onToggleKeep }: SegmentRowProps) {
+  const { t } = useT();
   return (
     <li className={cn("flex items-start gap-3 border-b border-line px-5 py-2.5 transition-colors", isKept && "bg-surface")}>
       {hasAudio && (
         <button
           type="button"
           onClick={() => onPlay(index, segment)}
-          aria-label={isPlaying ? "Pause clip" : "Play clip"}
+          aria-label={isPlaying ? t("Pause clip") : t("Play clip")}
           aria-pressed={isPlaying}
           className={cn(
             "mt-0.5 flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded border border-line transition-colors hover:border-line-strong",
@@ -196,7 +198,7 @@ function SegmentRow({ index, segment, hasAudio, isKept, isPlaying, onPlay, onTog
       </div>
 
       <Chip active={isKept} className="mt-0.5 shrink-0" onClick={() => onToggleKeep(index)}>
-        {isKept ? "Saved" : "Save"}
+        {isKept ? t("Saved") : t("Save")}
       </Chip>
     </li>
   );

@@ -17,3 +17,11 @@ export const ENGLISH_LEVELS: { value: EnglishLevel; label: string }[] = [
 ];
 
 export const GENERATION_TIMEOUT_MS = DECK_GENERATION_TIMEOUT_MS;
+
+/**
+ * The video suggested after the first lesson loop ("Now try a video of your own").
+ * Curation criteria: public and long-lived, under 5 minutes, clear unhurried
+ * speech, everyday vocabulary an A2-B1 learner can mine for phrases.
+ * Current pick: TED — "Try something new for 30 days" (Matt Cutts, 3:27).
+ */
+export const SUGGESTED_FIRST_VIDEO_URL = "https://www.youtube.com/watch?v=UNP03fDSj1U";

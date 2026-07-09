@@ -10,7 +10,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import Disclosure from "@/components/ui/Disclosure";
 import { getCounts, saveGeneratedDeck } from "@/lib/store/repository";
 import { useAiSettings } from "@/features/settings/context/AiSettingsContext";
-import type { PhraseCandidate } from "@/lib/cards/schema";
+import type { Card as CardModel, PhraseCandidate } from "@/lib/cards/schema";
 import { useProviderSelection } from "@/features/cards/hooks/useProviderSelection";
 import { useDeckGeneration } from "@/features/cards/hooks/useDeckGeneration";
 import type { DeckPayload } from "@/features/cards/exportDeck";
@@ -25,6 +25,20 @@ import { DEFAULT_LEARNING_PROFILE, getLearningProfile } from "@/features/setting
 import { markFirstRunPhrasesSaved, startFirstRunActivation } from "@/features/activation/firstRun";
 import { emitActivity } from "@/lib/store/activityLog";
 import { useT } from "@/i18n/I18nProvider";
+
+/**
+ * Local path Study/pronunciation can play for one segment's native audio:
+ * the bundled clip when the segment ships one, otherwise the per-phrase
+ * slice of the imported source. Works with no AI provider configured.
+ */
+function clipPathForSegment(result: DiscoverResult, seg: TranscriptSegment): string | undefined {
+  if (seg.clipUrl) return seg.clipUrl;
+  if (!result.hasAudio || seg.endMs <= seg.startMs) return undefined;
+  if (!/^[a-z0-9]{12}$/.test(result.sourceId)) return undefined;
+  // The runtime slices at most 30s per clip; a longer "phrase" keeps its first 30s.
+  const endMs = Math.min(seg.endMs, seg.startMs + 30_000);
+  return `/api/discover/clip/${result.sourceId}?startMs=${seg.startMs}&endMs=${endMs}`;
+}
 
 function waitForAudioEvent(
   audio: HTMLAudioElement,
@@ -50,14 +64,19 @@ function waitForAudioEvent(
 export default function DiscoverTab({
   onOpenSettings,
   onStudyNow,
+  prefill,
 }: {
   onOpenSettings?: () => void;
   onStudyNow?: () => void;
+  prefill?: { url: string; nonce: number } | null;
 }) {
   const { t } = useT();
   const { loading: settingsLoading } = useAiSettings();
+  const initialCurationNote = prefill
+    ? "Vídeo sugerido preenchido. Toque em “Buscar frases para aprender” para testar com uma fonte real."
+    : null;
   const [sourceKind, setSourceKind] = useState<DiscoverSourceKind>("youtube");
-  const [url, setUrl] = useState("");
+  const [url, setUrl] = useState(prefill?.url ?? "");
   const [file, setFile] = useState<File | null>(null);
   const [focus, setFocus] = useState(DEFAULT_LEARNING_PROFILE.focus);
   const [targetLevel, setTargetLevel] = useState<EnglishLevel>(DEFAULT_LEARNING_PROFILE.level);
@@ -66,7 +85,7 @@ export default function DiscoverTab({
   const [downloadingModel, setDownloadingModel] = useState(false);
   const [transcribeProgress, setTranscribeProgress] = useState<{ percent: number; stage: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [curationNote, setCurationNote] = useState<string | null>(null);
+  const [curationNote, setCurationNote] = useState<string | null>(initialCurationNote);
   const [result, setResult] = useState<DiscoverResult | null>(null);
   const [deckPreview, setDeckPreview] = useState<{
     data: DeckPayload;
@@ -80,13 +99,13 @@ export default function DiscoverTab({
   const generation = useDeckGeneration({
     timeoutMs: GENERATION_TIMEOUT_MS,
     timeoutMessage:
-      "This is taking longer than expected. Try a shorter clip or switch to a faster AI.",
-    cancelMessage: "Generation cancelled. Your selected phrases are still here.",
+      "Está demorando mais do que o esperado. Tente um vídeo mais curto ou uma IA mais rápida.",
+    cancelMessage: "Geração cancelada. As frases selecionadas continuam aqui.",
     stages: [
-      { untilSeconds: 8, label: "Creating focused practice phrases…" },
-      { untilSeconds: 25, label: "Reviewing phrase quality…" },
-      { untilSeconds: 90, label: "Preparing audio and review cards…" },
-      { untilSeconds: Infinity, label: "Still working — local processing and audio clips can take a while…" },
+      { untilSeconds: 8, label: "Criando frases focadas para praticar…" },
+      { untilSeconds: 25, label: "Revisando a qualidade das frases…" },
+      { untilSeconds: 90, label: "Preparando áudio e cards de revisão…" },
+      { untilSeconds: Infinity, label: "Ainda trabalhando. O processamento local e os áudios podem demorar um pouco…" },
     ],
   });
   const {
@@ -106,6 +125,11 @@ export default function DiscoverTab({
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const playRequestRef = useRef(0);
   const sourceInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (!prefill) return;
+    window.setTimeout(() => sourceInputRef.current?.focus(), 0);
+  }, [prefill]);
 
   useEffect(() => {
     const loadProfile = () => {
@@ -250,6 +274,11 @@ export default function DiscoverTab({
       // Activation timing is diagnostic only; never block source import.
     }
 
+    void emitActivity("own_source_started", {
+      sourceKind,
+      sourceId: (sourceKind === "pdf" ? file?.name : url.trim()) || undefined,
+    });
+
     // Only the YouTube path may download the one-time Whisper model.
     if (sourceKind === "youtube") {
       const poll = async () => {
@@ -276,7 +305,7 @@ export default function DiscoverTab({
       // Auto-curation needs the AI provider. Without it, still show the
       // transcript so people can hand-pick phrases; cards stay gated later.
       if (!providerReady) {
-        setCurationNote("Connect AI in Settings to auto-pick phrases. For now, tap the phrases you want to keep.");
+        setCurationNote(t("Connect an AI in Settings to pick phrases automatically. For now, tap the phrases you want to keep."));
         return;
       }
 
@@ -293,21 +322,30 @@ export default function DiscoverTab({
         });
         setKept(new Set(selected));
         setCurationNote(
-          selected.length > 0
-            ? `${selected.length} segment${selected.length === 1 ? "" : "s"} preselected for ${targetLevel}.`
-            : `No segments preselected for ${targetLevel}.`,
+          selected.length === 1
+            ? t("1 passage pre-selected for {level}.", { level: targetLevel })
+            : selected.length > 1
+              ? t("{count} passages pre-selected for {level}.", { count: selected.length, level: targetLevel })
+              : t("No passages pre-selected for {level}.", { level: targetLevel }),
         );
       } catch (mineErr: unknown) {
         setCurationNote(
           mineErr instanceof Error
-            ? `Auto-selection skipped: ${mineErr.message}`
-            : "Auto-selection skipped.",
+            ? t("Automatic selection skipped: {message}", { message: mineErr.message })
+            : t("Automatic selection skipped."),
         );
       } finally {
         setCurating(false);
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
+      const fallback =
+        sourceKind === "youtube"
+          ? "Não consegui importar esse vídeo. Tente um vídeo público com menos de 15 minutos ou continue pela lição inicial e Estudar."
+          : sourceKind === "article"
+            ? "Não consegui abrir esse artigo. Tente outro link ou continue pela lição inicial e Estudar."
+            : "Não consegui ler esse PDF. Tente um arquivo menor ou continue pela lição inicial e Estudar.";
+      const message = err instanceof Error ? err.message : "";
+      setError(message.startsWith("Não ") || message.startsWith("O processamento") ? message : fallback);
     } finally {
       if (pollRef.current) clearInterval(pollRef.current);
       setLoading(false);
@@ -315,7 +353,7 @@ export default function DiscoverTab({
       setDownloadingModel(false);
       setTranscribeProgress(null);
     }
-  }, [sourceKind, url, file, provider, providerReady, selectedModel, focus, targetLevel, setGenError, setGenDone]);
+  }, [sourceKind, url, file, provider, providerReady, selectedModel, focus, targetLevel, setGenError, setGenDone, t]);
 
   const toggleKeep = (index: number) => {
     setKept((prev) => {
@@ -328,28 +366,69 @@ export default function DiscoverTab({
     setDeckPreview(null);
   };
 
-  const generateCards = useCallback(async () => {
-    if (!result || kept.size === 0) return;
-
-    if (!providerReady) return;
-
+  const buildCandidates = useCallback((): PhraseCandidate[] => {
+    if (!result) return [];
     // Accepted phrases → PhraseCandidates (the source of truth we persist, D1).
     // Timestamps drive the native clip, so they only travel for audio sources;
     // text sources (article / PDF) fall back to TTS.
     const now = Date.now();
-    const candidates: PhraseCandidate[] = [...kept].map((i) => {
-      const seg = result.segments[i];
-      return {
-        id: `${result.sourceId}-${i}`,
-        sourceId: result.sourceId,
-        text: seg.text,
-        status: "accepted",
-        startMs: result.hasAudio ? seg.startMs : undefined,
-        endMs: result.hasAudio ? seg.endMs : undefined,
-        createdAt: now,
-      };
-    });
+    return [...kept]
+      .sort((a, b) => a - b)
+      .map((i) => {
+        const seg = result.segments[i];
+        return {
+          id: `${result.sourceId}-${i}`,
+          sourceId: result.sourceId,
+          text: seg.text,
+          status: "accepted" as const,
+          startMs: result.hasAudio ? seg.startMs : undefined,
+          endMs: result.hasAudio ? seg.endMs : undefined,
+          audioClipPath: clipPathForSegment(result, seg),
+          createdAt: now,
+        };
+      });
+  }, [result, kept]);
 
+  // No AI provider: hand-picked phrases still become review cards — phrase +
+  // native clip + SRS entry, built deterministically on the client. The AI only
+  // adds automatic curation and translations on top of this path.
+  const saveManualSelection = useCallback(async () => {
+    if (!result || kept.size === 0) return;
+    setGenError(null);
+    try {
+      const candidates = buildCandidates();
+      const cards: CardModel[] = candidates.map((candidate) => ({
+        id: `${candidate.id}-manual`,
+        front: candidate.text,
+        back: t("Say what it means, then try using it in your own sentence."),
+        concept: result.title.slice(0, 60),
+        source: { kind: "phrase", id: candidate.id },
+        audioClipPath: candidate.audioClipPath,
+        createdAt: candidate.createdAt,
+      }));
+      const saved = await saveGeneratedDeck(cards, candidates);
+      const activation = markFirstRunPhrasesSaved({ sourceId: result.sourceId });
+      void emitActivity("cards_created", { count: cards.length, source: "discover", activation });
+      void emitActivity("own_source_completed", { cardsCreated: cards.length });
+      setGenDone(
+        saved.added === 1
+          ? t("1 phrase saved for review. Find it in Study.")
+          : t("{count} phrases saved for review. Find them in Study.", { count: saved.added }),
+      );
+    } catch (err: unknown) {
+      setGenError(err instanceof Error ? err.message : t("Could not save these phrases."));
+    }
+  }, [result, kept, buildCandidates, setGenError, setGenDone, t]);
+
+  const generateCards = useCallback(async () => {
+    if (!result || kept.size === 0) return;
+
+    if (!providerReady) {
+      await saveManualSelection();
+      return;
+    }
+
+    const candidates = buildCandidates();
     await run(async (signal) => {
       const data = await generateDiscoverDeck({ provider, selectedModel, result, candidates, signal });
       const cardsCreated = data.count ?? data.cards?.length ?? 0;
@@ -357,7 +436,7 @@ export default function DiscoverTab({
       setDeckPreview({ data, candidates });
       return `${cardsCreated} practice phrase${cardsCreated === 1 ? "" : "s"} ready to save.`;
     });
-  }, [result, kept, provider, providerReady, selectedModel, run, setDeckPreview, url]);
+  }, [result, kept, provider, providerReady, selectedModel, run, setDeckPreview, url, buildCandidates, saveManualSelection]);
 
   return (
     <div className="space-y-5">
@@ -381,7 +460,7 @@ export default function DiscoverTab({
                 value={sourceKind}
                 disabled={loading}
                 onChange={(kind) => {
-                  if (result && !window.confirm("Discard the current Discover results?")) return;
+                  if (result && !window.confirm(t("Discard the current Discover results?"))) return;
                   setSourceKind(kind);
                   setError(null);
                   setResult(null);
@@ -390,7 +469,7 @@ export default function DiscoverTab({
               />
 
               {sourceKind === "pdf" ? (
-                <Field label="PDF file" htmlFor="discover-pdf-input">
+                <Field label={t("PDF file")} htmlFor="discover-pdf-input">
                   <input
                     ref={sourceInputRef}
                     id="discover-pdf-input"
@@ -401,7 +480,7 @@ export default function DiscoverTab({
                   />
                 </Field>
               ) : (
-                <Field label={sourceKind === "article" ? "Article URL" : "YouTube URL"} htmlFor="discover-url-input">
+                <Field label={sourceKind === "article" ? t("Article link") : t("YouTube link")} htmlFor="discover-url-input">
                   <Input
                     ref={sourceInputRef}
                     id="discover-url-input"
@@ -415,7 +494,7 @@ export default function DiscoverTab({
                 </Field>
               )}
 
-              <Field label="English level" className="max-w-52">
+              <Field label={t("English level")} className="max-w-52">
                 <Select
                   value={targetLevel}
                   onChange={(value) => setTargetLevel(value as EnglishLevel)}
@@ -425,15 +504,15 @@ export default function DiscoverTab({
               </Field>
 
               <Disclosure
-                title="Advanced options"
-                description="Optional focus and IA choices for custom material."
+                title={t("Advanced options")}
+                description={t("Optional focus and AI choice for your own material.")}
                 nested
               >
                 <div className="space-y-4">
                   <Field
                     label={
                       <>
-                        Focus <span className="opacity-70">— optional</span>
+                        {t("Focus")} <span className="opacity-70">— {t("optional")}</span>
                       </>
                     }
                   >
@@ -441,7 +520,7 @@ export default function DiscoverTab({
                       type="text"
                       value={focus}
                       onChange={(event) => setFocus(event.target.value)}
-                      placeholder="e.g. phrasal verbs, business vocabulary…"
+                      placeholder={t("e.g., phrasal verbs, work vocabulary…")}
                     />
                   </Field>
                   <ProviderPicker selection={selection} disabled={loading} />
@@ -450,13 +529,13 @@ export default function DiscoverTab({
 
               {!providerReady && !settingsLoading && (
                 <Notice tone="default" role="status">
-                  You can import and read a source now. To auto-pick phrases and save practice phrases, connect IA{" "}
+                  {t("You can import a source and save hand-picked phrases now — no setup needed. To pick phrases automatically and add translations, connect an AI")}{" "}
                   {onOpenSettings ? (
                     <button onClick={onOpenSettings} className="underline hover:no-underline">
-                      in Settings →
+                      {t("in Settings →")}
                     </button>
                   ) : (
-                    "in Settings (gear icon)."
+                    t("in Settings.")
                   )}
                 </Notice>
               )}
@@ -472,17 +551,17 @@ export default function DiscoverTab({
                   <>
                     <Spinner className="h-3.5 w-3.5" />
                     {curating
-                      ? "Curating…"
+                      ? t("Selecting…")
                       : transcribeProgress?.stage === "transcribe"
-                        ? `Transcribing… ${transcribeProgress.percent}%`
+                        ? t("Transcribing… {percent}%", { percent: transcribeProgress.percent })
                         : transcribeProgress?.stage === "download"
-                          ? "Downloading audio…"
+                          ? t("Downloading audio…")
                           : sourceKind === "youtube"
-                            ? "Starting…"
-                            : "Extracting…"}
+                            ? t("Starting…")
+                            : t("Extracting…")}
                   </>
                 ) : (
-                  "Find phrases to learn"
+                  t("Find phrases to learn")
                 )}
               </Button>
             </div>
@@ -501,13 +580,16 @@ export default function DiscoverTab({
         {downloadingModel && (
           <div className="flex items-center gap-2 rounded border border-line bg-surface px-3 py-2.5 text-xs text-ink-soft">
             <Spinner className="h-3 w-3 shrink-0" />
-            Preparing audio discovery for the first time… this may take a minute.
+            {t("Preparing audio discovery for the first time. This can take a minute.")}
           </div>
         )}
 
         {error && (
           <Notice tone="error" className="text-xs">
-            {error}
+            <span>{error}</span>
+            <span className="mt-1 block">
+              {t("Caminho seguro: volte para a lição inicial ou abra Estudar para revisar o que já foi salvo.")}
+            </span>
           </Notice>
         )}
 
@@ -525,7 +607,6 @@ export default function DiscoverTab({
           genDone={genDone}
           generationStage={generationStage}
           generationSeconds={generationSeconds}
-          providerReady={providerReady}
           onGenerate={generateCards}
           onCancel={cancelGeneration}
           onToggleKeep={toggleKeep}
@@ -536,13 +617,14 @@ export default function DiscoverTab({
 
       {deckPreview && (
         <DeckPreview
-          title="Practice phrase preview"
+          title="Prévia dos cards de prática"
           data={deckPreview.data}
           defaultFilename={`${result?.title || "study-list"}.apkg`}
           persist={async (cards) => {
             await saveGeneratedDeck(cards, deckPreview.candidates);
             const activation = markFirstRunPhrasesSaved({ sourceId: result?.sourceId });
             void emitActivity("cards_created", { count: cards.length, source: "discover", activation });
+            void emitActivity("own_source_completed", { cardsCreated: cards.length });
           }}
           onStudyNow={onStudyNow}
           onDismiss={() => setDeckPreview(null)}

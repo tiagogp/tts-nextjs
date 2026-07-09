@@ -15,17 +15,18 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
 const PUBLIC_TRANSCRIBE_ERROR =
-  "Couldn't transcribe this audio right now. Try again with a shorter or clearer recording.";
+  "Não consegui transcrever esse áudio agora. Tente uma gravação mais curta ou mais clara.";
+const AUDIO_TOO_LARGE_ERROR = "Áudio grande demais (máximo 25 MB).";
 
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
     const file = formData.get("file");
     if (!(file instanceof File) || file.size === 0) {
-      return NextResponse.json({ error: "Attach an audio file." }, { status: 400 });
+      return NextResponse.json({ error: "Grave ou anexe um áudio primeiro." }, { status: 400 });
     }
     if (file.size > MAX_AUDIO_UPLOAD_BYTES) {
-      return NextResponse.json({ error: "Audio too large (max 25 MB)." }, { status: 413 });
+      return NextResponse.json({ error: AUDIO_TOO_LARGE_ERROR }, { status: 413 });
     }
     const res = await localRequest("/transcribe", {
       method: "POST",
@@ -36,14 +37,34 @@ export async function POST(req: NextRequest) {
       },
       timeoutMs: 120_000,
     });
-    const data = res.json<{ text?: string; detail?: string }>();
+    const data = res.json<{
+      text?: string;
+      detail?: string;
+      error?: string;
+      code?: string;
+      downloading?: boolean;
+      progress?: number;
+    }>();
+    if (res.status === 409 && data.code === "model_not_ready") {
+      // One-time Whisper download in flight: surface the runtime's PT-BR copy
+      // and progress so the UI can show a download notice instead of hanging.
+      return NextResponse.json(
+        {
+          error: data.error ?? PUBLIC_TRANSCRIBE_ERROR,
+          code: data.code,
+          downloading: data.downloading,
+          progress: data.progress,
+        },
+        { status: 409 },
+      );
+    }
     if (res.status < 200 || res.status >= 300) {
       logger.error({ status: res.status, data }, "Transcription runtime error");
       return NextResponse.json(
         {
           error:
             res.status === 413
-              ? "Audio too large (max 25 MB)."
+              ? AUDIO_TOO_LARGE_ERROR
               : PUBLIC_TRANSCRIBE_ERROR,
         },
         { status: res.status === 413 ? 413 : 502 },

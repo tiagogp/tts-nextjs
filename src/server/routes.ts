@@ -4,9 +4,10 @@ import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { buildCardsDeck, buildCsvDeck } from "./native/apkg";
 import { createApkgDebugId } from "./native/apkgDebug";
+import { decodeAudio, sliceDecodedAudio, type DecodedAudio } from "./native/audio";
 import { dataDir } from "./native/data";
 import { audioPathFor, discoverArticle, discoverPdf, discoverYouTube } from "./native/discovery";
-import { ensureKokoroModel, kokoroInstalled, modelStatus } from "./native/models";
+import { ensureKokoroModel, ensureWhisperModel, kokoroInstalled, modelStatus, whisperInstalled } from "./native/models";
 import { assessPronunciation } from "./native/pronunciation";
 import { synthesize, transcribe } from "./native/speech";
 import { logger } from "@/lib/logger";
@@ -92,6 +93,30 @@ async function requireKokoro(): Promise<LocalResponse | null> {
   });
 }
 
+const WHISPER_NOT_READY_MESSAGE =
+  "O reconhecimento de voz (Whisper, ~488MB) ainda está sendo preparado. O download começou — tente de novo quando concluir.";
+
+/**
+ * Same contract as `requireKokoro`: never block a request on the one-time
+ * Whisper download. Kick it off, tell the client it's in flight (409 +
+ * progress) and let the UI show a download notice instead of a frozen spinner.
+ */
+async function requireWhisper(): Promise<LocalResponse | null> {
+  if (await whisperInstalled()) return null;
+  void ensureWhisperModel().catch(() => {});
+  const status = await modelStatus();
+  return response(409, {
+    error:
+      status.error && !status.loading_whisper && !status.downloading_whisper
+        ? `Falha ao baixar o modelo de reconhecimento de voz: ${status.error}. Verifique a conexão e tente de novo.`
+        : WHISPER_NOT_READY_MESSAGE,
+    code: "model_not_ready",
+    downloading: status.downloading_whisper || status.loading_whisper,
+    progress: status.download_progress ?? 0,
+    modelError: status.error,
+  });
+}
+
 function synthesisFailure(error: unknown): LocalResponse {
   logger.error({ err: error }, "APKG build failed");
   return response(500, {
@@ -113,6 +138,11 @@ const handleStatus: RouteHandler = async () =>
 
 const handleKokoroEnsure: RouteHandler = async () => {
   void ensureKokoroModel().catch(() => {});
+  return response(202, await modelStatus());
+};
+
+const handleWhisperEnsure: RouteHandler = async () => {
+  void ensureWhisperModel().catch(() => {});
   return response(202, await modelStatus());
 };
 
@@ -177,6 +207,8 @@ const handleTts: RouteHandler = async (options) => {
 };
 
 const handleTranscribe: RouteHandler = async (options) => {
+  const notReady = await requireWhisper();
+  if (notReady) return notReady;
   const body = Buffer.isBuffer(options.body)
     ? options.body
     : Buffer.from(options.body || "");
@@ -196,6 +228,8 @@ const handleTranscribe: RouteHandler = async (options) => {
 };
 
 const handlePronunciationAssess: RouteHandler = async (options) => {
+  const notReady = await requireWhisper();
+  if (notReady) return notReady;
   const body = Buffer.isBuffer(options.body)
     ? options.body
     : Buffer.from(options.body || "");
@@ -309,6 +343,7 @@ const handleCardsApkg: RouteHandler = async (options) => {
 /** POST-only routes keyed by exact path. */
 export const POST_ROUTES: Record<string, RouteHandler> = {
   "/models/kokoro/ensure": handleKokoroEnsure,
+  "/models/whisper/ensure": handleWhisperEnsure,
   "/tts": handleTts,
   "/transcribe": handleTranscribe,
   "/pronunciation/assess": handlePronunciationAssess,
@@ -326,6 +361,40 @@ export const ANY_ROUTES: Record<string, RouteHandler> = {
   "/voice-upload": handleVoiceUpload,
 };
 
+// Per-phrase clips decode the whole source file; studying a deck replays clips
+// from the same source back to back, so keep the last decoded source around.
+const MAX_CLIP_DURATION_MS = 30_000;
+let lastDecodedSource: { file: string; decoded: DecodedAudio } | null = null;
+
+async function handleDiscoverClip(requestPath: string): Promise<LocalResponse> {
+  const [cleanPath, query = ""] = requestPath.split("?");
+  const sourceId = cleanPath.split("/").at(-1) || "";
+  const params = new URLSearchParams(query);
+  const startMs = Number(params.get("startMs"));
+  const endMs = Number(params.get("endMs"));
+  if (
+    !Number.isFinite(startMs) ||
+    !Number.isFinite(endMs) ||
+    startMs < 0 ||
+    endMs <= startMs ||
+    endMs - startMs > MAX_CLIP_DURATION_MS
+  ) {
+    return response(400, { detail: "invalid clip range" });
+  }
+  const file = await audioPathFor(sourceId);
+  if (!file) return response(404, { detail: "audio not found" });
+  try {
+    if (lastDecodedSource?.file !== file) {
+      lastDecodedSource = { file, decoded: await decodeAudio(await readFile(file)) };
+    }
+    const clip = sliceDecodedAudio(lastDecodedSource.decoded, startMs, endMs);
+    return response(200, clip, { "content-type": "audio/wav" });
+  } catch (error) {
+    logger.error({ err: error, sourceId }, "Clip slicing failed");
+    return response(500, { detail: "clip slicing failed" });
+  }
+}
+
 export async function dispatch(
   requestPath: string,
   options: LocalRequestOptions,
@@ -334,6 +403,11 @@ export async function dispatch(
 
   // Any-method exact routes.
   if (ANY_ROUTES[requestPath]) return ANY_ROUTES[requestPath](options);
+
+  // Per-phrase clip slicing — prefix match, any method.
+  if (requestPath.startsWith("/discover/clip/")) {
+    return handleDiscoverClip(requestPath);
+  }
 
   // Audio streaming — prefix match, any method.
   if (requestPath.startsWith("/discover/audio/")) {

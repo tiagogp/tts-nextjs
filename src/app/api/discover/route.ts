@@ -5,7 +5,7 @@ import { MAX_SETTINGS_JSON_BYTES } from "@/lib/constants";
 import { logger } from "@/lib/logger";
 
 export const runtime = "nodejs";
-export const maxDuration = 300;
+export const maxDuration = 450;
 
 function safeLang(v: unknown): string | null {
   if (typeof v !== "string") return null;
@@ -17,6 +17,9 @@ function sseChunk(data: object): Uint8Array {
   return new TextEncoder().encode(`data: ${JSON.stringify(data)}\n\n`);
 }
 
+const PUBLIC_YOUTUBE_INPUT_ERROR =
+  "Cole um link http(s) válido do YouTube ou continue pela lição inicial e Estudar.";
+
 export async function POST(req: NextRequest) {
   let url: string | null = null;
   let lang: string | null = null;
@@ -26,14 +29,14 @@ export async function POST(req: NextRequest) {
     url = httpUrl(bodyObj?.url);
     lang = safeLang(bodyObj?.lang);
   } catch {
-    return new Response(JSON.stringify({ error: "Provide a valid http(s) URL." }), {
+    return new Response(JSON.stringify({ error: PUBLIC_YOUTUBE_INPUT_ERROR }), {
       status: 400,
       headers: { "Content-Type": "application/json" },
     });
   }
 
   if (!url) {
-    return new Response(JSON.stringify({ error: "Provide a valid http(s) URL." }), {
+    return new Response(JSON.stringify({ error: PUBLIC_YOUTUBE_INPUT_ERROR }), {
       status: 400,
       headers: { "Content-Type": "application/json" },
     });
@@ -49,7 +52,7 @@ export async function POST(req: NextRequest) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ url: finalUrl, lang: finalLang }),
-          timeoutMs: 300_000,
+          timeoutMs: 450_000,
           onProgress: (percent, stage) => {
             try {
               controller.enqueue(sseChunk({ type: "progress", percent, stage }));
@@ -59,7 +62,7 @@ export async function POST(req: NextRequest) {
 
         if (res.status < 200 || res.status >= 300) {
           logger.error({ status: res.status, body: res.body.toString("utf8") }, "Discover runtime error");
-          controller.enqueue(sseChunk({ type: "error", message: "Couldn't process this source right now. Try again in a moment." }));
+          controller.enqueue(sseChunk({ type: "error", message: "Não consegui importar esse vídeo. Tente um vídeo público com menos de 15 minutos ou volte para a lição inicial." }));
         } else {
           controller.enqueue(sseChunk({ type: "done", result: res.json() }));
         }
@@ -67,10 +70,8 @@ export async function POST(req: NextRequest) {
         logger.error({ err }, "Discover proxy error");
         const message =
           err instanceof Error && err.name === "TimeoutError"
-            ? "Processing is taking longer than expected. Try a shorter source."
-            : err instanceof Error
-              ? err.message
-              : "Couldn't process this source right now.";
+            ? "O processamento demorou demais. Tente um vídeo público com menos de 15 minutos ou volte para a lição inicial."
+            : "Não consegui importar esse vídeo. Tente um vídeo público com menos de 15 minutos ou volte para a lição inicial.";
         try {
           controller.enqueue(sseChunk({ type: "error", message }));
         } catch {}

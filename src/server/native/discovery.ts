@@ -173,7 +173,7 @@ export async function discoverYouTube(
       await execFileAsync(bin, [
         "--no-playlist", "--no-warnings", "--no-progress", "--quiet", "--no-abort-on-error",
         "-o", path.join(root, `${id}.%(ext)s`), ...extraArgs, canonicalUrl,
-      ], { maxBuffer: 32 * 1024 * 1024, timeout: 270_000 });
+      ], { maxBuffer: 32 * 1024 * 1024, timeout: 400_000 });
     } catch (error) {
       if ((error as NodeJS.ErrnoException)?.code === "ENOENT") {
         throw new Error("yt-dlp is not installed. Install it (e.g. `brew install yt-dlp`) to import YouTube videos.");
@@ -184,6 +184,7 @@ export async function discoverYouTube(
 
   onProgress?.(0, "download");
   await run([
+    "--match-filter", "duration <= 900",
     "-f", "bestaudio/best",
     ...(ffmpeg ? ["--extract-audio", "--audio-format", "m4a", "--ffmpeg-location", ffmpeg] : []),
     "--print-to-file", "%(title)s", path.join(root, `${id}.title`),

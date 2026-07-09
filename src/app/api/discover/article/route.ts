@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 export const maxDuration = 120;
 
 const PUBLIC_ARTICLE_ERROR =
-  "Couldn't extract this article right now. Try another link or try again later.";
+  "Não consegui abrir esse artigo. Tente outro link ou continue pela lição inicial e Estudar.";
 
 export async function POST(req: NextRequest) {
   try {
@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     const url = httpUrl(bodyObj?.url);
     if (!url) {
       return NextResponse.json(
-        { error: "Provide a valid http(s) URL." },
+        { error: "Cole um link http(s) válido para importar um artigo." },
         { status: 400 },
       );
     }

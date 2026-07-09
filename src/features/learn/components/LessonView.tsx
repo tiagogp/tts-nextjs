@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Card as PanelCard } from "@/components/ui/Card";
 import { Notice } from "@/components/ui/Notice";
 import { TranscriptReview } from "@/features/discover/components/TranscriptReview";
+import { SUGGESTED_FIRST_VIDEO_URL } from "@/features/discover/constants";
 import type { DiscoverResult, TranscriptSegment } from "@/features/discover/types";
 import { markFirstRunPhrasesSaved } from "@/features/activation/firstRun";
 import { buildDeckFromPhrases, firstLesson, lessonById, type Lesson, type LessonPhrase } from "@/features/learn/lessonDeck";
@@ -53,24 +54,28 @@ export function LessonView({
   lessonId,
   onBack,
   onStudyNow,
+  onTryOwnSource,
 }: {
   lessonId?: string;
   onBack?: () => void;
   onStudyNow?: () => void;
+  onTryOwnSource?: (url: string) => void;
 }) {
   const lesson = useMemo(() => (lessonId ? lessonById(lessonId) : undefined) ?? firstLesson(), [lessonId]);
 
-  return <LessonViewContent key={lesson.id} lesson={lesson} onBack={onBack} onStudyNow={onStudyNow} />;
+  return <LessonViewContent key={lesson.id} lesson={lesson} onBack={onBack} onStudyNow={onStudyNow} onTryOwnSource={onTryOwnSource} />;
 }
 
 function LessonViewContent({
   lesson,
   onBack,
   onStudyNow,
+  onTryOwnSource,
 }: {
   lesson: Lesson;
   onBack?: () => void;
   onStudyNow?: () => void;
+  onTryOwnSource?: (url: string) => void;
 }) {
   const { t } = useT();
   const result = useMemo(() => resultForLesson(lesson), [lesson]);
@@ -84,6 +89,10 @@ function LessonViewContent({
   const [mistakeSaved, setMistakeSaved] = useState<{ hadMistake: boolean } | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const playRequestRef = useRef(0);
+
+  useEffect(() => {
+    void fetch("/api/models/whisper", { method: "POST" }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -174,7 +183,7 @@ function LessonViewContent({
             <p className="text-xs uppercase tracking-[0.7px] text-accent">{t(lesson.level)} · {t(lesson.topic)}</p>
             <h2 className="mt-1 text-xl font-semibold tracking-[-0.01em] text-ink">{t(lesson.title)}</h2>
             <p className="mt-1 text-sm text-ink-soft">
-              {t("Listen, save the phrases you want, then review them. No AI setup needed.")}
+              {t("Listen to the audio, save the phrases you want, then review them. No setup needed.")}
             </p>
           </div>
           {onBack && (
@@ -210,13 +219,12 @@ function LessonViewContent({
         audioRef={audioRef}
         kept={kept}
         playing={playing}
-        curationNote={t("Bundled lesson — all phrases are selected by default.")}
+        curationNote={t("All phrases are selected by default.")}
         generating={saving}
         genError={error}
         genDone={done}
         generationStage={t("Saving practice phrases…")}
         generationSeconds={0}
-        providerReady
         generateLabel={t("Save and study")}
         cancelLabel={t("Saving…")}
         onGenerate={() => void saveLesson()}
@@ -236,28 +244,54 @@ function LessonViewContent({
       {/* Depth, not the front door: pronunciation practice appears only after the
           save → write → correct loop is complete, so the first run stays one story. */}
       {mistakeSaved && (
-      <PanelCard className="space-y-3 p-5">
-        <div>
-          <p className="text-sm font-semibold tracking-[-0.01em] text-ink">{t("Practice pronunciation")}</p>
-          <p className="mt-0.5 text-xs text-ink-muted">
-            {t("Repeat the lesson phrases and get local feedback.")}
-          </p>
-        </div>
-        <div className="grid gap-3 md:grid-cols-2">
-          {lesson.phrases.map((phrase, index) => (
-            <div key={`${lesson.id}-${index}`} className="space-y-2 rounded border border-line bg-surface p-3">
-              <p className="text-sm leading-relaxed text-ink">{phrase.en}</p>
-              <PronunciationCoach
-                source="lesson"
-                lessonId={lesson.id}
-                targetText={phrase.en}
-                referenceAudioUrl={phrase.clip}
-                compact
-              />
+        <>
+          <PanelCard className="space-y-3 p-5">
+            <div>
+              <p className="text-sm font-semibold tracking-[-0.01em] text-ink">{t("Now try a video of your own")}</p>
+              <p className="mt-0.5 text-xs text-ink-muted">
+                {t("Use a short video to turn real phrases into review with the original audio.")}
+              </p>
             </div>
-          ))}
-        </div>
-      </PanelCard>
+            <div className="flex flex-wrap items-center gap-2">
+              {onTryOwnSource && (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => onTryOwnSource(SUGGESTED_FIRST_VIDEO_URL)}
+                >
+                  {t("Try a suggested video")}
+                </Button>
+              )}
+              {onStudyNow && (
+                <Button variant="secondary" size="sm" onClick={onStudyNow}>
+                  {t("Review now")}
+                </Button>
+              )}
+            </div>
+          </PanelCard>
+          <PanelCard className="space-y-3 p-5">
+            <div>
+              <p className="text-sm font-semibold tracking-[-0.01em] text-ink">{t("Practice pronunciation")}</p>
+              <p className="mt-0.5 text-xs text-ink-muted">
+                {t("Repeat the lesson phrases and get local feedback.")}
+              </p>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2">
+              {lesson.phrases.map((phrase, index) => (
+                <div key={`${lesson.id}-${index}`} className="space-y-2 rounded border border-line bg-surface p-3">
+                  <p className="text-sm leading-relaxed text-ink">{phrase.en}</p>
+                  <PronunciationCoach
+                    source="lesson"
+                    lessonId={lesson.id}
+                    targetText={phrase.en}
+                    referenceAudioUrl={phrase.clip}
+                    compact
+                  />
+                </div>
+              ))}
+            </div>
+          </PanelCard>
+        </>
       )}
     </div>
   );

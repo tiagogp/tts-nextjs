@@ -13,7 +13,7 @@ interface SourcePickerProps {
 export function SourcePicker({ value, onChange, disabled }: SourcePickerProps) {
   return (
     <Segmented<DiscoverSourceKind>
-      label="Source type"
+      label="Tipo de fonte"
       variant="fill"
       value={value}
       onChange={onChange}

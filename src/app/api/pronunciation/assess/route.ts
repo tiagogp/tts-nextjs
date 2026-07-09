@@ -10,7 +10,8 @@ export const maxDuration = 120;
 
 const MAX_TARGET_TEXT_CHARS = 500;
 const PUBLIC_PRONUNCIATION_ERROR =
-  "Couldn't assess pronunciation right now. Try a shorter, clearer recording.";
+  "Não consegui avaliar a pronúncia agora. Tente uma gravação mais curta e mais clara.";
+const AUDIO_TOO_LARGE_ERROR = "Áudio grande demais (máximo 25 MB).";
 
 function formText(value: FormDataEntryValue | null): string {
   return typeof value === "string" ? value.trim() : "";
@@ -21,18 +22,18 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData();
     const file = formData.get("file");
     if (!(file instanceof File) || file.size === 0) {
-      return NextResponse.json({ error: "Attach an audio file." }, { status: 400 });
+      return NextResponse.json({ error: "Grave um áudio primeiro." }, { status: 400 });
     }
     if (file.size > MAX_AUDIO_UPLOAD_BYTES) {
-      return NextResponse.json({ error: "Audio too large (max 25 MB)." }, { status: 413 });
+      return NextResponse.json({ error: AUDIO_TOO_LARGE_ERROR }, { status: 413 });
     }
 
     const targetText = formText(formData.get("targetText"));
     if (!targetText) {
-      return NextResponse.json({ error: "Add a phrase to assess." }, { status: 400 });
+      return NextResponse.json({ error: "Escolha uma frase para avaliar." }, { status: 400 });
     }
     if (targetText.length > MAX_TARGET_TEXT_CHARS) {
-      return NextResponse.json({ error: "Phrase is too long for pronunciation practice." }, { status: 400 });
+      return NextResponse.json({ error: "A frase é longa demais para o treino de pronúncia." }, { status: 400 });
     }
     const targetLang = formText(formData.get("targetLang")).slice(0, 16) || "en";
     const referenceDurationMs = Number(formText(formData.get("referenceDurationMs")).slice(0, 16));
@@ -51,11 +52,29 @@ export async function POST(req: NextRequest) {
       },
       timeoutMs: 120_000,
     });
-    const data = res.json<object>();
+    const data = res.json<{
+      error?: string;
+      code?: string;
+      downloading?: boolean;
+      progress?: number;
+    }>();
+    if (res.status === 409 && data.code === "model_not_ready") {
+      // One-time Whisper download in flight: surface the runtime's PT-BR copy
+      // and progress so the UI can show a download notice instead of hanging.
+      return NextResponse.json(
+        {
+          error: data.error ?? PUBLIC_PRONUNCIATION_ERROR,
+          code: data.code,
+          downloading: data.downloading,
+          progress: data.progress,
+        },
+        { status: 409 },
+      );
+    }
     if (res.status < 200 || res.status >= 300) {
       logger.error({ status: res.status, data }, "Pronunciation runtime error");
       return NextResponse.json(
-        { error: res.status === 413 ? "Audio too large (max 25 MB)." : PUBLIC_PRONUNCIATION_ERROR },
+        { error: res.status === 413 ? AUDIO_TOO_LARGE_ERROR : PUBLIC_PRONUNCIATION_ERROR },
         { status: res.status === 413 ? 413 : 502 },
       );
     }
