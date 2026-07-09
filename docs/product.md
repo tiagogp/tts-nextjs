@@ -37,6 +37,34 @@ estudaveis, agenda revisoes, detecta fraquezas e gera reforco a partir dos erros
 
 ## Guardrails De Launch
 
+<!-- BEGIN:W5_DECISION_RECORD -->
+## W5 Decision Record
+
+Status: pending 10 complete ICP rows.
+Generated: 2026-07-03.
+Rows scored: 0/10.
+Primary route: Pending: complete the 10-session ICP decision round before routing the roadmap.
+Billing route: Billing stays frozen until one paid pain wins.
+Launch segment: No explicit launch segment selected yet. No clear segment winner; do not launch to a blend.
+Waitlist platform mix: Not recorded yet.
+
+| Gate | Threshold | Actual | Result | Note |
+| --- | --- | --- | --- | --- |
+| Unaided completion | >= 6/10 | 0/10 | Pending | 0 unaided loops |
+| Activation / TT first loop | median < 2m | incomplete | Pending | median TT first loop incomplete |
+| Explain-back | >= 7/10 | 0/10 | Pending | 0 explain-back passes |
+| Retention | D+1 >= 40% and D+7 >= 25% | D+1 0% / D+7 0% | Pending | 0 D+1 returns, 0 D+7 returns |
+| Differentiation | >= 3/10 unprompted | 0/10 | Pending | 0 unprompted differentiators |
+| Paid pain | >= 3/10 same non-none pain | none recorded | Pending | no paid pain recorded |
+| Replacement | >= 3/10 | 0/10 | Pending | 0 replacement yeses |
+
+Paid-pain counts: none.
+
+| Segment | Rows | Signal points | Median TT first loop | Unaided | Explain-back | Replacement |
+| --- | --- | --- | --- | --- | --- | --- |
+| No segment rows | 0 | 0 | incomplete | 0/0 | 0/0 | 0/0 |
+<!-- END:W5_DECISION_RECORD -->
+
 Antes do launch, o roadmap fica subordinado a evidencia do W5. As decisoes de escopo, segmento
 inicial e monetizacao devem seguir os sinais de TTFR (`first_run_started` -> `first_loop_completed`),
 explain-back, diferenciacao espontanea e retorno D+1/D+7.
@@ -262,18 +290,20 @@ Fora do escopo do proximo ciclo:
 | Visibilidade de Study | Done | Study fica principal; Speak permanece profundidade depois do loop. |
 | Onboarding | Done | Pergunta lingua nativa, nivel e objetivo; ingles e default honesto. |
 | Promessa multi-idioma | Partial | V1 esta English-first, mas ainda ha copy/codigo a auditar. |
-| Seguranca dos dados locais | Partial | Backup JSON, restore com dry-run e testes (round-trip + migracao de schema) existem; falta validar restore com usuarios reais. |
-| Performance em escala | Planned | Falta helper indexado/limitado e summaries denormalizados. |
+| Seguranca dos dados locais | Partial | Backup JSON, restore com dry-run e testes (round-trip + migracao de schema) existem; protocolo moderado pronto em docs/w5/backup-restore-validation.md; falta rodar com usuario real. |
+| Transparencia de dados | Done | Settings mostra onde os dados ficam (pasta real via GET /api/data) e apaga todos os dados locais (IndexedDB + localStorage + arquivos pessoais em disco, modelos preservados). |
+| Performance em escala | Partial | Query helpers shipped (2026-07-08): due count via indice `due` (`countDueCards`), reviews recentes via indice `reviewedAt` (`getReviewsSince`), lookups em lote (`getMany`) eliminam N+1 em due cards/save/reinforcement e a orientacao de cards carrega so as fontes referenciadas. Faltam summaries denormalizados. |
 | Complexidade de Converse | Planned | Extrair hooks de sessao, recorder e review. |
-| Erros de API | Partial | Validacao 400/413 existe; falta taxonomia 502/504/abort completa. |
+| Erros de API | Done | Taxonomia tipada em src/server/http/providerFailure.ts (400/422/429/499/502/504 com code estavel); toda falha visivel em PT-BR, sem erro cru; testes forcam timeout, abort e input invalido. |
 | Copy de confianca | Done | README nao promete OS secure storage indevidamente. |
 
 Proximo passe recomendado:
 
-1. Validar restore com usuarios reais antes de dados de longo prazo.
-2. Query helpers para reviews recentes, due counts e summaries.
+1. Validar restore com usuarios reais antes de dados de longo prazo
+   (protocolo pronto: docs/w5/backup-restore-validation.md).
+2. Summaries denormalizados (query helpers de due count, reviews recentes e batch lookup
+   shipped 2026-07-08 em `src/lib/store/db.ts` / `repository.ts`).
 3. Split de `ConverseTab` em hooks menores.
-4. Taxonomia HTTP tipada para falhas de provedor, timeout/abort e input invalido.
 
 ## Revisao UX De Primeira Experiencia
 
@@ -304,7 +334,7 @@ ou exigir conceitos antes da ativacao.
 | Settings de IA guiado | Med | Partial | Provedores estao em Advanced AI; falta copy "Local no computador" vs "Nuvem mais facil". |
 | Coaching contextual | Low | Planned | Explicar o proximo passo no momento certo. |
 | Tools fora da nav primaria | Low | Done | Ferramentas em Settings/Advanced. |
-| Ativacao sem setup | High | Partial | Licoes bundled landed; o loop guiado completa offline (salvar -> escrever frase -> correcao local -> revisar) sem provedor. Falta o audio bundled real: gravar/licenciar clipes nativos, nao Kokoro TTS — TTS contradiz o diferencial "audio nativo, nao releitura robotica" que o W5 mede. |
+| Ativacao sem setup | High | Partial | Licoes bundled landed; o loop guiado completa offline (salvar -> escrever frase -> correcao local -> revisar) sem provedor. Falta o audio bundled real: gravar/licenciar clipes nativos, nao Kokoro TTS — TTS contradiz o diferencial "audio nativo, nao releitura robotica" que o W5 mede. Interim (2026-07-03): copy do onboarding corrigida para nao afirmar que o audio bundled e nativo. |
 
 Checklist de launch antes de publico:
 
@@ -401,13 +431,20 @@ Ainda pendente: validacao D+1/D+7 para confirmar se scaffold e band gate melhora
 Gate W5 para launch amplo, em 10 usuarios do ICP:
 
 - Pelo menos 6/10 completam o primeiro loop sem ajuda.
-- TTFR do primeiro loop completo abaixo de 2 minutos.
+- Mediana do tempo ate o primeiro loop completo abaixo de 2 minutos.
 - Pelo menos 7/10 explicam PhraseLoop como "transforma ingles real e meus erros em cards de
   revisao" sem prompt.
 - Pelo menos 40% retornam D+1 e 25% retornam D+7.
+- Pelo menos 3/10 nomeiam audio nativo, erros virando drills ou card creation com menos friccao
+  espontaneamente.
+- Pelo menos 3/10 nomeiam a mesma dor paga concreta; se `none` vence ou empata, billing continua
+  congelado.
 - Pelo menos 3/10 dizem que usariam PhraseLoop no lugar do fluxo atual de Anki/card-making pelos
   proximos 7 dias.
-- Pelo menos 3/10 nomeiam a mesma dor paga; caso contrario, billing continua congelado.
+
+Use `yarn w5:score docs/w5/capture-table.md --write-product docs/product.md` para substituir o
+W5 Decision Record acima depois da rodada de 10 usuarios. Acrescente `--waitlist` com o export JSON
+da landing para gravar o mix de plataformas junto dos resultados.
 
 Eventos minimos de ativacao:
 
