@@ -47,9 +47,10 @@ export async function generateCorrectionDeck(input: {
   });
   const data = (await response.json().catch(() => ({}))) as DeckGenerationResult;
   if (!response.ok) {
-    const debug = data.debugId ? ` Debug: ${data.debugId}` : "";
+    // The debug id stays in the console for support; the user sees only the copy.
+    if (data.debugId) console.error("Deck generation failed. Debug:", data.debugId, data.debugLog);
     throw new DeckGenerationError(
-      `${data.error ?? `Request failed (${response.status})`}${debug}`,
+      data.error ?? `Não consegui gerar os cards agora (erro ${response.status}).`,
       data.code,
     );
   }
@@ -132,7 +133,19 @@ export async function transcribeAudio(blob: Blob, filename?: string): Promise<st
   const form = new FormData();
   form.append("file", blob, filename || `clip.${ext}`);
   const response = await fetch("/api/transcribe", { method: "POST", body: form });
-  const data = (await response.json().catch(() => ({}))) as { text?: string; error?: string };
-  if (!response.ok) throw new Error(data.error ?? `Transcription failed (${response.status})`);
+  const data = (await response.json().catch(() => ({}))) as {
+    text?: string;
+    error?: string;
+    code?: string;
+    downloading?: boolean;
+    progress?: number;
+  };
+  if (!response.ok) {
+    let message = data.error ?? `Não consegui transcrever o áudio agora (erro ${response.status}).`;
+    if (data.code === "model_not_ready" && data.downloading && (data.progress ?? 0) > 0) {
+      message += ` ${Math.round((data.progress ?? 0) * 100)}% baixado.`;
+    }
+    throw new Error(message);
+  }
   return (data.text ?? "").trim();
 }

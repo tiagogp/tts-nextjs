@@ -6,6 +6,7 @@ import { Chip } from "@/components/ui/Chip";
 import { cn } from "@/lib/cn";
 import { listItem, staggerContainer } from "@/lib/motion";
 import type { Weakness, WeaknessTrend } from "@/lib/srs/analytics";
+import { useT } from "@/i18n/I18nProvider";
 
 interface WeaknessListProps {
   weaknesses: Weakness[];
@@ -22,17 +23,19 @@ const WEAKNESS_KIND_LABEL: Record<Weakness["kind"], string> = {
 };
 
 export function WeaknessList({ weaknesses, genError, generatingKey, onPractice, onGenerate }: WeaknessListProps) {
+  const { t } = useT();
   return (
     <Card className="p-5">
-      <p className="mb-1 text-sm font-semibold tracking-[-0.01em] text-ink">Weak spots to reinforce</p>
+      <p className="mb-1 text-sm font-semibold tracking-[-0.01em] text-ink">{t("Weak spots to reinforce")}</p>
       <p className="mb-4 text-xs text-ink-muted">
-        The app ranks concepts, error types, and situations from your reviews. Practice saved phrases,
-        or create fresh variants from the same sources.
+        {t(
+          "The app ranks concepts, error types, and situations from your reviews. Practice saved phrases, or create fresh variants from the same sources.",
+        )}
       </p>
       {genError && <p className="mb-3 text-xs text-danger">{genError}</p>}
       {weaknesses.length === 0 && (
         <div className="rounded border border-line bg-surface px-3 py-3 text-xs text-ink-soft">
-          No patterns detected yet. Review a few phrases or run a correction session first.
+          {t("No patterns detected yet. Review a few phrases or run a correction session first.")}
         </div>
       )}
       <motion.ul className="space-y-2" variants={staggerContainer} initial="hidden" animate="show">
@@ -48,7 +51,8 @@ export function WeaknessList({ weaknesses, genError, generatingKey, onPractice, 
               <div className="min-w-0 flex-1 basis-40">
                 <p className="truncate text-sm text-ink">{weakness.label}</p>
                 <p className="text-xs text-ink-muted">
-                  {WEAKNESS_KIND_LABEL[weakness.kind]} · {weakness.reviews} reviews
+                  {t(WEAKNESS_KIND_LABEL[weakness.kind])} ·{" "}
+                  {t("{count} reviews", { count: weakness.reviews })}
                 </p>
               </div>
               <div className="hidden w-24 shrink-0 sm:block">
@@ -64,16 +68,16 @@ export function WeaknessList({ weaknesses, genError, generatingKey, onPractice, 
               </span>
               <TrendBadge trend={weakness.trend} delta={weakness.trendDelta} />
               <Chip tone="danger" className="shrink-0" onClick={() => onPractice(weakness)}>
-                Drill
+                {t("Drill")}
               </Chip>
               <button
                 type="button"
                 onClick={() => onGenerate(weakness)}
                 disabled={generatingKey !== null}
                 className="shrink-0 cursor-pointer rounded-sm px-2 py-1 text-xs font-medium text-ink-muted opacity-60 transition-opacity hover:opacity-100 focus-visible:opacity-100 group-hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-50"
-                title="Create new practice phrases for this weak spot from existing sources"
+                title={t("Create new practice phrases for this weak spot from existing sources")}
               >
-                {generatingKey === key ? "Creating…" : "New phrases"}
+                {generatingKey === key ? t("Creating…") : t("New phrases")}
               </button>
             </motion.li>
           );
@@ -88,6 +92,7 @@ export function WeaknessList({ weaknesses, genError, generatingKey, onPractice, 
  * Stable spots render an empty slot so attention stays on what's moving.
  */
 function TrendBadge({ trend, delta }: { trend: WeaknessTrend; delta: number }) {
+  const { t } = useT();
   if (trend === "stable") {
     return <span className="w-10 shrink-0" aria-hidden />;
   }
@@ -101,8 +106,8 @@ function TrendBadge({ trend, delta }: { trend: WeaknessTrend; delta: number }) {
       )}
       title={
         improving
-          ? "Fewer errors of this type in your writing over time"
-          : "More errors of this type in your writing over time"
+          ? t("Fewer errors of this type in your writing over time")
+          : t("More errors of this type in your writing over time")
       }
     >
       {improving ? "↓" : "↑"} {points}

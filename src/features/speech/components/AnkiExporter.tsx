@@ -71,7 +71,6 @@ export default function AnkiExporter({ embedded = false }: { embedded?: boolean 
   const [enKokoroSpeed, setEnKokoroSpeed] = useState("1.15");
   const [status, setStatus] = useState<ExportStatus>("idle");
   const [error, setError] = useState<string | null>(null);
-  const [lastDebugId, setLastDebugId] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -82,7 +81,6 @@ export default function AnkiExporter({ embedded = false }: { embedded?: boolean 
 
   const resetFeedback = useCallback(() => {
     setError(null);
-    setLastDebugId(null);
     setStatus("idle");
   }, []);
 
@@ -151,10 +149,12 @@ export default function AnkiExporter({ embedded = false }: { embedded?: boolean 
         // The voice model wasn't ready: the server just kicked off the download,
         // so start tracking its progress instead of showing a dead error.
         if (data.code === "model_not_ready") void model.refresh();
-        const debug = data.debugId ? ` Debug: ${data.debugId}` : "";
-        throw new Error(`${data.error ?? `Error (${res.status})`}${debug}`);
+        // The debug id stays in the console for support; the user sees only the copy.
+        if (data.debugId) console.error("Anki export failed. Debug:", data.debugId);
+        throw new Error(data.error ?? `Não consegui exportar agora (erro ${res.status}).`);
       }
-      setLastDebugId(res.headers.get("x-phraseloop-apkg-debug-id"));
+      // Kept out of the UI; the export log id is only support material.
+      console.info("Anki export debug id:", res.headers.get("x-phraseloop-apkg-debug-id"));
 
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -328,7 +328,7 @@ export default function AnkiExporter({ embedded = false }: { embedded?: boolean 
 
           {status === "done" && (
             <p className="text-xs text-success">
-              {`Export finished. If the download didn’t start, try again.${lastDebugId ? ` Debug: ${lastDebugId}` : ""}`}
+              Export concluído. Se o download não começou, tente de novo.
             </p>
           )}
 

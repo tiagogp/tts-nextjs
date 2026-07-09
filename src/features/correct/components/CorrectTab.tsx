@@ -89,13 +89,13 @@ export default function CorrectTab({
   const generation = useDeckGeneration({
     timeoutMs: DECK_GENERATION_TIMEOUT_MS,
     timeoutMessage:
-      "This is taking longer than expected. Try a shorter clip or switch to a faster AI.",
-    cancelMessage: "Generation cancelled. Your corrections are still here.",
+      "Está demorando mais do que o esperado. Tente menos correções ou uma IA mais rápida.",
+    cancelMessage: "Geração cancelada. Suas correções continuam aqui.",
     stages: [
-      { untilSeconds: 10, label: "Creating focused practice phrases…" },
-      { untilSeconds: 40, label: "Reviewing phrase quality…" },
-      { untilSeconds: 90, label: "Preparing audio and Anki export…" },
-      { untilSeconds: Infinity, label: "Still working — local models are slow with several corrections. Hang tight…" },
+      { untilSeconds: 10, label: "Criando frases focadas para praticar…" },
+      { untilSeconds: 40, label: "Revisando a qualidade das frases…" },
+      { untilSeconds: 90, label: "Preparando áudio e export para Anki…" },
+      { untilSeconds: Infinity, label: "Ainda trabalhando — modelos locais demoram com várias correções…" },
     ],
     // The voice model wasn't ready: the server just kicked off the download, so start
     // tracking progress (the notice below shows the live bar).

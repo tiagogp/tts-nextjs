@@ -7,6 +7,7 @@ import { cn } from "@/lib/cn";
 import { assessPronunciation } from "@/features/pronunciation/api";
 import { synthesizeSpeech } from "@/features/converse/api";
 import { savePronunciationAttempt } from "@/lib/store/repository";
+import { useT } from "@/i18n/I18nProvider";
 import type {
   PronunciationAssessment,
   PronunciationAttempt,
@@ -45,6 +46,7 @@ export function PronunciationCoach({
   source,
   compact = false,
 }: PronunciationCoachProps) {
+  const { t } = useT();
   const [recording, setRecording] = useState(false);
   const [assessing, setAssessing] = useState(false);
   const [playingReference, setPlayingReference] = useState(false);
@@ -94,9 +96,9 @@ export function PronunciationCoach({
       await audio.play();
     } catch (err: unknown) {
       setPlayingReference(false);
-      setNote(err instanceof Error ? err.message : "Couldn't play the reference audio.");
+      setNote(err instanceof Error ? err.message : t("Couldn't play the reference audio."));
     }
-  }, [referenceAudioUrl, targetText]);
+  }, [referenceAudioUrl, targetText, t]);
 
   const assessBlob = useCallback(
     async (blob: Blob) => {
@@ -111,7 +113,7 @@ export function PronunciationCoach({
         });
         setAssessment(result);
         if (!result.transcript) {
-          setNote("Couldn't make out any speech in that clip.");
+          setNote(t("Couldn't make out any speech in that clip."));
           return;
         }
         const attempt: PronunciationAttempt = {
@@ -125,12 +127,12 @@ export function PronunciationCoach({
         };
         void savePronunciationAttempt(attempt).catch(() => {});
       } catch (err: unknown) {
-        setNote(err instanceof Error ? err.message : "Pronunciation assessment failed.");
+        setNote(err instanceof Error ? err.message : t("Pronunciation assessment failed."));
       } finally {
         setAssessing(false);
       }
     },
-    [cardId, lessonId, source, targetLang, targetText],
+    [cardId, lessonId, source, targetLang, targetText, t],
   );
 
   const startRecording = useCallback(async () => {
@@ -152,9 +154,9 @@ export function PronunciationCoach({
       recorder.start();
       setRecording(true);
     } catch {
-      setNote("Couldn't access the microphone. Check the browser's permission.");
+      setNote(t("Couldn't access the microphone. Check the browser's permission."));
     }
-  }, [assessBlob]);
+  }, [assessBlob, t]);
 
   const stopRecording = useCallback(() => {
     recorderRef.current?.stop();
@@ -166,8 +168,10 @@ export function PronunciationCoach({
     <div className={cn("rounded border border-line bg-surface/60 p-3", compact ? "space-y-2" : "space-y-3")}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-xs font-medium uppercase tracking-[0.7px] text-ink-muted">Pronunciation</p>
-          {!compact && <p className="mt-0.5 text-sm text-ink-soft">Listen, repeat, then check what was heard.</p>}
+          <p className="text-xs font-medium uppercase tracking-[0.7px] text-ink-muted">{t("Pronunciation")}</p>
+          {!compact && (
+            <p className="mt-0.5 text-sm text-ink-soft">{t("Listen, repeat, then check what was heard.")}</p>
+          )}
         </div>
         {assessment && (
           <span className={cn("text-sm font-semibold tabular-nums", scoreTone(assessment.scores.overall))}>
@@ -184,7 +188,7 @@ export function PronunciationCoach({
           onClick={() => void playReference()}
           disabled={playingReference || recording || assessing}
         >
-          {playingReference ? "Playing..." : "Listen"}
+          {playingReference ? t("Playing...") : t("Listen")}
         </Button>
         <Button
           type="button"
@@ -196,14 +200,14 @@ export function PronunciationCoach({
           {assessing ? (
             <>
               <Spinner className="h-3.5 w-3.5" />
-              Checking...
+              {t("Checking...")}
             </>
           ) : recording ? (
-            "Stop"
+            t("Stop")
           ) : assessment ? (
-            "Try again"
+            t("Try again")
           ) : (
-            "Record"
+            t("Record")
           )}
         </Button>
       </div>
@@ -211,9 +215,9 @@ export function PronunciationCoach({
       {assessment && (
         <div className="space-y-2">
           <div className="grid grid-cols-3 gap-2 text-xs">
-            <Score label="Accuracy" value={assessment.scores.accuracy} />
-            <Score label="Complete" value={assessment.scores.completeness} />
-            <Score label="Rhythm" value={assessment.scores.fluency} />
+            <Score label={t("Accuracy")} value={assessment.scores.accuracy} />
+            <Score label={t("Completeness")} value={assessment.scores.completeness} />
+            <Score label={t("Rhythm")} value={assessment.scores.fluency} />
           </div>
           <div className="flex flex-wrap gap-1.5">
             {assessment.words.map((word, index) => (
@@ -227,7 +231,7 @@ export function PronunciationCoach({
             ))}
           </div>
           {assessment.transcript && (
-            <p className="text-xs text-ink-muted">Heard: {assessment.transcript}</p>
+            <p className="text-xs text-ink-muted">{t("Heard: {transcript}", { transcript: assessment.transcript })}</p>
           )}
           <ul className="space-y-1 text-xs text-ink-soft">
             {assessment.tips.map((tip) => (
@@ -237,7 +241,7 @@ export function PronunciationCoach({
         </div>
       )}
 
-      {note && <p className={cn("text-xs", note.includes("Couldn't") ? "text-danger" : "text-ink-muted")}>{note}</p>}
+      {note && <p className="text-xs text-danger">{note}</p>}
     </div>
   );
 }

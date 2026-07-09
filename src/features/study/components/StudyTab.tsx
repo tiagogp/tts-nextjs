@@ -43,6 +43,7 @@ import { markFirstRunReviewCompleted } from "@/features/activation/firstRun";
 import { getWeeklyGoal } from "@/features/study/weeklyGoal";
 import { ProgressOverview } from "@/features/progress/components/ProgressOverview";
 import { emitActivity } from "@/lib/store/activityLog";
+import { useT } from "@/i18n/I18nProvider";
 import { StudyCard, type DueCard, type ScaffoldTelemetry } from "./StudyCard";
 import type { SessionResult } from "./SessionSummary";
 import { buildLightQueue, isSaturated, type SessionMode } from "../sessionMode";
@@ -61,6 +62,7 @@ export default function StudyTab({
   onDiscover?: () => void;
   onConversation?: () => void;
 }) {
+  const { t } = useT();
   const { settings } = useAiSettings();
   const defaultProvider = settings.providers.find(
     (provider) => provider.kind === settings.defaultProvider,
@@ -162,6 +164,27 @@ export default function StudyTab({
     void load();
     return () => {
       cancelled = true;
+    };
+  }, [refresh]);
+
+  // This tab stays mounted in the background while cards are saved from
+  // lessons, Discover, or Correct. Pick those up when they happen — but only
+  // while idle, so a running queue or an end-of-session summary is never
+  // reshuffled underneath the learner.
+  const idle = queue.length === 0 && sessionResults.length === 0 && !reinforcing && !loading;
+  const idleRef = useRef(idle);
+  useEffect(() => {
+    idleRef.current = idle;
+  }, [idle]);
+  useEffect(() => {
+    const handle = () => {
+      if (idleRef.current && isStoreAvailable()) void refresh().catch(() => undefined);
+    };
+    window.addEventListener("phraseloop:activity", handle);
+    window.addEventListener("phraseloop:lesson-saved", handle);
+    return () => {
+      window.removeEventListener("phraseloop:activity", handle);
+      window.removeEventListener("phraseloop:lesson-saved", handle);
     };
   }, [refresh]);
 
@@ -282,7 +305,11 @@ export default function StudyTab({
     async (w: Weakness) => {
       const key = `${w.kind}:${w.label}`;
       if (!defaultProvider?.available) {
-        setGenError(`${defaultProvider?.label ?? "The selected AI"} is unavailable. Open Settings to connect it.`);
+        setGenError(
+          t("{provider} is unavailable. Open Settings to connect it.", {
+            provider: defaultProvider?.label ?? t("The selected AI"),
+          }),
+        );
         return;
       }
       setGenError(null);
@@ -293,7 +320,7 @@ export default function StudyTab({
           kind: w.kind,
         });
         if (candidates.length === 0 && errors.length === 0) {
-          setGenError(`No saved material left for "${w.label}" to generate from.`);
+          setGenError(t('No saved material left for "{label}" to generate from.', { label: w.label }));
           return;
         }
         const res = await fetch("/api/cards/reinforce", {
@@ -310,7 +337,7 @@ export default function StudyTab({
           | { cards?: Card[]; error?: string }
           | null;
         if (!res.ok || !data?.cards?.length) {
-          setGenError(data?.error ?? "Couldn't create new practice phrases.");
+          setGenError(data?.error ?? t("Couldn't create new practice phrases."));
           return;
         }
         await saveCards(data.cards);
@@ -318,22 +345,22 @@ export default function StudyTab({
         // Drill everything for this concept now — the new variants included.
         await startReinforcement(w);
       } catch {
-        setGenError("Couldn't reach IA. Try again.");
+        setGenError(t("Couldn't reach IA. Try again."));
       } finally {
         setGeneratingKey(null);
       }
     },
-    [defaultProvider, refresh, settings.defaultProvider, settings.ollama.model, startReinforcement],
+    [defaultProvider, refresh, settings.defaultProvider, settings.ollama.model, startReinforcement, t],
   );
 
   if (loading) {
-    return <p className="text-sm text-ink-muted">Loading…</p>;
+    return <p className="text-sm text-ink-muted">{t("Loading…")}</p>;
   }
 
   if (!available) {
     return (
       <p className="text-sm text-ink-muted">
-        Local storage isn’t available in this browser, so studying is disabled.
+        {t("Local storage isn't available in this browser, so studying is disabled.")}
       </p>
     );
   }
@@ -356,14 +383,15 @@ export default function StudyTab({
       {reinforcing && (
         <div className="flex items-center justify-between gap-3 rounded-lg border border-danger bg-danger/10 px-4 py-2.5">
           <p className="text-xs text-ink">
-            Reinforcing <span className="font-medium">{reinforcing.label}</span> · {queue.length} remaining
+            {t("Reinforcing")} <span className="font-medium">{reinforcing.label}</span> ·{" "}
+            {t("{count} remaining", { count: queue.length })}
           </p>
           <button
             type="button"
             onClick={() => void exitReinforcement()}
             className="shrink-0 cursor-pointer text-xs font-medium text-danger transition-opacity hover:opacity-80"
           >
-            Exit
+            {t("Exit")}
           </button>
         </div>
       )}
@@ -372,14 +400,15 @@ export default function StudyTab({
       {mode === "light" && (
         <div className="flex items-center justify-between gap-3 rounded-lg border border-accent/40 bg-accent/10 px-4 py-2.5">
           <p className="text-xs text-ink">
-            Light session · <span className="font-medium">{queue.length} easy phrase{queue.length === 1 ? "" : "s"}</span>
+            {t("Light session")} ·{" "}
+            <span className="font-medium">{t("{count} easy phrases", { count: queue.length })}</span>
           </p>
           <button
             type="button"
             onClick={stopSession}
             className="shrink-0 cursor-pointer text-xs font-medium text-accent transition-opacity hover:opacity-80"
           >
-            Stop
+            {t("Stop")}
           </button>
         </div>
       )}
@@ -403,14 +432,14 @@ export default function StudyTab({
       {cooldown && (
         <UiCard className="flex flex-wrap items-center justify-between gap-3 p-4">
           <p className="text-xs text-ink-soft">
-            Nice work. This is a good place to stop, or take one light session.
+            {t("Nice work. This is a good place to stop, or take one light session.")}
           </p>
           <div className="flex shrink-0 gap-2">
             <Button variant="ghost" size="sm" onClick={stopSession}>
-              Stop here
+              {t("Stop here")}
             </Button>
             <Button variant="secondary" size="sm" onClick={() => void startLight()}>
-              Light session
+              {t("Light session")}
             </Button>
           </div>
         </UiCard>
@@ -470,41 +499,42 @@ function MethodCoach({
   onDiscover?: () => void;
   onConversation?: () => void;
 }) {
+  const { t } = useT();
   const remainingConversations = onConversation ? Math.max(0, weeklyGoal - conversations) : 0;
   const next = cards === 0
     ? {
-        title: "Save your first phrases",
-        text: "Start with the demo or one source. Keep a small set so review stays light.",
-        action: "Open Discover",
+        title: t("Save your first phrases"),
+        text: t("Start with the demo or one source. Keep a small set so review stays light."),
+        action: t("Open Discover"),
         onClick: onDiscover,
       }
     : due > 0
       ? {
-          title: "Review before adding more",
-          text: `${due} practice phrase${due === 1 ? "" : "s"} due now. Review first, then add more.`,
+          title: t("Review before adding more"),
+          text: t("{count} practice phrases due now. Review first, then add more.", { count: due }),
           action: null,
           onClick: undefined,
         }
       : topWeakness
         ? {
-            title: `Reinforce ${topWeakness.label}`,
-            text: "Use the weak spots list below to practice saved phrases or create new variants.",
+            title: t("Reinforce {label}", { label: topWeakness.label }),
+            text: t("Use the weak spots list below to practice saved phrases or create new variants."),
             action: null,
             onClick: undefined,
           }
         : remainingConversations > 0
           ? {
-              title: "Produce language this week",
-              text: `${remainingConversations} conversation${
-                remainingConversations === 1 ? "" : "s"
-              } left for your weekly rhythm.`,
-              action: "Start conversation",
+              title: t("Produce language this week"),
+              text: t("{count} conversations left for your weekly rhythm.", {
+                count: remainingConversations,
+              }),
+              action: t("Start conversation"),
               onClick: onConversation,
             }
           : {
-              title: "Add the next small batch",
-              text: "You are caught up. Add fresh input only when you want more material.",
-              action: "Open Discover",
+              title: t("Add the next small batch"),
+              text: t("You are caught up. Add fresh input only when you want more material."),
+              action: t("Open Discover"),
               onClick: onDiscover,
             };
 
@@ -512,7 +542,7 @@ function MethodCoach({
     <UiCard className="p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs uppercase tracking-[0.7px] text-accent">Today&apos;s method</p>
+          <p className="text-xs uppercase tracking-[0.7px] text-accent">{t("Today's method")}</p>
           <p className="mt-1 text-sm font-semibold text-ink">{next.title}</p>
           <p className="mt-1 text-xs text-ink-muted">{next.text}</p>
         </div>
@@ -533,16 +563,17 @@ function MethodCoach({
  * than hidden — exactly the "confirm offline before any UI" step the strategy demands.
  */
 function BandGateNote({ gate }: { gate: BandGateResult }) {
+  const { t } = useT();
   const status =
     gate.verdict === "adopt"
-      ? { label: "Active", cls: "border-accent bg-accent/10 text-accent" }
+      ? { label: t("Active"), cls: "border-accent bg-accent/10 text-accent" }
       : gate.verdict === "skip"
-        ? { label: "Holding", cls: "border-line bg-surface-2 text-ink-soft" }
-        : { label: "Gathering data", cls: "border-line bg-surface-2 text-ink-muted" };
+        ? { label: t("Holding"), cls: "border-line bg-surface-2 text-ink-soft" }
+        : { label: t("Gathering data"), cls: "border-line bg-surface-2 text-ink-muted" };
   return (
     <UiCard className="space-y-2 p-4">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-xs uppercase tracking-[0.7px] text-ink-soft">Review order</p>
+        <p className="text-xs uppercase tracking-[0.7px] text-ink-soft">{t("Review order")}</p>
         <span
           className={cn(
             "rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide",
@@ -555,7 +586,7 @@ function BandGateNote({ gate }: { gate: BandGateResult }) {
       <p className="text-xs text-ink-muted">{gate.note}</p>
       {gate.verdict === "adopt" && (
         <p className="text-[11px] text-ink-soft">
-          Due phrases are ordered toward the best recall zone first.
+          {t("Due phrases are ordered toward the best recall zone first.")}
         </p>
       )}
     </UiCard>
@@ -568,16 +599,17 @@ function BandGateNote({ gate }: { gate: BandGateResult }) {
  * common case is a single tap, not a cold decision.
  */
 function CyclePicker({ plan, onStart }: { plan: CyclePlan; onStart: (path: CyclePath) => void }) {
+  const { t } = useT();
   const rec = plan.options.find((o) => o.path === plan.recommended)!;
   return (
     <UiCard className="space-y-4 p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs uppercase tracking-[0.7px] text-accent">Today&apos;s next step</p>
-          <p className="mt-1 text-xs text-ink-muted">Start with the recommended path.</p>
+          <p className="text-xs uppercase tracking-[0.7px] text-accent">{t("Today's next step")}</p>
+          <p className="mt-1 text-xs text-ink-muted">{t("Start with the recommended path.")}</p>
         </div>
         <Button size="sm" onClick={() => onStart(plan.recommended)}>
-          Start · {rec.load}
+          {t("Start · {load}", { load: rec.load })}
         </Button>
       </div>
       <div className="grid gap-2 sm:grid-cols-3">
@@ -598,7 +630,7 @@ function CyclePicker({ plan, onStart }: { plan: CyclePlan; onStart: (path: Cycle
             <div className="flex items-center justify-between gap-2">
               <span className="text-sm font-semibold text-ink">{option.title}</span>
               {option.recommended && (
-                <span className="text-[10px] uppercase tracking-wide text-accent">Recommended</span>
+                <span className="text-[10px] uppercase tracking-wide text-accent">{t("Recommended")}</span>
               )}
             </div>
             <p className="mt-1 text-xs text-ink-muted">{option.description}</p>

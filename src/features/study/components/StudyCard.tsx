@@ -9,6 +9,7 @@ import type { Card as CardModel } from "@/lib/cards/schema";
 import type { ReviewRecord } from "@/lib/store/repository";
 import { PronunciationCoach } from "@/features/pronunciation/components/PronunciationCoach";
 import { SessionSummary, type SessionResult } from "./SessionSummary";
+import { useT } from "@/i18n/I18nProvider";
 import {
   SCAFFOLD,
   buildHint,
@@ -53,6 +54,7 @@ export function StudyCard({
   onGrade,
   onDiscover,
 }: StudyCardProps) {
+  const { t } = useT();
   // Highest scaffold tier used on the current card — reported up on grade.
   const [scaffoldLevel, setScaffoldLevel] = useState<number>(SCAFFOLD.none);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -109,31 +111,33 @@ export function StudyCard({
     <Card className="p-6 sm:p-8">
       {totalCards === 0 ? (
         <div className="space-y-1 py-8 text-center">
-          <p className="text-sm font-medium text-ink">No practice phrases yet</p>
+          <p className="text-sm font-medium text-ink">{t("No practice phrases yet")}</p>
           <p className="text-xs text-ink-muted">
-            Start from Home with the first lesson. If you already have a source, bring it in Phrases.
+            {t("Start from Home with the first lesson. If you already have a source, bring it in Phrases.")}
           </p>
           <Button variant="secondary" size="sm" className="mt-3" onClick={onDiscover}>
-            Open Phrases
+            {t("Open Phrases")}
           </Button>
         </div>
       ) : !current ? (
         <div className="space-y-1 py-8 text-center">
-          <p className="text-sm font-medium text-ink">You&apos;re all caught up</p>
+          <p className="text-sm font-medium text-ink">{t("You're all caught up")}</p>
           <p className="text-xs text-ink-muted">
-            Tomorrow you review these phrases. Add more only when you want fresh material.
+            {t("Tomorrow you review these phrases. Add more only when you want fresh material.")}
           </p>
           <Button variant="secondary" size="sm" className="mt-3" onClick={onDiscover}>
-            Find new phrases
+            {t("Find new phrases")}
           </Button>
         </div>
       ) : (
         <div className="space-y-5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium uppercase tracking-[0.8px] text-ink-muted">
-              {current.card.concept || "Practice phrase"}
+              {current.card.concept || t("Practice phrase")}
             </span>
-            <span className="text-xs tabular-nums text-ink-muted">{queueLength} in today&apos;s queue</span>
+            <span className="text-xs tabular-nums text-ink-muted">
+              {t("{count} in today's queue", { count: queueLength })}
+            </span>
           </div>
 
           <div className="flex min-h-24 flex-col items-center justify-center gap-3 text-center">
@@ -182,7 +186,7 @@ export function StudyCard({
 
           {!flipped ? (
             <Button variant="primary" size="lg" className="py-2.5" onClick={onFlip}>
-              Show answer
+              {t("Show answer")}
             </Button>
           ) : (
             <GradeButtons
@@ -218,14 +222,15 @@ function ScaffoldControls({
   onSlowAudio: () => void;
   onModality: () => void;
 }) {
+  const { t } = useT();
   if (offerModality) {
     return (
       <div className="flex flex-col items-center gap-1">
         <Button variant="secondary" size="sm" onClick={onModality}>
-          Listen &amp; repeat
+          {t("Listen & repeat")}
         </Button>
         <p className="text-[11px] text-ink-muted">
-          You&apos;ve struggled with this one — hear it first, then say it back.
+          {t("You've struggled with this one — hear it first, then say it back.")}
         </p>
       </div>
     );
@@ -240,11 +245,11 @@ function ScaffoldControls({
             onClick={onHint}
             className="cursor-pointer text-ink-muted underline-offset-2 transition-opacity hover:opacity-70 hover:underline"
           >
-            Need a hint?
+            {t("Need a hint?")}
           </button>
         ) : (
           <Button variant="ghost" size="sm" onClick={onHint}>
-            Hint
+            {t("Hint")}
           </Button>
         ))}
       {nativeClip && (
@@ -253,7 +258,7 @@ function ScaffoldControls({
           onClick={onSlowAudio}
           className="cursor-pointer text-ink-muted underline-offset-2 transition-opacity hover:opacity-70 hover:underline"
         >
-          Replay 0.75×
+          {t("Replay 0.75×")}
         </button>
       )}
     </div>

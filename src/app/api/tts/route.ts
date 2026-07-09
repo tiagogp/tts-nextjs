@@ -15,9 +15,9 @@ const MAX_TTS_JSON_BYTES = 512 * 1024;
 const DEFAULT_SPEED = 1.15;
 const DEFAULT_VOICE = "af_heart";
 const PUBLIC_TTS_ERROR =
-  "Couldn't generate audio right now. Try again in a moment.";
+  "Não consegui gerar o áudio agora. Tente de novo em instantes.";
 const PUBLIC_TTS_TIMEOUT =
-  "Audio generation is taking longer than expected. Try again with a shorter text.";
+  "A geração de áudio está demorando mais do que o esperado. Tente com um texto mais curto.";
 
 class PublicRouteError extends Error {
   constructor(
@@ -86,22 +86,20 @@ function extractLinesFromJson(value: unknown, textKey: string): string[] {
 }
 
 function runtimeErrorMessage(rawBody: string): string | null {
+  // Only the runtime's own `error` copy is user-ready (PT-BR); `detail` and raw
+  // bodies are technical English and must never reach the UI.
   try {
-    const data = JSON.parse(rawBody) as { error?: unknown; detail?: unknown };
+    const data = JSON.parse(rawBody) as { error?: unknown };
     if (typeof data.error === "string" && data.error.trim()) return data.error;
-    if (typeof data.detail === "string" && data.detail.trim()) return data.detail;
   } catch {
-    const text = rawBody.trim();
-    if (text && !text.startsWith("<!DOCTYPE") && !text.startsWith("<html")) {
-      return text.slice(0, 500);
-    }
+    // Non-JSON runtime bodies fall through to the public fallback copy.
   }
   return null;
 }
 
 async function synthOne(text: string, speed: number, voice: string): Promise<Buffer> {
   if (text.length > MAX_TTS_TEXT_CHARS) {
-    throw new PublicRouteError(`Text exceeds ${MAX_TTS_TEXT_CHARS} characters.`, 400);
+    throw new PublicRouteError(`O texto passa de ${MAX_TTS_TEXT_CHARS} caracteres.`, 400);
   }
 
   const ttsRes = await localJson(
@@ -127,11 +125,11 @@ export async function POST(req: NextRequest) {
   try {
     const contentLength = Number(req.headers.get("content-length") ?? 0);
     if (contentLength > MAX_TTS_JSON_BYTES) {
-      return NextResponse.json({ error: "Request body too large." }, { status: 413 });
+      return NextResponse.json({ error: "O conteúdo enviado é grande demais." }, { status: 413 });
     }
     const raw = await req.text();
     if (Buffer.byteLength(raw, "utf8") > MAX_TTS_JSON_BYTES) {
-      return NextResponse.json({ error: "Request body too large." }, { status: 413 });
+      return NextResponse.json({ error: "O conteúdo enviado é grande demais." }, { status: 413 });
     }
     const body = raw ? (JSON.parse(raw) as unknown) : null;
     const bodyObj = isPlainObject(body) ? body : null;
@@ -150,14 +148,14 @@ export async function POST(req: NextRequest) {
     if (lines.length > 0) {
       if (lines.length > MAX_ITEMS) {
         return NextResponse.json(
-          { error: `Too many items (max ${MAX_ITEMS}).` },
+          { error: `Itens demais (máximo ${MAX_ITEMS}).` },
           { status: 400 },
         );
       }
       const totalChars = lines.reduce((sum, t) => sum + t.length, 0);
       if (totalChars > MAX_TOTAL_CHARS) {
         return NextResponse.json(
-          { error: `Total text too large (max ${MAX_TOTAL_CHARS} characters).` },
+          { error: `Texto total grande demais (máximo ${MAX_TOTAL_CHARS} caracteres).` },
           { status: 400 },
         );
       }
@@ -198,7 +196,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           error:
-            'Provide either "text" (string), "lines" (string[]), or "json" (array/object).',
+            'Envie "text" (texto), "lines" (lista de textos) ou "json" (lista/objeto).',
         },
         { status: 400 },
       );

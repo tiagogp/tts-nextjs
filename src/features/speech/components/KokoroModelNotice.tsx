@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
+import { useT } from "@/i18n/I18nProvider";
 import type { KokoroModelState } from "@/features/speech/hooks/useKokoroModel";
 
 /**
@@ -19,6 +20,7 @@ export default function KokoroModelNotice({
   model: KokoroModelState;
   className?: string;
 }) {
+  const { t } = useT();
   if (model.ready !== false) return null;
 
   const percent = Math.round((model.progress ?? 0) * 100);
@@ -27,7 +29,7 @@ export default function KokoroModelNotice({
   return (
     <div className={cn("space-y-2 rounded-lg border border-line bg-input px-3 py-3 text-xs", className)}>
       <p className="text-ink-muted">
-        The local voice model (Kokoro, about 349&nbsp;MB) needs to be downloaded once before audio can be generated.
+        {t("The local voice model (Kokoro, about 349 MB) needs to be downloaded once before audio can be generated.")}
       </p>
       {model.downloading ? (
         <>
@@ -35,12 +37,14 @@ export default function KokoroModelNotice({
             <div className="h-full bg-accent transition-[width] duration-500" style={{ width: `${percent}%` }} />
           </div>
           <p className="text-ink-muted">
-            {hasProgress ? `Downloading voice model… ${percent}%` : "Preparing voice model download…"}
+            {hasProgress
+              ? t("Downloading voice model… {percent}%", { percent })
+              : t("Preparing voice model download…")}
           </p>
         </>
       ) : (
         <Button variant="primary" size="lg" onClick={() => void model.ensure()}>
-          Download voice model
+          {t("Download voice model")}
         </Button>
       )}
       {model.error && <p className="text-danger">{model.error}</p>}

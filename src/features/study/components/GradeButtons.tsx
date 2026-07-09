@@ -11,6 +11,7 @@ import {
   type Grade,
   type SrsRecord,
 } from "@/lib/srs/fsrs";
+import { useT } from "@/i18n/I18nProvider";
 
 /** Again→danger, Hard→warning, Good→success, Easy→info, all from design tokens. */
 const GRADE_TONE: Record<Grade, string> = {
@@ -21,6 +22,7 @@ const GRADE_TONE: Record<Grade, string> = {
 };
 
 export function GradeButtons({ srs, onGrade }: { srs: SrsRecord; onGrade: (grade: Grade) => void }) {
+  const { t } = useT();
   return (
     <div className="grid grid-cols-4 gap-2">
       {GRADES.map((grade) => (
@@ -36,7 +38,7 @@ export function GradeButtons({ srs, onGrade }: { srs: SrsRecord; onGrade: (grade
             GRADE_TONE[grade],
           )}
         >
-          <span>{GRADE_LABELS[grade]}</span>
+          <span>{t(GRADE_LABELS[grade])}</span>
           <span className="tabular-nums opacity-70">{previewInterval(srs, grade)}</span>
         </motion.button>
       ))}

@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/Card";
 import Disclosure from "@/components/ui/Disclosure";
 import { cn } from "@/lib/cn";
 import type { computePerformance, computeReturnAfterMiss } from "@/lib/srs/analytics";
+import { useT } from "@/i18n/I18nProvider";
 
 type Performance = ReturnType<typeof computePerformance>;
 type Retention = ReturnType<typeof computeReturnAfterMiss>;
@@ -17,27 +18,35 @@ export function PerformanceStats({
   stats: Performance;
   retention?: Retention;
 }) {
+  const { t } = useT();
   return (
     <Card className="p-5">
-      <p className="mb-4 text-sm font-semibold tracking-[-0.01em] text-ink">Performance</p>
+      <p className="mb-4 text-sm font-semibold tracking-[-0.01em] text-ink">{t("Performance")}</p>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <Stat label="Phrases" value={String(cardsCount)} />
-        <Stat label="Reviews" value={String(stats.totalReviews)} />
-        <Stat label="Accuracy" value={`${Math.round(stats.accuracy * 100)}%`} />
-        <Stat label="Streak" value={`${stats.streakDays}d`} />
+        <Stat label={t("Phrases")} value={String(cardsCount)} />
+        <Stat label={t("Reviews")} value={String(stats.totalReviews)} />
+        <Stat label={t("Accuracy")} value={`${Math.round(stats.accuracy * 100)}%`} />
+        <Stat label={t("Streak")} value={`${stats.streakDays}d`} />
       </div>
 
       {retention && retention.missGaps > 0 && (
         <p className="mt-4 text-xs text-ink-muted">
-          You’ve come back {retention.promptReturns} of {retention.missGaps}{" "}
-          {retention.missGaps === 1 ? "time" : "times"} within a week of a break.
+          {retention.missGaps === 1
+            ? t("You've come back {returns} of {gaps} time within a week of a break.", {
+                returns: retention.promptReturns,
+                gaps: retention.missGaps,
+              })
+            : t("You've come back {returns} of {gaps} times within a week of a break.", {
+                returns: retention.promptReturns,
+                gaps: retention.missGaps,
+              })}
         </p>
       )}
 
       {stats.totalReviews > 0 && (
         <Disclosure
-          title="Review activity"
-          description={`Last 14 days · ${stats.reviewsToday} today`}
+          title={t("Review activity")}
+          description={t("Last 14 days · {count} today", { count: stats.reviewsToday })}
           className="mt-5"
           nested
         >
@@ -60,8 +69,8 @@ export function PerformanceStats({
 
       {stats.errorTypes.length > 0 && (
         <Disclosure
-          title="Error types"
-          description="Accuracy by recurring correction category"
+          title={t("Error types")}
+          description={t("Accuracy by recurring correction category")}
           className="mt-3"
           nested
         >
@@ -70,7 +79,9 @@ export function PerformanceStats({
               <div key={entry.type} className="grid grid-cols-[minmax(0,1fr)_4rem_4rem] items-center gap-3 text-xs">
                 <span className="truncate text-ink">{entry.type}</span>
                 <span className="text-right tabular-nums text-ink-soft">{Math.round(entry.accuracy * 100)}%</span>
-                <span className="text-right tabular-nums text-ink-muted">{entry.reviews} rev</span>
+                <span className="text-right tabular-nums text-ink-muted">
+                  {t("{count} rev", { count: entry.reviews })}
+                </span>
               </div>
             ))}
           </div>

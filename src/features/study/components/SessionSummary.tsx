@@ -11,6 +11,7 @@
 
 import { Card } from "@/components/ui/Card";
 import { Rating, recallProbabilityAt, type Grade, type SrsRecord } from "@/lib/srs/fsrs";
+import { useT } from "@/i18n/I18nProvider";
 
 export interface SessionResult {
   cardId: string;
@@ -39,34 +40,35 @@ export function SessionSummary({
   results: SessionResult[];
   streakDays: number;
 }) {
+  const { t } = useT();
   const { reviewed, passed, stable } = summarize(results);
   const accuracy = reviewed ? Math.round((passed / reviewed) * 100) : 0;
 
   return (
     <Card className="space-y-5 p-6 text-center sm:p-8">
       <div className="space-y-1">
-        <p className="text-sm font-semibold text-ink">Review complete</p>
+        <p className="text-sm font-semibold text-ink">{t("Review complete")}</p>
         <p className="text-xs text-ink-muted">
-          {reviewed} phrase{reviewed === 1 ? "" : "s"} reviewed today.
+          {t("{count} phrases reviewed today.", { count: reviewed })}
         </p>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
           <p className="text-2xl font-semibold tabular-nums text-ink">{accuracy}%</p>
-          <p className="mt-0.5 text-xs uppercase tracking-[0.8px] text-ink-muted">Now</p>
-          <p className="mt-1 text-[11px] leading-snug text-ink-muted">went well this round</p>
+          <p className="mt-0.5 text-xs uppercase tracking-[0.8px] text-ink-muted">{t("Now")}</p>
+          <p className="mt-1 text-[11px] leading-snug text-ink-muted">{t("went well this round")}</p>
         </div>
         <div>
           <p className="text-2xl font-semibold tabular-nums text-ink">{stable}</p>
-          <p className="mt-0.5 text-xs uppercase tracking-[0.8px] text-ink-muted">Tomorrow</p>
-          <p className="mt-1 text-[11px] leading-snug text-ink-muted">ready for tomorrow</p>
+          <p className="mt-0.5 text-xs uppercase tracking-[0.8px] text-ink-muted">{t("Tomorrow")}</p>
+          <p className="mt-1 text-[11px] leading-snug text-ink-muted">{t("ready for tomorrow")}</p>
         </div>
       </div>
 
       {streakDays > 1 && (
         <p className="text-xs text-ink-soft">
-          {streakDays} days in a row. Tomorrow you review the next phrases.
+          {t("{count} days in a row. Tomorrow you review the next phrases.", { count: streakDays })}
         </p>
       )}
     </Card>

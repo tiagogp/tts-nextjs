@@ -22,7 +22,18 @@ export async function assessPronunciation(input: {
     form.append("referenceDurationMs", String(Math.round(input.referenceDurationMs)));
   }
   const response = await fetch("/api/pronunciation/assess", { method: "POST", body: form });
-  const data = (await response.json().catch(() => ({}))) as PronunciationAssessment & { error?: string };
-  if (!response.ok) throw new Error(data.error ?? `Pronunciation failed (${response.status})`);
+  const data = (await response.json().catch(() => ({}))) as PronunciationAssessment & {
+    error?: string;
+    code?: string;
+    downloading?: boolean;
+    progress?: number;
+  };
+  if (!response.ok) {
+    let message = data.error ?? `Não consegui avaliar a pronúncia agora (erro ${response.status}).`;
+    if (data.code === "model_not_ready" && data.downloading && (data.progress ?? 0) > 0) {
+      message += ` ${Math.round((data.progress ?? 0) * 100)}% baixado.`;
+    }
+    throw new Error(message);
+  }
   return data;
 }
