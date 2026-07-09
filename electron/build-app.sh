@@ -72,7 +72,7 @@ if [ -n "${APPLE_DEVELOPER_ID:-}" ]; then
     --entitlements "$ENTITLEMENTS" --sign "$APPLE_DEVELOPER_ID" "$APP"
   codesign --verify --deep --strict "$APP"
 
-  echo "→ Notarizing (notarytool)…"
+  echo "→ Notarizing app (notarytool)…"
   ZIP="dist/PhraseLoop-notarize.zip"
   ditto -c -k --keepParent "$APP" "$ZIP"
   if [ -n "${NOTARY_PROFILE:-}" ]; then
@@ -97,9 +97,37 @@ else
   codesign --verify --deep --strict "$APP"
 fi
 
+echo "→ Building .dmg…"
+VERSION="$(node -p "require('./package.json').version")"
+DMG="dist/PhraseLoop-$VERSION.dmg"
+DMG_STAGING="$(mktemp -d "${TMPDIR:-/tmp}/phraseloop-dmg.XXXXXX")"
+cp -R "$APP" "$DMG_STAGING/"
+ln -s /Applications "$DMG_STAGING/Applications"
+rm -f "$DMG"
+hdiutil create -volname "PhraseLoop" -srcfolder "$DMG_STAGING" -ov -format UDZO "$DMG"
+rm -rf "$DMG_STAGING"
+
+if [ -n "${APPLE_DEVELOPER_ID:-}" ]; then
+  echo "→ Signing the .dmg…"
+  codesign --force --timestamp --sign "$APPLE_DEVELOPER_ID" "$DMG"
+  echo "→ Notarizing .dmg (notarytool)…"
+  if [ -n "${NOTARY_PROFILE:-}" ]; then
+    xcrun notarytool submit "$DMG" --keychain-profile "$NOTARY_PROFILE" --wait
+  else
+    xcrun notarytool submit "$DMG" \
+      --apple-id "$APPLE_ID" \
+      --password "$APPLE_APP_SPECIFIC_PASSWORD" \
+      --team-id "$APPLE_TEAM_ID" --wait
+  fi
+  echo "→ Stapling notarization ticket to .dmg…"
+  xcrun stapler staple "$DMG"
+  xcrun stapler validate "$DMG"
+fi
+
 echo "→ Bundle size report…"
 du -sh "$APP"
 du -sh "$APP_NEXT/node_modules"/* 2>/dev/null | sort -hr | head -20 || true
 
 echo ""
 echo "✓ Done: $ROOT/$APP"
+echo "✓ Done: $ROOT/$DMG"
