@@ -1,5 +1,5 @@
 import "fake-indexeddb/auto";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Card } from "@/lib/cards/schema";
 import { Rating } from "@/lib/srs/fsrs";
 import { clearAll } from "./db";
@@ -15,6 +15,7 @@ import {
   saveGeneratedDeck,
   saveProgressAssessment,
   validateLocalBackup,
+  wipeLocalData,
 } from "./repository";
 
 describe("local backup validation", () => {
@@ -121,6 +122,34 @@ describe("local backup round-trip (W6)", () => {
     expect(cards.map((c) => c.id).sort()).toEqual(["card-1", "card-2"]);
     // card-1 is overwritten by the backup copy (merge-by-id).
     expect(cards.find((c) => c.id === "card-1")?.back).toBe("original");
+  });
+});
+
+describe("delete all local data (launch checklist item 8)", () => {
+  beforeEach(() => clearAll());
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    return clearAll();
+  });
+
+  it("wipes every store and localStorage preferences", async () => {
+    const entries = new Map<string, string>([["phraseloop:profile", "{}"]]);
+    vi.stubGlobal("localStorage", {
+      clear: () => entries.clear(),
+      getItem: (key: string) => entries.get(key) ?? null,
+      setItem: (key: string, value: string) => entries.set(key, value),
+      removeItem: (key: string) => entries.delete(key),
+    });
+
+    await saveCards([makeCard("card-1")]);
+    expect(await getCards()).toHaveLength(1);
+    expect(await getSrs("card-1")).toBeDefined();
+
+    await wipeLocalData();
+
+    expect(await getCards()).toHaveLength(0);
+    expect(await getSrs("card-1")).toBeUndefined();
+    expect(entries.size).toBe(0);
   });
 });
 

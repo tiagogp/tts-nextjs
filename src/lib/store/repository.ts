@@ -538,3 +538,14 @@ export async function restoreLocalBackup(raw: unknown): Promise<BackupValidation
   }
   return validation;
 }
+
+/**
+ * Data transparency (launch checklist item 8): delete every record PhraseLoop keeps in
+ * the browser — all IndexedDB stores plus localStorage preferences. Files on disk
+ * (imported-audio cache, voice reference, logs) are removed separately via
+ * DELETE /api/data; the caller is expected to do both and then reload.
+ */
+export async function wipeLocalData(): Promise<void> {
+  await clearAll();
+  if (typeof localStorage !== "undefined") localStorage.clear();
+}

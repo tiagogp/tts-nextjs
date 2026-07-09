@@ -1,7 +1,14 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Select from "@/components/ui/Select";
+import { ENGLISH_LEVELS } from "@/features/discover/constants";
+import type { EnglishLevel } from "@/features/discover/types";
+import {
+  DEFAULT_LEARNING_PROFILE,
+  getLearningProfile,
+  saveLearningProfile,
+} from "@/features/settings/learningProfile";
 import { useAiSettings } from "@/features/settings/context/AiSettingsContext";
 import type { ProviderKind } from "@/lib/cards/provider";
 import type { AiSettingsPatch, ProviderStatus } from "@/types/aiSettings";
@@ -16,6 +23,7 @@ import {
   exportLocalBackup,
   restoreLocalBackup,
   validateLocalBackup,
+  wipeLocalData,
   type BackupValidationResult,
 } from "@/lib/store/repository";
 import type { StoreName } from "@/lib/store/db";
@@ -49,6 +57,12 @@ function statusTone(provider: ProviderStatus): StatusTone {
   return "default";
 }
 
+function subscribeToProfile(onChange: () => void): () => void {
+  if (typeof window === "undefined") return () => {};
+  window.addEventListener("phraseloop:profile-updated", onChange);
+  return () => window.removeEventListener("phraseloop:profile-updated", onChange);
+}
+
 export default function SettingsScreen({
   onBack,
   onOpenTools,
@@ -78,6 +92,28 @@ export default function SettingsScreen({
     raw: unknown;
     validation: BackupValidationResult;
   } | null>(null);
+  const [dataPath, setDataPath] = useState<string | null>(null);
+  const learnerLevel = useSyncExternalStore(
+    subscribeToProfile,
+    () => getLearningProfile().level,
+    () => DEFAULT_LEARNING_PROFILE.level,
+  );
+
+  useEffect(() => {
+    let canceled = false;
+    void fetch("/api/data")
+      .then((res) => (res.ok ? (res.json() as Promise<{ path?: unknown }>) : null))
+      .then((data) => {
+        if (!canceled && typeof data?.path === "string") setDataPath(data.path);
+      })
+      .catch(() => {});
+    return () => {
+      canceled = true;
+    };
+  }, []);
+  const changeLearnerLevel = (value: string) => {
+    saveLearningProfile({ level: value as EnglishLevel });
+  };
 
   const run = async (
     name: string,
@@ -169,6 +205,29 @@ export default function SettingsScreen({
     } catch {
       setNotice({ ok: false, text: t("Could not restore local data.") });
     } finally {
+      setBusy(null);
+    }
+  };
+
+  const deleteAllData = async () => {
+    if (
+      !window.confirm(
+        t(
+          "Delete ALL local data? Practice phrases, reviews, mistakes, progress, and preferences will be permanently removed from this computer. Download a backup first if you might want them back.",
+        ),
+      )
+    ) {
+      return;
+    }
+    setBusy("wipe");
+    setNotice(null);
+    try {
+      const response = await fetch("/api/data", { method: "DELETE" }).catch(() => null);
+      if (!response || !response.ok) throw new Error("server data deletion failed");
+      await wipeLocalData();
+      window.location.reload();
+    } catch {
+      setNotice({ ok: false, text: t("Could not delete all local data. Try again.") });
       setBusy(null);
     }
   };
@@ -407,6 +466,35 @@ export default function SettingsScreen({
         )}
       </Card>
 
+      <Card className="mb-4 p-5">
+        <h3 className="font-medium text-ink">{t("Where your data lives")}</h3>
+        <p className="mt-1 text-sm text-ink-muted">
+          {t("Everything stays on this computer. Practice phrases, reviews, mistakes, and progress live in the app's local database — nothing is sent anywhere unless you connect a cloud AI.")}
+        </p>
+        {dataPath && (
+          <div className="mt-3">
+            <p className="text-xs text-ink-muted">
+              {t("Imported audio and downloaded voice models are kept in this folder:")}
+            </p>
+            <code className="mt-1 block overflow-x-auto rounded border border-line bg-surface px-2.5 py-1.5 text-xs text-ink">
+              {dataPath}
+            </code>
+          </div>
+        )}
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
+          <p className="max-w-sm text-xs text-ink-muted">
+            {t("Deleting removes everything above from this computer. Downloaded voice models stay — they are not personal data.")}
+          </p>
+          <Button
+            variant="danger"
+            disabled={busy !== null}
+            onClick={() => void deleteAllData()}
+          >
+            {busy === "wipe" ? t("Deleting...") : t("Delete all local data")}
+          </Button>
+        </div>
+      </Card>
+
       {showAdvancedAi && (
         <Disclosure
           title={t("Advanced AI for custom content")}
@@ -531,6 +619,21 @@ export default function SettingsScreen({
           </div>
         </Card>
       )}
+
+      <Card className="mt-4 p-5">
+        <div>
+          <h3 className="font-medium text-ink">{t("Learner profile")}</h3>
+          <p className="mt-1 text-sm text-ink-muted">
+            {t("Adjust your English level as you progress. Lessons and corrections follow it.")}
+          </p>
+        </div>
+        <Field label={t("English level")} className="mt-3 max-w-52">
+          <Select value={learnerLevel} onChange={changeLearnerLevel} options={ENGLISH_LEVELS} />
+        </Field>
+        <p className="mt-2 text-xs text-ink-muted">
+          {t("From B1 the interface switches to English.")}
+        </p>
+      </Card>
 
       <W5ValidationCard />
     </div>
