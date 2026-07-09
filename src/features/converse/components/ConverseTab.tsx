@@ -1,5 +1,8 @@
 "use client";
 
+// FROZEN until W5 passes (docs/validation-action-plan.md Phase 0): no fixes, polish,
+// or refactors here except crash fixes. See AGENTS.md "Feature freeze".
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
 import { Button } from "@/components/ui/Button";

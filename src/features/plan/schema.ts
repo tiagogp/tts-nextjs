@@ -1,3 +1,7 @@
+// FROZEN until W5 passes (docs/validation-action-plan.md Phase 0): the whole
+// src/features/plan/ directory (the "90-day Plan") gets no fixes, polish, or refactors
+// except crash fixes. See AGENTS.md "Feature freeze".
+
 import type { EnglishLevel } from "@/features/discover/types";
 
 export type TaskType = "discover" | "study" | "converse" | "correct" | "lesson";

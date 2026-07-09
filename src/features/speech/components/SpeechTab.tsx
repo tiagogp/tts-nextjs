@@ -1,5 +1,11 @@
 "use client";
 
+// FROZEN until W5 passes (docs/validation-action-plan.md Phase 0): the Speak tab, its
+// AnkiExporter, and ThemePhraseGenerator get no fixes, polish, or refactors except
+// crash fixes. Shared audio infra (useKokoroModel, useAudioState, useSpeechGenerator,
+// TtsSettingsContext) is NOT frozen — Correct and the core loop depend on it.
+// See AGENTS.md "Feature freeze".
+
 import AnkiExporter from "@/features/speech/components/AnkiExporter";
 import AudioPlayer from "@/components/ui/AudioPlayer";
 import ThemePhraseGenerator from "@/features/speech/components/ThemePhraseGenerator";
