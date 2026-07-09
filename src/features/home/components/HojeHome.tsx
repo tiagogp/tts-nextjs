@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { isStoreAvailable } from "@/lib/store/db";
 import { getCards, getCounts, getErrorEvents, getReviews, type ReviewRecord } from "@/lib/store/repository";
+import { getActivityLog } from "@/lib/store/activityLog";
 import { computePerformance } from "@/lib/srs/analytics";
 import { useT } from "@/i18n/I18nProvider";
 import { completedLessonIdsFromCardIds, firstLesson, nextLessonFor, type Lesson } from "@/features/learn/lessonDeck";
@@ -26,6 +27,35 @@ interface NextAction {
   onClick: () => void;
 }
 
+interface ReturnMoment {
+  due: number;
+  mistakeCards: number;
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function localDayIndex(ts: number): number {
+  const d = new Date(ts);
+  d.setHours(0, 0, 0, 0);
+  return Math.round(d.getTime() / DAY_MS);
+}
+
+function returnMomentFor(input: {
+  due: number;
+  activity: { ts: number }[];
+  errors: { createdAt: number }[];
+  now?: number;
+}): ReturnMoment | null {
+  if (input.due <= 0 || input.activity.length === 0) return null;
+  const now = input.now ?? Date.now();
+  const today = localDayIndex(now);
+  const firstDay = Math.min(...input.activity.map((event) => localDayIndex(event.ts)));
+  if (today - firstDay !== 1) return null;
+  const yesterday = today - 1;
+  const mistakeCards = input.errors.filter((event) => localDayIndex(event.createdAt) === yesterday).length;
+  return { due: input.due, mistakeCards };
+}
+
 /**
  * "Hoje" — the app's front door. It answers a single question for the learner:
  * what is the one next thing to do right now? Resolution order: (a) today's first
@@ -37,16 +67,24 @@ export function HojeHome({ onStudy, onCorrect, onFirstLesson, onLesson }: HojeHo
   const [counts, setCounts] = useState({ cards: 0, reviews: 0, due: 0, errors: 0 });
   const [streakDays, setStreakDays] = useState(0);
   const [nextLesson, setNextLesson] = useState<Lesson>(() => nextLessonFor(getLearningProfile(), []) ?? firstLesson());
+  const [returnMoment, setReturnMoment] = useState<ReturnMoment | null>(null);
   const [countsLoaded, setCountsLoaded] = useState(() => !isStoreAvailable());
 
   useEffect(() => {
     if (!isStoreAvailable()) return;
     let cancelled = false;
     const load = async () => {
-      const [nextCounts, reviews, cards, errors] = await Promise.all([getCounts(), getReviews(), getCards(), getErrorEvents()]);
+      const [nextCounts, reviews, cards, errors, activity] = await Promise.all([
+        getCounts(),
+        getReviews(),
+        getCards(),
+        getErrorEvents(),
+        getActivityLog(),
+      ]);
       if (cancelled) return;
       setCounts({ ...nextCounts, errors: errors.length });
       setStreakDays(computePerformance(reviews as ReviewRecord[], Date.now()).streakDays);
+      setReturnMoment(returnMomentFor({ due: nextCounts.due, activity, errors }));
       setNextLesson(
         nextLessonFor(
           getLearningProfile(),
@@ -74,6 +112,7 @@ export function HojeHome({ onStudy, onCorrect, onFirstLesson, onLesson }: HojeHo
     onCorrect,
     onLesson,
     nextLesson,
+    returnMoment,
   });
 
   return (
@@ -119,6 +158,7 @@ function resolveNextAction({
   onCorrect,
   onLesson,
   nextLesson,
+  returnMoment,
 }: {
   t: (en: string, vars?: Record<string, string | number>) => string;
   counts: { cards: number; reviews: number; due: number; errors: number };
@@ -127,7 +167,25 @@ function resolveNextAction({
   onCorrect: () => void;
   onLesson: (lessonId?: string) => void;
   nextLesson: Lesson;
+  returnMoment: ReturnMoment | null;
 }): NextAction {
+  if (returnMoment && counts.due > 0) {
+    const title =
+      returnMoment.mistakeCards === 1
+        ? t("{count} cards for today — 1 came from your mistake yesterday", { count: counts.due })
+        : t("{count} cards for today — {mistakes} came from your mistakes yesterday", {
+            count: counts.due,
+            mistakes: returnMoment.mistakeCards,
+          });
+    return {
+      eyebrow: t("Today"),
+      title,
+      detail: t("Review while yesterday is still fresh."),
+      cta: t("Start today's review"),
+      onClick: onStudy,
+    };
+  }
+
   // Due phrases waiting to be reviewed.
   if (counts.due > 0) {
     return {
@@ -164,8 +222,10 @@ function resolveNextAction({
   // Brand-new user, no saved phrases yet → start with the bundled first lesson.
   return {
     eyebrow: t("Start here"),
-    title: t("Turn real English into review cards in 2 minutes"),
-    detail: t("Practice phrases from a native clip and your own mistake — no setup needed."),
+    title: t("Turn real English into tomorrow's practice"),
+    detail: t(
+      "Paste a YouTube video. In 2 minutes, the best phrases become review cards with the original audio — and your own mistakes become tomorrow's practice.",
+    ),
     cta: t("Start first lesson"),
     onClick: onFirstLesson,
   };
