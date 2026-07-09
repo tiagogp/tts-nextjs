@@ -16,6 +16,7 @@
 import OpenAI from "openai";
 import { getOllamaBaseUrl, getOllamaModel } from "@/server/aiSettings";
 import { ollamaRoot } from "@/server/integrations/ollama";
+import { extractJson, requestOptions } from "./util";
 import type {
   CardGenerationProvider,
   ConversationTurn,
@@ -74,40 +75,6 @@ export function ollamaApiRoot(explicit?: string): string {
 /** Where to reach Ollama, normalized to the OpenAI-compatible `/v1` root. */
 export function ollamaBaseUrl(explicit?: string): string {
   return `${ollamaApiRoot(explicit)}/v1`;
-}
-
-/**
- * Pull the first JSON object out of a model response. Local models often wrap JSON in
- * markdown fences or add a sentence of preamble, so we strip fences and, failing a clean
- * parse, fall back to the outermost {...} span before giving up.
- */
-function extractJson(text: string): string {
-  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  const body = (fenced ? fenced[1] : text).trim();
-  try {
-    JSON.parse(body);
-    return body;
-  } catch {
-    const start = body.indexOf("{");
-    const end = body.lastIndexOf("}");
-    if (start !== -1 && end > start) return body.slice(start, end + 1);
-    return body;
-  }
-}
-
-function requestOptions(options: GenerationRunOptions):
-  | {
-      signal?: AbortSignal;
-      timeout?: number;
-      maxRetries: 0;
-    }
-  | undefined {
-  if (!options.signal && options.timeoutMs == null) return undefined;
-  return {
-    ...(options.signal ? { signal: options.signal } : {}),
-    ...(options.timeoutMs != null ? { timeout: options.timeoutMs } : {}),
-    maxRetries: 0,
-  };
 }
 
 export class OllamaProvider implements CardGenerationProvider {

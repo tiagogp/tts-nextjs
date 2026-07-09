@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Rating, applyGrade, initialSrs, type SrsRecord } from "@/lib/srs/fsrs";
+import { Rating, applyGrade, initialSrs } from "@/lib/srs/fsrs";
 import type { Card } from "@/lib/cards/schema";
 import type { DueCard } from "./components/StudyCard";
 import { buildLightQueue, isSaturated } from "./sessionMode";

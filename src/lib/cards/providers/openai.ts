@@ -43,6 +43,7 @@ import {
   normalizeMined,
   type JsonRequest,
 } from "../shared";
+import { requestOptions } from "./util";
 
 export interface OpenAIProviderOptions {
   apiKey?: string;
@@ -58,21 +59,6 @@ export interface OpenAIProviderOptions {
 
 const DEFAULT_MODEL = "gpt-4o";
 const DEFAULT_EMBED_MODEL = "text-embedding-3-small";
-
-function requestOptions(options: GenerationRunOptions):
-  | {
-      signal?: AbortSignal;
-      timeout?: number;
-      maxRetries: 0;
-    }
-  | undefined {
-  if (!options.signal && options.timeoutMs == null) return undefined;
-  return {
-    ...(options.signal ? { signal: options.signal } : {}),
-    ...(options.timeoutMs != null ? { timeout: options.timeoutMs } : {}),
-    maxRetries: 0,
-  };
-}
 
 export class OpenAIProvider implements CardGenerationProvider {
   readonly kind: ProviderKind = "openai";

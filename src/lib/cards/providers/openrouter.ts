@@ -48,6 +48,7 @@ import {
   normalizeMined,
   type JsonRequest,
 } from "../shared";
+import { extractJson, requestOptions } from "./util";
 
 export interface OpenRouterProviderOptions {
   apiKey?: string;
@@ -61,41 +62,6 @@ export interface OpenRouterProviderOptions {
 
 const BASE_URL = "https://openrouter.ai/api/v1";
 const DEFAULT_MODEL = "openrouter/free";
-
-/**
- * Pull the first JSON object out of a model response. Many OpenRouter models (especially the
- * free ones `openrouter/free` routes to) wrap JSON in markdown fences or a sentence of preamble,
- * so we strip fences and, failing a clean parse, fall back to the outermost {...} span before
- * giving up.
- */
-function extractJson(text: string): string {
-  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  const body = (fenced ? fenced[1] : text).trim();
-  try {
-    JSON.parse(body);
-    return body;
-  } catch {
-    const start = body.indexOf("{");
-    const end = body.lastIndexOf("}");
-    if (start !== -1 && end > start) return body.slice(start, end + 1);
-    return body;
-  }
-}
-
-function requestOptions(options: GenerationRunOptions):
-  | {
-      signal?: AbortSignal;
-      timeout?: number;
-      maxRetries: 0;
-    }
-  | undefined {
-  if (!options.signal && options.timeoutMs == null) return undefined;
-  return {
-    ...(options.signal ? { signal: options.signal } : {}),
-    ...(options.timeoutMs != null ? { timeout: options.timeoutMs } : {}),
-    maxRetries: 0,
-  };
-}
 
 export class OpenRouterProvider implements CardGenerationProvider {
   readonly kind: ProviderKind = "openrouter";

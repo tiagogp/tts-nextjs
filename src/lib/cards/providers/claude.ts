@@ -47,6 +47,7 @@ import {
   normalizeMined,
   type JsonRequest,
 } from "../shared";
+import { requestOptions } from "./util";
 
 export interface ClaudeProviderOptions {
   apiKey?: string;
@@ -61,21 +62,6 @@ export interface ClaudeProviderOptions {
 }
 
 const DEFAULT_MODEL = "claude-opus-4-8";
-
-function requestOptions(options: GenerationRunOptions):
-  | {
-      signal?: AbortSignal;
-      timeout?: number;
-      maxRetries: 0;
-    }
-  | undefined {
-  if (!options.signal && options.timeoutMs == null) return undefined;
-  return {
-    ...(options.signal ? { signal: options.signal } : {}),
-    ...(options.timeoutMs != null ? { timeout: options.timeoutMs } : {}),
-    maxRetries: 0,
-  };
-}
 
 export class ClaudeProvider implements CardGenerationProvider {
   readonly kind: ProviderKind = "claude";
