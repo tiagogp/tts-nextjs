@@ -119,11 +119,6 @@
     "ast_hash": "b391b8851b2a1a310f7f6a07f13a9095",
     "semantic_hash": "b391b8851b2a1a310f7f6a07f13a9095"
   },
-  "make-download.sh": {
-    "mtime": 1782611935.1016214,
-    "ast_hash": "07ed363e8c7336f4ed24cafc6a6378fe",
-    "semantic_hash": "07ed363e8c7336f4ed24cafc6a6378fe"
-  },
   "native-audio/manifest.json": {
     "mtime": 1783290261.3473582,
     "ast_hash": "58e0494c51d30eb3494f7c9198986bb9",
@@ -135,19 +130,14 @@
     "semantic_hash": "83ec63d01c389d7b38dc4ea6a2aefb98"
   },
   "package.json": {
-    "mtime": 1783289811.8599038,
-    "ast_hash": "60d6b415f589c8082700635bb39c0317",
-    "semantic_hash": "60d6b415f589c8082700635bb39c0317"
+    "mtime": 1783650635.1684527,
+    "ast_hash": "5b9aca6cf2d721d9af2cdbaf5218b31b",
+    "semantic_hash": ""
   },
   "postcss.config.mjs": {
     "mtime": 1776426164.0440888,
     "ast_hash": "239f3ebf717465dc636818a1a619398d",
     "semantic_hash": "239f3ebf717465dc636818a1a619398d"
-  },
-  "run-electron.sh": {
-    "mtime": 1782219441.7585018,
-    "ast_hash": "6b4e2b7554d0b0e9ef5043055e5151ab",
-    "semantic_hash": "6b4e2b7554d0b0e9ef5043055e5151ab"
   },
   "scripts/build-demo-fixture.mjs": {
     "mtime": 1782623242.0491118,
@@ -1339,11 +1329,6 @@
     "ast_hash": "edc4b0cbd393f9fab89eaf54e3c586f0",
     "semantic_hash": "edc4b0cbd393f9fab89eaf54e3c586f0"
   },
-  "start.sh": {
-    "mtime": 1782219441.773728,
-    "ast_hash": "6b7da2baca807fa69452a1293d94dcb3",
-    "semantic_hash": "6b7da2baca807fa69452a1293d94dcb3"
-  },
   "tsconfig.json": {
     "mtime": 1776426164.044728,
     "ast_hash": "ee17fd1c97c735e9f3564e3f5251f125",
@@ -1440,9 +1425,9 @@
     "semantic_hash": "82efb97a359f5c7290bf2513d14686be"
   },
   "README.md": {
-    "mtime": 1783608608.9564388,
-    "ast_hash": "c77472034f66a7a56c997848d0a4bcf6",
-    "semantic_hash": "c77472034f66a7a56c997848d0a4bcf6"
+    "mtime": 1783651320.1359618,
+    "ast_hash": "470890493acee71d9d97d79324bcb9b8",
+    "semantic_hash": ""
   },
   "apps/landing/README.md": {
     "mtime": 1783546200.0519214,
@@ -1470,9 +1455,9 @@
     "semantic_hash": ""
   },
   "docs/project-structure.md": {
-    "mtime": 1783608602.5096817,
-    "ast_hash": "4499707d1117e46077b00850fe654221",
-    "semantic_hash": "4499707d1117e46077b00850fe654221"
+    "mtime": 1783650650.3889563,
+    "ast_hash": "cf3d855cf58a1e9f70ddbc0dea1fe651",
+    "semantic_hash": ""
   },
   "docs/validation-action-plan.md": {
     "mtime": 1783629661.9381983,
@@ -1637,6 +1622,21 @@
   "src/features/study/components/SessionSummary.test.ts": {
     "mtime": 1783629566.0818596,
     "ast_hash": "87f93a9cdc2d0c6f1ef54760902d9f37",
+    "semantic_hash": ""
+  },
+  "scripts/make-download.sh": {
+    "mtime": 1783650617.5970998,
+    "ast_hash": "2895f8cfb197d246585517feabc73d4e",
+    "semantic_hash": ""
+  },
+  "scripts/run-electron.sh": {
+    "mtime": 1783650618.8813386,
+    "ast_hash": "6350596c50908f35c2c4dee254990220",
+    "semantic_hash": ""
+  },
+  "scripts/start.sh": {
+    "mtime": 1783650620.621193,
+    "ast_hash": "9d54b0261f961e1414317cb00ab9aafc",
     "semantic_hash": ""
   }
 }

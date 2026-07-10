@@ -1,16 +1,16 @@
 # Graph Report - text-to-speech  (2026-07-09)
 
 ## Corpus Check
-- 315 files · ~655,552 words
+- 315 files · ~655,675 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 2268 nodes · 5711 edges · 232 communities (109 shown, 123 thin omitted)
+- 2269 nodes · 5713 edges · 238 communities (112 shown, 126 thin omitted)
 - Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 115 edges (avg confidence: 0.71)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `27197b3a`
+- Built from commit: `38754f8e`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -85,8 +85,8 @@
 - Native Audio Clip Docs
 - Electron Preload Bridge
 - Demo Fixture Builder
-- APKG Extraction Script
-- SettingsScreen.tsx
+- schema.ts
+- useUnlockedTabs.ts
 - Landing Hero Imagery
 - Package Metadata
 - App Context Providers
@@ -106,7 +106,7 @@
 - Activation Event Model
 - Learning Plan Docs
 - Loading Splash Screen
-- Electron Run Script
+- ollama.ts
 - Ollama Models Hook
 - Graphify Usage Rules
 - Landing ESLint Config
@@ -122,7 +122,7 @@
 - Globe Icon Asset
 - Vercel Logo Asset
 - Apple Touch Icon
-- Start Script
+- orientation.ts
 - Next.js Logo Asset
 - Pluggable Providers Note
 - validation-action-plan.md
@@ -237,12 +237,18 @@
 - Native Source Audio Differentiator
 - YouTube Audio Import Pipeline (yt-dlp + whisper.cpp)
 - PronunciationCoach.tsx
-- openrouter.ts
-- useUnlockedTabs.ts
+- repository.backup.test.ts
+- ExposureMeter.tsx
 - dedupe.ts
-- languages.ts
+- extract-apkg-json.mjs
+- OpenAIProvider
+- useStudySession.ts
+- AppProviders.tsx
 - MemoryStorage
 - W5 Follow-Up Messages
+- W5 Recruiting Message
+- YourSection.tsx
+- W5 Capture Table
 
 ## God Nodes (most connected - your core abstractions)
 1. `cn()` - 58 edges
@@ -279,99 +285,99 @@
 - **Waveform, Document, and Correction Arrow Form the Brand Mark** — public_logo_audio_waveform_motif, public_logo_document_motif, public_logo_correction_arrow_motif, public_logo_applogo [EXTRACTED 1.00]
 - **Waveform, Document, and Conversion Concept Form the App Brand Mark** — src_app_icon_appicon, src_app_icon_audio_waveform, src_app_icon_text_document, src_app_icon_speech_text_conversion [INFERRED 0.85]
 
-## Communities (232 total, 123 thin omitted)
+## Communities (238 total, 126 thin omitted)
 
 ### Community 0 - "Study Plan Adaptation"
 Cohesion: 0.06
-Nodes (63): AdaptationKind, AdaptationSuggestion, evaluateAdaptation(), PlanOnboardingProps, PlanTaskRow(), AVAILABILITY_OPTIONS, CALENDAR_STATUS_DOT, CALENDAR_STATUS_RING (+55 more)
+Nodes (61): AdaptationKind, AdaptationSuggestion, evaluateAdaptation(), PlanOnboardingProps, PlanTaskRow(), AVAILABILITY_OPTIONS, CALENDAR_STATUS_DOT, CALENDAR_STATUS_RING (+53 more)
 
 ### Community 1 - "Demo Fixture Data"
-Cohesion: 0.24
-Nodes (15): ENGLISH_LEVELS, clampGoal(), completeOnboarding(), getLearningProfile(), isEnglishLevel(), isOnboardingComplete(), LearningTrack, levelOrDefault() (+7 more)
+Cohesion: 0.21
+Nodes (9): ConversationTurn, ConverseOptions, GenerationRunOptions, ClaudeProvider, ClaudeProviderOptions, requestOptions(), buildConverseSystem(), cefrLanguageLine() (+1 more)
 
 ### Community 2 - "Shared Feature UI Widgets"
-Cohesion: 0.12
-Nodes (24): sendConversationTurn(), synthesizeSpeech(), ConverseTab(), formatWhen(), TurnBubble(), CONVERSATION_LEVELS, CONVERSATION_SCENARIOS, ConversationLevel (+16 more)
+Cohesion: 0.09
+Nodes (39): ProviderBadge(), ProviderBadgeProps, Segmented(), SegmentedOption, SegmentedProps, basename(), DeckPreview(), DeckPreviewProps (+31 more)
 
 ### Community 3 - "First-Run Activation"
-Cohesion: 0.08
-Nodes (36): ActivationTiming, FirstRunActivation, FirstRunActivationSource, getStorage(), markFirstRunPhrasesSaved(), markFirstRunReviewCompleted(), read(), startFirstRunActivation() (+28 more)
+Cohesion: 0.07
+Nodes (40): ActivationTiming, FirstRunActivation, FirstRunActivationSource, getStorage(), markFirstRunPhrasesSaved(), markFirstRunReviewCompleted(), read(), startFirstRunActivation() (+32 more)
 
 ### Community 4 - "Learn Audio Generation Script"
 Cohesion: 0.09
 Nodes (41): args, buildCoverage(), collectNativeRecordings(), createTts(), currentPath, dataDir(), defaultNativeDir, defaultPublicDir (+33 more)
 
 ### Community 6 - "App Layout & AI Settings"
-Cohesion: 0.20
-Nodes (15): browserDownloadApkg(), saveApkg(), AiSettingsProvider(), AiSettingsValue, bridge(), Context, EMPTY_SETTINGS, getAiSettingsBridge() (+7 more)
+Cohesion: 0.24
+Nodes (15): ProviderSelection, AiSettingsProvider(), AiSettingsValue, bridge(), Context, EMPTY_SETTINGS, ProviderKind, AiConnectionState (+7 more)
 
 ### Community 7 - "Electron Main Process"
 Cohesion: 0.07
 Nodes (39): AI_SETTINGS_FALLBACK_FILE, APKG_DEBUG_LOG_FILE, { app, BrowserWindow, ipcMain, Menu, shell, utilityProcess }, APP_ICON_PNG, boot(), children, clearOwnQuarantine(), crypto (+31 more)
 
 ### Community 8 - "Local Store Repository"
-Cohesion: 0.09
-Nodes (47): SettingsScreen(), statusLabel(), subscribeToProfile(), clearAll(), count(), countFromIndex(), del(), get() (+39 more)
+Cohesion: 0.13
+Nodes (34): clearAll(), count(), countFromIndex(), del(), get(), getAll(), getAllFromIndex(), getMany() (+26 more)
 
 ### Community 9 - "Landing Site UI"
-Cohesion: 0.06
-Nodes (33): AsciiLoop(), buildTrack(), Cell, COMET, COMET_HEAD, renderFrame(), appStageStyle, cardHover (+25 more)
+Cohesion: 0.07
+Nodes (25): appStageStyle, cardHover, ctaReveal, darkPatternStyle, demoCards, demoDiscoverResult, demoFetchResponse(), demoStreamResponse() (+17 more)
 
 ### Community 10 - "Home Page Shell"
-Cohesion: 0.15
-Nodes (21): HomeContent(), Overlay, recommendedLessonId(), resolveLessonId(), useDockDueBadge(), LEVEL_RANK, EnglishLevel, HojeHome() (+13 more)
+Cohesion: 0.14
+Nodes (22): HomeContent(), Overlay, recommendedLessonId(), resolveLessonId(), useDockDueBadge(), LEVEL_RANK, HojeHome(), HojeHomeProps (+14 more)
 
 ### Community 11 - "Study Transcript Review"
 Cohesion: 0.04
 Nodes (45): 1. What this is, 2. The card pipeline — architecture, 3. Card pipeline — build status, 4. Pre-launch TODO, 5. Conversation practice — shipped, 6. Structured 90-day learning plan — shipped, Active product priority, Activity log (camada nova necessária) (+37 more)
 
 ### Community 12 - "Speech Input UI"
-Cohesion: 0.12
-Nodes (24): Button, ButtonProps, buttonVariants, Chip, ChipProps, FieldProps, Input, Textarea (+16 more)
+Cohesion: 0.17
+Nodes (19): Button, Notice(), NoticeProps, toneClass, evaluateCorrectionText(), LessonViewContent(), resultForLesson(), waitForAudioEvent() (+11 more)
 
 ### Community 13 - "AI Settings API"
 Cohesion: 0.15
-Nodes (26): PROVIDER_FALLBACK_LABELS, GET(), GET(), GET(), LABELS, PATCH(), POST(), ollamaApiRoot() (+18 more)
+Nodes (25): PROVIDER_FALLBACK_LABELS, GET(), GET(), GET(), LABELS, PATCH(), POST(), ollamaApiRoot() (+17 more)
 
 ### Community 14 - "Native Audio Decoding"
-Cohesion: 0.12
-Nodes (22): BRACKETED_NON_SPEECH_RE, collapseWhisperOverlaps(), createAsync(), GeneratedAudio, getTts(), NON_SPEECH_MARKER, normalizeKey(), normalizeWhisper() (+14 more)
+Cohesion: 0.11
+Nodes (31): decodeAudio(), DecodedAudio, mono(), resample(), sliceAudio(), sliceDecodedAudio(), wav(), assessPronunciation() (+23 more)
 
 ### Community 15 - "Ingestion API Routes"
-Cohesion: 0.17
-Nodes (17): POST(), safeLevel(), safeSourceKind(), toSegment(), clamp(), extractLinesFromJson(), normalizeLines(), POST() (+9 more)
+Cohesion: 0.21
+Nodes (14): clamp(), extractLinesFromJson(), normalizeLines(), POST(), PublicRouteError, runtimeErrorMessage(), safeSpeed(), safeVoice() (+6 more)
 
 ### Community 16 - "Local Server Routes"
-Cohesion: 0.14
-Nodes (34): error(), audioPathFor(), ensureKokoroModel(), ensureOnce(), ensureWhisperModel(), kokoroInstalled(), modelStatus, whisperInstalled() (+26 more)
+Cohesion: 0.15
+Nodes (32): error(), audioPathFor(), kokoroInstalled(), modelStatus, whisperInstalled(), ANY_ROUTES, dispatch(), handleAnkiApkg() (+24 more)
 
 ### Community 17 - "Card API Integration Tests"
-Cohesion: 0.11
-Nodes (13): generateDeck, localJson, localRequest, NaturalnessReviewProps, phraseSource, AdvancedReview, AdvancedReviewSummary, CardSourceRef (+5 more)
+Cohesion: 0.17
+Nodes (15): Embedder, abortError(), CardGenerationProvider, debug(), generateDeck(), generateVettedCards(), isAbortError(), isSourceGrounded() (+7 more)
 
 ### Community 18 - "Discover & Provider Selection"
-Cohesion: 0.15
-Nodes (17): Segmented(), SegmentedOption, SegmentedProps, SourcePicker(), SourcePickerProps, formatTime(), SegmentRow(), SegmentRowProps (+9 more)
+Cohesion: 0.13
+Nodes (24): DeckGeneration, DeckGenerationOptions, GenerationStage, useDeckGeneration(), curateDiscoverSegments(), extractDiscoverSource(), generateDiscoverDeck(), clipPathForSegment() (+16 more)
 
 ### Community 19 - "UI Primitives & Motion Tokens"
-Cohesion: 0.18
-Nodes (19): Card(), CardProps, BandGateNote(), CyclePicker(), MethodCoach(), Performance, PerformanceStats(), Retention (+11 more)
+Cohesion: 0.12
+Nodes (26): Card(), CardProps, isLevelAtLeast(), BandGateNote(), CyclePicker(), MethodCoach(), Performance, PerformanceStats() (+18 more)
 
 ### Community 20 - "W5 Decision-Gate Scorer"
 Cohesion: 0.14
 Nodes (29): countTrue(), currentPath, formatCount(), formatDuration(), formatPercent(), GATE_DEFS, isSeparatorRow(), isTemplateRow() (+21 more)
 
 ### Community 21 - "Plan Generation API"
-Cohesion: 0.15
-Nodes (34): POST(), POST(), cardProviderKind(), POST(), POST(), conversationProviderKind(), parseTurns(), POST() (+26 more)
+Cohesion: 0.25
+Nodes (26): POST(), POST(), cardProviderKind(), combinedSignal(), readExportError(), timeoutError(), POST(), POST() (+18 more)
 
 ### Community 22 - "SRS Analytics Dashboard"
-Cohesion: 0.16
-Nodes (15): computePerformance(), computeReturnAfterMiss(), computeWeeklyActivity(), dayIndex(), dayKey(), detectWeaknesses(), group(), PerformanceStats (+7 more)
+Cohesion: 0.17
+Nodes (14): computeReturnAfterMiss(), computeWeeklyActivity(), dayIndex(), dayKey(), detectWeaknesses(), group(), PerformanceStats, productionTrend() (+6 more)
 
 ### Community 23 - "Package Dependencies"
-Cohesion: 0.05
-Nodes (37): dependencies, ankipack, @anthropic-ai/sdk, audio-decode, class-variance-authority, clsx, csv-parse, jszip (+29 more)
+Cohesion: 0.07
+Nodes (28): dependencies, ankipack, @anthropic-ai/sdk, audio-decode, class-variance-authority, clsx, csv-parse, @kutalia/whisper-node-addon (+20 more)
 
 ### Community 24 - "Card Export API"
 Cohesion: 0.07
@@ -379,59 +385,59 @@ Nodes (25): Aggressive Escalation Triggers, Guidelines, Operating Posture, Part 
 
 ### Community 25 - "APKG Export Handling"
 Cohesion: 0.14
-Nodes (27): RFC-5987, RFC-6266, ApkgErrorPayload, csvEscapeCell(), isProbablyJsonUpload(), isTimeoutOrAbort(), jsonToCsvBytes(), jsonToCsvBytesFromParsed() (+19 more)
+Nodes (25): RFC-5987, RFC-6266, ApkgErrorPayload, csvEscapeCell(), isProbablyJsonUpload(), isTimeoutOrAbort(), jsonToCsvBytes(), jsonToCsvBytesFromParsed() (+17 more)
 
 ### Community 26 - "Anki Deck Builder"
-Cohesion: 0.16
-Nodes (25): abortError(), basicModel(), buildCardsDeck(), buildCsvDeck(), cardModel(), column(), digestAlgorithmName(), digestData() (+17 more)
+Cohesion: 0.15
+Nodes (26): jszip, abortError(), basicModel(), buildCardsDeck(), buildCsvDeck(), cardModel(), column(), digestAlgorithmName() (+18 more)
 
 ### Community 27 - "Correction Input Forms"
-Cohesion: 0.15
-Nodes (20): ManualEntryForm(), ManualEntryFormProps, CORRECTION_ERROR_TYPES, CORRECTION_INPUT_OPTIONS, CorrectionDraft, CorrectionInputMode, ERROR_TYPE_SET, newDraft() (+12 more)
+Cohesion: 0.08
+Nodes (44): ManualEntryForm(), ManualEntryFormProps, CORRECTION_ERROR_TYPES, CORRECTION_INPUT_OPTIONS, CorrectionDraft, CorrectionInputMode, ERROR_TYPE_SET, newDraft() (+36 more)
 
 ### Community 28 - "Card Prompt Builders"
-Cohesion: 0.15
-Nodes (10): CorrectOptions, DeckResult, GenerationRunOptions, ClaudeProvider, OllamaProvider, OpenAIProvider, OpenRouterProvider, requestOptions() (+2 more)
+Cohesion: 0.11
+Nodes (24): AdvancedReviewResult, buildCorrectRequest(), buildCritiqueRequest(), buildGenerateRequest(), CEFR_LANGUAGE_PROFILE, coerceErrorType(), CorrectedError, CorrectResult (+16 more)
 
 ### Community 29 - "SRS Cycle Planner"
-Cohesion: 0.13
-Nodes (17): CycleInputs, CycleOption, CyclePlan, deriveCyclePlan(), minutesLabel(), weighted(), Skill, clamp01() (+9 more)
+Cohesion: 0.12
+Nodes (18): CycleInputs, CycleOption, CyclePath, CyclePlan, deriveCyclePlan(), minutesLabel(), weighted(), Skill (+10 more)
 
 ### Community 30 - "Runtime Status API"
-Cohesion: 0.13
+Cohesion: 0.14
 Nodes (16): GET(), GET(), POST(), POST(), safeLang(), POST(), POST(), formText() (+8 more)
 
 ### Community 31 - "Native Data Directories"
-Cohesion: 0.19
-Nodes (18): DELETE(), GET(), dataDir(), discoverCacheDir(), linuxDataDirs(), modelDirs(), modelsDir(), active (+10 more)
+Cohesion: 0.16
+Nodes (21): DELETE(), GET(), dataDir(), discoverCacheDir(), linuxDataDirs(), modelDirs(), modelsDir(), active (+13 more)
 
 ### Community 32 - "Landing Package Config"
 Cohesion: 0.08
 Nodes (23): dependencies, motion, next, next-themes, react, react-dom, devDependencies, eslint (+15 more)
 
 ### Community 33 - "Progress Scoring Model"
-Cohesion: 0.19
-Nodes (23): activeDayCount(), avg(), buildMilestones(), clampScore(), computeProgressSnapshot(), confidenceFor(), errorTrend(), estimatedBand() (+15 more)
+Cohesion: 0.17
+Nodes (15): POST(), safeLevel(), safeSourceKind(), toSegment(), ABORT_NAMES, causeCode(), classifyProviderFailure(), CONNECTION_CODES (+7 more)
 
 ### Community 34 - "Study Session Modes"
-Cohesion: 0.20
-Nodes (15): buildLightQueue(), hasAudio(), SessionMode, card(), freshCard(), stableCard(), applyGrade(), deserialize() (+7 more)
+Cohesion: 0.18
+Nodes (9): DeckGenerationResult, phraseSource, DeckResult, ollamaBaseUrl(), OllamaProvider, Card, CardSource, Critique (+1 more)
 
 ### Community 35 - "Provider Selection Constants"
-Cohesion: 0.24
-Nodes (21): endOfTomorrowLocal(), ProgressOverview(), fatigueByCard(), isSaturated(), loadOrderedDueQueue(), loadStudySnapshot(), orderDue(), useStudySession() (+13 more)
+Cohesion: 0.29
+Nodes (12): ProgressOverview(), loadOrderedDueQueue(), loadStudySnapshot(), useStudySession(), getCardsWithSrs(), getConversations(), getDueCards(), getProgressAssessments() (+4 more)
 
 ### Community 36 - "Landing TypeScript Config"
 Cohesion: 0.10
 Nodes (19): compilerOptions, allowJs, esModuleInterop, incremental, isolatedModules, jsx, lib, module (+11 more)
 
 ### Community 37 - "Electron Builder Config"
-Cohesion: 0.14
-Nodes (14): build, appId, dmg, extraResources, files, nsis, productName, win (+6 more)
+Cohesion: 0.10
+Nodes (20): build, appId, dmg, extraResources, files, mac, nsis, productName (+12 more)
 
 ### Community 38 - "Ollama Card Provider"
-Cohesion: 0.11
-Nodes (22): steps, AppHeader(), emptySubscribe(), useIsClient(), useTheme(), Disclosure(), DisclosureProps, IconButton (+14 more)
+Cohesion: 0.08
+Nodes (41): ButtonProps, buttonVariants, Chip, ChipProps, Disclosure(), DisclosureProps, Field(), FieldProps (+33 more)
 
 ### Community 39 - "Root TypeScript Config"
 Cohesion: 0.10
@@ -446,72 +452,68 @@ Cohesion: 0.11
 Nodes (18): scripts, app, app:dist, app:download, app:linux, app:windows, build, dev (+10 more)
 
 ### Community 42 - "Card Deck Preview UI"
-Cohesion: 0.12
-Nodes (31): basename(), DeckPreview(), DeckPreviewProps, ProviderPicker(), Selection, ankiConnect(), browserDownload(), csvCell() (+23 more)
+Cohesion: 0.24
+Nodes (15): card(), freshCard(), stableCard(), bandGateMetrics, applyGrade(), deserialize(), formatInterval(), GRADE_LABELS (+7 more)
 
 ### Community 43 - "CEFR Band Gating"
 Cohesion: 0.08
 Nodes (24): 1. Visual Theme & Atmosphere, 2. Color Palette & Roles, 3. Typography Rules, 4. Component Stylings, 5. Layout Principles, 6. Depth & Elevation, 7. Do's and Don'ts, 8. Responsive Behavior (+16 more)
 
 ### Community 44 - "IndexedDB Access Layer"
-Cohesion: 0.18
-Nodes (13): isLevelAtLeast(), GOAL_OPTIONS, OnboardingDialog(), Step, STEPS, subscribe(), resolveInterfaceLang(), UiLang (+5 more)
+Cohesion: 0.10
+Nodes (36): Modal(), Select(), SelectOption, SelectProps, ENGLISH_LEVELS, defaultTargetLevel(), levelIndex(), PlanOnboarding() (+28 more)
 
 ### Community 45 - "Content Discovery Pipeline"
 Cohesion: 0.23
 Nodes (16): dedupeSegments(), discoverArticle(), discoverPdf(), DiscoverResult, discoverYouTube(), downloadedAudio(), execFileAsync, ffmpegDir() (+8 more)
 
 ### Community 47 - "Pronunciation Practice UI"
-Cohesion: 0.16
-Nodes (9): Scoring Notes, Segment Labels, W5 Capture Table, Consent Log, Script, W5 Consent Script, DM / Community Post, Screening Rules (+1 more)
+Cohesion: 0.23
+Nodes (3): Consent Log, Script, W5 Consent Script
 
 ### Community 48 - "Conversation Providers"
-Cohesion: 0.11
-Nodes (25): AdvancedReviewResult, buildAdvancedReviewRequest(), buildCritiqueRequest(), buildGenerateRequest(), CEFR_LANGUAGE_PROFILE, cefrLanguageLine(), coerceErrorType(), CorrectedError (+17 more)
+Cohesion: 0.36
+Nodes (9): build_linux_download(), build_macos_download(), build_windows_download(), clean_macos_install(), clean_to_artifact(), install_linux_appimage(), kokoro_is_ready(), remove_path_if_exists() (+1 more)
 
 ### Community 49 - "Dev Dependencies"
 Cohesion: 0.13
 Nodes (15): devDependencies, electron, electron-builder, eslint, eslint-config-next, fake-indexeddb, tailwindcss, @tailwindcss/postcss (+7 more)
 
 ### Community 50 - "Audio Player & History"
-Cohesion: 0.12
-Nodes (19): AudioPlayer(), AudioPlayerProps, ENGINE_LABELS, HistoryItem(), HistoryItemProps, HistoryPanelProps, VOICE_LABELS, SpeechTab() (+11 more)
+Cohesion: 0.20
+Nodes (10): AudioPlayer(), AudioPlayerProps, ENGINE_LABELS, HistoryItem(), HistoryItemProps, HistoryPanelProps, VOICE_LABELS, AudioState (+2 more)
 
 ### Community 51 - "Progress Model Tests"
-Cohesion: 0.18
-Nodes (11): ProgressData, ProgressInput, StoredProgressAssessment, attempt(), NOW, StudySnapshot, PronunciationAssessment, PronunciationAttempt (+3 more)
+Cohesion: 0.15
+Nodes (22): ProgressData, ProgressInput, NOW, BandQueueResult, fatigueByCard(), orderDueQueue(), adoptLog(), due() (+14 more)
 
 ### Community 52 - "Study Card Scaffolding"
-Cohesion: 0.19
-Nodes (19): SessionResult, SessionSummary(), summarize(), line(), t(), tomorrowLine(), TomorrowPreview, ScaffoldControls() (+11 more)
+Cohesion: 0.21
+Nodes (16): SessionResult, SessionSummary(), summarize(), line(), t(), tomorrowLine(), TomorrowPreview, ScaffoldControls() (+8 more)
 
 ### Community 53 - "Card Language Orientation"
-Cohesion: 0.30
-Nodes (14): containsPortugueseAccent(), ENGLISH_MARKERS, isLikelyEnglish(), isLikelyPortuguese(), normalized(), orientCardsForTargetFront(), PORTUGUESE_MARKERS, sameOrContainedInTarget() (+6 more)
+Cohesion: 0.43
+Nodes (6): AsciiLoop(), buildTrack(), Cell, COMET, COMET_HEAD, renderFrame()
 
 ### Community 54 - "Lesson View UI"
-Cohesion: 0.12
-Nodes (27): Label(), Modal(), Notice(), NoticeProps, toneClass, Select(), SelectOption, SelectProps (+19 more)
+Cohesion: 0.21
+Nodes (8): Input, IconButton, IconButtonProps, StatusPill(), StatusPillProps, toneClass, PROVIDER_COPY, StatusTone
 
 ### Community 55 - "Pronunciation Scoring"
 Cohesion: 0.27
 Nodes (12): alignWords(), assessPronunciationText(), clampScore(), CONTRACTIONS, editDistance(), escapeRegExp(), fluencyScore(), normalizePronunciationWords() (+4 more)
 
 ### Community 56 - "OpenAI Card Provider"
-Cohesion: 0.12
-Nodes (26): BandQueueResult, orderDueQueue(), adoptLog(), due(), NOW, NOW_MS, review(), srs() (+18 more)
+Cohesion: 0.21
+Nodes (13): BandVerdict, CardLike, clamp01(), gateVerdict(), orderByBand(), scoreCard(), simulateBandGate(), targetRecall() (+5 more)
 
 ### Community 57 - "Fatigue-Aware Band Queue"
 Cohesion: 0.11
 Nodes (17): Animation Vocabulary, Easing — how speed changes over an animation, Entrances & Exits — how elements appear and disappear, Examples, Feedback & Interaction — responding to the user's actions, Glossary, Instructions, Looping & Ambient Motion — animations that run on their own (+9 more)
 
 ### Community 58 - "Theme Generation API"
-Cohesion: 0.16
-Nodes (22): POST(), ExportErrorPayload, combinedSignal(), fallbackThemePhrases(), linesFromText(), parseThemePhraseCount(), readExportError(), timeoutError() (+14 more)
-
-### Community 59 - "Installer Build Script"
-Cohesion: 0.36
-Nodes (9): build_linux_download(), build_macos_download(), build_windows_download(), clean_macos_install(), clean_to_artifact(), install_linux_appimage(), kokoro_is_ready(), remove_path_if_exists() (+1 more)
+Cohesion: 0.19
+Nodes (17): POST(), ExportErrorPayload, fallbackThemePhrases(), linesFromText(), parseThemePhraseCount(), uniquePhrases(), POST(), planProviderKind() (+9 more)
 
 ### Community 60 - "Turborepo Config"
 Cohesion: 0.18
@@ -520,14 +522,6 @@ Nodes (10): turbo, dependsOn, outputs, cache, persistent, $schema, tasks, build 
 ### Community 61 - "Progress Overview UI"
 Cohesion: 0.13
 Nodes (15): Decision work, Demand test (parallel — this is the only test for the platform×market risk), Implementation support, Implementation support, Out of scope until further notice, Own-source reliability (do during recruiting downtime), Phase 0 — Feature Freeze (immediate), Phase 1 — W5 Blockers (week 1) (+7 more)
-
-### Community 62 - "Semantic Card Dedup"
-Cohesion: 0.33
-Nodes (7): ExposureMeter(), ZONE, exposureZone, getWeeklyGoal(), setWeeklyGoal(), subscribeWeeklyGoal(), WeeklyActivity
-
-### Community 63 - "Claude Card Provider"
-Cohesion: 0.16
-Nodes (16): Embedder, abortError(), CardGenerationProvider, debug(), generateDeck(), generateVettedCards(), isAbortError(), isSourceGrounded() (+8 more)
 
 ### Community 64 - "C1 Phase Proposal"
 Cohesion: 0.17
@@ -541,13 +535,13 @@ Nodes (26): Arquitetura Resumida, Avancados, Ciclo Adaptativo Shipped, Critica D
 Cohesion: 0.25
 Nodes (8): baseUrl, here, LESSONS_JSON, main(), OUT_DIR, PHRASES_JSON, root, synth()
 
-### Community 70 - "APKG Extraction Script"
-Cohesion: 0.23
-Nodes (14): ConversationTurn, ConverseOptions, ClaudeProviderOptions, OllamaProviderOptions, OpenAIProviderOptions, extractJson(), buildConverseSystem(), buildCorrectRequest() (+6 more)
-
-### Community 71 - "SettingsScreen.tsx"
+### Community 70 - "schema.ts"
 Cohesion: 0.15
-Nodes (13): Field(), ProviderBadge(), ProviderBadgeProps, StatusPill(), StatusPillProps, toneClass, PROVIDER_COPY, StatusTone (+5 more)
+Nodes (11): generateDeck, localJson, localRequest, NaturalnessReviewProps, AdvancedReviewSummary, CardSourceRef, ContentSource, CritiqueVerdict (+3 more)
+
+### Community 71 - "useUnlockedTabs.ts"
+Cohesion: 0.21
+Nodes (14): HOME_TABS, HomeTab, computeUnlockedTabTier(), highestNewTab(), tabsForUnlockTier(), UnlockSignals, useUnlockedTabs(), cardMatchesWeakness() (+6 more)
 
 ### Community 72 - "Landing Hero Imagery"
 Cohesion: 0.43
@@ -558,8 +552,8 @@ Cohesion: 0.25
 Nodes (7): desktopName, main, name, packageManager, private, version, workspaces
 
 ### Community 74 - "App Context Providers"
-Cohesion: 0.33
-Nodes (5): AppProviders(), TtsSettingsProvider(), I18nProvider(), subscribe(), useInterfaceLang()
+Cohesion: 0.31
+Nodes (9): SpeechTab(), Ctx, KOKORO_VOICE_OPTIONS, KokoroVoice, toKokoroVoice(), TtsSettings, useTtsSettings(), responseError() (+1 more)
 
 ### Community 75 - "Sync Opt-In Illustration"
 Cohesion: 0.43
@@ -570,8 +564,8 @@ Cohesion: 0.52
 Nodes (7): Calm Landscape Motif (sun over hills in circular frame, muted warm palette), Flowing Data Streams (orange, blue, green curved lines with node dots), Knowledge Graph Card (rightmost card showing a connected node diagram), Landing Hero Illustration: Data-to-Cards Pipeline, Input Sources (database cylinders, keypad device, raw sphere), Structured Output Cards (four content cards with text lines and highlights), Processing Engine (dark device with glowing orange core)
 
 ### Community 77 - "Positioning & Structure Docs"
-Cohesion: 0.14
-Nodes (14): Advanced AI Providers, Advanced Anki Export, Building the macOS app, Distributing the app, Features, Head to head, PhraseLoop, Phrases (YouTube → transcript → review) (+6 more)
+Cohesion: 0.13
+Nodes (15): Advanced AI Providers, Advanced Anki Export, Building the macOS app, Deploying to Vercel, Distributing the app, Features, Head to head, PhraseLoop (+7 more)
 
 ### Community 79 - "Waitlist Demand Test"
 Cohesion: 0.29
@@ -609,12 +603,20 @@ Nodes (12): Capture Template: One Row Per Participant, Decision Notes, Event Mod
 Cohesion: 0.67
 Nodes (3): Electron Loading Splash Screen, renderNextStatus, window.setStatus
 
+### Community 91 - "ollama.ts"
+Cohesion: 0.19
+Nodes (9): OllamaProviderOptions, OpenRouterProvider, extractJson(), AdvancedReview, buildAdvancedReviewRequest(), JsonRequest, normalizeAdvancedReview(), normalizeCorrected() (+1 more)
+
 ### Community 92 - "Ollama Models Hook"
-Cohesion: 0.38
-Nodes (9): decodeAudio(), DecodedAudio, mono(), resample(), sliceAudio(), sliceDecodedAudio(), wav(), assessPronunciation() (+1 more)
+Cohesion: 0.34
+Nodes (8): ThemeResponse, OpenAIProviderOptions, OpenRouterProviderOptions, DiscoveryRequest, PhraseCandidate, TranscriptSegment, buildMineRequest(), normalizeMined()
+
+### Community 109 - "orientation.ts"
+Cohesion: 0.30
+Nodes (14): containsPortugueseAccent(), ENGLISH_MARKERS, isLikelyEnglish(), isLikelyPortuguese(), normalized(), orientCardsForTargetFront(), PORTUGUESE_MARKERS, sameOrContainedInTarget() (+6 more)
 
 ### Community 114 - "validation-action-plan.md"
-Cohesion: 0.25
+Cohesion: 0.50
 Nodes (3): How to add a recording, native-audio — real native-speaker recordings, The first-run gate (what W5 needs)
 
 ### Community 115 - "graphify reference: extra exports and benchmark"
@@ -626,8 +628,8 @@ Cohesion: 0.22
 Nodes (9): Current App Boundaries, Desktop App, Feature Modules, Landing App, Organization Priorities, PhraseLoop Project Structure, Runtime Shape, Source Directory Rules (+1 more)
 
 ### Community 117 - "AsciiLoop.tsx"
-Cohesion: 0.16
-Nodes (13): fontVariables, metadata, fontVariables, metadata, getStoredTheme(), getSystemTheme(), isTheme(), subscribeStoredTheme() (+5 more)
+Cohesion: 0.10
+Nodes (23): fontVariables, metadata, fontVariables, metadata, AppHeader(), AppHeaderProps, emptySubscribe(), useIsClient() (+15 more)
 
 ### Community 118 - "demoFixture.ts"
 Cohesion: 0.43
@@ -654,8 +656,8 @@ Cohesion: 0.33
 Nodes (6): After The Session, Before The Session, Handover, Observe The Unaided Loop, Questions After The Loop, W5 Moderator Run-Sheet
 
 ### Community 124 - "mac"
-Cohesion: 0.33
-Nodes (6): mac, category, icon, identity, minimumSystemVersion, target
+Cohesion: 0.27
+Nodes (10): synthesizeSpeech(), attempt(), assessPronunciation(), PronunciationCoach(), PronunciationCoachProps, Score(), scoreTone(), wordClass() (+2 more)
 
 ### Community 125 - "AGENTS.md"
 Cohesion: 0.50
@@ -674,32 +676,48 @@ Cohesion: 0.50
 Nodes (3): For --cluster-only, For --update (incremental re-extraction), graphify reference: incremental update and cluster-only
 
 ### Community 129 - "page.tsx"
-Cohesion: 0.22
-Nodes (9): DueCardLike, localDayIndex(), mistakeCardStats(), ReturnMoment, returnMomentFor(), NOW, TWO_DAYS_AGO, WEEK_AGO (+1 more)
+Cohesion: 0.21
+Nodes (10): DueCardLike, endOfTomorrowLocal(), localDayIndex(), mistakeCardStats(), ReturnMoment, returnMomentFor(), NOW, TWO_DAYS_AGO (+2 more)
 
 ### Community 225 - "PronunciationCoach.tsx"
-Cohesion: 0.28
-Nodes (10): adaptProviderKind(), POST(), PLAN_TASK_TYPES, extractJsonObject(), GeneratedDay, GeneratedTask, validateGeneratedDays(), validatePlanResult() (+2 more)
+Cohesion: 0.23
+Nodes (12): adaptProviderKind(), PLAN_TASK_TYPES, extractJsonObject(), GeneratedDay, GeneratedTask, validateGeneratedDays(), validatePlanResult(), validateTask() (+4 more)
 
-### Community 226 - "openrouter.ts"
-Cohesion: 0.38
-Nodes (7): ThemeResponse, OpenRouterProviderOptions, DiscoveryRequest, PhraseCandidate, TranscriptSegment, buildMineRequest(), normalizeMined()
+### Community 226 - "repository.backup.test.ts"
+Cohesion: 0.22
+Nodes (9): SettingsScreen(), statusLabel(), subscribeToProfile(), emptyBackupCounts(), exportLocalBackup(), isRecord(), restoreLocalBackup(), validateLocalBackup() (+1 more)
 
-### Community 227 - "useUnlockedTabs.ts"
-Cohesion: 0.31
-Nodes (8): AppHeaderProps, HOME_TABS, HomeTab, computeUnlockedTabTier(), highestNewTab(), tabsForUnlockTier(), UnlockSignals, useUnlockedTabs()
+### Community 227 - "ExposureMeter.tsx"
+Cohesion: 0.33
+Nodes (7): ExposureMeter(), ZONE, exposureZone, getWeeklyGoal(), setWeeklyGoal(), subscribeWeeklyGoal(), WeeklyActivity
 
 ### Community 228 - "dedupe.ts"
 Cohesion: 0.33
 Nodes (10): contentHash(), cosine(), dedupeCards(), embeddingCache, embedWithCache(), fingerprint(), isAbortError(), lexicalVectors() (+2 more)
 
-### Community 229 - "languages.ts"
-Cohesion: 0.33
-Nodes (8): isLanguageCode(), isNativeLanguageCode(), isTargetLanguageCode(), Language, languageLabel(), LANGUAGES, NATIVE_LANGUAGES, TARGET_LANGUAGES
+### Community 229 - "extract-apkg-json.mjs"
+Cohesion: 0.28
+Nodes (8): apkgNames, assetsDir, extractDeck(), initSqlJs, modelFieldIndexes(), require, rootDir, textFromField()
 
-### Community 231 - "W5 Follow-Up Messages"
+### Community 231 - "useStudySession.ts"
+Cohesion: 0.48
+Nodes (5): ScaffoldTelemetry, buildLightQueue(), hasAudio(), isSaturated(), SessionMode
+
+### Community 232 - "AppProviders.tsx"
+Cohesion: 0.33
+Nodes (5): AppProviders(), TtsSettingsProvider(), I18nProvider(), subscribe(), useInterfaceLang()
+
+### Community 234 - "W5 Follow-Up Messages"
 Cohesion: 0.50
 Nodes (4): D+1, D+7, Logging, W5 Follow-Up Messages
+
+### Community 235 - "W5 Recruiting Message"
+Cohesion: 0.50
+Nodes (3): DM / Community Post, Screening Rules, W5 Recruiting Message
+
+### Community 237 - "W5 Capture Table"
+Cohesion: 0.67
+Nodes (3): Scoring Notes, Segment Labels, W5 Capture Table
 
 ## Ambiguous Edges - Review These
 - `Landing Illustration: Device-to-Cloud Sync` → `Concept: User-Controlled Data Sync (Opt-In Cloud Connection)`  [AMBIGUOUS]
@@ -708,9 +726,9 @@ Nodes (4): D+1, D+7, Logging, W5 Follow-Up Messages
   apps/landing/public/image-3.png · relation: conceptually_related_to
 
 ## Knowledge Gaps
-- **756 isolated node(s):** `eslintConfig`, `nextConfig`, `name`, `version`, `private` (+751 more)
+- **757 isolated node(s):** `eslintConfig`, `nextConfig`, `name`, `version`, `private` (+752 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **123 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **126 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
@@ -719,13 +737,13 @@ _Questions this graph is uniquely positioned to answer:_
   _Edge tagged AMBIGUOUS (relation: rationale_for) - confidence is low._
 - **What is the exact relationship between `Network Graph Icon (connected concepts motif)` and `Text-to-Speech Pipeline (product value proposition)`?**
   _Edge tagged AMBIGUOUS (relation: conceptually_related_to) - confidence is low._
-- **Why does `dependencies` connect `Package Dependencies` to `Package Metadata`?**
-  _High betweenness centrality (0.059) - this node is a cross-community bridge._
+- **Why does `dependencies` connect `Package Dependencies` to `Package Metadata`, `Anki Deck Builder`?**
+  _High betweenness centrality (0.068) - this node is a cross-community bridge._
 - **Why does `motion` connect `Package Dependencies` to `Ollama Card Provider`?**
+  _High betweenness centrality (0.028) - this node is a cross-community bridge._
+- **Why does `openai` connect `Package Dependencies` to `Ollama Models Hook`?**
   _High betweenness centrality (0.025) - this node is a cross-community bridge._
-- **Why does `openai` connect `Package Dependencies` to `APKG Extraction Script`?**
-  _High betweenness centrality (0.023) - this node is a cross-community bridge._
 - **What connects `eslintConfig`, `nextConfig`, `name` to the rest of the system?**
-  _770 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _771 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Study Plan Adaptation` be split into smaller, more focused modules?**
-  _Cohesion score 0.05775803144224197 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.058738738738738736 - nodes in this community are weakly interconnected._
