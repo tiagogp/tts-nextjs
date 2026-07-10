@@ -8,7 +8,7 @@ import type { Grade, SrsRecord } from "@/lib/srs/fsrs";
 import type { Card as CardModel } from "@/lib/cards/schema";
 import type { ReviewRecord } from "@/lib/store/repository";
 import { PronunciationCoach } from "@/features/pronunciation/components/PronunciationCoach";
-import { SessionSummary, type SessionResult } from "./SessionSummary";
+import { SessionSummary, type SessionResult, type TomorrowPreview } from "./SessionSummary";
 import { useT } from "@/i18n/I18nProvider";
 import {
   SCAFFOLD,
@@ -35,6 +35,7 @@ interface StudyCardProps {
   queueLength: number;
   flipped: boolean;
   sessionResults: SessionResult[];
+  tomorrow: TomorrowPreview | null;
   streakDays: number;
   reviews: ReviewRecord[];
   onFlip: () => void;
@@ -48,6 +49,7 @@ export function StudyCard({
   queueLength,
   flipped,
   sessionResults,
+  tomorrow,
   streakDays,
   reviews,
   onFlip,
@@ -104,7 +106,7 @@ export function StudyCard({
   // When a queue finishes after real work, the honest session summary replaces the
   // bare "all caught up" note — it carries its own card chrome.
   if (totalCards > 0 && !current && sessionResults.length > 0) {
-    return <SessionSummary results={sessionResults} streakDays={streakDays} />;
+    return <SessionSummary results={sessionResults} streakDays={streakDays} tomorrow={tomorrow} />;
   }
 
   return (
