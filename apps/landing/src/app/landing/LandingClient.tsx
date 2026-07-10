@@ -78,12 +78,6 @@ const darkPatternStyle = {
   backgroundSize: "100% 100%, 32px 32px, 32px 32px",
 } as CSSProperties;
 
-const accentPatternStyle = {
-  backgroundImage:
-    "radial-gradient(circle at 50% -12%, rgba(255, 255, 255, 0.30), transparent 44%), linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px)",
-  backgroundSize: "100% 100%, 32px 32px, 32px 32px",
-} as CSSProperties;
-
 const flowSteps = [
   {
     label: "YouTube / PDF / article / writing",
@@ -734,13 +728,13 @@ function WaitlistForm() {
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           className="mt-1 w-full rounded border border-white/15 bg-white/8 px-3 py-2 text-sm text-white placeholder:text-[#8f8980] focus:outline-none focus:ring-2 focus:ring-accent/50"
-          placeholder="voce@email.com"
+          placeholder="you@email.com"
         />
       </label>
 
       <label className="block">
         <span className="text-xs font-semibold uppercase text-[#d8d3ca]">
-          Qual computador você usa?
+          Which computer do you use?
         </span>
         <select
           required
@@ -752,7 +746,7 @@ function WaitlistForm() {
           }
           className="mt-1 w-full rounded border border-white/15 bg-[#151515] px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-accent/50"
         >
-          <option value="">Escolha uma opção</option>
+          <option value="">Choose an option</option>
           {platformOptions.map((option) => (
             <option key={option} value={option}>
               {option}
@@ -763,7 +757,7 @@ function WaitlistForm() {
 
       <label className="block">
         <span className="text-xs font-semibold uppercase text-[#d8d3ca]">
-          Como você transforma conteúdo em inglês em prática hoje?
+          How do you turn English content into practice today?
         </span>
         <textarea
           required
@@ -772,7 +766,7 @@ function WaitlistForm() {
           onChange={(event) => setWorkflow(event.target.value)}
           rows={3}
           className="mt-1 w-full resize-none rounded border border-white/15 bg-white/8 px-3 py-2 text-sm text-white placeholder:text-[#8f8980] focus:outline-none focus:ring-2 focus:ring-accent/50"
-          placeholder="Ex.: salvo frases no Anki, faço resumos, uso caderno..."
+          placeholder="E.g. I save phrases in Anki, write summaries, keep a notebook..."
         />
       </label>
 
@@ -782,21 +776,21 @@ function WaitlistForm() {
         className="inline-flex w-full items-center justify-center rounded border border-accent bg-accent px-5 py-3 text-sm font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-70"
       >
         {status === "saving"
-          ? "Enviando..."
+          ? "Sending..."
           : status === "saved"
-            ? "Entrou na lista"
-            : "Entrar na lista"}
+            ? "You're on the list"
+            : "Join the waitlist"}
       </button>
 
       {status === "error" && (
         <p className="text-xs text-[#ffb199]">
-          Não consegui salvar agora. Tente de novo em alguns segundos.
+          Could not save right now. Try again in a few seconds.
         </p>
       )}
       {status === "saved" && (
         <p className="text-xs text-[#b7e4bf]">
-          Obrigado. Vou priorizar convites para quem usa Mac Apple Silicon nesta
-          rodada.
+          Thanks. I am prioritizing invites for Mac Apple Silicon users in this
+          round.
         </p>
       )}
     </form>
@@ -970,7 +964,7 @@ export default function LandingPage() {
                 className="mb-4 text-sm font-semibold text-accent"
                 variants={listItem}
               >
-                Inglês real. Áudio original. Revisão pronta.
+                Real English. Original audio. Ready to review.
               </motion.p>
               <motion.h1
                 className="brand-wordmark text-6xl font-normal leading-[0.9] text-ink sm:text-7xl lg:text-8xl"
@@ -982,9 +976,9 @@ export default function LandingPage() {
                 className="mx-auto mt-5 max-w-3xl text-xl leading-8 text-ink-soft sm:text-2xl sm:leading-9"
                 variants={listItem}
               >
-                Cole um vídeo do YouTube. Em 2 minutos, as melhores frases viram
-                cards de revisão com o áudio original — e os seus próprios erros
-                viram o treino de amanhã.
+                Paste a YouTube video. In 2 minutes, the best phrases become
+                review cards with the original audio — and your own mistakes
+                become tomorrow&apos;s practice.
               </motion.p>
               <motion.div
                 className="mt-7 flex flex-col justify-center gap-3 sm:flex-row"
@@ -996,7 +990,7 @@ export default function LandingPage() {
                   whileTap={tapPress}
                   className="inline-flex items-center justify-center rounded border border-accent bg-accent px-5 py-3 text-sm font-semibold text-white"
                 >
-                  Baixar para macOS
+                  Download for macOS
                 </motion.a>
                 <motion.a
                   href="#workflow"
@@ -1005,15 +999,15 @@ export default function LandingPage() {
                   whileTap={tapPress}
                   className="inline-flex items-center justify-center rounded border border-line bg-card px-5 py-3 text-sm font-semibold text-ink"
                 >
-                  Ver como funciona
+                  See how it works
                 </motion.a>
               </motion.div>
               <motion.p
                 className="mt-4 text-sm text-ink-muted"
                 variants={listItem}
               >
-                Para brasileiros A2-B1 que estudam sozinhos: uma etapa antes do
-                Anki, em português, no seu Mac.
+                For A2-B1 learners studying on their own: the step before Anki,
+                right on your Mac.
               </motion.p>
             </motion.div>
 
@@ -1331,15 +1325,15 @@ export default function LandingPage() {
         <Reveal className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1fr_0.9fr] lg:items-start">
           <div>
             <p className="mb-3 text-xs font-semibold uppercase text-accent">
-              Lista de espera
+              Waitlist
             </p>
             <h2 className="brand-wordmark text-4xl font-normal leading-[0.95] sm:text-5xl">
-              Quer testar com seus vídeos e seus erros?
+              Want to test it with your videos and your mistakes?
             </h2>
             <p className="mt-4 max-w-2xl text-lg leading-8 text-[#d8d3ca]">
-              A rodada W5 está procurando usuários de Mac Apple Silicon que já
-              tentam transformar inglês real em prática. Responda as duas
-              perguntas para eu saber se você entra no grupo certo.
+              The W5 round is looking for Mac Apple Silicon users who already
+              try to turn real English into practice. Answer the two questions
+              so I know if you fit this group.
             </p>
           </div>
           <div className="rounded-lg border border-white/15 bg-white/6 p-5">
@@ -1350,29 +1344,29 @@ export default function LandingPage() {
 
       <section
         id="download"
-        className="scroll-mt-24 bg-accent px-4 py-20 text-white sm:px-6 lg:px-8"
-        style={accentPatternStyle}
+        className="scroll-mt-24 border-t border-[#2b2926] bg-[#111111] px-4 py-16 text-[#faf9f6] sm:px-6 lg:px-8"
+        style={darkPatternStyle}
       >
         <Reveal className="mx-auto max-w-3xl text-center">
-          <p className="mb-3 text-xs font-semibold uppercase text-white/85">
+          <p className="mb-3 text-xs font-semibold uppercase text-accent">
             Download
           </p>
-          <h2 className="brand-wordmark text-5xl font-normal leading-[0.92] sm:text-6xl">
-            Comece seu loop de inglês hoje.
+          <h2 className="brand-wordmark text-4xl font-normal leading-[0.95] sm:text-5xl">
+            Start your English loop today.
           </h2>
-          <p className="mx-auto mt-5 max-w-xl text-lg leading-8 text-white/90">
-            Baixe o DMG, arraste o PhraseLoop para Aplicativos e transforme o
-            próximo vídeo que você assistir em cards com áudio real.
+          <p className="mx-auto mt-4 max-w-xl text-lg leading-8 text-[#d8d3ca]">
+            Download the DMG, drag PhraseLoop to Applications, and turn the
+            next video you watch into cards with real audio.
           </p>
-          <div className="mt-6 flex flex-wrap justify-center gap-2">
+          <div className="mt-5 flex flex-wrap justify-center gap-2">
             {[
               "macOS Apple Silicon",
-              "Runtime incluído",
-              "Instala arrastando",
+              "Runtime bundled",
+              "Drag-to-install",
             ].map((item) => (
               <span
                 key={item}
-                className="rounded-full border border-white/30 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white"
+                className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-[#d8d3ca]"
               >
                 {item}
               </span>
@@ -1380,20 +1374,19 @@ export default function LandingPage() {
           </div>
           <motion.a
             href="/api/download/macos"
-            variants={ctaReveal}
             whileHover={hoverLift}
             whileTap={tapPress}
-            className="mt-8 inline-flex items-center justify-center rounded border border-white bg-white px-7 py-3.5 text-sm font-semibold text-accent"
+            className="mt-7 inline-flex items-center justify-center rounded border border-accent bg-accent px-5 py-3 text-sm font-semibold text-white"
           >
-            Baixar PhraseLoop.dmg
+            Download PhraseLoop.dmg
           </motion.a>
-          <p className="mt-6 text-xs text-white/85">
-            Criado por{" "}
+          <p className="mt-6 text-xs text-[#d8d3ca]">
+            Created by{" "}
             <a
               href="https://github.com/tiagogp"
               target="_blank"
               rel="noreferrer"
-              className="font-semibold text-white underline decoration-white/60 underline-offset-4 transition-colors hover:decoration-white"
+              className="font-semibold text-white underline decoration-accent underline-offset-4 transition-colors hover:text-accent"
             >
               Tiago GP
             </a>

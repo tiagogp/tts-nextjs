@@ -1,11 +1,18 @@
 import type { Metadata } from "next";
 import type { CSSProperties, ReactNode } from "react";
+import { Archivo_Black } from "next/font/google";
 import ThemeProvider from "@/components/app/ThemeProvider";
 import "./globals.css";
 
+const archivoBlack = Archivo_Black({
+  variable: "--font-brand",
+  subsets: ["latin"],
+  weight: "400",
+  fallback: ["Arial Black", "Impact", "sans-serif"],
+});
+
 const fontVariables = {
   "--font-geist-sans": "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
-  "--font-brand": "\"Arial Black\", Impact, ui-sans-serif, system-ui, sans-serif",
 } as CSSProperties;
 
 export const metadata: Metadata = {
@@ -22,7 +29,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className="h-full antialiased"
+      className={`${archivoBlack.variable} h-full antialiased`}
       style={fontVariables}
       suppressHydrationWarning
     >
