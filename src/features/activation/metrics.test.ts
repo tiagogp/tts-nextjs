@@ -236,6 +236,27 @@ describe("computeW5Metrics", () => {
     expect(m.ttfrUnderTarget).toBe(false);
   });
 
+  it("treats exactly 2 minutes as outside the strictly-under target", () => {
+    const start = Date.UTC(2026, 5, 1, 12, 0, 0);
+    const m = computeW5Metrics([
+      event("first_run_started", start, { source: "bundled_lesson", sourceId: "lesson-1" }),
+      event("cards_reviewed", start + TTFR_TARGET_MS, {
+        count: 1,
+        cardIds: ["c1"],
+        activation: {
+          source: "bundled_lesson",
+          zeroSetup: true,
+          startedAt: start,
+          elapsedMs: TTFR_TARGET_MS,
+        },
+      }),
+      event("correction_generated", start + TTFR_TARGET_MS, { cardsCreated: 1, source: "lesson" }),
+    ]);
+
+    expect(m.ttfrUnderTarget).toBe(false);
+    expect(m.firstLoopUnderTarget).toBe(false);
+  });
+
   it("reports own-source activation separately from bundled lessons", () => {
     const start = Date.UTC(2026, 5, 1, 12, 0, 0);
     const m = computeW5Metrics([

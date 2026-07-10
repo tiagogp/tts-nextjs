@@ -704,8 +704,11 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "Turn real English into tomorrow's practice": {
     pt: "Transforme inglês real no treino de amanhã",
   },
-  "Paste a YouTube video. In 2 minutes, the best phrases become review cards with the original audio — and your own mistakes become tomorrow's practice.": {
-    pt: "Cole um vídeo do YouTube. Em 2 minutos, as melhores frases viram cards de revisão com o áudio original — e os seus próprios erros viram o treino de amanhã.",
+  "Start with one short lesson": {
+    pt: "Comece com uma lição curta",
+  },
+  "Listen, save one useful phrase, and use it in a sentence of your own.": {
+    pt: "Ouça, salve uma frase útil e use-a em uma frase sua.",
   },
   "Hear real phrases, save the useful ones, then review them — no setup needed.": {
     pt: "Ouça frases reais, salve as úteis e revise — sem configurar nada.",
@@ -743,20 +746,20 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "to review": { pt: "para revisar" },
   "cards saved": { pt: "cartões salvos" },
   "practice phrases": { pt: "frases para praticar" },
-  "Activation source": { pt: "Origem da ativação" },
-  "Own source": { pt: "Fonte própria" },
+  "First task started with": { pt: "Início da primeira tarefa" },
+  "Own material": { pt: "Material próprio" },
   "Bundled lesson": { pt: "Lição incluída" },
   "W5 validation": { pt: "Validação W5" },
-  "First-run activation and return signal recorded on this device. Use it to score a session against the validation protocol.": {
-    pt: "Ativação inicial e sinal de retorno registrados neste dispositivo. Use para pontuar a sessão contra o protocolo de validação.",
+  "First-task times and return visits recorded on this device for the W5 session.": {
+    pt: "Tempos da primeira tarefa e retornos registrados neste dispositivo para a sessão W5.",
   },
   "Local activity data is unavailable in this build.": {
     pt: "Os dados locais de atividade não estão disponíveis nesta build.",
   },
   "Time to saved phrase": { pt: "Tempo até salvar frase" },
   "Time to first review": { pt: "Tempo até primeira revisão" },
-  "Time to first loop": { pt: "Tempo até primeiro loop" },
-  "Dropoff step": { pt: "Ponto de abandono" },
+  "Time to complete first task": { pt: "Tempo para concluir a primeira tarefa" },
+  "Where the first task stopped": { pt: "Onde a primeira tarefa parou" },
   "Under 2m": { pt: "Menos de 2min" },
   "Over 2m": { pt: "Mais de 2min" },
   Incomplete: { pt: "Incompleto" },
@@ -771,7 +774,7 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "Save phrase": { pt: "Salvar frase" },
   Mistake: { pt: "Erro" },
   Correction: { pt: "Correção" },
-  "Own source funnel": { pt: "Funil de fonte própria" },
+  "Own material import": { pt: "Importação de material próprio" },
   Completed: { pt: "Concluído" },
   Attempted: { pt: "Tentado" },
   "Not attempted": { pt: "Não tentado" },
@@ -793,8 +796,8 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "Listen, save the phrases you want, then review them. No AI setup needed.": {
     pt: "Ouça, salve as frases que quiser e revise. Sem configurar IA.",
   },
-  "Listen to the audio, save the phrases you want, then review them. No setup needed.": {
-    pt: "Ouça o áudio, salve as frases que quiser e revise. Sem configuração.",
+  "Listen to the audio, save the phrases you want, then review them. You can start now.": {
+    pt: "Ouça o áudio, salve as frases que quiser e revise. Você pode começar agora.",
   },
   "Bundled lesson — all phrases are selected by default.": {
     pt: "Lição incluída — todas as frases já vêm selecionadas.",
@@ -814,11 +817,11 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "{count} practice phrases saved. Now write one sentence of your own below.": {
     pt: "{count} frases para praticar salvas. Agora escreva uma frase sua aqui embaixo.",
   },
-  "You created {count} review cards: {phrases} from real English and 1 from your own mistake.": {
-    pt: "Você criou {count} cards de revisão: {phrases} de inglês real e 1 do seu próprio erro.",
+  "You saved {count} phrases to review: {phrases} from real English and 1 from your own mistake.": {
+    pt: "Você salvou {count} frases para revisar: {phrases} de inglês real e 1 do seu próprio erro.",
   },
-  "You created {count} review cards: {phrases} from real English and 1 you wrote yourself.": {
-    pt: "Você criou {count} cards de revisão: {phrases} de inglês real e 1 que você mesmo escreveu.",
+  "You saved {count} phrases to review: {phrases} from real English and 1 you wrote yourself.": {
+    pt: "Você salvou {count} frases para revisar: {phrases} de inglês real e 1 que você mesmo escreveu.",
   },
   "Could not save this lesson.": { pt: "Não foi possível salvar esta lição." },
   "Now try a video of your own": { pt: "Agora teste com um vídeo seu" },
@@ -834,8 +837,8 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   /* ── first-loop mistake step ───────────────────────────── */
   "Your turn": { pt: "Sua vez" },
   "Write one sentence in English": { pt: "Escreva uma frase em inglês" },
-  'Use "{phrase}" in your own sentence. The corrected version becomes tomorrow\'s review card.': {
-    pt: 'Use "{phrase}" em uma frase sua. A versão corrigida vira seu card de revisão de amanhã.',
+  'Use "{phrase}" in your own sentence. You will practice the corrected version tomorrow.': {
+    pt: 'Use "{phrase}" em uma frase sua. Amanhã você vai praticar a versão corrigida.',
   },
   "Write your sentence here…": { pt: "Escreva sua frase aqui…" },
   "Check my sentence": { pt: "Corrigir minha frase" },
@@ -1046,18 +1049,12 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
     pt: "Não foi possível acessar o microfone. Verifique a permissão do navegador.",
   },
 
-  // Onboarding welcome screen — states the two differentiators up front (validation-action-plan.md Phase 1).
-  "The audio is real. So are your mistakes.": {
-    pt: "O áudio é real. Os seus erros também.",
-  },
-  "Original audio": { pt: "Áudio original" },
-  "Import a video and each phrase keeps its original audio, cut straight from the source.": {
-    pt: "Importe um vídeo e cada frase mantém o áudio original, recortado direto da fonte.",
-  },
-  "Your own mistakes": { pt: "Os seus próprios erros" },
-  "Correct one phrase you wrote — it becomes tomorrow's practice.": {
-    pt: "Corrija uma frase que você escreveu — ela vira o treino de amanhã.",
-  },
+  // Onboarding welcome screen — explains actions without naming the differentiators being tested.
+  Listen: { pt: "Ouça" },
+  "Hear a phrase in context.": { pt: "Ouça uma frase no contexto." },
+  "Keep a phrase you want to review.": { pt: "Guarde uma frase que você queira revisar." },
+  Write: { pt: "Escreva" },
+  "Use the phrase in an English sentence.": { pt: "Use a frase em uma frase em inglês." },
 
   // Onboarding profile step + TranscriptReview (bundled lesson phrase list, also used by Discover).
   "Three choices are enough to start. You can tune the rest later.": {
@@ -1092,4 +1089,48 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "More errors of this type in your writing over time": {
     pt: "Mais erros desse tipo na sua escrita ao longo do tempo",
   },
+
+  /* ── c1 diagnosis (experimental, pre-W5 exception) ─────────── */
+  "C1 diagnosis": { pt: "Diagnóstico C1" },
+  "C1 diagnosis (experimental)": { pt: "Diagnóstico C1 (experimental)" },
+  "Register, naturalness, and collocation feedback for past B1/B2 writing.": {
+    pt: "Feedback de registro, naturalidade e colocação para escrita acima de B1/B2.",
+  },
+  Experimental: { pt: "Experimental" },
+  "Open C1 diagnosis": { pt: "Abrir" },
+  "Past B1/B2, grammar stops being the gap — register, naturalness, and collocation take over. This checks a short writing sample for that gap and lets you practice speaking the fix.":
+    {
+      pt: "Acima de B1/B2, a gramática deixa de ser o limite — registro, naturalidade e colocação passam a importar mais. Isso avalia uma amostra curta de escrita nessa dimensão e deixa você praticar falando a versão corrigida.",
+    },
+  "Domain: {domain}": { pt: "Domínio: {domain}" },
+  Edit: { pt: "Editar" },
+  "What's this for?": { pt: "Para que é isso?" },
+  "Work, university, immigration — one domain, picked once. Steers the feedback toward language you'll actually use.":
+    {
+      pt: "Trabalho, universidade, imigração — um domínio, escolhido uma vez. Direciona o feedback para a linguagem que você realmente vai usar.",
+    },
+  "e.g. work": { pt: "ex.: trabalho" },
+  "Where you're stuck": { pt: "Onde você está travando" },
+  Grammar: { pt: "Gramática" },
+  reviews: { pt: "revisões" },
+  "Register, naturalness, collocation": { pt: "Registro, naturalidade, colocação" },
+  "Write a short C1-level sample": { pt: "Escreva uma amostra curta em nível C1" },
+  "A paragraph or two in your domain. This checks for what a native speaker would phrase differently.":
+    {
+      pt: "Um ou dois parágrafos no seu domínio. Isso verifica o que um falante nativo diria de forma diferente.",
+    },
+  "Write about {domain}…": { pt: "Escreva sobre {domain}…" },
+  "your domain": { pt: "seu domínio" },
+  "Checking…": { pt: "Verificando…" },
+  "Check with AI →": { pt: "Verificar com IA →" },
+  "{provider} is unavailable. Open Settings to connect one.": {
+    pt: "{provider} está indisponível. Abra as Configurações para conectar uma IA.",
+  },
+  "No gaps found in this sample — try a longer or more ambitious one.": {
+    pt: "Nenhuma lacuna encontrada nessa amostra — tente uma mais longa ou mais ambiciosa.",
+  },
+  "Couldn't check that sample.": { pt: "Não consegui verificar essa amostra." },
+  "Practice speaking the fix": { pt: "Pratique falando a correção" },
+  Hide: { pt: "Ocultar" },
+  "Practice speaking": { pt: "Praticar a fala" },
 };

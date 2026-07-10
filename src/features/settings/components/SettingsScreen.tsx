@@ -66,10 +66,12 @@ function subscribeToProfile(onChange: () => void): () => void {
 export default function SettingsScreen({
   onBack,
   onOpenTools,
+  onOpenC1,
   showAdvancedAi = true,
 }: {
   onBack: () => void;
   onOpenTools?: () => void;
+  onOpenC1?: () => void;
   showAdvancedAi?: boolean;
 }) {
   const { t } = useT();
@@ -615,6 +617,22 @@ export default function SettingsScreen({
             </div>
             <Button variant="secondary" onClick={onOpenTools}>
               {t("Open tools")}
+            </Button>
+          </div>
+        </Card>
+      )}
+
+      {onOpenC1 && (
+        <Card className="mt-4 p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="font-medium text-ink">{t("C1 diagnosis (experimental)")}</h3>
+              <p className="mt-1 text-sm text-ink-muted">
+                {t("Register, naturalness, and collocation feedback for past B1/B2 writing.")}
+              </p>
+            </div>
+            <Button variant="secondary" onClick={onOpenC1}>
+              {t("Open C1 diagnosis")}
             </Button>
           </div>
         </Card>

@@ -216,10 +216,8 @@ function resolveNextAction({
   // Brand-new user, no saved phrases yet → start with the bundled first lesson.
   return {
     eyebrow: t("Start here"),
-    title: t("Turn real English into tomorrow's practice"),
-    detail: t(
-      "Paste a YouTube video. In 2 minutes, the best phrases become review cards with the original audio — and your own mistakes become tomorrow's practice.",
-    ),
+    title: t("Start with one short lesson"),
+    detail: t("Listen, save one useful phrase, and use it in a sentence of your own."),
     cta: t("Start first lesson"),
     onClick: onFirstLesson,
   };

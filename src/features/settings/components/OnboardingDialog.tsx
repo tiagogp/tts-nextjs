@@ -81,17 +81,15 @@ export default function OnboardingDialog({ onOpenSettings: _onOpenSettings }: Re
         <div>
           <p className="text-xs uppercase tracking-widest text-accent">{t("Welcome")}</p>
           <h2 id="welcome-title" className="mt-1 text-xl font-semibold text-ink">
-            {t("The audio is real. So are your mistakes.")}
+            {t("Start with one short lesson")}
           </h2>
           <p className="mt-2 text-sm text-ink-soft">
-            {t(
-              "Paste a YouTube video. In 2 minutes, the best phrases become review cards with the original audio — and your own mistakes become tomorrow's practice.",
-            )}
+            {t("Listen, save one useful phrase, and use it in a sentence of your own.")}
           </p>
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
-            <MethodTile title={t("Original audio")} text={t("Import a video and each phrase keeps its original audio, cut straight from the source.")} />
-            <MethodTile title={t("Daily review")} text={t("Review a few practice phrases each day.")} />
-            <MethodTile title={t("Your own mistakes")} text={t("Correct one phrase you wrote — it becomes tomorrow's practice.")} />
+            <MethodTile title={t("Listen")} text={t("Hear a phrase in context.")} />
+            <MethodTile title={t("Save")} text={t("Keep a phrase you want to review.")} />
+            <MethodTile title={t("Write")} text={t("Use the phrase in an English sentence.")} />
           </div>
         </div>
       )}

@@ -37,6 +37,7 @@ const profile: LearningProfile = {
   createdAt: 1,
   onboardingCompleted: true,
   unlockedTabTier: 0,
+  c1Domain: "",
 };
 
 describe("default plans", () => {

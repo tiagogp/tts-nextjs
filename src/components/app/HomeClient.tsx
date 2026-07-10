@@ -8,6 +8,7 @@ import { type HomeTab } from "@/components/app/homeTabs";
 import AppProviders from "@/components/app/AppProviders";
 import { useUnlockedTabs } from "@/components/app/useUnlockedTabs";
 import { useDockDueBadge } from "@/components/app/useDockDueBadge";
+import C1Tab from "@/features/c1/components/C1Tab";
 import ConverseTab from "@/features/converse/components/ConverseTab";
 import CorrectTab from "@/features/correct/components/CorrectTab";
 import { startFirstRunActivation } from "@/features/activation/firstRun";
@@ -92,8 +93,9 @@ function TabContent({
 }
 
 // Conversation/VAD is demoted out of the primary tabs (W3) but stays fully
-// functional, reachable as an overlay rather than a phantom tab.
-type Overlay = "settings" | "tools" | "converse" | null;
+// functional, reachable as an overlay rather than a phantom tab. C1 diagnosis (experimental,
+// pre-W5 exception — docs/c1-phase-proposal.md) follows the same pattern: never a primary tab.
+type Overlay = "settings" | "tools" | "converse" | "c1" | null;
 
 function HomeContent() {
   const { t } = useT();
@@ -193,8 +195,31 @@ function HomeContent() {
                 <SettingsScreen
                   onBack={() => setOverlay(null)}
                   onOpenTools={advancedSurfacesUnlocked ? () => setOverlay("tools") : undefined}
+                  onOpenC1={advancedSurfacesUnlocked ? () => setOverlay("c1") : undefined}
                   showAdvancedAi={advancedSurfacesUnlocked || settingsAiIntent}
                 />
+              </div>
+            ) : overlay === "c1" ? (
+              <div className="h-full overflow-y-auto pb-16 app-scroll-region sm:pb-20">
+                <div className="mx-auto max-w-5xl px-4 py-6 sm:py-8">
+                  <div className="mb-6 flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setOverlay("settings")}
+                      className="rounded-md border border-line px-2.5 py-1.5 text-sm text-ink-soft transition-colors hover:text-ink"
+                      aria-label="Back to Settings"
+                    >
+                      ←
+                    </button>
+                    <h2 className="text-xl font-semibold text-ink">{t("C1 diagnosis")}</h2>
+                  </div>
+                  <C1Tab
+                    onOpenSettings={() => {
+                      setSettingsAiIntent(true);
+                      setOverlay("settings");
+                    }}
+                  />
+                </div>
               </div>
             ) : overlay === "converse" ? (
               <div className="h-full overflow-y-auto pb-16 app-scroll-region sm:pb-20">

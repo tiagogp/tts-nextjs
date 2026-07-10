@@ -92,7 +92,7 @@ export default function W5ValidationCard() {
   const returnTone = (returned: boolean): Tone => (returned ? "success" : "default");
   const returnLabel = (returned: boolean) => (returned ? t("Returned") : t("No return yet"));
   const activationSourceLabel = metrics?.activationSource === "own_source"
-    ? t("Own source")
+    ? t("Own material")
     : metrics?.activationSource === "bundled_lesson"
       ? t("Bundled lesson")
       : t("Not yet");
@@ -106,7 +106,7 @@ export default function W5ValidationCard() {
         <h3 className="font-medium text-ink">{t("W5 validation")}</h3>
         <p className="mt-1 text-sm text-ink-muted">
           {t(
-            "First-run activation and return signal recorded on this device. Use it to score a session against the validation protocol.",
+            "First-task times and return visits recorded on this device for the W5 session.",
           )}
         </p>
       </div>
@@ -117,7 +117,7 @@ export default function W5ValidationCard() {
         </p>
       ) : (
         <dl className="mt-4 grid gap-2 sm:grid-cols-2">
-          <MetricRow label={t("Activation source")} value={activationSourceLabel} />
+          <MetricRow label={t("First task started with")} value={activationSourceLabel} />
           <MetricRow label={t("Time to saved phrase")} value={duration(metrics?.timeToSavedPhraseMs ?? null)} />
           <MetricRow
             label={t("Time to first review")}
@@ -129,7 +129,7 @@ export default function W5ValidationCard() {
             }
           />
           <MetricRow
-            label={t("Time to first loop")}
+            label={t("Time to complete first task")}
             value={duration(metrics?.timeToFirstLoopMs ?? null)}
             pill={
               metrics?.timeToFirstLoopMs == null
@@ -138,7 +138,7 @@ export default function W5ValidationCard() {
             }
           />
           <MetricRow
-            label={t("Dropoff step")}
+            label={t("Where the first task stopped")}
             value={dropoffLabel}
             pill={{
               tone: metrics?.firstLoopCompleted ? "success" : "default",
@@ -146,7 +146,7 @@ export default function W5ValidationCard() {
             }}
           />
           <MetricRow
-            label={t("Own source funnel")}
+            label={t("Own material import")}
             value={
               metrics?.ownSourceCompleted
                 ? t("Completed")
@@ -199,7 +199,7 @@ function dropoffStepLabel(
     case "correction":
       return t("Correction");
     case "own_source":
-      return t("Own source");
+      return t("Own material");
   }
 }
 

@@ -107,7 +107,7 @@ export function MistakeStep({
           {t("Write one sentence in English")}
         </h3>
         <p className="mt-1 text-sm text-ink-soft">
-          {t('Use "{phrase}" in your own sentence. The corrected version becomes tomorrow\'s review card.', {
+          {t('Use "{phrase}" in your own sentence. You will practice the corrected version tomorrow.', {
             phrase: phrase.en,
           })}
         </p>

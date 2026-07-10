@@ -183,7 +183,7 @@ function LessonViewContent({
             <p className="text-xs uppercase tracking-[0.7px] text-accent">{t(lesson.level)} · {t(lesson.topic)}</p>
             <h2 className="mt-1 text-xl font-semibold tracking-[-0.01em] text-ink">{t(lesson.title)}</h2>
             <p className="mt-1 text-sm text-ink-soft">
-              {t("Listen to the audio, save the phrases you want, then review them. No setup needed.")}
+              {t("Listen to the audio, save the phrases you want, then review them. You can start now.")}
             </p>
           </div>
           {onBack && (
@@ -198,8 +198,8 @@ function LessonViewContent({
               {mistakeSaved
                 ? t(
                     mistakeSaved.hadMistake
-                      ? "You created {count} review cards: {phrases} from real English and 1 from your own mistake."
-                      : "You created {count} review cards: {phrases} from real English and 1 you wrote yourself.",
+                      ? "You saved {count} phrases to review: {phrases} from real English and 1 from your own mistake."
+                      : "You saved {count} phrases to review: {phrases} from real English and 1 you wrote yourself.",
                     { count: savedPhraseCount + 1, phrases: savedPhraseCount },
                   )
                 : done}

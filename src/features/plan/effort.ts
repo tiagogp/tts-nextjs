@@ -17,6 +17,7 @@ const MINUTES_PER_EVENT: Record<ActivityEventType, (event: ActivityEvent) => num
   own_source_started: () => 0, // overlap with video_processed — don't double-count
   own_source_completed: () => 0, // overlap with cards_created — don't double-count
   progress_checkin: () => 5,
+  c1_diagnosis_completed: () => 5,
 };
 
 function startOfWeek(date: Date): Date {

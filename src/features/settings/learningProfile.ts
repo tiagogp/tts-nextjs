@@ -25,6 +25,8 @@ export interface LearningProfile {
   onboardingCompleted: boolean;
   /** Monotonic disclosure tier for app sections; once raised it never decreases. */
   unlockedTabTier: number;
+  /** Domain picked once for the C1 diagnosis loop (experimental), e.g. "work", "university". */
+  c1Domain: string;
 }
 
 export const DEFAULT_LEARNING_PROFILE: LearningProfile = {
@@ -37,6 +39,7 @@ export const DEFAULT_LEARNING_PROFILE: LearningProfile = {
   createdAt: 0,
   onboardingCompleted: false,
   unlockedTabTier: 0,
+  c1Domain: "",
 };
 
 function storage(): Storage | null {
@@ -94,6 +97,7 @@ function normalizeProfile(value: unknown): LearningProfile {
     createdAt,
     onboardingCompleted: raw.onboardingCompleted === true,
     unlockedTabTier: unlockedTabTierOrDefault(raw.unlockedTabTier),
+    c1Domain: typeof raw.c1Domain === "string" ? raw.c1Domain.trim() : "",
   };
 }
 

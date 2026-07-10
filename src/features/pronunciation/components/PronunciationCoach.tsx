@@ -20,7 +20,7 @@ interface PronunciationCoachProps {
   cardId?: string;
   lessonId?: string;
   referenceAudioUrl?: string;
-  source: "study" | "lesson";
+  source: "study" | "lesson" | "c1";
   compact?: boolean;
 }
 
