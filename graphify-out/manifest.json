@@ -35,9 +35,9 @@
     "semantic_hash": "79dfc7988ff2f188641b10fbeab73151"
   },
   "apps/landing/src/app/api/waitlist/route.ts": {
-    "mtime": 1783653847.0628054,
-    "ast_hash": "92d5d6e15969832dc0aa6c1ff66732b9",
-    "semantic_hash": "92d5d6e15969832dc0aa6c1ff66732b9"
+    "mtime": 1783655853.9847648,
+    "ast_hash": "b42417474fa99d2d5800541f1e96b2cd",
+    "semantic_hash": ""
   },
   "apps/landing/src/app/landing/AsciiLoop.tsx": {
     "mtime": 1783653847.0634856,
@@ -45,8 +45,8 @@
     "semantic_hash": "752807f6550ec167108e1f633476a9ae"
   },
   "apps/landing/src/app/landing/LandingClient.tsx": {
-    "mtime": 1783655034.261036,
-    "ast_hash": "765b9344114e666a9f51ba28ec08fa92",
+    "mtime": 1783655837.5121753,
+    "ast_hash": "f0ddb0d6e9f3f998d23a247a171f681f",
     "semantic_hash": ""
   },
   "apps/landing/src/app/landing/YourSection.tsx": {
