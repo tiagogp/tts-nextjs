@@ -5,11 +5,16 @@ PT-BR landing page with the qualified waitlist for the Phase 2 demand test in
 desktop app's UI (repo-root `src/*` via the `@/*` alias, see `next.config.ts`), so it must
 be built from inside the monorepo — it is not a standalone app.
 
+PT-BR is the default because W5 targets Brazilian learners. The header PT/EN selector
+switches the full landing page and embedded app preview, updates document language/metadata,
+and persists the choice in `localStorage` without changing the learner's CEFR profile.
+
 ## Local development
 
 ```sh
 yarn landing:dev     # from the repo root
 yarn landing:build   # production build check
+./node_modules/.bin/vitest run apps/landing/src/app/api/waitlist/route.test.ts
 ```
 
 ## Waitlist storage
@@ -24,7 +29,7 @@ forwards it as JSON to `PHRASELOOP_WAITLIST_WEBHOOK_URL`:
   "platform": "Mac Apple Silicon",
   "workflow": "Copio frases de séries para o Anki…",
   "source": "landing-w5",
-  "createdAt": "2026-07-08T12:00:00.000Z"
+  "createdAt": "2026-07-10T12:00:00.000Z"
 }
 ```
 
@@ -51,10 +56,17 @@ Brazilian). One-time project setup:
 ## Post-deploy verification (before posting to any community)
 
 - [ ] Page loads and shows the one-line pitch before any interaction.
+- [ ] PT/EN changes the page and embedded preview; reloading preserves the choice.
 - [ ] Submitting with either qualifying question empty is blocked.
 - [ ] A valid submit returns success and the entry arrives at the webhook.
 - [ ] A bad platform value POSTed directly to `/api/waitlist` returns 400.
+- [ ] The submitted webhook row contains `email`, `platform`, `workflow`, `source`, and
+      `createdAt`.
 
 Known gap (tracked in the action plan): the 60–90s **real-loop screen recording** is not on
 the page yet — it is blocked by the Phase 1 native-clips honesty gate. The interactive
 simulation currently in its place does not satisfy that checklist item.
+
+The public CTAs deliberately lead to the waitlist, not `/api/download/macos`, until the
+Phase 1 build is signed and notarized. Do not restore a public download CTA to an ad-hoc
+signed build: Gatekeeper friction would contaminate the W5 activation timer.

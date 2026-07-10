@@ -205,12 +205,18 @@ The things W5 measures most directly are the things not finished. Fix these
       reachable audience exists behind the compounded filter (Brazilian × A2-B1 ×
       Anki-adjacent × Apple Silicon × desktop).
       _Done when:_ page is live and both questions are required.
-      _Implementation status:_ qualified waitlist form (both questions required, PT-BR) and
-      `/api/waitlist` (validates the platform enum, forwards to
-      `PHRASELOOP_WAITLIST_WEBHOOK_URL`) are implemented and the page shows the one-line
-      pitch. Deploy config shipped 2026-07-08: `apps/landing/vercel.json` (monorepo install
-      with Electron download skipped, waitlist function pinned to gru1/São Paulo) plus the
-      deploy runbook + post-deploy verification checklist in `apps/landing/README.md`;
+      _Implementation status:_ corrected and verified 2026-07-10: the landing defaults to
+      PT-BR for the Brazilian W5 audience and offers a persistent PT/EN selector that also
+      switches the embedded app preview; metadata, form states, and the one-line pitch follow
+      the selected language. The form requires email + both
+      qualifying answers; and `/api/waitlist` independently validates the email, exact
+      platform enum, and 8–2,000-character workflow before forwarding all fields to
+      `PHRASELOOP_WAITLIST_WEBHOOK_URL`. Route coverage passes 6/6 and the production landing
+      build passes. Public download CTAs point to the waitlist until the signed/notarized
+      Phase 1 build exists. Deploy config shipped 2026-07-08: `apps/landing/vercel.json`
+      (monorepo install with Electron download skipped, waitlist function pinned to
+      gru1/São Paulo) plus the deploy runbook + post-deploy verification checklist in
+      `apps/landing/README.md`;
       production build verified (`yarn landing:build`). Still pending: the 60-90s real-loop
       **recording** — the page currently has only an interactive in-browser simulation,
       which does not satisfy this item (blocked by the Phase 1 native-clips honesty gate) —

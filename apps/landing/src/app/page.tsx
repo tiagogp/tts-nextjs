@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import LandingClient from "./landing/LandingClient";
+import LandingPage from "@landing/components/features/landing/LandingPage";
 
 export const metadata: Metadata = {
-  title: "PhraseLoop - Local-first English practice",
+  title: "PhraseLoop — inglês real vira prática",
   description:
-    "Turn real English into audio-backed flashcards, practice sessions, and focused drills - locally by default.",
+    "Transforme vídeos em cards com o áudio original e os seus próprios erros no treino de amanhã.",
 };
 
 export default function Home() {
-  return <LandingClient />;
+  return <LandingPage />;
 }

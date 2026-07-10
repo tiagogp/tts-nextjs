@@ -34,8 +34,15 @@ function useInterfaceLang(): UiLang {
   );
 }
 
-export function I18nProvider({ children }: { children: ReactNode }) {
-  const lang = useInterfaceLang();
+export function I18nProvider({
+  children,
+  lang: forcedLang,
+}: {
+  children: ReactNode;
+  lang?: UiLang;
+}) {
+  const profileLang = useInterfaceLang();
+  const lang = forcedLang ?? profileLang;
 
   const t = useCallback(
     (en: string, vars?: TranslateVars): string => translate(lang, en, vars),

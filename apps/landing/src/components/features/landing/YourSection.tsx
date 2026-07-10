@@ -1,15 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
 import { listItem, staggerContainer } from "@/lib/motion";
+import {
+  translateLanding,
+  type LandingLanguage,
+} from "@landing/lib/landingLanguage";
 
 const steps = [
-  ["Discover", "Find a phrase in a real source."],
-  ["Keep", "Save the line that is worth remembering."],
-  ["Generate", "Create an active card with audio."],
-  ["Reinforce", "Drill it again when it becomes a weakness."],
+  ["Descobrir", "Encontre uma frase em uma fonte real."],
+  ["Guardar", "Salve a linha que vale lembrar."],
+  ["Revisar", "Crie um card com contexto e áudio."],
+  ["Reforçar", "Pratique de novo quando ela virar um ponto fraco."],
 ];
 
-export function YourSection() {
+export function YourSection({ language }: { language: LandingLanguage }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [lines, setLines] = useState<
@@ -112,10 +116,12 @@ export function YourSection() {
           </div>
 
           <p className="brand-wordmark text-2xl font-normal leading-none text-ink">
-            {label}
+            {translateLanding(language, label)}
           </p>
 
-          <p className="mt-1 text-sm leading-6 text-ink-muted">{body}</p>
+          <p className="mt-1 text-sm leading-6 text-ink-muted">
+            {translateLanding(language, body)}
+          </p>
         </motion.div>
       ))}
     </motion.div>
