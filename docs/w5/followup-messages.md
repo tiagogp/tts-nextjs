@@ -5,21 +5,21 @@ Record activity-log returns separately from self-report.
 
 ## D+1
 
-Oi! Passando para o follow-up de 1 dia do teste do PhraseLoop.
+Oi! Passando para o retorno de 1 dia do teste do PhraseLoop.
 
-1. Voce abriu o app de novo desde a nossa sessao?
+1. Voce abriu o app hoje, um dia depois da nossa sessao?
 2. Se abriu: o que voce fez?
 3. Se nao abriu: o que te impediu?
-4. Voce lembrava que havia cards para revisar hoje?
+4. Voce lembrava que havia frases para revisar hoje?
 
 Obrigado! Resposta curta ja ajuda.
 
 ## D+7
 
-Oi! Ultimo follow-up do teste do PhraseLoop.
+Oi! Ultimo retorno do teste do PhraseLoop.
 
-1. Voce abriu o app alguma vez nos ultimos 7 dias?
-2. Voce usou algum card/frase do PhraseLoop fora da sessao?
+1. Voce abriu o app hoje, cerca de 7 dias depois da nossa sessao?
+2. Voce usou alguma frase do PhraseLoop fora da sessao?
 3. Voce voltaria a usar com um video, artigo ou PDF seu?
 4. O que teria que melhorar para isso substituir seu processo atual?
 

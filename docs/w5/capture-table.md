@@ -16,8 +16,11 @@ Use exactly one primary segment per row:
 
 ## Scoring Notes
 
-- Explain-back passes only when the participant says, without being led, that PhraseLoop turns
-  real English and/or their mistakes into review practice.
+- Unaided completion passes only when all six required actions are completed before any navigation
+  hint or moderator takeover. A request for help is `N`, even if the participant later finishes.
+- Explain-back passes only when the participant says, without being led, that both material they
+  watch/read and their own sentence or mistake become something they can practise again later.
+  Product terms such as “card,” “review,” or “loop” are not required.
 - Differentiator source is `unprompted` only if mentioned before the moderator names native
   audio, mistake drills, or lower-friction card creation.
 - Own-source completion means the participant successfully reaches saved phrases/cards from
@@ -25,6 +28,10 @@ Use exactly one primary segment per row:
 - For paid pain, use exactly `managed-cloud`, `review-anywhere`, `curated-content`, `none`, or
   `other: short-label`. Plain `other` does not pass the paid-pain gate because Phase 3 needs the
   same concrete answer from at least 3/10 users.
+- For D+1/D+7, blank, declined, and unverified answers score as `N`. Keep `(self-reported)` in the
+  source column when no local activity record is available.
+- Replacement is `Y` only for an unqualified commitment to replace the current workflow for seven
+  days. Record conditional or “alongside it” answers verbatim in Notes and score them `N`.
 - After the 10-session decision round is complete, run:
 
 ```sh

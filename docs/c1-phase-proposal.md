@@ -1,9 +1,16 @@
 # PhraseLoop — Post-B1/B2 Plateau (C1 Phase Proposal)
 
-> **Status: Concept — Phase 6 ("Tutor Vision Unlock"), gated on a W5 pass.**
-> Do not build against this doc until Phase 6 opens in
-> [validation-action-plan.md](validation-action-plan.md). Today the W5 Decision Record in
-> [product.md](product.md) reads 0/10 rows scored, pending. Nothing here is scheduled.
+> **Status: MVP slice implemented as a deliberate, scoped exception — not a W5 pass.**
+> The W5 Decision Record in [product.md](product.md) still reads 0/10 rows scored, pending;
+> Phase 6 ("Tutor Vision Unlock") has not opened in
+> [validation-action-plan.md](validation-action-plan.md). By explicit product decision, the
+> MVP slice described below — diagnosis using the existing `errorTypes` signal plus one short
+> writing-sample check, one domain, one write → feedback → speak loop — was built ahead of
+> that gate as an experimental surface reached only from Settings, not part of the tested
+> first-loop or default navigation, and not to be treated as validated. Everything else in
+> this doc (Native Content Ladder, multi-domain C1 builder, Skill Balance Score, Fluency
+> Progress Graph, automated study-ratio enforcement) remains unbuilt and still gated on
+> Phase 6 opening.
 
 ## Why this doc exists
 
