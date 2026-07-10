@@ -70,7 +70,7 @@
   "68": "Electron Preload Bridge",
   "69": "Demo Fixture Builder",
   "70": "APKG Extraction Script",
-  "71": "Settings UI Widgets",
+  "71": "SettingsScreen.tsx",
   "72": "Landing Hero Imagery",
   "73": "Package Metadata",
   "74": "App Context Providers",
@@ -223,5 +223,12 @@
   "221": "Local Speech Runtime (Kokoro + Whisper)",
   "222": "Mistakes Become Drills Differentiator",
   "223": "Native Source Audio Differentiator",
-  "224": "YouTube Audio Import Pipeline (yt-dlp + whisper.cpp)"
+  "224": "YouTube Audio Import Pipeline (yt-dlp + whisper.cpp)",
+  "225": "PronunciationCoach.tsx",
+  "226": "openrouter.ts",
+  "227": "useUnlockedTabs.ts",
+  "228": "dedupe.ts",
+  "229": "languages.ts",
+  "230": "MemoryStorage",
+  "231": "W5 Follow-Up Messages"
 }
