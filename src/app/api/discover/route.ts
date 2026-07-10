@@ -1,11 +1,15 @@
 import { NextRequest } from "next/server";
 import { localRequest } from "@/server/localRuntime";
 import { httpUrl, readJsonObject } from "@/server/http/validation";
-import { MAX_SETTINGS_JSON_BYTES } from "@/lib/constants";
+import {
+  MAX_SETTINGS_JSON_BYTES,
+  YOUTUBE_IMPORT_MAX_DURATION_MINUTES,
+  YOUTUBE_IMPORT_TIMEOUT_MS,
+} from "@/lib/constants";
 import { logger } from "@/lib/logger";
 
 export const runtime = "nodejs";
-export const maxDuration = 450;
+export const maxDuration = 1800;
 
 function safeLang(v: unknown): string | null {
   if (typeof v !== "string") return null;
@@ -19,6 +23,10 @@ function sseChunk(data: object): Uint8Array {
 
 const PUBLIC_YOUTUBE_INPUT_ERROR =
   "Cole um link http(s) válido do YouTube ou continue pela lição inicial e Estudar.";
+const YOUTUBE_IMPORT_ERROR =
+  `Não consegui importar esse vídeo. Tente um vídeo público com menos de ${YOUTUBE_IMPORT_MAX_DURATION_MINUTES} minutos ou volte para a lição inicial.`;
+const YOUTUBE_IMPORT_TIMEOUT_ERROR =
+  `O processamento demorou demais. Tente um vídeo público com menos de ${YOUTUBE_IMPORT_MAX_DURATION_MINUTES} minutos ou volte para a lição inicial.`;
 
 export async function POST(req: NextRequest) {
   let url: string | null = null;
@@ -52,7 +60,7 @@ export async function POST(req: NextRequest) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ url: finalUrl, lang: finalLang }),
-          timeoutMs: 450_000,
+          timeoutMs: YOUTUBE_IMPORT_TIMEOUT_MS,
           onProgress: (percent, stage) => {
             try {
               controller.enqueue(sseChunk({ type: "progress", percent, stage }));
@@ -62,7 +70,7 @@ export async function POST(req: NextRequest) {
 
         if (res.status < 200 || res.status >= 300) {
           logger.error({ status: res.status, body: res.body.toString("utf8") }, "Discover runtime error");
-          controller.enqueue(sseChunk({ type: "error", message: "Não consegui importar esse vídeo. Tente um vídeo público com menos de 15 minutos ou volte para a lição inicial." }));
+          controller.enqueue(sseChunk({ type: "error", message: YOUTUBE_IMPORT_ERROR }));
         } else {
           controller.enqueue(sseChunk({ type: "done", result: res.json() }));
         }
@@ -70,8 +78,8 @@ export async function POST(req: NextRequest) {
         logger.error({ err }, "Discover proxy error");
         const message =
           err instanceof Error && err.name === "TimeoutError"
-            ? "O processamento demorou demais. Tente um vídeo público com menos de 15 minutos ou volte para a lição inicial."
-            : "Não consegui importar esse vídeo. Tente um vídeo público com menos de 15 minutos ou volte para a lição inicial.";
+            ? YOUTUBE_IMPORT_TIMEOUT_ERROR
+            : YOUTUBE_IMPORT_ERROR;
         try {
           controller.enqueue(sseChunk({ type: "error", message }));
         } catch {}

@@ -16,6 +16,15 @@ export const MAX_CORRECTION_JSON_BYTES = 256 * 1024;
 /** Max JSON body accepted by settings writes/tests. */
 export const MAX_SETTINGS_JSON_BYTES = 16 * 1024;
 
+/** Max YouTube source length accepted by Discover import. */
+export const YOUTUBE_IMPORT_MAX_DURATION_MINUTES = 30;
+
+/** yt-dlp duration filter value for Discover import. */
+export const YOUTUBE_IMPORT_MAX_DURATION_SECONDS = YOUTUBE_IMPORT_MAX_DURATION_MINUTES * 60;
+
+/** Wall-clock timeout for YouTube download + local transcription. */
+export const YOUTUBE_IMPORT_TIMEOUT_MS = YOUTUBE_IMPORT_MAX_DURATION_MINUTES * 60_000;
+
 /** Local request default timeout. */
 export const LOCAL_REQUEST_TIMEOUT_MS = 120_000;
 

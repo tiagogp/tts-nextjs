@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Card } from "@/lib/cards/schema";
-import { MAX_AUDIO_UPLOAD_BYTES, MAX_PDF_UPLOAD_BYTES } from "@/lib/constants";
+import {
+  MAX_AUDIO_UPLOAD_BYTES,
+  MAX_PDF_UPLOAD_BYTES,
+  YOUTUBE_IMPORT_MAX_DURATION_MINUTES,
+  YOUTUBE_IMPORT_TIMEOUT_MS,
+} from "@/lib/constants";
 
 const localJson = vi.fn();
 const localRequest = vi.fn();
@@ -460,6 +465,24 @@ describe("API route integration", () => {
     expect(response.status).toBe(400);
     expect(data.error).toContain("link http(s) válido");
     expect(data.error).toContain("lição inicial");
+  });
+
+  it("/api/discover returns 30-minute PT-BR copy for YouTube runtime failures", async () => {
+    localRequest.mockResolvedValueOnce(localResponse({ detail: "failed" }, 500));
+    const { POST } = await import("@/app/api/discover/route");
+
+    const response = await POST(jsonRequest("/api/discover", {
+      url: "https://www.youtube.com/watch?v=abc123def45",
+      lang: "en",
+    }) as never);
+    const body = await response.text();
+
+    expect(response.status).toBe(200);
+    expect(body).toContain(`menos de ${YOUTUBE_IMPORT_MAX_DURATION_MINUTES} minutos`);
+    expect(body).toContain("lição inicial");
+    expect(localRequest).toHaveBeenCalledWith("/discover", expect.objectContaining({
+      timeoutMs: YOUTUBE_IMPORT_TIMEOUT_MS,
+    }));
   });
 
   it("/api/discover/pdf returns recoverable PT-BR copy for oversized files", async () => {

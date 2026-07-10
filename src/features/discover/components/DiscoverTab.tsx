@@ -8,6 +8,7 @@ import { Field, Input } from "@/components/ui/Field";
 import { Notice } from "@/components/ui/Notice";
 import { Spinner } from "@/components/ui/Spinner";
 import Disclosure from "@/components/ui/Disclosure";
+import { YOUTUBE_IMPORT_MAX_DURATION_MINUTES } from "@/lib/constants";
 import { getCounts, saveGeneratedDeck } from "@/lib/store/repository";
 import { useAiSettings } from "@/features/settings/context/AiSettingsContext";
 import type { Card as CardModel, PhraseCandidate } from "@/lib/cards/schema";
@@ -340,7 +341,7 @@ export default function DiscoverTab({
     } catch (err: unknown) {
       const fallback =
         sourceKind === "youtube"
-          ? "Não consegui importar esse vídeo. Tente um vídeo público com menos de 15 minutos ou continue pela lição inicial e Estudar."
+          ? `Não consegui importar esse vídeo. Tente um vídeo público com menos de ${YOUTUBE_IMPORT_MAX_DURATION_MINUTES} minutos ou continue pela lição inicial e Estudar.`
           : sourceKind === "article"
             ? "Não consegui abrir esse artigo. Tente outro link ou continue pela lição inicial e Estudar."
             : "Não consegui ler esse PDF. Tente um arquivo menor ou continue pela lição inicial e Estudar.";
