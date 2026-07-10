@@ -377,7 +377,11 @@ Historico de ativacao shipped:
 
 - Progresso ainda mede muito esforco, pouco resultado de proficiencia.
 - Custo de API precisa ser mais visivel.
-- Motivacao/habito ainda e magro.
+- Motivacao/habito ainda e magro. Parcialmente enderecado (2026-07-09) dentro do freeze:
+  o return moment do Hoje agora dispara em todo dia de retorno (D+1 a D+7) com contagem
+  honesta de cards vindos de erros reais (`src/features/home/returnMoment.ts`), e o fim de
+  sessao mostra o preview "Amanha: N frases te esperam" fechando o loop. Loop de habito
+  completo continua P3/pos-W5.
 - Anki e Study interno competem na narrativa; Study deve ser o centro.
 
 Recomendacao critica:

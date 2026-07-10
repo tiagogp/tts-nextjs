@@ -247,22 +247,29 @@ The things W5 measures most directly are the things not finished. Fix these
 - [x] **Import failure fallbacks.**
       Every YouTube/article/PDF failure state ends in PT-BR copy with a path back to the
       bundled lesson and Study — never a dead end. Hard-cap first import length (suggest clips
-      under ~15 min) with a friendly explanation.
+      under ~30 min) with a friendly explanation.
       _Done when:_ forcing each failure (bad URL, blocked video, oversized PDF, network off)
       lands on recoverable PT-BR copy.
       _Implementation status:_ Discover now normalizes failures to recoverable PT-BR copy
       with PT-BR API fallbacks for bad YouTube/article/PDF inputs; YouTube import is capped
-      at 15 minutes; targeted route coverage verifies bad YouTube/article/PDF inputs.
+      at 30 minutes; targeted route coverage verifies bad YouTube/article/PDF inputs.
 
 - [x] **Design the day-2 return moment.**
       On D+1 open: one calm, unmissable statement — "3 cards para hoje — 1 veio do seu erro de
       ontem" — leading straight into review.
       _Why:_ D+1 40% / D+7 25% are gate metrics with no designed surface behind them.
       _Done when:_ a clean install revisited the next day shows the moment with correct counts.
-      _Implementation status:_ Hoje derives the D+1 moment locally (`returnMomentFor` in
-      `HojeHome.tsx`): it shows only when cards are due and the first recorded activity was
-      exactly yesterday, counting yesterday's `errorEvents` for the "veio do seu erro" line,
-      and leads straight into review. Next-day clean-install walkthrough still pending.
+      _Implementation status:_ reworked 2026-07-09 into `src/features/home/returnMoment.ts`
+      (pure, unit-tested): the moment now fires on **every** return day (D+1 through D+7 —
+      previously only when today was exactly the day after the first-ever activity, so the
+      D+7 gate day got generic copy), and the "veio do seu erro" claim is only made when a
+      **due card's provenance** (`card.source.kind === "error"`) backs it — counting raw
+      yesterday `errorEvents` could overclaim when an error produced no card. The loop is
+      also closed from the other side: the end-of-session summary shows a calm "Amanhã: N
+      frases te esperam — 1 veio do seu erro de hoje" preview (`tomorrowLine` in
+      `SessionSummary.tsx`, fed by `useStudySession` looking ahead to the local end of
+      tomorrow). Next-day clean-install walkthrough still pending — that remains the
+      _Done when_.
 
 ---
 
