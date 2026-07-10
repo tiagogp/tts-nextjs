@@ -670,8 +670,17 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "{count} cards for today — {mistakes} came from your mistakes yesterday": {
     pt: "{count} cards para hoje — {mistakes} vieram dos seus erros de ontem",
   },
+  "{count} cards for today — 1 came from your mistake": {
+    pt: "{count} cards para hoje — 1 veio do seu erro",
+  },
+  "{count} cards for today — {mistakes} came from your mistakes": {
+    pt: "{count} cards para hoje — {mistakes} vieram dos seus erros",
+  },
   "Review while yesterday is still fresh.": {
     pt: "Revise enquanto o que aconteceu ontem ainda está fresco.",
+  },
+  "Reviewing your own mistakes is what makes them stick.": {
+    pt: "Revisar os seus próprios erros é o que faz eles fixarem.",
   },
   "Start today's review": { pt: "Revisar agora" },
   "Review these before adding more, so nothing piles up.": {
@@ -925,6 +934,23 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "ready for tomorrow": { pt: "prontas para amanhã" },
   "{count} days in a row. Tomorrow you review the next phrases.": {
     pt: "{count} dias seguidos. Amanhã você revisa as próximas frases.",
+  },
+  "{count} days in a row.": { pt: "{count} dias seguidos." },
+  "Nothing due tomorrow yet — the next review arrives right on time.": {
+    pt: "Nada para amanhã ainda — a próxima revisão chega na hora certa.",
+  },
+  "Tomorrow: the phrase from today's mistake is waiting for you.": {
+    pt: "Amanhã: a frase do seu erro de hoje te espera.",
+  },
+  "Tomorrow: {count} phrases are waiting — 1 came from today's mistake.": {
+    pt: "Amanhã: {count} frases te esperam — 1 veio do seu erro de hoje.",
+  },
+  "Tomorrow: {count} phrases are waiting — {mistakes} came from today's mistakes.": {
+    pt: "Amanhã: {count} frases te esperam — {mistakes} vieram dos seus erros de hoje.",
+  },
+  "Tomorrow: 1 phrase is waiting for you.": { pt: "Amanhã: 1 frase te espera." },
+  "Tomorrow: {count} phrases are waiting for you.": {
+    pt: "Amanhã: {count} frases te esperam.",
   },
   "Performance": { pt: "Desempenho" },
   "Reviews": { pt: "Revisões" },

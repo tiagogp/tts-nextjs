@@ -5,8 +5,16 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { isStoreAvailable } from "@/lib/store/db";
-import { getCards, getCounts, getErrorEvents, getReviews, type ReviewRecord } from "@/lib/store/repository";
+import {
+  getCards,
+  getCounts,
+  getDueCards,
+  getErrorEvents,
+  getReviews,
+  type ReviewRecord,
+} from "@/lib/store/repository";
 import { getActivityLog } from "@/lib/store/activityLog";
+import { returnMomentFor, type ReturnMoment } from "@/features/home/returnMoment";
 import { computePerformance } from "@/lib/srs/analytics";
 import { useT } from "@/i18n/I18nProvider";
 import { completedLessonIdsFromCardIds, firstLesson, nextLessonFor, type Lesson } from "@/features/learn/lessonDeck";
@@ -27,35 +35,6 @@ interface NextAction {
   onClick: () => void;
 }
 
-interface ReturnMoment {
-  due: number;
-  mistakeCards: number;
-}
-
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-function localDayIndex(ts: number): number {
-  const d = new Date(ts);
-  d.setHours(0, 0, 0, 0);
-  return Math.round(d.getTime() / DAY_MS);
-}
-
-function returnMomentFor(input: {
-  due: number;
-  activity: { ts: number }[];
-  errors: { createdAt: number }[];
-  now?: number;
-}): ReturnMoment | null {
-  if (input.due <= 0 || input.activity.length === 0) return null;
-  const now = input.now ?? Date.now();
-  const today = localDayIndex(now);
-  const firstDay = Math.min(...input.activity.map((event) => localDayIndex(event.ts)));
-  if (today - firstDay !== 1) return null;
-  const yesterday = today - 1;
-  const mistakeCards = input.errors.filter((event) => localDayIndex(event.createdAt) === yesterday).length;
-  return { due: input.due, mistakeCards };
-}
-
 /**
  * "Hoje" — the app's front door. It answers a single question for the learner:
  * what is the one next thing to do right now? Resolution order: (a) today's first
@@ -74,17 +53,20 @@ export function HojeHome({ onStudy, onCorrect, onFirstLesson, onLesson }: HojeHo
     if (!isStoreAvailable()) return;
     let cancelled = false;
     const load = async () => {
-      const [nextCounts, reviews, cards, errors, activity] = await Promise.all([
+      const [nextCounts, reviews, cards, errors, activity, dueCards] = await Promise.all([
         getCounts(),
         getReviews(),
         getCards(),
         getErrorEvents(),
         getActivityLog(),
+        getDueCards(),
       ]);
       if (cancelled) return;
       setCounts({ ...nextCounts, errors: errors.length });
       setStreakDays(computePerformance(reviews as ReviewRecord[], Date.now()).streakDays);
-      setReturnMoment(returnMomentFor({ due: nextCounts.due, activity, errors }));
+      setReturnMoment(
+        returnMomentFor({ dueCards: dueCards.map((item) => item.card), activity, errors }),
+      );
       setNextLesson(
         nextLessonFor(
           getLearningProfile(),
@@ -169,18 +151,30 @@ function resolveNextAction({
   nextLesson: Lesson;
   returnMoment: ReturnMoment | null;
 }): NextAction {
-  if (returnMoment && counts.due > 0) {
-    const title =
-      returnMoment.mistakeCards === 1
-        ? t("{count} cards for today — 1 came from your mistake yesterday", { count: counts.due })
+  // Return-day moment with a true mistake claim: every counted mistake is a due
+  // card whose provenance points at a real error. Zero mistake cards falls through
+  // to the plain due branch — the claim is never made without the card behind it.
+  if (returnMoment && returnMoment.mistakeCards > 0) {
+    const { due, mistakeCards, fromYesterday } = returnMoment;
+    const title = fromYesterday
+      ? mistakeCards === 1
+        ? t("{count} cards for today — 1 came from your mistake yesterday", { count: due })
         : t("{count} cards for today — {mistakes} came from your mistakes yesterday", {
-            count: counts.due,
-            mistakes: returnMoment.mistakeCards,
+            count: due,
+            mistakes: mistakeCards,
+          })
+      : mistakeCards === 1
+        ? t("{count} cards for today — 1 came from your mistake", { count: due })
+        : t("{count} cards for today — {mistakes} came from your mistakes", {
+            count: due,
+            mistakes: mistakeCards,
           });
     return {
       eyebrow: t("Today"),
       title,
-      detail: t("Review while yesterday is still fresh."),
+      detail: fromYesterday
+        ? t("Review while yesterday is still fresh.")
+        : t("Reviewing your own mistakes is what makes them stick."),
       cta: t("Start today's review"),
       onClick: onStudy,
     };
