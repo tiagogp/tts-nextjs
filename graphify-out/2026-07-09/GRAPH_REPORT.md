@@ -1,7 +1,7 @@
 # Graph Report - text-to-speech  (2026-07-09)
 
 ## Corpus Check
-- 315 files · ~655,675 words
+- 315 files · ~655,676 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `38754f8e`
+- Built from commit: `57ec2f42`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -71,7 +71,7 @@
 - Card Language Orientation
 - Lesson View UI
 - Pronunciation Scoring
-- OpenAI Card Provider
+- returnMoment.test.ts
 - Fatigue-Aware Band Queue
 - Theme Generation API
 - Installer Build Script
@@ -135,12 +135,12 @@
 - graphify reference: query, path, explain
 - Backup/Restore Validation — Moderated Protocol
 - W5 Moderator Run-Sheet
-- mac
+- useStudySession
 - AGENTS.md
 - graphify reference: add a URL and watch a folder
 - graphify reference: commit hook and native CLAUDE.md integration
 - graphify reference: incremental update and cluster-only
-- page.tsx
+- PronunciationCoach.tsx
 - graphify reference: GitHub clone and cross-repo merge
 - graphify reference: transcribe video and audio
 - CLAUDE.md
@@ -236,8 +236,8 @@
 - Mistakes Become Drills Differentiator
 - Native Source Audio Differentiator
 - YouTube Audio Import Pipeline (yt-dlp + whisper.cpp)
-- PronunciationCoach.tsx
 - repository.backup.test.ts
+- AsciiLoop.tsx
 - ExposureMeter.tsx
 - dedupe.ts
 - extract-apkg-json.mjs
@@ -316,8 +316,8 @@ Cohesion: 0.07
 Nodes (39): AI_SETTINGS_FALLBACK_FILE, APKG_DEBUG_LOG_FILE, { app, BrowserWindow, ipcMain, Menu, shell, utilityProcess }, APP_ICON_PNG, boot(), children, clearOwnQuarantine(), crypto (+31 more)
 
 ### Community 8 - "Local Store Repository"
-Cohesion: 0.13
-Nodes (34): clearAll(), count(), countFromIndex(), del(), get(), getAll(), getAllFromIndex(), getMany() (+26 more)
+Cohesion: 0.12
+Nodes (38): clearAll(), count(), countFromIndex(), del(), get(), getAll(), getAllFromIndex(), getMany() (+30 more)
 
 ### Community 9 - "Landing Site UI"
 Cohesion: 0.07
@@ -325,7 +325,7 @@ Nodes (25): appStageStyle, cardHover, ctaReveal, darkPatternStyle, demoCards, de
 
 ### Community 10 - "Home Page Shell"
 Cohesion: 0.14
-Nodes (22): HomeContent(), Overlay, recommendedLessonId(), resolveLessonId(), useDockDueBadge(), LEVEL_RANK, HojeHome(), HojeHomeProps (+14 more)
+Nodes (23): HomeContent(), Overlay, recommendedLessonId(), resolveLessonId(), useDockDueBadge(), LEVEL_RANK, HojeHome(), HojeHomeProps (+15 more)
 
 ### Community 11 - "Study Transcript Review"
 Cohesion: 0.04
@@ -424,8 +424,8 @@ Cohesion: 0.18
 Nodes (9): DeckGenerationResult, phraseSource, DeckResult, ollamaBaseUrl(), OllamaProvider, Card, CardSource, Critique (+1 more)
 
 ### Community 35 - "Provider Selection Constants"
-Cohesion: 0.29
-Nodes (12): ProgressOverview(), loadOrderedDueQueue(), loadStudySnapshot(), useStudySession(), getCardsWithSrs(), getConversations(), getDueCards(), getProgressAssessments() (+4 more)
+Cohesion: 0.21
+Nodes (13): BandVerdict, CardLike, clamp01(), gateVerdict(), orderByBand(), scoreCard(), simulateBandGate(), targetRecall() (+5 more)
 
 ### Community 36 - "Landing TypeScript Config"
 Cohesion: 0.10
@@ -492,8 +492,8 @@ Cohesion: 0.21
 Nodes (16): SessionResult, SessionSummary(), summarize(), line(), t(), tomorrowLine(), TomorrowPreview, ScaffoldControls() (+8 more)
 
 ### Community 53 - "Card Language Orientation"
-Cohesion: 0.43
-Nodes (6): AsciiLoop(), buildTrack(), Cell, COMET, COMET_HEAD, renderFrame()
+Cohesion: 0.23
+Nodes (12): adaptProviderKind(), PLAN_TASK_TYPES, extractJsonObject(), GeneratedDay, GeneratedTask, validateGeneratedDays(), validatePlanResult(), validateTask() (+4 more)
 
 ### Community 54 - "Lesson View UI"
 Cohesion: 0.21
@@ -503,9 +503,9 @@ Nodes (8): Input, IconButton, IconButtonProps, StatusPill(), StatusPillProps, to
 Cohesion: 0.27
 Nodes (12): alignWords(), assessPronunciationText(), clampScore(), CONTRACTIONS, editDistance(), escapeRegExp(), fluencyScore(), normalizePronunciationWords() (+4 more)
 
-### Community 56 - "OpenAI Card Provider"
+### Community 56 - "returnMoment.test.ts"
 Cohesion: 0.21
-Nodes (13): BandVerdict, CardLike, clamp01(), gateVerdict(), orderByBand(), scoreCard(), simulateBandGate(), targetRecall() (+5 more)
+Nodes (10): DueCardLike, endOfTomorrowLocal(), localDayIndex(), mistakeCardStats(), ReturnMoment, returnMomentFor(), NOW, TWO_DAYS_AGO (+2 more)
 
 ### Community 57 - "Fatigue-Aware Band Queue"
 Cohesion: 0.11
@@ -540,8 +540,8 @@ Cohesion: 0.15
 Nodes (11): generateDeck, localJson, localRequest, NaturalnessReviewProps, AdvancedReviewSummary, CardSourceRef, ContentSource, CritiqueVerdict (+3 more)
 
 ### Community 71 - "useUnlockedTabs.ts"
-Cohesion: 0.21
-Nodes (14): HOME_TABS, HomeTab, computeUnlockedTabTier(), highestNewTab(), tabsForUnlockTier(), UnlockSignals, useUnlockedTabs(), cardMatchesWeakness() (+6 more)
+Cohesion: 0.30
+Nodes (9): HOME_TABS, HomeTab, computeUnlockedTabTier(), highestNewTab(), tabsForUnlockTier(), UnlockSignals, useUnlockedTabs(), getCards() (+1 more)
 
 ### Community 72 - "Landing Hero Imagery"
 Cohesion: 0.43
@@ -655,9 +655,9 @@ Nodes (5): Backup/Restore Validation — Moderated Protocol, Capture Table, Know
 Cohesion: 0.33
 Nodes (6): After The Session, Before The Session, Handover, Observe The Unaided Loop, Questions After The Loop, W5 Moderator Run-Sheet
 
-### Community 124 - "mac"
-Cohesion: 0.27
-Nodes (10): synthesizeSpeech(), attempt(), assessPronunciation(), PronunciationCoach(), PronunciationCoachProps, Score(), scoreTone(), wordClass() (+2 more)
+### Community 124 - "useStudySession"
+Cohesion: 0.29
+Nodes (12): ProgressOverview(), loadOrderedDueQueue(), loadStudySnapshot(), useStudySession(), getCardsWithSrs(), getConversations(), getDueCards(), getProgressAssessments() (+4 more)
 
 ### Community 125 - "AGENTS.md"
 Cohesion: 0.50
@@ -675,17 +675,17 @@ Nodes (3): For git commit hook, For native CLAUDE.md integration, graphify refer
 Cohesion: 0.50
 Nodes (3): For --cluster-only, For --update (incremental re-extraction), graphify reference: incremental update and cluster-only
 
-### Community 129 - "page.tsx"
-Cohesion: 0.21
-Nodes (10): DueCardLike, endOfTomorrowLocal(), localDayIndex(), mistakeCardStats(), ReturnMoment, returnMomentFor(), NOW, TWO_DAYS_AGO (+2 more)
+### Community 129 - "PronunciationCoach.tsx"
+Cohesion: 0.27
+Nodes (10): synthesizeSpeech(), attempt(), assessPronunciation(), PronunciationCoach(), PronunciationCoachProps, Score(), scoreTone(), wordClass() (+2 more)
 
-### Community 225 - "PronunciationCoach.tsx"
-Cohesion: 0.23
-Nodes (12): adaptProviderKind(), PLAN_TASK_TYPES, extractJsonObject(), GeneratedDay, GeneratedTask, validateGeneratedDays(), validatePlanResult(), validateTask() (+4 more)
-
-### Community 226 - "repository.backup.test.ts"
+### Community 225 - "repository.backup.test.ts"
 Cohesion: 0.22
 Nodes (9): SettingsScreen(), statusLabel(), subscribeToProfile(), emptyBackupCounts(), exportLocalBackup(), isRecord(), restoreLocalBackup(), validateLocalBackup() (+1 more)
+
+### Community 226 - "AsciiLoop.tsx"
+Cohesion: 0.43
+Nodes (6): AsciiLoop(), buildTrack(), Cell, COMET, COMET_HEAD, renderFrame()
 
 ### Community 227 - "ExposureMeter.tsx"
 Cohesion: 0.33

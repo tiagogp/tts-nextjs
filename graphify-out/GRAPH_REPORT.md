@@ -1,7 +1,7 @@
 # Graph Report - text-to-speech  (2026-07-09)
 
 ## Corpus Check
-- 315 files · ~655,716 words
+- 315 files · ~655,690 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `2c566008`
+- Built from commit: `57ec2f42`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -313,7 +313,7 @@ Nodes (46): SettingsScreen(), statusLabel(), subscribeToProfile(), clearAll(), c
 
 ### Community 9 - "Landing Site UI"
 Cohesion: 0.07
-Nodes (27): accentPatternStyle, appStageStyle, cardHover, ctaReveal, darkPatternStyle, demoCards, demoDiscoverResult, demoFetchResponse() (+19 more)
+Nodes (26): appStageStyle, cardHover, ctaReveal, darkPatternStyle, demoCards, demoDiscoverResult, demoFetchResponse(), demoStreamResponse() (+18 more)
 
 ### Community 10 - "Home Page Shell"
 Cohesion: 0.10
@@ -616,8 +616,8 @@ Cohesion: 0.22
 Nodes (9): Current App Boundaries, Desktop App, Feature Modules, Landing App, Organization Priorities, PhraseLoop Project Structure, Runtime Shape, Source Directory Rules (+1 more)
 
 ### Community 117 - "AsciiLoop.tsx"
-Cohesion: 0.16
-Nodes (13): fontVariables, metadata, fontVariables, metadata, getStoredTheme(), getSystemTheme(), isTheme(), subscribeStoredTheme() (+5 more)
+Cohesion: 0.15
+Nodes (14): archivoBlack, fontVariables, metadata, fontVariables, metadata, getStoredTheme(), getSystemTheme(), isTheme() (+6 more)
 
 ### Community 118 - "demoFixture.ts"
 Cohesion: 0.43
