@@ -12,7 +12,8 @@ export type ActivityEventType =
   | "cards_created"
   | "own_source_started"
   | "own_source_completed"
-  | "progress_checkin";
+  | "progress_checkin"
+  | "c1_diagnosis_completed";
 
 export interface FirstRunStartedPayload {
   source: FirstRunActivationSource;
@@ -70,6 +71,13 @@ export interface ProgressCheckinPayload {
   errorsFound: number;
 }
 
+/** A C1 writing sample was reviewed for register/naturalness/collocation gaps (experimental). */
+export interface C1DiagnosisCompletedPayload {
+  domain: string;
+  errorsFound: number;
+  dimensionsFlagged: number;
+}
+
 type PayloadMap = {
   first_run_started: FirstRunStartedPayload;
   cards_reviewed: CardsReviewedPayload;
@@ -81,6 +89,7 @@ type PayloadMap = {
   own_source_started: OwnSourceStartedPayload;
   own_source_completed: OwnSourceCompletedPayload;
   progress_checkin: ProgressCheckinPayload;
+  c1_diagnosis_completed: C1DiagnosisCompletedPayload;
 };
 
 export interface ActivityEvent<T extends ActivityEventType = ActivityEventType> {

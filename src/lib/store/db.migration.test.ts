@@ -3,10 +3,12 @@ import { describe, expect, it } from "vitest";
 import type { Card } from "@/lib/cards/schema";
 import { STORES, getAll, openDb, type StoreName } from "./db";
 import {
+  getC1Diagnoses,
   getCards,
   getDueCards,
   getProgressAssessments,
   getSrs,
+  saveC1Diagnosis,
   saveProgressAssessment,
 } from "./repository";
 
@@ -101,6 +103,17 @@ describe("IndexedDB schema migration", () => {
     } as unknown as Parameters<typeof saveProgressAssessment>[0]);
     const assessments = await getProgressAssessments();
     expect(assessments.map((a) => a.id)).toContain("assess-after-migration");
+
+    await saveC1Diagnosis({
+      id: "c1-after-migration",
+      domain: "work",
+      sampleText: "sample",
+      errors: [],
+      refinements: [],
+      createdAt: 1_700_000_300_000,
+    });
+    const diagnoses = await getC1Diagnoses();
+    expect(diagnoses.map((d) => d.id)).toContain("c1-after-migration");
   });
 
   it("exposes every declared store as a readable object store after open", async () => {

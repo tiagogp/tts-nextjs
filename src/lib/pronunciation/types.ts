@@ -29,5 +29,5 @@ export interface PronunciationAttempt extends PronunciationAssessment {
   targetLang: string;
   cardId?: string;
   lessonId?: string;
-  source: "study" | "lesson";
+  source: "study" | "lesson" | "c1";
 }

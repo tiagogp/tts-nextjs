@@ -14,6 +14,7 @@ import type {
 import { orientCardsForTargetFront } from "@/lib/cards/orientation";
 import type { PronunciationAttempt } from "@/lib/pronunciation/types";
 import type { StoredProgressAssessment } from "@/features/progress/model";
+import type { C1Diagnosis } from "@/features/c1/types";
 import type { ConversationTurn } from "@/lib/cards/provider";
 import {
   STORES,
@@ -351,6 +352,17 @@ export function saveProgressAssessment(assessment: StoredProgressAssessment): Pr
 export async function getProgressAssessments(): Promise<StoredProgressAssessment[]> {
   const assessments = await getAll<StoredProgressAssessment>(STORES.progressAssessments);
   return assessments.sort((a, b) => b.createdAt - a.createdAt);
+}
+
+/* ──────────────────────────── C1 diagnosis (experimental, pre-W5 exception) ──────────────────────────── */
+
+export function saveC1Diagnosis(diagnosis: C1Diagnosis): Promise<void> {
+  return put(STORES.c1Diagnoses, diagnosis);
+}
+
+export async function getC1Diagnoses(): Promise<C1Diagnosis[]> {
+  const diagnoses = await getAll<C1Diagnosis>(STORES.c1Diagnoses);
+  return diagnoses.sort((a, b) => b.createdAt - a.createdAt);
 }
 
 /* ──────────────────────────── conversations (Phase 1) ──────────────────────────── */

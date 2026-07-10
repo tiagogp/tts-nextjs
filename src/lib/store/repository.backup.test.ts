@@ -130,7 +130,7 @@ describe("local backup round-trip (W6)", () => {
  *
  * The moderated [backup-restore protocol](../../../docs/w5/backup-restore-validation.md)
  * proves zero loss on ONE real participant. This test proves the same property
- * automatically, across ALL 11 stores, through the exact real path a user hits:
+ * automatically, across ALL 12 stores, through the exact real path a user hits:
  * export → serialize to a JSON file → parse the file back → dry-run validate →
  * restore. It fills every store with weeks of data (not the handful the high-level
  * API touches) and asserts each record survives byte-for-byte, including FSRS due
@@ -155,6 +155,7 @@ describe("local backup round-trip — weeks-scale zero-loss proof (Phase 4)", ()
     [STORES.effortHistory]: "weekOf",
     [STORES.pronunciationAttempts]: "id",
     [STORES.progressAssessments]: "id",
+    [STORES.c1Diagnoses]: "id",
   };
 
   function buildSeed(): Record<StoreName, Record<string, unknown>[]> {
@@ -240,6 +241,14 @@ describe("local backup round-trip — weeks-scale zero-loss proof (Phase 4)", ()
         id: `assess-${i}`,
         createdAt: START + i * 3 * DAY,
         levelEstimate: ["A2", "B1"][i % 2],
+      })),
+      [STORES.c1Diagnoses]: Array.from({ length: 4 }, (_, i) => ({
+        id: `c1-${i}`,
+        domain: "work",
+        sampleText: `sample text ${i}`,
+        errors: [],
+        refinements: [],
+        createdAt: START + i * 4 * DAY,
       })),
     };
   }

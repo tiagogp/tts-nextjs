@@ -7,8 +7,8 @@
  */
 
 const DB_NAME = "tts-cards";
-// v6: adds progress assessment checkpoints for local-first outcome tracking.
-const DB_VERSION = 6;
+// v7: adds C1 writing-sample diagnosis records (experimental, pre-W5 exception).
+const DB_VERSION = 7;
 
 export const STORES = {
   errorEvents: "errorEvents",
@@ -22,6 +22,7 @@ export const STORES = {
   effortHistory: "effortHistory",
   pronunciationAttempts: "pronunciationAttempts",
   progressAssessments: "progressAssessments",
+  c1Diagnoses: "c1Diagnoses",
 } as const;
 
 export type StoreName = (typeof STORES)[keyof typeof STORES];
@@ -83,6 +84,10 @@ export function openDb(): Promise<IDBDatabase> {
       }
       if (!db.objectStoreNames.contains(STORES.progressAssessments)) {
         const s = db.createObjectStore(STORES.progressAssessments, { keyPath: "id" });
+        s.createIndex("createdAt", "createdAt");
+      }
+      if (!db.objectStoreNames.contains(STORES.c1Diagnoses)) {
+        const s = db.createObjectStore(STORES.c1Diagnoses, { keyPath: "id" });
         s.createIndex("createdAt", "createdAt");
       }
     };
