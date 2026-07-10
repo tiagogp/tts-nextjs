@@ -22,7 +22,7 @@
     "app:dist": "bash electron/build-app.sh",
     "app:linux": "bash electron/build-linux.sh",
     "app:windows": "bash electron/build-windows.sh",
-    "app:download": "bash make-download.sh",
+    "app:download": "bash scripts/make-download.sh",
     "landing:dev": "yarn workspace landing dev",
     "landing:build": "yarn workspace landing build"
   },

@@ -5,7 +5,7 @@
 # Windows: dist/PhraseLoop-<version>-Setup.exe
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "$0")" && pwd)"
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 clean_to_artifact() {

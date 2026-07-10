@@ -69,7 +69,7 @@ verified by SHA-256 and installed atomically.
 Start the Electron app and its standalone Next server with a single command:
 
 ```bash
-./start.sh
+./scripts/start.sh
 ```
 
 Speech inference runs inside the Next Node process through native addons. No
@@ -233,9 +233,29 @@ map of app boundaries, module ownership, and where new work should go.
 │   │   └── native/            # models, speech, discovery, audio, APKG
 │   ├── lib/                   # shared pure/domain utilities
 │   └── types/
-└── start.sh                   # Starts Electron and standalone Next
+├── scripts/                   # Build, launch, and asset-generation scripts
+│   └── start.sh               # Starts Electron and standalone Next
+├── docs/                      # Product, architecture, and validation docs
+└── assets/                    # Imported source decks/data fixtures
 ```
 
 The UI is organized by feature rather than by tab-sized files. Next.js `app/` stays thin:
 route handlers keep their public URLs stable, while domain logic lives under `features/`
 or server-only modules under `server/`.
+
+## Deploying to Vercel
+
+Only `apps/landing` deploys to Vercel. The root Next app is the desktop product —
+it depends on native addons (Kokoro/sherpa-onnx, Whisper) and local files, so it
+cannot run on Vercel; it ships inside Electron instead.
+
+One-time Vercel project setup (full runbook in
+[apps/landing/README.md](apps/landing/README.md)):
+
+1. Import the repo and set **Root Directory** to `apps/landing`.
+2. Enable **"Include source files outside of the Root Directory"** — the landing
+   reuses repo-root `src/*` via the `@/*` alias.
+3. Add the `PHRASELOOP_WAITLIST_WEBHOOK_URL` env var (Production).
+
+`apps/landing/vercel.json` handles the rest (framework, monorepo install without
+the Electron binary, `gru1` region). Validate locally with `yarn landing:build`.

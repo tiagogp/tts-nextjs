@@ -14,7 +14,7 @@ active.
 ├── src/                      # Desktop Next app, API routes, product code
 ├── native-audio/             # Source recordings for bundled native clips
 ├── public/                   # Generated/static assets served by the desktop app
-├── scripts/                  # Build, validation, and asset-generation scripts
+├── scripts/                  # Build, launch, validation, and asset-generation scripts
 ├── docs/                     # Product, architecture, validation, and planning docs
 └── assets/                   # Imported source decks/data fixtures
 ```
@@ -88,7 +88,6 @@ src/features/settings/       Profile, providers, backup, validation card
 src/features/cards/          Shared card generation/export UI hooks
 src/features/progress/       Progress summaries and assessment model
 src/features/pronunciation/  Pronunciation assessment surfaces
-src/features/practice/       Practice-oriented UI surfaces
 ```
 
 Advanced surfaces are present but should stay secondary during W5:
