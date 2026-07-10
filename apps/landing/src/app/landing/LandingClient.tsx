@@ -78,6 +78,12 @@ const darkPatternStyle = {
   backgroundSize: "100% 100%, 32px 32px, 32px 32px",
 } as CSSProperties;
 
+const accentPatternStyle = {
+  backgroundImage:
+    "radial-gradient(circle at 50% -12%, rgba(255, 255, 255, 0.30), transparent 44%), linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px)",
+  backgroundSize: "100% 100%, 32px 32px, 32px 32px",
+} as CSSProperties;
+
 const flowSteps = [
   {
     label: "YouTube / PDF / article / writing",
@@ -481,7 +487,12 @@ function DemoTabContent({
   onOpenCorrect: () => void;
 }) {
   if (tab === "discover") {
-    return <DiscoverTab onOpenSettings={onOpenSettings} onStudyNow={onOpenPractice} />;
+    return (
+      <DiscoverTab
+        onOpenSettings={onOpenSettings}
+        onStudyNow={onOpenPractice}
+      />
+    );
   }
 
   if (tab === "study") {
@@ -548,7 +559,10 @@ function RealAppDemo() {
                 style={{ overscrollBehavior: "auto" }}
               >
                 <div className="mx-auto max-w-5xl px-4 py-5">
-                  <SettingsScreen onBack={() => setSettingsOpen(false)} showAdvancedAi={false} />
+                  <SettingsScreen
+                    onBack={() => setSettingsOpen(false)}
+                    showAdvancedAi={false}
+                  />
                 </div>
               </div>
             ) : (
@@ -684,9 +698,13 @@ function MiniScreen({ title }: { title: string }) {
 
 function WaitlistForm() {
   const [email, setEmail] = useState("");
-  const [platform, setPlatform] = useState<(typeof platformOptions)[number] | "">("");
+  const [platform, setPlatform] = useState<
+    (typeof platformOptions)[number] | ""
+  >("");
   const [workflow, setWorkflow] = useState("");
-  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">(
+    "idle",
+  );
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -727,7 +745,11 @@ function WaitlistForm() {
         <select
           required
           value={platform}
-          onChange={(event) => setPlatform(event.target.value as (typeof platformOptions)[number] | "")}
+          onChange={(event) =>
+            setPlatform(
+              event.target.value as (typeof platformOptions)[number] | "",
+            )
+          }
           className="mt-1 w-full rounded border border-white/15 bg-[#151515] px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-accent/50"
         >
           <option value="">Escolha uma opção</option>
@@ -773,7 +795,8 @@ function WaitlistForm() {
       )}
       {status === "saved" && (
         <p className="text-xs text-[#b7e4bf]">
-          Obrigado. Vou priorizar convites para quem usa Mac Apple Silicon nesta rodada.
+          Obrigado. Vou priorizar convites para quem usa Mac Apple Silicon nesta
+          rodada.
         </p>
       )}
     </form>
@@ -960,8 +983,8 @@ export default function LandingPage() {
                 variants={listItem}
               >
                 Cole um vídeo do YouTube. Em 2 minutos, as melhores frases viram
-                cards de revisão com o áudio original — e os seus próprios erros viram
-                o treino de amanhã.
+                cards de revisão com o áudio original — e os seus próprios erros
+                viram o treino de amanhã.
               </motion.p>
               <motion.div
                 className="mt-7 flex flex-col justify-center gap-3 sm:flex-row"
@@ -1327,50 +1350,54 @@ export default function LandingPage() {
 
       <section
         id="download"
-        className="scroll-mt-24 border-t border-[#2b2926] bg-[#111111] px-4 py-16 text-[#faf9f6] sm:px-6 lg:px-8"
-        style={darkPatternStyle}
+        className="scroll-mt-24 bg-accent px-4 py-20 text-white sm:px-6 lg:px-8"
+        style={accentPatternStyle}
       >
-        <Reveal className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
-          <div>
-            <p className="mb-3 text-xs font-semibold uppercase text-accent">
-              Download
-            </p>
-            <h2 className="brand-wordmark text-4xl font-normal leading-[0.95] sm:text-5xl">
-              Build your own English loop on macOS.
-            </h2>
-            <p className="mt-4 max-w-2xl text-lg leading-8 text-[#d8d3ca]">
-              The Apple Silicon build bundles the Node runtime and local
-              services. Install from the DMG, drag PhraseLoop to Applications,
-              and start turning real English into cards with audio.
-            </p>
-          </div>
-          <div className="rounded-lg border border-white/15 bg-white/6 p-5">
-            <p className="text-sm font-semibold text-white">PhraseLoop.dmg</p>
-            <div className="mt-4 grid gap-2 text-sm text-[#d8d3ca]">
-              <p>macOS Apple Silicon</p>
-              <p>Node/runtime bundled</p>
-              <p>Drag-to-Applications install</p>
-            </div>
-            <motion.a
-              href="/api/download/macos"
-              whileHover={hoverLift}
-              whileTap={tapPress}
-              className="mt-6 inline-flex w-full items-center justify-center rounded border border-accent bg-accent px-5 py-3 text-sm font-semibold text-white"
-            >
-              Download for macOS
-            </motion.a>
-            <p className="mt-4 text-center text-xs text-[#d8d3ca]">
-              Created by{" "}
-              <a
-                href="https://github.com/tiagogp"
-                target="_blank"
-                rel="noreferrer"
-                className="font-semibold text-white underline decoration-accent underline-offset-4 transition-colors hover:text-accent"
+        <Reveal className="mx-auto max-w-3xl text-center">
+          <p className="mb-3 text-xs font-semibold uppercase text-white/85">
+            Download
+          </p>
+          <h2 className="brand-wordmark text-5xl font-normal leading-[0.92] sm:text-6xl">
+            Comece seu loop de inglês hoje.
+          </h2>
+          <p className="mx-auto mt-5 max-w-xl text-lg leading-8 text-white/90">
+            Baixe o DMG, arraste o PhraseLoop para Aplicativos e transforme o
+            próximo vídeo que você assistir em cards com áudio real.
+          </p>
+          <div className="mt-6 flex flex-wrap justify-center gap-2">
+            {[
+              "macOS Apple Silicon",
+              "Runtime incluído",
+              "Instala arrastando",
+            ].map((item) => (
+              <span
+                key={item}
+                className="rounded-full border border-white/30 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white"
               >
-                Tiago GP
-              </a>
-            </p>
+                {item}
+              </span>
+            ))}
           </div>
+          <motion.a
+            href="/api/download/macos"
+            variants={ctaReveal}
+            whileHover={hoverLift}
+            whileTap={tapPress}
+            className="mt-8 inline-flex items-center justify-center rounded border border-white bg-white px-7 py-3.5 text-sm font-semibold text-accent"
+          >
+            Baixar PhraseLoop.dmg
+          </motion.a>
+          <p className="mt-6 text-xs text-white/85">
+            Criado por{" "}
+            <a
+              href="https://github.com/tiagogp"
+              target="_blank"
+              rel="noreferrer"
+              className="font-semibold text-white underline decoration-white/60 underline-offset-4 transition-colors hover:decoration-white"
+            >
+              Tiago GP
+            </a>
+          </p>
         </Reveal>
       </section>
     </main>
