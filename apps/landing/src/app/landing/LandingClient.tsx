@@ -33,7 +33,7 @@ const sectionReveal: Variants = {
 
 const staggerContainer: Variants = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.095, delayChildren: 0.08 } },
+  show: { transition: { staggerChildren: 0.1, delayChildren: 0.08 } },
 };
 
 const listItem: Variants = {
@@ -41,7 +41,7 @@ const listItem: Variants = {
   show: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.68, ease: [0.22, 1, 0.36, 1] },
+    transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] },
   },
 };
 
@@ -51,7 +51,7 @@ const ctaReveal: Variants = {
     opacity: 1,
     y: 0,
     filter: "blur(0px)",
-    transition: { duration: 1.15, ease: [0.22, 1, 0.36, 1] },
+    transition: { duration: 1.35, ease: [0.22, 1, 0.36, 1] },
   },
 };
 
@@ -911,18 +911,13 @@ export default function LandingPage() {
               initial="hidden"
               animate="show"
             >
-              <motion.div
-                className="absolute left-1/2 top-1/2 -z-10 -translate-x-1/2 -translate-y-1/2"
-                variants={listItem}
-              >
-                <AsciiLoop className="text-[clamp(7px,1.4vw,12px)]" />
-              </motion.div>
               <motion.p
-                className="mb-4 text-sm font-semibold text-accent"
+                className="text-sm font-semibold text-accent  mb-4"
                 variants={listItem}
               >
                 Real English. Original audio. Ready to review.
               </motion.p>
+
               <motion.h1
                 className="brand-wordmark text-6xl font-normal leading-[0.9] text-ink sm:text-7xl lg:text-8xl"
                 variants={listItem}
@@ -1274,7 +1269,10 @@ export default function LandingPage() {
         </Reveal>
       </section>
 
-      <section id="waitlist" className="scroll-mt-24 px-4 py-16 sm:px-6 lg:px-8">
+      <section
+        id="waitlist"
+        className="scroll-mt-24 px-4 py-16 sm:px-6 lg:px-8"
+      >
         <Reveal className="mx-auto max-w-7xl">
           <div
             className="relative overflow-hidden rounded-2xl bg-accent px-6 py-12 text-white sm:px-10 lg:px-14 lg:py-14"
@@ -1315,22 +1313,20 @@ export default function LandingPage() {
             Start your English loop today.
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-lg leading-8 text-[#d8d3ca]">
-            Download the DMG, drag PhraseLoop to Applications, and turn the
-            next video you watch into cards with real audio.
+            Download the DMG, drag PhraseLoop to Applications, and turn the next
+            video you watch into cards with real audio.
           </p>
           <div className="mt-5 flex flex-wrap justify-center gap-2">
-            {[
-              "macOS Apple Silicon",
-              "Runtime bundled",
-              "Drag-to-install",
-            ].map((item) => (
-              <span
-                key={item}
-                className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-[#d8d3ca]"
-              >
-                {item}
-              </span>
-            ))}
+            {["macOS Apple Silicon", "Runtime bundled", "Drag-to-install"].map(
+              (item) => (
+                <span
+                  key={item}
+                  className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-[#d8d3ca]"
+                >
+                  {item}
+                </span>
+              ),
+            )}
           </div>
           <motion.a
             href="/api/download/macos"

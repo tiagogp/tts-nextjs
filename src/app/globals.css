@@ -67,6 +67,7 @@ body {
   background-color: var(--surface);
   color: var(--text-primary);
   font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  letter-spacing: -0.01em;
   -webkit-font-smoothing: antialiased;
 }
 

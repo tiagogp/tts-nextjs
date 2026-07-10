@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { CSSProperties, ReactNode } from "react";
+import ThemeInitScript from "@/components/app/ThemeInitScript";
 import ThemeProvider from "@/components/app/ThemeProvider";
 import "./globals.css";
 
@@ -26,6 +27,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">
+        <ThemeInitScript />
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
