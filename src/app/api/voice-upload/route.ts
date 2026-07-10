@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getTtsServerUrl } from "@/server/ttsServer";
+import { localRequest } from "@/server/localRuntime";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const TTS_SERVER = getTtsServerUrl();
-
 export async function GET() {
   try {
-    const res = await fetch(`${TTS_SERVER}/voice-upload`);
-    const data = await res.json();
+    const res = await localRequest("/voice-upload");
+    const data = res.json();
     return NextResponse.json(data);
   } catch {
     return NextResponse.json({ name: null });
@@ -19,14 +17,19 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
-    const res = await fetch(`${TTS_SERVER}/voice-upload`, {
+    const file = formData.get("file");
+    if (!(file instanceof File) || file.size === 0) {
+      return NextResponse.json({ error: "Upload failed" }, { status: 400 });
+    }
+    const res = await localRequest("/voice-upload", {
       method: "POST",
-      body: formData,
+      body: Buffer.from(await file.arrayBuffer()),
+      headers: { "X-File-Name": encodeURIComponent(file.name) },
     });
-    if (!res.ok) {
+    if (res.status < 200 || res.status >= 300) {
       return NextResponse.json({ error: "Upload failed" }, { status: 502 });
     }
-    const data = await res.json();
+    const data = res.json();
     return NextResponse.json(data);
   } catch {
     return NextResponse.json({ error: "Upload failed" }, { status: 500 });
@@ -35,7 +38,7 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE() {
   try {
-    await fetch(`${TTS_SERVER}/voice-upload`, { method: "DELETE" });
+    await localRequest("/voice-upload", { method: "DELETE" });
     return NextResponse.json({ status: "ok" });
   } catch {
     return NextResponse.json({ error: "Delete failed" }, { status: 500 });

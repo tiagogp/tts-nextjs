@@ -1,0 +1,8 @@
+/* Reuse the desktop app's full stylesheet (Tailwind import, theme tokens,
+   shared component CSS). Keeping a single source of truth avoids drift. */
+@import "../../../../src/app/globals.css";
+
+/* Tailwind v4 auto-detects sources only within this app's directory. The landing
+   renders the desktop app UI imported from the repo's src/, so scan those files
+   too — otherwise the preview renders without their utility classes. */
+@source "../../../../src";

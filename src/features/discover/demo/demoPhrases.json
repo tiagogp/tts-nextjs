@@ -1,0 +1,86 @@
+[
+  {
+    "en": "She called off the wedding.",
+    "pt": "Ela cancelou o casamento.",
+    "concept": "call off — cancelar",
+    "note": "Phrasal verb: \"call off\" significa cancelar algo planejado.",
+    "clip": "/demo/audio/01.wav"
+  },
+  {
+    "en": "Sales have picked up this year.",
+    "pt": "As vendas melhoraram este ano.",
+    "concept": "pick up — melhorar/aumentar",
+    "note": "Phrasal verb: \"pick up\" aqui é melhorar, aumentar.",
+    "clip": "/demo/audio/02.wav"
+  },
+  {
+    "en": "His career has really taken off.",
+    "pt": "A carreira dele realmente decolou.",
+    "concept": "take off — decolar/deslanchar",
+    "note": "Phrasal verb: \"take off\" = deslanchar, crescer rápido.",
+    "clip": "/demo/audio/03.wav"
+  },
+  {
+    "en": "I give in; it's too difficult.",
+    "pt": "Eu desisto; é difícil demais.",
+    "concept": "give in — desistir/ceder",
+    "note": "Phrasal verb: \"give in\" = desistir, ceder.",
+    "clip": "/demo/audio/04.wav"
+  },
+  {
+    "en": "If I can't read it, I'll look up the words.",
+    "pt": "Se eu não conseguir ler, vou procurar as palavras.",
+    "concept": "look up — procurar/pesquisar",
+    "note": "Phrasal verb: \"look up\" = procurar (num dicionário, etc.).",
+    "clip": "/demo/audio/05.wav"
+  },
+  {
+    "en": "They didn't bring the subject up.",
+    "pt": "Eles não mencionaram o assunto.",
+    "concept": "bring up — mencionar/levantar um assunto",
+    "note": "Phrasal verb: \"bring up\" = trazer à tona, mencionar.",
+    "clip": "/demo/audio/06.wav"
+  },
+  {
+    "en": "Our supplies finally ran out.",
+    "pt": "Nossos suprimentos finalmente acabaram.",
+    "concept": "run out — acabar/esgotar",
+    "note": "Phrasal verb: \"run out\" = esgotar, acabar.",
+    "clip": "/demo/audio/07.wav"
+  },
+  {
+    "en": "She knew the poem by heart.",
+    "pt": "Ela sabia o poema de cor.",
+    "concept": "by heart — de cor",
+    "note": "Expressão: \"by heart\" = de cor, de memória.",
+    "clip": "/demo/audio/08.wav"
+  },
+  {
+    "en": "I know the city like the back of my hand.",
+    "pt": "Eu conheço a cidade como a palma da minha mão.",
+    "concept": "like the back of my hand — como a palma da mão",
+    "note": "Expressão: conhecer muito bem.",
+    "clip": "/demo/audio/09.wav"
+  },
+  {
+    "en": "So far, so good.",
+    "pt": "Até agora, tudo bem.",
+    "concept": "so far, so good — até agora, tudo bem",
+    "note": "Expressão usada para dizer que, até o momento, está tudo certo.",
+    "clip": "/demo/audio/10.wav"
+  },
+  {
+    "en": "He was hitting on me.",
+    "pt": "Ele estava dando em cima de mim.",
+    "concept": "hit on — dar em cima/cantar",
+    "note": "Phrasal verb informal: \"hit on\" = dar em cima de alguém.",
+    "clip": "/demo/audio/11.wav"
+  },
+  {
+    "en": "I'll get in touch with you tomorrow.",
+    "pt": "Eu entro em contato com você amanhã.",
+    "concept": "get in touch — entrar em contato",
+    "note": "Expressão: \"get in touch\" = entrar em contato.",
+    "clip": "/demo/audio/12.wav"
+  }
+]

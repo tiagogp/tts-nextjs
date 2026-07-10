@@ -11,11 +11,12 @@ const eslintConfig = defineConfig([
     ".next/**",
     "out/**",
     "build/**",
+    "dist/**",
     "next-env.d.ts",
     // Project-specific ignores:
-    "backend/**",
-    "**/.venv/**",
-    "**/__pycache__/**",
+    // Workspace apps (e.g. apps/landing) lint themselves; don't crawl their
+    // sources or build output from the root.
+    "apps/**",
   ]),
 ]);
 

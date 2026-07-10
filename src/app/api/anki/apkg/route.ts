@@ -1,63 +1,42 @@
 import { NextRequest, NextResponse } from "next/server";
-import { spawn } from "node:child_process";
-import { promises as fs } from "node:fs";
-import os from "node:os";
-import path from "node:path";
 import { isPlainObject } from "@/lib/isObject";
+import { contentDispositionAttachment } from "@/server/anki";
+import { localJson } from "@/server/localRuntime";
+import {
+  apkgDebugLogPath,
+  createApkgDebugId,
+  validateApkgBytes,
+  writeApkgDebug,
+} from "@/server/native/apkgDebug";
 
 export const runtime = "nodejs";
-export const maxDuration = 300;
+export const maxDuration = 600;
 
 const MAX_INPUT_BYTES = 5 * 1024 * 1024; // 5MB
+const APKG_EXPORT_TIMEOUT_MS = 540_000;
+const PUBLIC_APKG_ERROR =
+  "PhraseLoop couldn't generate the deck right now. Try again in a moment.";
+const PUBLIC_APKG_TIMEOUT_ERROR =
+  "Deck export took too long. Try fewer cards or split the deck into smaller files.";
 
-function asciiFallbackFilename(raw: string): string {
-  const normalized = raw.normalize("NFKD");
-  const asciiOnly = normalized.replaceAll(/[^\x20-\x7E]/g, "_");
-  const noBadChars = asciiOnly
-    .replaceAll(/[\\/:*?"<>|]+/g, "_")
-    .replaceAll(/["\\]/g, "_");
-  const collapsed = noBadChars.replaceAll(/\s+/g, " ").trim();
-  return collapsed || "anki-deck";
+interface ApkgErrorPayload {
+  error?: string;
+  code?: string;
+  downloading?: boolean;
+  progress?: number;
 }
 
-function encodeRFC5987ValueChars(raw: string): string {
-  // RFC 5987 (used by RFC 6266 filename*): percent-encode UTF-8 bytes.
-  return encodeURIComponent(raw)
-    .replaceAll(
-      /['()]/g,
-      (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`,
-    )
-    .replaceAll(/\*/g, "%2A");
+function readErrorPayload(body: Buffer): ApkgErrorPayload {
+  try {
+    const parsed = JSON.parse(body.toString("utf8") || "{}");
+    return isPlainObject(parsed) ? (parsed as ApkgErrorPayload) : {};
+  } catch {
+    return {};
+  }
 }
 
-function contentDispositionAttachment(filenameUtf8: string): string {
-  const fallback = asciiFallbackFilename(filenameUtf8);
-  const fallbackQuoted = fallback.replaceAll(/"/g, "_");
-  const encoded = encodeRFC5987ValueChars(filenameUtf8);
-  return `attachment; filename="${fallbackQuoted}"; filename*=UTF-8''${encoded}`;
-}
-
-function spawnCapture(
-  cmd: string,
-  args: string[],
-  opts: { cwd: string },
-): Promise<{ code: number; stdout: string; stderr: string }> {
-  return new Promise((resolve, reject) => {
-    const child = spawn(cmd, args, { cwd: opts.cwd });
-    let stdout = "";
-    let stderr = "";
-
-    child.stdout.on("data", (d) => {
-      stdout += d.toString();
-    });
-    child.stderr.on("data", (d) => {
-      stderr += d.toString();
-    });
-    child.on("error", reject);
-    child.on("close", (code) => {
-      resolve({ code: code ?? 0, stdout, stderr });
-    });
-  });
+function isTimeoutOrAbort(error: unknown): boolean {
+  return error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError");
 }
 
 function parseBool(v: string | null): boolean {
@@ -142,7 +121,7 @@ function jsonToCsvBytesFromParsed(
       : null;
   if (!Array.isArray(cards)) {
     throw new Error(
-      'JSON inválido: esperado um array (ex: [{"pt":"...","en":"..."}]) ou um objeto com a chave "cards".',
+      'Invalid JSON: expected an array, e.g. [{"pt":"...","en":"..."}], or an object with a "cards" key.',
     );
   }
 
@@ -175,14 +154,14 @@ function jsonToCsvBytesFromParsed(
     } else if (isPlainObject(card)) {
       if (!hasHeader) {
         throw new Error(
-          'JSON inválido: quando usar --noHeader com JSON, cada card precisa ser um array (ex: ["pt", "en"]).',
+          'Invalid JSON: when using --noHeader with JSON, each card must be an array, e.g. ["pt", "en"].',
         );
       }
       pt = toCellText(card[ptKey as string]);
       en = toCellText(card[enKey as string]);
     } else {
       throw new Error(
-        "JSON inválido: cada item deve ser um objeto (ex: {pt,en}) ou um array (ex: [pt,en]).",
+        "Invalid JSON: each item must be an object, e.g. {pt,en}, or an array, e.g. [pt,en].",
       );
     }
 
@@ -212,43 +191,19 @@ function jsonToCsvBytes(opts: {
   });
 }
 
-async function resolveBackendPython(repoRoot: string): Promise<string> {
-  if (process.env.BACKEND_PYTHON) return process.env.BACKEND_PYTHON;
-  const candidates = [
-    path.join(repoRoot, "backend", ".venv", "bin", "python"),
-    path.join(repoRoot, "backend", ".venv", "bin", "python3"),
-    "python3",
-    "python",
-  ];
-  for (const candidate of candidates) {
-    try {
-      await fs.access(candidate);
-      return candidate;
-    } catch {}
-  }
-  return "python3";
-}
-
 export async function POST(req: NextRequest) {
-  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "anki-tts-"));
-  const cleanup = async () => {
-    try {
-      await fs.rm(tempDir, { recursive: true, force: true });
-    } catch {}
-  };
-
+  const startedAt = Date.now();
+  const debugId = createApkgDebugId();
+  const debugLog = apkgDebugLogPath();
   try {
     const contentType = (req.headers.get("content-type") ?? "").toLowerCase();
     const contentLength = Number(req.headers.get("content-length") ?? "0") || 0;
     if (contentLength > MAX_INPUT_BYTES) {
       return NextResponse.json(
-        { error: "Arquivo muito grande (máx 5MB)." },
+        { error: "File too large (max 5 MB)." },
         { status: 413 },
       );
     }
-
-    const csvPath = path.join(tempDir, "cards.csv");
-    const outPath = path.join(tempDir, "deck.apkg");
 
     let deck = "English - new method";
     let ptCol = "pt";
@@ -259,6 +214,11 @@ export async function POST(req: NextRequest) {
     let enKokoroSpeed = 1.15;
     let enKokoroLang: string | null = null;
     let csvBytes: Buffer;
+    writeApkgDebug(debugId, "api-request-received", {
+      contentType,
+      contentLength,
+      debugLog,
+    });
 
     if (contentType.includes("application/json")) {
       const body = (await req.json()) as unknown;
@@ -289,7 +249,7 @@ export async function POST(req: NextRequest) {
         const msg =
           e instanceof Error
             ? e.message
-            : "JSON inválido. Envie um array de cards ou um objeto com { cards: [...] }.";
+            : "Invalid JSON. Send an array of cards or an object with { cards: [...] }.";
         return NextResponse.json({ error: msg }, { status: 400 });
       }
     } else {
@@ -320,7 +280,7 @@ export async function POST(req: NextRequest) {
       if (f instanceof File) {
         if (f.size > MAX_INPUT_BYTES) {
           return NextResponse.json(
-            { error: "Arquivo muito grande (máx 5MB)." },
+            { error: "File too large (max 5 MB)." },
             { status: 413 },
           );
         }
@@ -339,7 +299,7 @@ export async function POST(req: NextRequest) {
             const msg =
               e instanceof Error
                 ? e.message
-                : "JSON inválido. Envie um array de cards ou um objeto com { cards: [...] }.";
+                : "Invalid JSON. Send an array of cards or an object with { cards: [...] }.";
             return NextResponse.json({ error: msg }, { status: 400 });
           }
         } else {
@@ -349,7 +309,7 @@ export async function POST(req: NextRequest) {
         const raw = String(jsonText ?? text ?? "");
         if (Buffer.byteLength(raw, "utf8") > MAX_INPUT_BYTES) {
           return NextResponse.json(
-            { error: "Arquivo muito grande (máx 5MB)." },
+            { error: "File too large (max 5 MB)." },
             { status: 413 },
           );
         }
@@ -365,80 +325,132 @@ export async function POST(req: NextRequest) {
           const msg =
             e instanceof Error
               ? e.message
-              : "JSON inválido. Envie um array de cards ou um objeto com { cards: [...] }.";
+              : "Invalid JSON. Send an array of cards or an object with { cards: [...] }.";
           return NextResponse.json({ error: msg }, { status: 400 });
         }
       } else {
         return NextResponse.json(
           {
             error:
-              'Envie "file" (CSV/JSON) ou "json"/"text" (JSON em texto) no multipart/form-data.',
+              'Send "file" (CSV/JSON) or "json"/"text" (JSON text) in multipart/form-data.',
           },
           { status: 400 },
         );
       }
     }
 
-    await fs.writeFile(csvPath, csvBytes);
-
-    const repoRoot = process.cwd();
-    const python = await resolveBackendPython(repoRoot);
-
-    const scriptPath = path.join(repoRoot, "backend", "apkg_from_csv.py");
-    const args = [
-      scriptPath,
-      "--csv",
-      csvPath,
-      "--deck",
+    writeApkgDebug(debugId, "api-runtime-export-requested", {
       deck,
-      "--pt-col",
+      bytes: csvBytes.byteLength,
       ptCol,
-      "--en-col",
       enCol,
-      "--delimiter",
       delimiter,
-      "--out",
-      outPath,
-    ];
-    if (noHeader) args.push("--no-header");
-    args.push(
-      "--en-engine",
-      "kokoro",
-      "--en-kokoro-voice",
-      enKokoroVoice,
-      "--en-kokoro-speed",
-      String(enKokoroSpeed),
-    );
-    if (enKokoroLang) args.push("--en-kokoro-lang", enKokoroLang);
-
-    const { code, stderr } = await spawnCapture(python, args, {
-      cwd: repoRoot,
+      noHeader,
+      voice: enKokoroVoice,
+      speed: enKokoroSpeed,
     });
-    if (code !== 0) {
-      const msg =
-        stderr.trim() ||
-        "Falha ao gerar o .apkg. Verifique se as dependências Python estão instaladas em backend/.venv.";
-      return NextResponse.json({ error: msg }, { status: 500 });
+
+    const exported = await localJson("/anki/apkg", {
+      csvBase64: csvBytes.toString("base64"), deck, ptCol, enCol, delimiter,
+      noHeader, voice: enKokoroVoice, speed: enKokoroSpeed, lang: enKokoroLang, debugId,
+    }, { timeoutMs: APKG_EXPORT_TIMEOUT_MS, signal: req.signal });
+    if (exported.status < 200 || exported.status >= 300) {
+      const payload = readErrorPayload(exported.body);
+      console.error("Anki runtime failed:", exported.status, payload);
+      writeApkgDebug(debugId, "api-runtime-export-failed", {
+        status: exported.status,
+        payload,
+      });
+      return NextResponse.json(
+        {
+          error: payload.error ?? PUBLIC_APKG_ERROR,
+          code: payload.code,
+          downloading: payload.downloading,
+          progress: payload.progress,
+          debugId,
+          debugLog,
+        },
+        {
+          status: exported.status,
+          headers: {
+            "X-PhraseLoop-Apkg-Debug-Id": debugId,
+            "X-PhraseLoop-Apkg-Debug-Log": debugLog,
+          },
+        },
+      );
     }
 
-    const apkg = await fs.readFile(outPath);
+    const apkg = exported.body;
+    const validation = await validateApkgBytes(apkg);
+    writeApkgDebug(debugId, "api-apkg-validation", validation as unknown as Record<string, unknown>);
+    if (!validation.ok) {
+      return NextResponse.json(
+        {
+          error: "The .apkg was generated, but internal validation failed. Check the debugLog.",
+          code: "apkg_validation_failed",
+          debugId,
+          debugLog,
+          validation,
+        },
+        {
+          status: 500,
+          headers: {
+            "X-PhraseLoop-Apkg-Debug-Id": debugId,
+            "X-PhraseLoop-Apkg-Debug-Log": debugLog,
+          },
+        },
+      );
+    }
     const filenameUtf8 = `${deck.trim() || "anki-deck"}.apkg`;
     const disposition = contentDispositionAttachment(filenameUtf8);
+    writeApkgDebug(debugId, "api-response-ready", {
+      deck,
+      bytes: apkg.byteLength,
+      durationMs: Date.now() - startedAt,
+    });
 
-    return new NextResponse(apkg, {
+    return new NextResponse(new Uint8Array(apkg), {
       status: 200,
       headers: {
         "Content-Type": "application/octet-stream",
         "Content-Disposition": disposition,
         "Content-Length": apkg.byteLength.toString(),
+        "X-PhraseLoop-Apkg-Debug-Id": debugId,
+        "X-PhraseLoop-Apkg-Debug-Log": debugLog,
       },
     });
   } catch (err: unknown) {
+    if (isTimeoutOrAbort(err)) {
+      console.error("Anki export timed out or was aborted:", err);
+      writeApkgDebug(debugId, "api-export-timeout-or-abort", {
+        error: err instanceof Error ? err.message : "unknown",
+        durationMs: Date.now() - startedAt,
+      });
+      return NextResponse.json(
+        { error: PUBLIC_APKG_TIMEOUT_ERROR, debugId, debugLog },
+        {
+          status: 504,
+          headers: {
+            "X-PhraseLoop-Apkg-Debug-Id": debugId,
+            "X-PhraseLoop-Apkg-Debug-Log": debugLog,
+          },
+        },
+      );
+    }
     console.error("Anki export error:", err);
-    const message =
-      err instanceof Error ? err.message : "Falha ao exportar o deck.";
-    return NextResponse.json({ error: message }, { status: 500 });
-  } finally {
-    await cleanup();
+    writeApkgDebug(debugId, "api-export-error", {
+      error: err instanceof Error ? err.message : "unknown",
+      durationMs: Date.now() - startedAt,
+    });
+    return NextResponse.json(
+      { error: PUBLIC_APKG_ERROR, debugId, debugLog },
+      {
+        status: 500,
+        headers: {
+          "X-PhraseLoop-Apkg-Debug-Id": debugId,
+          "X-PhraseLoop-Apkg-Debug-Log": debugLog,
+        },
+      },
+    );
   }
 }

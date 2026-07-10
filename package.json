@@ -1,29 +1,133 @@
 {
-  "name": "text-to-speech",
+  "name": "phraseloop",
   "version": "0.1.0",
+  "desktopName": "PhraseLoop",
   "private": true,
+  "packageManager": "yarn@1.22.22",
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
+    "postinstall": "node scripts/fix-native-rpaths.mjs",
     "dev": "next dev",
+    "prebuild": "yarn learn:audio",
     "build": "next build",
+    "learn:audio": "node scripts/generate-learn-audio.mjs",
+    "learn:audio:verify": "node scripts/generate-learn-audio.mjs --verify",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "vitest run",
+    "w5:score": "node scripts/score-w5-decision-gate.mjs",
+    "app": "env -u ELECTRON_RUN_AS_NODE electron electron/main.js",
+    "app:dist": "bash electron/build-app.sh",
+    "app:linux": "bash electron/build-linux.sh",
+    "app:windows": "bash electron/build-windows.sh",
+    "app:download": "bash scripts/make-download.sh",
+    "landing:dev": "yarn workspace landing dev",
+    "landing:build": "yarn workspace landing build"
+  },
+  "main": "electron/main.js",
+  "build": {
+    "appId": "com.tiago.phraseloop",
+    "productName": "PhraseLoop",
+    "files": [
+      "electron/**/*",
+      "package.json",
+      "!node_modules/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": ".next/standalone",
+        "to": "app-next"
+      }
+    ],
+    "mac": {
+      "icon": "electron/assets/icon.icns",
+      "category": "public.app-category.education",
+      "target": "dir",
+      "identity": "PhraseLoop Dev",
+      "minimumSystemVersion": "14.0"
+    },
+    "linux": {
+      "icon": "electron/assets/icon.png",
+      "category": "Education",
+      "syncDesktopName": true,
+      "target": [
+        "AppImage"
+      ]
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "artifactName": "${productName}-${version}-Setup.${ext}",
+      "oneClick": false,
+      "perMachine": false
+    },
+    "dmg": {
+      "title": "PhraseLoop",
+      "contents": [
+        {
+          "x": 140,
+          "y": 200,
+          "type": "file"
+        },
+        {
+          "x": 400,
+          "y": 200,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    }
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.104.2",
+    "@kutalia/whisper-node-addon": "^1.1.0",
+    "@mozilla/readability": "^0.6.0",
+    "@napi-rs/canvas": "^1.0.0",
     "@radix-ui/react-select": "^2.2.6",
+    "ankipack": "^0.1.3",
+    "audio-decode": "^3.10.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "csv-parse": "^7.0.0",
     "jszip": "^3.10.1",
-    "next": "16.2.4",
+    "linkedom": "^0.18.12",
+    "motion": "^12.41.0",
+    "next": "^16.2.9",
     "next-themes": "^0.4.6",
+    "openai": "^6.44.0",
+    "pdfjs-dist": "^6.0.227",
+    "pino": "^10.3.1",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "server-only": "^0.0.1",
+    "sherpa-onnx-node": "^1.13.3",
+    "sql.js": "^1.14.1",
+    "tailwind-merge": "^3.6.0",
+    "tar": "^7.5.16",
+    "ts-fsrs": "^5.4.1",
+    "unbzip2-stream": "^1.4.3",
+    "youtubei.js": "^17.0.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/sql.js": "^1.4.11",
+    "@types/unbzip2-stream": "^1.4.3",
+    "electron": "^42.4.1",
+    "electron-builder": "^26.15.3",
     "eslint": "^9",
-    "eslint-config-next": "16.2.4",
+    "eslint-config-next": "^16.2.9",
+    "fake-indexeddb": "^6.2.5",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "turbo": "^2.5.8",
+    "typescript": "^5",
+    "vitest": "^4.1.9"
   }
 }

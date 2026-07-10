@@ -1,17 +1,9 @@
 @import "tailwindcss";
+@import "./correct-flow.css";
+@import "./desktop-shell.css";
 @variant dark (&:where(.dark, .dark *));
 
-@theme {
-  --color-cream: #faf9f6;
-  --color-off-black: #111111;
-  --color-fin: #ff5600;
-  --color-oat: #dedbd6;
-  --color-muted: #7b7b78;
-  --color-black-80: #313130;
-  --color-black-60: #626260;
-  --color-sand: #d3cec6;
-}
-
+/* Raw values are the single source of truth; ThemeProvider flips `.dark`. */
 :root {
   --surface:       #faf9f6;
   --surface-card:  #ffffff;
@@ -22,6 +14,11 @@
   --border:        #dedbd6;
   --border-strong: #c8c4be;
   --accent:        #ff5600;
+  --danger:        #c41c1c;
+  --warning:       #b8860b;
+  --success:       #1f9d4d;
+  --info:          #1565c0;
+  --shadow-soft:   0 10px 30px rgb(17 17 17 / 5%);
 }
 
 .dark {
@@ -34,6 +31,36 @@
   --border:        #353330;
   --border-strong: #4a4744;
   --accent:        #ff5600;
+  --danger:        #e5484d;
+  --warning:       #e0b341;
+  --success:       #30c862;
+  --info:          #5b9be8;
+  --shadow-soft:   0 12px 32px rgb(0 0 0 / 18%);
+}
+
+/* Static scale → fixed Tailwind utilities (brand mark, solid button, radius). */
+@theme {
+  --color-fin: #ff5600;
+  --color-off-black: #111111;
+  --radius-panel: 0.75rem;
+}
+
+/* Theme-aware tokens: `inline` makes the utilities re-resolve the raw vars at
+   the use site, so `bg-surface`, `text-ink-muted`, etc. follow `.dark`. */
+@theme inline {
+  --color-surface: var(--surface);
+  --color-card: var(--surface-card);
+  --color-input: var(--surface-input);
+  --color-ink: var(--text-primary);
+  --color-ink-soft: var(--text-secondary);
+  --color-ink-muted: var(--text-muted);
+  --color-line: var(--border);
+  --color-line-strong: var(--border-strong);
+  --color-accent: var(--accent);
+  --color-danger: var(--danger);
+  --color-warning: var(--warning);
+  --color-success: var(--success);
+  --color-info: var(--info);
 }
 
 body {
@@ -41,6 +68,86 @@ body {
   color: var(--text-primary);
   font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Form controls provide their own focus styling (see Field.tsx),
+   so skip the global outline to avoid a doubled border. */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none;
+}
+
+.app-scroll-region {
+  overscroll-behavior: contain;
+  scrollbar-color: color-mix(in srgb, var(--text-muted) 38%, transparent) transparent;
+  scrollbar-width: thin;
+}
+
+.app-scroll-region::-webkit-scrollbar {
+  height: 10px;
+  width: 10px;
+}
+
+.app-scroll-region::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.app-scroll-region::-webkit-scrollbar-thumb {
+  background-clip: padding-box;
+  background-color: color-mix(in srgb, var(--text-muted) 30%, transparent);
+  border: 3px solid transparent;
+  border-radius: 999px;
+}
+
+.app-scroll-region::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in srgb, var(--text-muted) 52%, transparent);
+}
+
+.app-scroll-region::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .app-header-inner {
+    grid-template-columns: 1fr auto;
+    gap: 0.45rem 0.75rem;
+    padding-top: 0.75rem;
+  }
+
+  .app-header-nav {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+  }
 }
 
 input[type="range"] {

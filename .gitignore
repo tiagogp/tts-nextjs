@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+apps/*/node_modules
 /.pnp
 .pnp.*
 .yarn/*
@@ -12,13 +13,27 @@
 
 __pycache__
 .venv
+.discover_cache
+.anki_tts_out
+/dist
+
+# Source APKG decks include bundled audio and are too large for the repo.
+/assets/*.apkg
+
+# Generated from src/features/learn/lessons.json by yarn learn:audio.
+/public/learn/audio/
+/public/demo/audio/
 
 # testing
 /coverage
 
 # next.js
 /.next/
+apps/*/.next/
 /out/
+
+# turborepo
+.turbo
 
 # production
 /build

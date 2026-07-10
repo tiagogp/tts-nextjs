@@ -2,18 +2,31 @@ import { NextRequest, NextResponse } from "next/server";
 import JSZip from "jszip";
 import { isPlainObject } from "@/lib/isObject";
 import { sanitizeFilename } from "@/lib/sanitizeFilename";
-import { getTtsServerUrl } from "@/server/ttsServer";
+import { localJson } from "@/server/localRuntime";
+import { MAX_TTS_TEXT_CHARS } from "@/lib/constants";
+import { logger } from "@/lib/logger";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
 
-const TTS_SERVER = getTtsServerUrl();
-
-const MAX_TEXT_CHARS = 4096;
 const MAX_ITEMS = 250;
 const MAX_TOTAL_CHARS = 80_000;
+const MAX_TTS_JSON_BYTES = 512 * 1024;
 const DEFAULT_SPEED = 1.15;
 const DEFAULT_VOICE = "af_heart";
+const PUBLIC_TTS_ERROR =
+  "Não consegui gerar o áudio agora. Tente de novo em instantes.";
+const PUBLIC_TTS_TIMEOUT =
+  "A geração de áudio está demorando mais do que o esperado. Tente com um texto mais curto.";
+
+class PublicRouteError extends Error {
+  constructor(
+    message: string,
+    readonly status = 500,
+  ) {
+    super(message);
+  }
+}
 
 function clamp(n: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, n));
@@ -72,37 +85,53 @@ function extractLinesFromJson(value: unknown, textKey: string): string[] {
   return [];
 }
 
+function runtimeErrorMessage(rawBody: string): string | null {
+  // Only the runtime's own `error` copy is user-ready (PT-BR); `detail` and raw
+  // bodies are technical English and must never reach the UI.
+  try {
+    const data = JSON.parse(rawBody) as { error?: unknown };
+    if (typeof data.error === "string" && data.error.trim()) return data.error;
+  } catch {
+    // Non-JSON runtime bodies fall through to the public fallback copy.
+  }
+  return null;
+}
+
 async function synthOne(text: string, speed: number, voice: string): Promise<Buffer> {
-  if (text.length > MAX_TEXT_CHARS) {
-    throw new Error(`Text exceeds ${MAX_TEXT_CHARS} characters.`);
+  if (text.length > MAX_TTS_TEXT_CHARS) {
+    throw new PublicRouteError(`O texto passa de ${MAX_TTS_TEXT_CHARS} caracteres.`, 400);
   }
 
-  const ttsRes = await fetch(`${TTS_SERVER}/tts`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      text: text.trim(),
-      voice,
-      speed,
-      engine: "kokoro",
-    }),
-    signal: AbortSignal.timeout(300_000),
-  });
+  const ttsRes = await localJson(
+    "/tts",
+    { text: text.trim(), voice, speed, engine: "kokoro" },
+    300_000,
+  );
 
-  if (!ttsRes.ok) {
-    const data = await ttsRes.json().catch(() => ({}));
-    const msg =
-      (data as { detail?: string }).detail ??
-      `TTS server error (${ttsRes.status})`;
-    throw new Error(msg);
+  if (ttsRes.status < 200 || ttsRes.status >= 300) {
+    const rawBody = ttsRes.body.toString("utf8");
+    const runtimeMessage = runtimeErrorMessage(rawBody);
+    if (runtimeMessage) {
+      throw new PublicRouteError(runtimeMessage, ttsRes.status === 409 ? 409 : 500);
+    }
+    logger.error({ status: ttsRes.status, body: rawBody }, "TTS runtime error");
+    throw new PublicRouteError(PUBLIC_TTS_ERROR, 502);
   }
 
-  return Buffer.from(await ttsRes.arrayBuffer());
+  return ttsRes.body;
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const body = (await req.json().catch(() => null)) as unknown;
+    const contentLength = Number(req.headers.get("content-length") ?? 0);
+    if (contentLength > MAX_TTS_JSON_BYTES) {
+      return NextResponse.json({ error: "O conteúdo enviado é grande demais." }, { status: 413 });
+    }
+    const raw = await req.text();
+    if (Buffer.byteLength(raw, "utf8") > MAX_TTS_JSON_BYTES) {
+      return NextResponse.json({ error: "O conteúdo enviado é grande demais." }, { status: 413 });
+    }
+    const body = raw ? (JSON.parse(raw) as unknown) : null;
     const bodyObj = isPlainObject(body) ? body : null;
     const speed = safeSpeed(bodyObj?.speed);
     const voice = safeVoice(bodyObj?.voice);
@@ -119,14 +148,14 @@ export async function POST(req: NextRequest) {
     if (lines.length > 0) {
       if (lines.length > MAX_ITEMS) {
         return NextResponse.json(
-          { error: `Too many items (max ${MAX_ITEMS}).` },
+          { error: `Itens demais (máximo ${MAX_ITEMS}).` },
           { status: 400 },
         );
       }
       const totalChars = lines.reduce((sum, t) => sum + t.length, 0);
       if (totalChars > MAX_TOTAL_CHARS) {
         return NextResponse.json(
-          { error: `Total text too large (max ${MAX_TOTAL_CHARS} characters).` },
+          { error: `Texto total grande demais (máximo ${MAX_TOTAL_CHARS} caracteres).` },
           { status: 400 },
         );
       }
@@ -167,7 +196,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           error:
-            'Provide either "text" (string), "lines" (string[]), or "json" (array/object).',
+            'Envie "text" (texto), "lines" (lista de textos) ou "json" (lista/objeto).',
         },
         { status: 400 },
       );
@@ -187,18 +216,14 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (err: unknown) {
-    console.error("TTS proxy error:", err);
-    const isConnRefused =
-      err instanceof Error &&
-      (err.message.includes("ECONNREFUSED") ||
-        err.message.includes("fetch failed"));
-    const message = isConnRefused
-      ? "The TTS server is not running. Run: uvicorn tts_server:app --port 5002"
-      : err instanceof Error && err.name === "TimeoutError"
-        ? "The TTS server took too long. Check that backend/tts_server.py is running."
-        : err instanceof Error
-          ? err.message
-          : "Failed to generate audio.";
+    logger.error({ err }, "TTS proxy error");
+    if (err instanceof PublicRouteError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
+    const message =
+      err instanceof Error && err.name === "TimeoutError"
+        ? PUBLIC_TTS_TIMEOUT
+        : PUBLIC_TTS_ERROR;
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

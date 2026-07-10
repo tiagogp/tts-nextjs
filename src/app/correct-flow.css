@@ -1,0 +1,22 @@
+/* Indeterminate progress bar for deck/audio generation (motion covers the rest). */
+@keyframes generation-slide {
+  from { transform: translateX(-110%); }
+  to { transform: translateX(360%); }
+}
+
+.generation-track {
+  height: 3px;
+  margin-top: 0.55rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 14%, var(--border));
+}
+
+.generation-bar {
+  display: block;
+  width: 30%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  animation: generation-slide 1.6s linear infinite;
+}
