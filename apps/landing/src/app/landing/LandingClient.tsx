@@ -180,13 +180,6 @@ const landingNavItems: Array<{ id: LandingSectionId; label: string }> = [
   { id: "waitlist", label: "Waitlist" },
 ];
 
-const platformOptions = [
-  "Mac Apple Silicon",
-  "Mac Intel",
-  "Windows",
-  "Linux",
-] as const;
-
 const demoDiscoverResult = {
   sourceId: "landing-demo-interview",
   title: "Real interview clip - building consistency",
@@ -692,10 +685,6 @@ function MiniScreen({ title }: { title: string }) {
 
 function WaitlistForm() {
   const [email, setEmail] = useState("");
-  const [platform, setPlatform] = useState<
-    (typeof platformOptions)[number] | ""
-  >("");
-  const [workflow, setWorkflow] = useState("");
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">(
     "idle",
   );
@@ -707,7 +696,7 @@ function WaitlistForm() {
       const response = await fetch("/api/waitlist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, platform, workflow }),
+        body: JSON.stringify({ email }),
       });
       if (!response.ok) throw new Error("waitlist failed");
       setStatus("saved");
@@ -729,44 +718,6 @@ function WaitlistForm() {
           onChange={(event) => setEmail(event.target.value)}
           className="mt-1 w-full rounded border border-white/15 bg-white/8 px-3 py-2 text-sm text-white placeholder:text-[#8f8980] focus:outline-none focus:ring-2 focus:ring-accent/50"
           placeholder="you@email.com"
-        />
-      </label>
-
-      <label className="block">
-        <span className="text-xs font-semibold uppercase text-[#d8d3ca]">
-          Which computer do you use?
-        </span>
-        <select
-          required
-          value={platform}
-          onChange={(event) =>
-            setPlatform(
-              event.target.value as (typeof platformOptions)[number] | "",
-            )
-          }
-          className="mt-1 w-full rounded border border-white/15 bg-[#151515] px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-accent/50"
-        >
-          <option value="">Choose an option</option>
-          {platformOptions.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <label className="block">
-        <span className="text-xs font-semibold uppercase text-[#d8d3ca]">
-          How do you turn English content into practice today?
-        </span>
-        <textarea
-          required
-          minLength={8}
-          value={workflow}
-          onChange={(event) => setWorkflow(event.target.value)}
-          rows={3}
-          className="mt-1 w-full resize-none rounded border border-white/15 bg-white/8 px-3 py-2 text-sm text-white placeholder:text-[#8f8980] focus:outline-none focus:ring-2 focus:ring-accent/50"
-          placeholder="E.g. I save phrases in Anki, write summaries, keep a notebook..."
         />
       </label>
 
@@ -1332,8 +1283,8 @@ export default function LandingPage() {
             </h2>
             <p className="mt-4 max-w-2xl text-lg leading-8 text-[#d8d3ca]">
               The W5 round is looking for Mac Apple Silicon users who already
-              try to turn real English into practice. Answer the two questions
-              so I know if you fit this group.
+              try to turn real English into practice. Leave your email and I
+              will reach out when your invite is ready.
             </p>
           </div>
           <div className="rounded-lg border border-white/15 bg-white/6 p-5">
