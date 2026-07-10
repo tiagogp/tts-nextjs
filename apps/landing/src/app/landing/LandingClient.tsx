@@ -78,6 +78,12 @@ const darkPatternStyle = {
   backgroundSize: "100% 100%, 32px 32px, 32px 32px",
 } as CSSProperties;
 
+const accentPanelStyle = {
+  backgroundImage:
+    "radial-gradient(circle at 84% 0%, rgba(255, 255, 255, 0.24), transparent 38%), linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px)",
+  backgroundSize: "100% 100%, 32px 32px, 32px 32px",
+} as CSSProperties;
+
 const flowSteps = [
   {
     label: "YouTube / PDF / article / writing",
@@ -708,7 +714,7 @@ function WaitlistForm() {
   return (
     <form onSubmit={submit} className="space-y-4">
       <label className="block">
-        <span className="text-xs font-semibold uppercase text-[#d8d3ca]">
+        <span className="text-xs font-semibold uppercase text-ink-soft">
           Email
         </span>
         <input
@@ -716,7 +722,7 @@ function WaitlistForm() {
           type="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          className="mt-1 w-full rounded border border-white/15 bg-white/8 px-3 py-2 text-sm text-white placeholder:text-[#8f8980] focus:outline-none focus:ring-2 focus:ring-accent/50"
+          className="mt-1 w-full rounded border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-accent/50"
           placeholder="you@email.com"
         />
       </label>
@@ -734,12 +740,12 @@ function WaitlistForm() {
       </button>
 
       {status === "error" && (
-        <p className="text-xs text-[#ffb199]">
+        <p className="text-xs text-[#c73a1d]">
           Could not save right now. Try again in a few seconds.
         </p>
       )}
       {status === "saved" && (
-        <p className="text-xs text-[#b7e4bf]">
+        <p className="text-xs text-[#2f7d3d]">
           Thanks. I am prioritizing invites for Mac Apple Silicon users in this
           round.
         </p>
@@ -1268,27 +1274,30 @@ export default function LandingPage() {
         </Reveal>
       </section>
 
-      <section
-        id="waitlist"
-        className="scroll-mt-24 border-t border-[#2b2926] bg-[#111111] px-4 py-16 text-[#faf9f6] sm:px-6 lg:px-8"
-        style={darkPatternStyle}
-      >
-        <Reveal className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1fr_0.9fr] lg:items-start">
-          <div>
-            <p className="mb-3 text-xs font-semibold uppercase text-accent">
-              Waitlist
-            </p>
-            <h2 className="brand-wordmark text-4xl font-normal leading-[0.95] sm:text-5xl">
-              Want to test it with your videos and your mistakes?
-            </h2>
-            <p className="mt-4 max-w-2xl text-lg leading-8 text-[#d8d3ca]">
-              The W5 round is looking for Mac Apple Silicon users who already
-              try to turn real English into practice. Leave your email and I
-              will reach out when your invite is ready.
-            </p>
-          </div>
-          <div className="rounded-lg border border-white/15 bg-white/6 p-5">
-            <WaitlistForm />
+      <section id="waitlist" className="scroll-mt-24 px-4 py-16 sm:px-6 lg:px-8">
+        <Reveal className="mx-auto max-w-7xl">
+          <div
+            className="relative overflow-hidden rounded-2xl bg-accent px-6 py-12 text-white sm:px-10 lg:px-14 lg:py-14"
+            style={accentPanelStyle}
+          >
+            <div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+              <div>
+                <p className="mb-4 inline-flex rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide">
+                  Waitlist
+                </p>
+                <h2 className="brand-wordmark text-4xl font-normal leading-[0.95] sm:text-5xl">
+                  Want to test it with your videos and your mistakes?
+                </h2>
+                <p className="mt-4 max-w-2xl text-lg leading-8 text-white/85">
+                  The W5 round is looking for Mac Apple Silicon users who
+                  already try to turn real English into practice. Leave your
+                  email and I will reach out when your invite is ready.
+                </p>
+              </div>
+              <div className="rounded-xl border border-line bg-card p-6 shadow-[0_24px_60px_rgba(0,0,0,0.18)]">
+                <WaitlistForm />
+              </div>
+            </div>
           </div>
         </Reveal>
       </section>
