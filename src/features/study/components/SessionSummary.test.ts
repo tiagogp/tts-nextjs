@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { tomorrowLine, type TomorrowPreview } from "./SessionSummary";
+import { Rating, State, type Grade, type SrsRecord } from "@/lib/srs/fsrs";
+import {
+  summarize,
+  tomorrowLine,
+  type SessionResult,
+  type TomorrowPreview,
+} from "./SessionSummary";
 
 /** Passthrough t() that interpolates like the real helper. */
 function t(en: string, vars?: Record<string, string | number>): string {
@@ -40,5 +46,48 @@ describe("tomorrowLine", () => {
     expect(line({ due: 2, mistakeCards: 1, fromToday: false })).toBe(
       "Tomorrow: 2 phrases are waiting for you.",
     );
+  });
+});
+
+function makeSrs(): SrsRecord {
+  const now = Date.now();
+  return {
+    cardId: "c1",
+    due: now,
+    stability: 1,
+    difficulty: 5,
+    elapsed_days: 0,
+    scheduled_days: 1,
+    learning_steps: 0,
+    reps: 1,
+    lapses: 0,
+    state: State.Review,
+    last_review: now,
+  } as SrsRecord;
+}
+
+function makeResult(overrides: Partial<SessionResult> = {}): SessionResult {
+  return {
+    cardId: "c1",
+    grade: Rating.Good as Grade,
+    srs: makeSrs(),
+    ...overrides,
+  };
+}
+
+describe("summarize", () => {
+  it("counts reviewed, passed, and tomorrow-stable cards", () => {
+    const stable = makeSrs();
+    stable.stability = 60;
+    const fragile = makeSrs();
+    fragile.cardId = "c2";
+    fragile.stability = 0.01;
+
+    expect(
+      summarize([
+        makeResult({ cardId: "c1", grade: Rating.Good as Grade, srs: stable }),
+        makeResult({ cardId: "c2", grade: Rating.Again as Grade, srs: fragile }),
+      ]),
+    ).toEqual({ reviewed: 2, passed: 1, stable: 1 });
   });
 });

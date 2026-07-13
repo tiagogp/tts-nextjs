@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card as UiCard } from "@/components/ui/Card";
+import { useT } from "@/i18n/I18nProvider";
+import { errorTypeLabel } from "@/lib/cards/errorTypeLabels";
 import {
   exportAndSaveDeck,
   exportCardsCsv,
@@ -26,7 +28,7 @@ function basename(filename: string, extension: string): string {
 }
 
 export function DeckPreview({
-  title = "Study list preview",
+  title,
   data,
   defaultFilename,
   persist,
@@ -34,6 +36,7 @@ export function DeckPreview({
   onDismiss,
   onExported,
 }: DeckPreviewProps) {
+  const { t } = useT();
   const [busy, setBusy] = useState<"apkg" | "anki" | "save" | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const cards = data.cards ?? [];
@@ -49,10 +52,14 @@ export function DeckPreview({
       if (onStudyNow) {
         onStudyNow();
       } else {
-        setNote(`Saved ${cards.length} practice phrase${cards.length === 1 ? "" : "s"} to study.`);
+        setNote(
+          cards.length === 1
+            ? t("Saved 1 practice phrase to study.")
+            : t("Saved {count} practice phrases to study.", { count: cards.length }),
+        );
       }
     } catch (error) {
-      setNote(error instanceof Error ? error.message : "Could not save the study list.");
+      setNote(error instanceof Error ? error.message : t("Could not save the study list."));
     } finally {
       setBusy(null);
     }
@@ -70,7 +77,7 @@ export function DeckPreview({
       setNote(message);
       onExported?.();
     } catch (error) {
-      setNote(error instanceof Error ? error.message : "Could not export to Anki.");
+      setNote(error instanceof Error ? error.message : t("Could not export to Anki."));
     } finally {
       setBusy(null);
     }
@@ -82,9 +89,11 @@ export function DeckPreview({
     <UiCard className="overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3">
         <div className="min-w-0">
-          <p className="truncate text-sm font-medium text-ink">{title}</p>
+          <p className="truncate text-sm font-medium text-ink">{title ?? t("Study list preview")}</p>
           <p className="text-xs text-ink-muted">
-            {cards.length} practice phrase{cards.length === 1 ? "" : "s"} ready to study
+            {cards.length === 1
+              ? t("1 practice phrase ready to study")
+              : t("{count} practice phrases ready to study", { count: cards.length })}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -96,7 +105,7 @@ export function DeckPreview({
                 disabled={busy !== null}
                 onClick={() => void exportDeck(true)}
               >
-                {busy === "anki" ? "Sending…" : "Export to Anki"}
+                {busy === "anki" ? t("Sending…") : t("Export to Anki")}
               </Button>
               <Button
                 variant="ghost"
@@ -104,7 +113,7 @@ export function DeckPreview({
                 disabled={busy !== null}
                 onClick={() => void exportDeck(false)}
               >
-                {busy === "apkg" ? "Exporting…" : "Export for Anki"}
+                {busy === "apkg" ? t("Exporting…") : t("Export for Anki")}
               </Button>
             </>
           )}
@@ -120,7 +129,7 @@ export function DeckPreview({
             size="sm"
             onClick={() => setNote(exportCardsText(cards, `${basename(filename, ".txt")}.txt`))}
           >
-            Text
+            {t("Text")}
           </Button>
           <Button
             variant="primary"
@@ -128,11 +137,11 @@ export function DeckPreview({
             disabled={busy !== null}
             onClick={() => void saveAndStudy()}
           >
-            {busy === "save" ? "Saving…" : onStudyNow ? "Save & review now" : "Save to study"}
+            {busy === "save" ? t("Saving…") : onStudyNow ? t("Save & review now") : t("Save to study")}
           </Button>
           {onDismiss && (
             <Button variant="ghost" size="sm" onClick={onDismiss}>
-              Dismiss
+              {t("Dismiss")}
             </Button>
           )}
         </div>
@@ -143,7 +152,7 @@ export function DeckPreview({
           <span>{note}</span>
           {onStudyNow && (
             <button type="button" onClick={onStudyNow} className="font-medium text-accent underline hover:no-underline">
-              Review now →
+              {t("Review now →")}
             </button>
           )}
         </div>
@@ -153,15 +162,15 @@ export function DeckPreview({
         {cards.map((card) => (
           <li key={card.id} className="grid gap-2 px-5 py-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
             <div className="min-w-0">
-              <p className="mb-1 text-[11px] font-medium uppercase tracking-[0.7px] text-ink-muted">Front</p>
+              <p className="mb-1 text-[11px] font-medium uppercase tracking-[0.7px] text-ink-muted">{t("Front")}</p>
               <p className="text-sm leading-relaxed text-ink">{card.front}</p>
             </div>
             <div className="min-w-0">
-              <p className="mb-1 text-[11px] font-medium uppercase tracking-[0.7px] text-ink-muted">Back</p>
+              <p className="mb-1 text-[11px] font-medium uppercase tracking-[0.7px] text-ink-muted">{t("Back side")}</p>
               <p className="text-sm leading-relaxed text-ink-soft">{card.back}</p>
               <p className="mt-1 text-xs text-ink-muted">
                 {card.concept}
-                {card.errorType ? ` · ${card.errorType}` : ""}
+                {card.errorType ? ` · ${t(errorTypeLabel(card.errorType))}` : ""}
                 {card.context ? ` · ${card.context}` : ""}
               </p>
             </div>

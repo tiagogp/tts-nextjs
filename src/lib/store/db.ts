@@ -7,8 +7,8 @@
  */
 
 const DB_NAME = "tts-cards";
-// v7: adds C1 writing-sample diagnosis records (experimental, pre-W5 exception).
-const DB_VERSION = 7;
+// v8: adds level-up test attempts (level advancement).
+const DB_VERSION = 8;
 
 export const STORES = {
   errorEvents: "errorEvents",
@@ -23,6 +23,7 @@ export const STORES = {
   pronunciationAttempts: "pronunciationAttempts",
   progressAssessments: "progressAssessments",
   c1Diagnoses: "c1Diagnoses",
+  levelTests: "levelTests",
 } as const;
 
 export type StoreName = (typeof STORES)[keyof typeof STORES];
@@ -88,6 +89,10 @@ export function openDb(): Promise<IDBDatabase> {
       }
       if (!db.objectStoreNames.contains(STORES.c1Diagnoses)) {
         const s = db.createObjectStore(STORES.c1Diagnoses, { keyPath: "id" });
+        s.createIndex("createdAt", "createdAt");
+      }
+      if (!db.objectStoreNames.contains(STORES.levelTests)) {
+        const s = db.createObjectStore(STORES.levelTests, { keyPath: "id" });
         s.createIndex("createdAt", "createdAt");
       }
     };

@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useRef, type KeyboardEvent, type ReactNode } from "react";
-import { motion } from "motion/react";
+import { m } from "motion/react";
 import { cn } from "@/lib/cn";
 import { springSnappy } from "@/lib/motion";
 
@@ -86,7 +86,7 @@ export function Segmented<T extends string>({
             )}
           >
             {active && (
-              <motion.span
+              <m.span
                 layoutId={layoutId}
                 aria-hidden
                 className="absolute inset-0 -z-10 rounded-md bg-card shadow-[0_1px_4px_rgb(0_0_0/0.08)]"

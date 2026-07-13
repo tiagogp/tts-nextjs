@@ -15,6 +15,7 @@ import { orientCardsForTargetFront } from "@/lib/cards/orientation";
 import type { PronunciationAttempt } from "@/lib/pronunciation/types";
 import type { StoredProgressAssessment } from "@/features/progress/model";
 import type { C1Diagnosis } from "@/features/c1/types";
+import type { StoredLevelTestAttempt } from "@/features/levelup/testModel";
 import type { ConversationTurn } from "@/lib/cards/provider";
 import {
   STORES,
@@ -228,7 +229,7 @@ export async function recordReview(
   grade: Grade,
   telemetry?: ReviewTelemetry,
   now: Date = new Date(),
-): Promise<SrsRecord> {
+): Promise<{ next: SrsRecord; review: ReviewRecord }> {
   const { next, scheduledDays, previousState } = applyGrade(srs, grade, now);
   await put(STORES.srs, next);
   const review: ReviewRecord = {
@@ -246,7 +247,7 @@ export async function recordReview(
     scaffoldLevel: telemetry?.scaffoldLevel,
   };
   await put(STORES.reviews, review);
-  return next;
+  return { next, review };
 }
 
 export function getReviews(): Promise<ReviewRecord[]> {
@@ -363,6 +364,17 @@ export function saveC1Diagnosis(diagnosis: C1Diagnosis): Promise<void> {
 export async function getC1Diagnoses(): Promise<C1Diagnosis[]> {
   const diagnoses = await getAll<C1Diagnosis>(STORES.c1Diagnoses);
   return diagnoses.sort((a, b) => b.createdAt - a.createdAt);
+}
+
+/* ──────────────────────────── level-up test attempts ──────────────────────────── */
+
+export function saveLevelTestAttempt(attempt: StoredLevelTestAttempt): Promise<void> {
+  return put(STORES.levelTests, attempt);
+}
+
+export async function getLevelTestAttempts(): Promise<StoredLevelTestAttempt[]> {
+  const attempts = await getAll<StoredLevelTestAttempt>(STORES.levelTests);
+  return attempts.sort((a, b) => b.createdAt - a.createdAt);
 }
 
 /* ──────────────────────────── conversations (Phase 1) ──────────────────────────── */

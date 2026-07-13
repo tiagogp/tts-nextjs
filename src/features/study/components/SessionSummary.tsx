@@ -82,7 +82,7 @@ export function SessionSummary({
   tomorrow?: TomorrowPreview | null;
 }) {
   const { t } = useT();
-  const { reviewed, passed, stable } = summarize(results);
+  const { reviewed, passed } = summarize(results);
   const accuracy = reviewed ? Math.round((passed / reviewed) * 100) : 0;
 
   return (
@@ -96,14 +96,12 @@ export function SessionSummary({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <p className="text-2xl font-semibold tabular-nums text-ink">{accuracy}%</p>
-          <p className="mt-0.5 text-xs uppercase tracking-[0.8px] text-ink-muted">{t("Now")}</p>
-          <p className="mt-1 text-[11px] leading-snug text-ink-muted">{t("went well this round")}</p>
+          <p className="text-2xl font-semibold tabular-nums text-ink">{reviewed}</p>
+          <p className="mt-0.5 text-xs text-ink-muted">{t("cards reviewed")}</p>
         </div>
         <div>
-          <p className="text-2xl font-semibold tabular-nums text-ink">{stable}</p>
-          <p className="mt-0.5 text-xs uppercase tracking-[0.8px] text-ink-muted">{t("Tomorrow")}</p>
-          <p className="mt-1 text-[11px] leading-snug text-ink-muted">{t("ready for tomorrow")}</p>
+          <p className="text-2xl font-semibold tabular-nums text-ink">{accuracy}%</p>
+          <p className="mt-0.5 text-xs text-ink-muted">{t("accuracy")}</p>
         </div>
       </div>
 

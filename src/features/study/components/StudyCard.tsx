@@ -10,6 +10,7 @@ import type { ReviewRecord } from "@/lib/store/repository";
 import { PronunciationCoach } from "@/features/pronunciation/components/PronunciationCoach";
 import { SessionSummary, type SessionResult, type TomorrowPreview } from "./SessionSummary";
 import { useT } from "@/i18n/I18nProvider";
+import { errorTypeLabel } from "@/lib/cards/errorTypeLabels";
 import {
   SCAFFOLD,
   buildHint,
@@ -34,6 +35,7 @@ interface StudyCardProps {
   current?: DueCard;
   queueLength: number;
   flipped: boolean;
+  grading: boolean;
   sessionResults: SessionResult[];
   tomorrow: TomorrowPreview | null;
   streakDays: number;
@@ -48,6 +50,7 @@ export function StudyCard({
   current,
   queueLength,
   flipped,
+  grading,
   sessionResults,
   tomorrow,
   streakDays,
@@ -155,7 +158,9 @@ export function StudyCard({
               <>
                 <div className="w-full border-t border-line" />
                 <p className="text-base leading-relaxed text-ink-soft">{current.card.back}</p>
-                {current.card.errorType && <span className="text-xs text-ink-muted">{current.card.errorType}</span>}
+                {current.card.errorType && (
+                  <span className="text-xs text-ink-muted">{t(errorTypeLabel(current.card.errorType))}</span>
+                )}
                 <div className="w-full">
                   <PronunciationCoach
                     source="study"
@@ -193,6 +198,7 @@ export function StudyCard({
           ) : (
             <GradeButtons
               srs={current.srs}
+              disabled={grading}
               onGrade={(g) => onGrade(g, { hintUsed: scaffoldLevel > SCAFFOLD.none, scaffoldLevel })}
             />
           )}

@@ -12,7 +12,7 @@ export async function POST() {
     return NextResponse.json(res.json(), { status: res.status });
   } catch {
     return NextResponse.json(
-      { error: "Não consegui iniciar o download do modelo de voz." },
+      { error: "Could not start the voice-model download." },
       { status: 500 },
     );
   }

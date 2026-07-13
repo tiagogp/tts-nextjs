@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Field";
 import { Spinner } from "@/components/ui/Spinner";
 import { cn } from "@/lib/cn";
+import { useT } from "@/i18n/I18nProvider";
 
 interface AiEvaluateFormProps {
   value: string;
@@ -37,12 +38,13 @@ export function AiEvaluateForm({
   onEvaluate,
   onOpenSettings,
 }: AiEvaluateFormProps) {
+  const { t } = useT();
   return (
     <div className="space-y-2">
       <Textarea
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        placeholder="Write or record a few sentences in English. IA will find what a native speaker would say differently."
+        placeholder={t("Write or record a few sentences in English. The AI will find what a native speaker would say differently.")}
         rows={6}
         disabled={evaluating}
         className="px-4 py-3 leading-relaxed"
@@ -66,17 +68,17 @@ export function AiEvaluateForm({
           {recording ? (
             <>
               <span className="h-2 w-2 animate-pulse rounded-full bg-danger" />
-              Stop recording
+              {t("Stop recording")}
             </>
           ) : transcribing ? (
             <>
               <Spinner className="h-4 w-4" />
-              Transcribing…
+              {t("Transcribing…")}
             </>
           ) : (
             <>
               <MicrophoneIcon />
-              Record speech
+              {t("Record speech")}
             </>
           )}
         </Button>
@@ -88,7 +90,7 @@ export function AiEvaluateForm({
           className="h-10 gap-2"
         >
           <UploadIcon />
-          Upload audio
+          {t("Upload audio")}
         </Button>
         <Button
           variant="primary"
@@ -96,7 +98,7 @@ export function AiEvaluateForm({
           disabled={!value.trim() || evaluating || transcribing || evaluatorHint !== null}
           className="ml-auto h-10"
         >
-          {evaluating ? "Evaluating…" : "Check with IA →"}
+          {evaluating ? t("Evaluating…") : t("Check with AI →")}
         </Button>
       </div>
       {evaluatorHint && (
@@ -104,20 +106,20 @@ export function AiEvaluateForm({
           {evaluatorHint}{" "}
           {onOpenSettings && (
             <button onClick={onOpenSettings} className="underline hover:no-underline">
-              Open Settings →
+              {t("Open Settings →")}
             </button>
           )}
         </p>
       )}
       {ollamaOffline && (
         <p className="text-xs text-danger">
-          Local AI is offline or has no installed models.{" "}
+          {t("Local AI is offline or has no installed models.")}{" "}
           {onOpenSettings ? (
             <button onClick={onOpenSettings} className="underline hover:no-underline">
-              Open Settings →
+              {t("Open Settings →")}
             </button>
           ) : (
-            "Open Settings to check the connection."
+            t("Open Settings to check the connection.")
           )}
         </p>
       )}

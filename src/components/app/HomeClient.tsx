@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion } from "motion/react";
+import { m } from "motion/react";
 import { BLUR, springSoft, TRAVEL } from "@/lib/motion";
 import AppHeader from "@/components/app/AppHeader";
 import { type HomeTab } from "@/components/app/homeTabs";
@@ -12,6 +12,7 @@ import C1Tab from "@/features/c1/components/C1Tab";
 import ConverseTab from "@/features/converse/components/ConverseTab";
 import CorrectTab from "@/features/correct/components/CorrectTab";
 import { startFirstRunActivation } from "@/features/activation/firstRun";
+import { TabErrorBoundary } from "@/components/app/TabErrorBoundary";
 import DiscoverTab from "@/features/discover/components/DiscoverTab";
 import { LEVEL_RANK } from "@/features/discover/levels";
 import { HojeHome } from "@/features/home/components/HojeHome";
@@ -176,7 +177,7 @@ function HomeContent() {
           <main className="flex-1 min-h-0" id="main-content">
             {lessonId !== null ? (
               <section className="h-full overflow-y-auto app-scroll-region">
-                <motion.div
+                <m.div
                   className="max-w-5xl mx-auto px-4 pt-5 pb-14 sm:pt-7 sm:pb-20"
                   initial={false}
                   animate={{ opacity: 1, y: 0 }}
@@ -188,7 +189,7 @@ function HomeContent() {
                     onStudyNow={() => changeTab("study")}
                     onTryOwnSource={openDiscoverWithSource}
                   />
-                </motion.div>
+                </m.div>
               </section>
             ) : overlay === "settings" ? (
               <div className="h-full overflow-y-auto pb-16 app-scroll-region sm:pb-20">
@@ -207,7 +208,7 @@ function HomeContent() {
                       type="button"
                       onClick={() => setOverlay("settings")}
                       className="rounded-md border border-line px-2.5 py-1.5 text-sm text-ink-soft transition-colors hover:text-ink"
-                      aria-label="Back to Settings"
+                      aria-label={t("Back to Settings")}
                     >
                       ←
                     </button>
@@ -229,7 +230,7 @@ function HomeContent() {
                       type="button"
                       onClick={() => setOverlay(null)}
                       className="rounded-md border border-line px-2.5 py-1.5 text-sm text-ink-soft transition-colors hover:text-ink"
-                      aria-label="Back"
+                      aria-label={t("Back")}
                     >
                       ←
                     </button>
@@ -251,14 +252,14 @@ function HomeContent() {
                       type="button"
                       onClick={() => setOverlay("settings")}
                       className="rounded-md border border-line px-2.5 py-1.5 text-sm text-ink-soft transition-colors hover:text-ink"
-                      aria-label="Back to Settings"
+                      aria-label={t("Back to Settings")}
                     >
                       ←
                     </button>
                     <div>
-                      <h2 className="text-xl font-semibold text-ink">Advanced tools</h2>
+                      <h2 className="text-xl font-semibold text-ink">{t("Advanced tools")}</h2>
                       <p className="text-sm text-ink-muted">
-                        Export to Anki, text-to-speech, and theme phrase lists.
+                        {t("Export to Anki, text-to-speech, and theme phrase lists.")}
                       </p>
                     </div>
                   </div>
@@ -280,41 +281,43 @@ function HomeContent() {
                   >
                     {/* Mount stays alive across tab switches so each tab keeps its
                         state; only the entrance animation replays on activation. */}
-                    <motion.div
+                    <m.div
                       className="max-w-5xl mx-auto px-4 pt-5 pb-14 sm:pt-7 sm:pb-20"
                       initial={false}
                       animate={active ? { opacity: 1, y: 0 } : { opacity: 0, y: TRAVEL }}
                       transition={springSoft}
                     >
-                      <TabContent
-                        tab={item.id}
-                        onOpenSettings={() => {
-                          setSettingsAiIntent(true);
-                          setOverlay("settings");
-                        }}
-                        onOpenDiscover={() => changeTab("discover")}
-                        onOpenPractice={() => changeTab("study")}
-                        onOpenConversation={
-                          advancedSurfacesUnlocked
-                            ? () => {
-                                setLessonId(null);
-                                setOverlay("converse");
-                              }
-                            : undefined
-                        }
-                        onOpenCorrect={() => changeTab("correct")}
-                        onFirstLesson={startFirstLesson}
-                        onOpenLesson={openLesson}
-                        discoverPrefill={discoverPrefill}
-                      />
-                    </motion.div>
+                      <TabErrorBoundary>
+                        <TabContent
+                          tab={item.id}
+                          onOpenSettings={() => {
+                            setSettingsAiIntent(true);
+                            setOverlay("settings");
+                          }}
+                          onOpenDiscover={() => changeTab("discover")}
+                          onOpenPractice={() => changeTab("study")}
+                          onOpenConversation={
+                            advancedSurfacesUnlocked
+                              ? () => {
+                                  setLessonId(null);
+                                  setOverlay("converse");
+                                }
+                              : undefined
+                          }
+                          onOpenCorrect={() => changeTab("correct")}
+                          onFirstLesson={startFirstLesson}
+                          onOpenLesson={openLesson}
+                          discoverPrefill={discoverPrefill}
+                        />
+                      </TabErrorBoundary>
+                    </m.div>
                   </section>
                 );
               })
             )}
           </main>
           {announcedLabel && (
-            <motion.div
+            <m.div
               className="pointer-events-none fixed bottom-5 left-1/2 z-30 -translate-x-1/2 rounded-md border border-line bg-card px-3 py-2 text-sm font-medium text-ink shadow-lg"
               initial={{ opacity: 0, y: 10, filter: `blur(${BLUR}px)` }}
               animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
@@ -323,7 +326,7 @@ function HomeContent() {
               role="status"
             >
               {t("New section unlocked: {section}", { section: t(announcedLabel) })}
-            </motion.div>
+            </m.div>
           )}
           <OnboardingDialog
             onOpenSettings={() => {

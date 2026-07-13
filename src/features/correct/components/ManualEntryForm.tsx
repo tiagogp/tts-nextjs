@@ -2,6 +2,8 @@
 
 import { Chip } from "@/components/ui/Chip";
 import { Field, Input, Textarea } from "@/components/ui/Field";
+import { useT } from "@/i18n/I18nProvider";
+import { errorTypeLabel } from "@/lib/cards/errorTypeLabels";
 import { CORRECTION_ERROR_TYPES } from "@/features/correct/constants";
 import type { CorrectionDraft } from "@/features/correct/types";
 import type { ErrorType } from "@/lib/cards/schema";
@@ -13,15 +15,15 @@ interface ManualEntryFormProps {
   onAdd: () => void;
 }
 
-const optionalHint = <span className="font-normal lowercase opacity-70">— optional</span>;
-
 export function ManualEntryForm({ draft, onChange, onToggleType, onAdd }: ManualEntryFormProps) {
+  const { t } = useT();
   const canAdd = Boolean(draft.original.trim() && draft.corrected.trim());
+  const optionalHint = <span className="font-normal lowercase opacity-70">— {t("optional")}</span>;
 
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Field label="What you said">
+        <Field label={t("What you said")}>
           <Textarea
             value={draft.original}
             onChange={(event) => onChange({ original: event.target.value })}
@@ -29,7 +31,7 @@ export function ManualEntryForm({ draft, onChange, onToggleType, onAdd }: Manual
             rows={2}
           />
         </Field>
-        <Field label="Natural English version">
+        <Field label={t("Natural English version")}>
           <Textarea
             value={draft.corrected}
             onChange={(event) => onChange({ corrected: event.target.value })}
@@ -39,27 +41,27 @@ export function ManualEntryForm({ draft, onChange, onToggleType, onAdd }: Manual
         </Field>
       </div>
 
-      <Field label={<>Error type {optionalHint}</>}>
+      <Field label={<>{t("Error type")} {optionalHint}</>}>
         <div className="flex flex-wrap gap-1.5">
           {CORRECTION_ERROR_TYPES.map((type) => (
             <Chip key={type} active={draft.errorTypes.includes(type)} onClick={() => onToggleType(type)}>
-              {type}
+              {t(errorTypeLabel(type))}
             </Chip>
           ))}
         </div>
       </Field>
 
-      <Field label={<>Why it was wrong {optionalHint}</>}>
+      <Field label={<>{t("Why it was wrong")} {optionalHint}</>}>
         <Input
           type="text"
           value={draft.rationale}
           onChange={(event) => onChange({ rationale: event.target.value })}
-          placeholder="age uses 'be', not 'have'"
+          placeholder={t("age uses 'be', not 'have'")}
         />
       </Field>
 
       <Chip active={canAdd} disabled={!canAdd} className="px-3 py-1.5" onClick={onAdd}>
-        + Add to list
+        {t("+ Add to list")}
       </Chip>
     </div>
   );

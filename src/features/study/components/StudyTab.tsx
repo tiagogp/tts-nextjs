@@ -11,6 +11,7 @@ import { useCallback } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card as UiCard } from "@/components/ui/Card";
 import { ProgressOverview } from "@/features/progress/components/ProgressOverview";
+import { ReadinessCoach } from "@/features/levelup/components/ReadinessCoach";
 import { useT } from "@/i18n/I18nProvider";
 import { useStudySession } from "../useStudySession";
 import type { CyclePath } from "../cyclePlanner";
@@ -37,6 +38,7 @@ export default function StudyTab({
     queue,
     current,
     flipped,
+    grading,
     reviews,
     counts,
     cards,
@@ -160,6 +162,7 @@ export default function StudyTab({
         current={current}
         queueLength={queue.length}
         flipped={flipped}
+        grading={grading}
         sessionResults={sessionResults}
         tomorrow={tomorrow}
         streakDays={stats.streakDays}
@@ -174,6 +177,16 @@ export default function StudyTab({
       {showAdaptiveDepth && counts.cards > 0 && bandGate && <BandGateNote gate={bandGate} />}
 
       {showAdaptiveDepth && <ProgressOverview showCheckIn />}
+
+      {/* Level advancement: readiness coach + evidence-gated level test. */}
+      {showAdaptiveDepth && (
+        <ReadinessCoach
+          weaknesses={weaknesses}
+          generatingKey={generatingKey}
+          onPractice={(w) => void startReinforcement(w)}
+          onGenerate={(w) => void generateReinforcement(w)}
+        />
+      )}
 
       {showAdaptiveDepth && <ExposureMeter activity={activity} />}
 

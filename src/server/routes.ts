@@ -66,16 +66,22 @@ export function isAbort(error: unknown): boolean {
 }
 
 const MODEL_NOT_READY_MESSAGE =
-  "O modelo de voz (Kokoro, ~349MB) ainda não está pronto. O download começou — acompanhe o progresso e refaça o export quando concluir.";
+  "The voice model (Kokoro, about 349 MB) is not ready yet. The download has started; watch the progress and retry the export when it finishes.";
+
+const MODEL_FINALIZING_MESSAGE =
+  "The voice model (Kokoro, about 349 MB) finished downloading and is being prepared. Retry the export in a moment.";
 
 function kokoroNotReadyMessage(
   status: Awaited<ReturnType<typeof modelStatus>>,
 ): string {
   if (status.error && !status.loading_kokoro) {
-    return `Falha ao baixar/preparar o modelo de voz neste sistema: ${status.error}. Tente baixar novamente; se persistir, verifique a conexão com GitHub e permissões da pasta de dados.`;
+    return `Failed to download or prepare the voice model on this system: ${status.error}. Try the download again; if it keeps failing, check GitHub connectivity and data-folder permissions.`;
   }
   if (status.error) {
-    return `O modelo de voz está sendo baixado novamente. Último erro: ${status.error}`;
+    return `The voice model is being downloaded again. Last error: ${status.error}`;
+  }
+  if (status.loading_kokoro && !status.downloading_kokoro) {
+    return MODEL_FINALIZING_MESSAGE;
   }
   return MODEL_NOT_READY_MESSAGE;
 }
@@ -94,7 +100,7 @@ async function requireKokoro(): Promise<LocalResponse | null> {
 }
 
 const WHISPER_NOT_READY_MESSAGE =
-  "O reconhecimento de voz (Whisper, ~488MB) ainda está sendo preparado. O download começou — tente de novo quando concluir.";
+  "Speech recognition (Whisper, about 488 MB) is not ready yet. The download has started; try again when it finishes.";
 
 /**
  * Same contract as `requireKokoro`: never block a request on the one-time
@@ -108,7 +114,7 @@ async function requireWhisper(): Promise<LocalResponse | null> {
   return response(409, {
     error:
       status.error && !status.loading_whisper && !status.downloading_whisper
-        ? `Falha ao baixar o modelo de reconhecimento de voz: ${status.error}. Verifique a conexão e tente de novo.`
+        ? `Failed to download the speech-recognition model: ${status.error}. Check your connection and try again.`
         : WHISPER_NOT_READY_MESSAGE,
     code: "model_not_ready",
     downloading: status.downloading_whisper || status.loading_whisper,
@@ -121,7 +127,7 @@ function synthesisFailure(error: unknown): LocalResponse {
   logger.error({ err: error }, "APKG build failed");
   return response(500, {
     error:
-      "Falha ao sintetizar o áudio dos cards. Confira o log do servidor para o erro técnico.",
+      "Failed to synthesize card audio. Check the server log for the technical error.",
     code: "synthesis_failed",
   });
 }
@@ -199,7 +205,7 @@ const handleTts: RouteHandler = async (options) => {
     logger.error({ err: error }, "TTS synthesis failed");
     return response(500, {
       error:
-        "Falha ao gerar áudio com Kokoro neste sistema. Confira o log do servidor para o erro técnico.",
+        "Failed to generate audio with Kokoro on this system. Check the server log for the technical error.",
       code: "tts_failed",
       detail: error instanceof Error ? error.message : "unknown",
     });

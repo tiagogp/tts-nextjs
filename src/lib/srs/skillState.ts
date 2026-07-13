@@ -24,7 +24,7 @@ const RECENT_WINDOW_MS = 7 * DAY_MS;
 /** The trailing reviews fatigue inspects per skill — a rough "last session" worth. */
 const FATIGUE_WINDOW = 8;
 /** Stability (days) at which a skill's cards count as fully "proven" for the proxy. */
-const STABILITY_TARGET_DAYS = 21;
+export const STABILITY_TARGET_DAYS = 21;
 /** Latency (ms) treated as fully fatigued; matches the saturation floor in `sessionMode`. */
 const SLOW_LATENCY_MS = 12_000;
 /** Recent production errors that saturate the error contribution to fatigue. */

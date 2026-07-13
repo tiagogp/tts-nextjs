@@ -152,7 +152,7 @@ describe("getReviewsSince", () => {
     await saveCards([makeCard("r")]);
     const card = makeCard("r");
     const srs1 = await getSrs("r");
-    const srs2 = await recordReview(card, srs1!, Rating.Good, undefined, new Date(1_700_000_000_000));
+    const { next: srs2 } = await recordReview(card, srs1!, Rating.Good, undefined, new Date(1_700_000_000_000));
     await recordReview(card, srs2, Rating.Good, undefined, new Date(1_700_000_200_000));
 
     const recent = await getReviewsSince(1_700_000_100_000);

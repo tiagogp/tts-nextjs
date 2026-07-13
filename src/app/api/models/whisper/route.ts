@@ -13,7 +13,7 @@ export async function POST() {
     return NextResponse.json(res.json(), { status: res.status });
   } catch {
     return NextResponse.json(
-      { error: "Não consegui iniciar a preparação do reconhecimento de voz." },
+      { error: "Could not start speech-recognition preparation." },
       { status: 502 },
     );
   }

@@ -21,7 +21,15 @@ const GRADE_TONE: Record<Grade, string> = {
   [Rating.Easy]: "border-info text-info",
 };
 
-export function GradeButtons({ srs, onGrade }: { srs: SrsRecord; onGrade: (grade: Grade) => void }) {
+export function GradeButtons({
+  srs,
+  disabled,
+  onGrade,
+}: {
+  srs: SrsRecord;
+  disabled?: boolean;
+  onGrade: (grade: Grade) => void;
+}) {
   const { t } = useT();
   return (
     <div className="grid grid-cols-4 gap-2">
@@ -29,12 +37,13 @@ export function GradeButtons({ srs, onGrade }: { srs: SrsRecord; onGrade: (grade
         <motion.button
           key={grade}
           type="button"
-          whileHover={hoverLift}
-          whileTap={{ ...tapPress, y: 0 }}
+          disabled={disabled}
+          whileHover={disabled ? undefined : hoverLift}
+          whileTap={disabled ? undefined : { ...tapPress, y: 0 }}
           transition={springSnappy}
           onClick={() => onGrade(grade)}
           className={cn(
-            "flex cursor-pointer flex-col items-center gap-0.5 rounded border px-2 py-2 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent",
+            "flex cursor-pointer flex-col items-center gap-0.5 rounded border px-2 py-2 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50",
             GRADE_TONE[grade],
           )}
         >

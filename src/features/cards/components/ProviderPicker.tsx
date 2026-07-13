@@ -2,6 +2,7 @@
 
 import Select from "@/components/ui/Select";
 import ProviderBadge from "@/components/ui/ProviderBadge";
+import { useT } from "@/i18n/I18nProvider";
 import type { ProviderKind } from "@/lib/cards/provider";
 import type { useProviderSelection } from "@/features/cards/hooks/useProviderSelection";
 
@@ -9,6 +10,7 @@ type Selection = ReturnType<typeof useProviderSelection>;
 
 /** IA + Ollama model pickers, shared by Discover and Correct. */
 export function ProviderPicker({ selection, disabled }: { selection: Selection; disabled?: boolean }) {
+  const { t } = useT();
   const {
     providers,
     provider,
@@ -32,7 +34,7 @@ export function ProviderPicker({ selection, disabled }: { selection: Selection; 
       {selectableProviders.length > 1 && (
         <div className="grid grid-rows-[1.625rem_auto] gap-1.5">
           <div className="flex min-w-0 items-center gap-2">
-            <label className="text-xs font-medium text-ink-muted">IA</label>
+            <label className="text-xs font-medium text-ink-muted">{t("AI")}</label>
             {activeProvider && <ProviderBadge isLocal={activeProvider.isLocal} available={activeProvider.available} />}
           </div>
           <Select
@@ -40,7 +42,7 @@ export function ProviderPicker({ selection, disabled }: { selection: Selection; 
             onChange={(value) => setProviderOverride(value as ProviderKind)}
             options={selectableProviders.map((entry) => ({
               value: entry.kind,
-              label: `${entry.label}${entry.available ? "" : " — unavailable"}`,
+              label: `${entry.label}${entry.available ? "" : ` — ${t("unavailable")}`}`,
             }))}
             disabled={disabled}
           />
@@ -50,7 +52,7 @@ export function ProviderPicker({ selection, disabled }: { selection: Selection; 
       {showModelPicker && (
         <div className="grid grid-rows-[1.625rem_auto] gap-1.5">
           <div className="flex min-w-0 items-center gap-2">
-            <label className="text-xs font-medium text-ink-muted">Ollama model</label>
+            <label className="text-xs font-medium text-ink-muted">{t("Ollama model")}</label>
           </div>
           <Select
             value={selectedModel}

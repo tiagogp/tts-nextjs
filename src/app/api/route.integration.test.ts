@@ -426,7 +426,7 @@ describe("API route integration", () => {
 
   it("/api/pronunciation/assess surfaces the Whisper download state instead of hanging", async () => {
     localRequest.mockResolvedValueOnce(localResponse({
-      error: "O reconhecimento de voz (Whisper, ~488MB) ainda está sendo preparado. O download começou — tente de novo quando concluir.",
+      error: "Speech recognition (Whisper, about 488 MB) is not ready yet. The download has started; try again when it finishes.",
       code: "model_not_ready",
       downloading: true,
       progress: 0.42,
@@ -443,7 +443,7 @@ describe("API route integration", () => {
     expect(data.code).toBe("model_not_ready");
     expect(data.downloading).toBe(true);
     expect(data.progress).toBe(0.42);
-    expect(data.error).toContain("reconhecimento de voz");
+    expect(data.error).toContain("Speech recognition");
   });
 
   it("/api/discover/article returns recoverable PT-BR copy for bad input", async () => {

@@ -7,13 +7,12 @@
  * studySession.ts.
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { isStoreAvailable } from "@/lib/store/db";
 import {
   getDueCards,
   getCardsWithSrs,
   getCounts,
-  getReviews,
   getReinforcementCards,
   getReinforcementSources,
   recordReview,
@@ -59,6 +58,7 @@ export function useStudySession() {
   const [loading, setLoading] = useState(true);
   const [queue, setQueue] = useState<DueCard[]>([]);
   const [flipped, setFlipped] = useState(false);
+  const [grading, setGrading] = useState(false);
   const [reviews, setReviews] = useState<ReviewRecord[]>([]);
   const [errorEvents, setErrorEvents] = useState<ErrorEvent[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -76,6 +76,7 @@ export function useStudySession() {
   const [cooldown, setCooldown] = useState(false);
   /** Epoch ms a card was flipped (answer shown) — the start of the flip→grade latency. */
   const flipAtRef = useRef<number | null>(null);
+  const gradingRef = useRef(false);
   /** P3 #7 — latest offline band-gate result; drives whether the queue is band-ordered. */
   const [bandGate, setBandGate] = useState<BandGateResult | null>(null);
   /** D5 — when set, the queue is a focused reinforcement drill, not the due queue. */
@@ -189,47 +190,57 @@ export function useStudySession() {
 
   const grade = useCallback(
     async (g: Grade, scaffold: ScaffoldTelemetry) => {
-      if (!current) return;
-      const latencyMs = flipAtRef.current != null ? Date.now() - flipAtRef.current : undefined;
-      flipAtRef.current = null;
-      const next = await recordReview(current.card, current.srs, g, {
-        latencyMs,
-        hintUsed: scaffold.hintUsed,
-        scaffoldLevel: scaffold.scaffoldLevel,
-      });
-      const activation = markFirstRunReviewCompleted();
-      void emitActivity("cards_reviewed", {
-        count: 1,
-        cardIds: [current.card.id],
-        activation,
-      });
-      setSessionResults((prev) => [...prev, { cardId: current.card.id, grade: g, srs: next }]);
-      // P1 #4 — track the running window and raise the cooldown prompt on a genuine bad
-      // streak. Only in a standard session; a light round is already the gentle path.
-      const answers = [...recentAnswers, { grade: g, latencyMs }];
-      setRecentAnswers(answers);
-      if (mode === "standard" && !cooldown && isSaturated(answers)) setCooldown(true);
-      const rest = queue.slice(1);
-      const [allReviews, c] = await Promise.all([getReviews(), getCounts()]);
-      setReviews(allReviews);
-      setCounts(c);
-      if (rest.length > 0) {
-        setQueue(rest);
-      } else if (reinforcing) {
-        // Reinforcement drill finished — drop back to the normal due queue.
-        setReinforcing(null);
-        setQueue(await reloadStandardQueue());
-      } else if (mode === "light") {
-        // Light round done — end cleanly into the summary rather than reopening the queue.
-        setMode("standard");
-        setQueue([]);
-      } else {
-        // Re-query: FSRS learning steps may have re-queued a card minutes out.
-        setQueue(await reloadStandardQueue());
+      if (!current || gradingRef.current) return;
+      gradingRef.current = true;
+      setGrading(true);
+      try {
+        const latencyMs = flipAtRef.current != null ? Date.now() - flipAtRef.current : undefined;
+        flipAtRef.current = null;
+        const { next, review } = await recordReview(current.card, current.srs, g, {
+          latencyMs,
+          hintUsed: scaffold.hintUsed,
+          scaffoldLevel: scaffold.scaffoldLevel,
+        });
+        const activation = markFirstRunReviewCompleted();
+        void emitActivity("cards_reviewed", {
+          count: 1,
+          cardIds: [current.card.id],
+          activation,
+        });
+        // P1 #4 — track the running window and raise the cooldown prompt on a genuine bad
+        // streak. Only in a standard session; a light round is already the gentle path.
+        const answers = [...recentAnswers, { grade: g, latencyMs }];
+        setRecentAnswers(answers);
+        if (mode === "standard" && !cooldown && isSaturated(answers)) setCooldown(true);
+        const rest = queue.slice(1);
+        const allReviews = [...reviews, review];
+        const c = await getCounts();
+        setSessionResults((prev) => [...prev, {
+          cardId: current.card.id, grade: g, srs: next,
+        }]);
+        setReviews(allReviews);
+        setCounts(c);
+        if (rest.length > 0) {
+          setQueue(rest);
+        } else if (reinforcing) {
+          // Reinforcement drill finished — drop back to the normal due queue.
+          setReinforcing(null);
+          setQueue(await reloadStandardQueue());
+        } else if (mode === "light") {
+          // Light round done — end cleanly into the summary rather than reopening the queue.
+          setMode("standard");
+          setQueue([]);
+        } else {
+          // Re-query: FSRS learning steps may have re-queued a card minutes out.
+          setQueue(await reloadStandardQueue());
+        }
+        setFlipped(false);
+      } finally {
+        gradingRef.current = false;
+        setGrading(false);
       }
-      setFlipped(false);
     },
-    [current, queue, reinforcing, mode, cooldown, recentAnswers, reloadStandardQueue],
+    [current, queue, reinforcing, mode, cooldown, recentAnswers, reloadStandardQueue, reviews],
   );
 
   /** D5 — start a focused drill on a weak concept/error-type, on top of the due queue. */
@@ -265,6 +276,7 @@ export function useStudySession() {
 
   /** P2 #5 — return to the standard due queue and scroll the card into view. */
   const startReview = useCallback(async () => {
+    setSessionResults([]);
     setReinforcing(null);
     setCooldown(false);
     setMode("standard");
@@ -340,17 +352,32 @@ export function useStudySession() {
     [defaultProvider, refresh, settings.defaultProvider, settings.ollama.model, startReinforcement, t],
   );
 
-  const stats = computePerformance(reviews);
-  const retention = computeReturnAfterMiss(reviews);
-  const activity = computeWeeklyActivity(conversations, reviews);
-  const weaknesses = detectWeaknesses(reviews, errorEvents);
+  const stats = useMemo(() => computePerformance(reviews), [reviews]);
+  const retention = useMemo(() => computeReturnAfterMiss(reviews), [reviews]);
+  const activity = useMemo(
+    () => computeWeeklyActivity(conversations, reviews),
+    [conversations, reviews],
+  );
+  const weaknesses = useMemo(
+    () => detectWeaknesses(reviews, errorEvents),
+    [reviews, errorEvents],
+  );
   const weeklyGoal = getWeeklyGoal();
   const showAdaptiveDepth = reviews.length >= 5;
 
   // P2 #5 — derive the three-path cycle plan from per-skill state + due + light availability.
-  const skillStates = deriveSkillStates(reviews, cardsWithSrs, pronAttempts, errorEvents);
-  const lightAvailable = buildLightQueue(queue, cardsWithSrs).length > 0;
-  const cyclePlan = deriveCyclePlan(skillStates, { due: counts.due, lightAvailable });
+  const skillStates = useMemo(
+    () => deriveSkillStates(reviews, cardsWithSrs, pronAttempts, errorEvents),
+    [reviews, cardsWithSrs, pronAttempts, errorEvents],
+  );
+  const lightAvailable = useMemo(
+    () => buildLightQueue(queue, cardsWithSrs).length > 0,
+    [queue, cardsWithSrs],
+  );
+  const cyclePlan = useMemo(
+    () => deriveCyclePlan(skillStates, { due: counts.due, lightAvailable }),
+    [skillStates, counts.due, lightAvailable],
+  );
 
   return {
     available,
@@ -358,6 +385,7 @@ export function useStudySession() {
     queue,
     current,
     flipped,
+    grading,
     reviews,
     counts,
     cards,

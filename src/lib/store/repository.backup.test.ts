@@ -156,6 +156,7 @@ describe("local backup round-trip — weeks-scale zero-loss proof (Phase 4)", ()
     [STORES.pronunciationAttempts]: "id",
     [STORES.progressAssessments]: "id",
     [STORES.c1Diagnoses]: "id",
+    [STORES.levelTests]: "id",
   };
 
   function buildSeed(): Record<StoreName, Record<string, unknown>[]> {
@@ -249,6 +250,13 @@ describe("local backup round-trip — weeks-scale zero-loss proof (Phase 4)", ()
         errors: [],
         refinements: [],
         createdAt: START + i * 4 * DAY,
+      })),
+      [STORES.levelTests]: Array.from({ length: 3 }, (_, i) => ({
+        id: `level-test-${i}`,
+        fromLevel: "A1",
+        targetLevel: "A2",
+        createdAt: START + i * 5 * DAY,
+        passed: i === 2,
       })),
     };
   }

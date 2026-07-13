@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type ReactNode } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import { cn } from "@/lib/cn";
 import { springSoft, tweenSmooth } from "@/lib/motion";
 
@@ -47,7 +47,7 @@ export function Modal({
   return (
     <AnimatePresence>
       {open && (
-        <motion.div
+        <m.div
           className="fixed inset-0 z-[100] grid place-items-center bg-black/45 p-4 backdrop-blur-xs"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -57,7 +57,7 @@ export function Modal({
             if (closeOnBackdrop && event.target === event.currentTarget) onClose?.();
           }}
         >
-          <motion.div
+          <m.div
             ref={panelRef}
             role="dialog"
             aria-modal="true"
@@ -74,8 +74,8 @@ export function Modal({
             )}
           >
             {children}
-          </motion.div>
-        </motion.div>
+          </m.div>
+        </m.div>
       )}
     </AnimatePresence>
   );

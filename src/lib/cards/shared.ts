@@ -628,7 +628,7 @@ export function isMonolingualLevel(level?: string): boolean {
  * same simple register, so B1 ends up sounding like A1-A2. These spell out the gap:
  * sentence length, tense range, clause complexity, and vocabulary reach for each band.
  */
-const CEFR_LANGUAGE_PROFILE: Record<string, string> = {
+export const CEFR_LANGUAGE_PROFILE: Record<string, string> = {
   A1: `CEFR A1 (beginner): very short, simple sentences. Present simple, basic "can"/"want to". High-frequency everyday words only. One idea per sentence; no subordinate clauses.`,
   A2: `CEFR A2 (elementary): short, clear sentences. Present and past simple, "going to" future, basic connectors (and, but, because). Common everyday vocabulary; avoid idioms and abstract words.`,
   B1: `CEFR B1 (intermediate): noticeably richer than A2 — vary sentence length and use subordinate clauses (when, if, although, that). Mix present, past, present perfect, future, and conditionals. Express opinions, give reasons, and use common phrasal verbs and everyday collocations. Do NOT keep it to short beginner sentences.`,

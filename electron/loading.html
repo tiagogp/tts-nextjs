@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="pt-BR">
   <head>
     <meta charset="utf-8" />
     <title>PhraseLoop</title>
@@ -66,23 +66,23 @@
   <body>
     <div class="wrap">
       <div class="title">PhraseLoop</div>
-      <div class="status" id="status">Opening…</div>
+      <div class="status" id="status">Abrindo…</div>
       <div class="spinner"></div>
     </div>
     <script>
       const statusEl = document.getElementById("status");
       const statusSets = {
         preparing: [
-          "Preparing PhraseLoop…",
-          "Warming up voices…",
-          "Loading your workspace…",
-          "Almost ready…",
+          "Preparando o PhraseLoop…",
+          "Aquecendo as vozes…",
+          "Carregando seu espaço…",
+          "Quase pronto…",
         ],
         opening: [
-          "Opening PhraseLoop…",
-          "Bringing the app forward…",
-          "Polishing the last bits…",
-          "Almost there…",
+          "Abrindo o PhraseLoop…",
+          "Trazendo o app para frente…",
+          "Ajustando os últimos detalhes…",
+          "Quase lá…",
         ],
       };
       let currentSet = statusSets.opening;
@@ -95,16 +95,16 @@
         currentIndex += 1;
       }
 
-      window.setStatus = function (text) {
-        if (/couldn't|failed/i.test(text)) {
+      // `kind` comes from main.js's setStatus: "error" locks the message on
+      // screen; "opening" / "preparing" pick the matching rotation.
+      window.setStatus = function (text, kind) {
+        if (kind === "error") {
           locked = true;
           statusEl.textContent = text;
           return;
         }
 
-        currentSet = /opening/i.test(text)
-          ? statusSets.opening
-          : statusSets.preparing;
+        currentSet = kind === "opening" ? statusSets.opening : statusSets.preparing;
         currentIndex = 0;
         renderNextStatus();
       };

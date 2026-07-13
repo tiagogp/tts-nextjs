@@ -11,7 +11,7 @@ const fontVariables = {
 
 export const metadata: Metadata = {
   title: "PhraseLoop",
-  description: "Convert text into natural English speech and download the audio file.",
+  description: "Aprenda inglês com frases reais: salve, revise e transforme seus erros em prática.",
 };
 
 export default function RootLayout({
@@ -20,8 +20,10 @@ export default function RootLayout({
   children: ReactNode;
 }>) {
   return (
+    // Static default matches the default learner profile (pt native, A1);
+    // I18nProvider re-stamps `lang` at runtime when the profile resolves to English UI.
     <html
-      lang="en"
+      lang="pt-BR"
       className="h-full antialiased"
       style={fontVariables}
       suppressHydrationWarning

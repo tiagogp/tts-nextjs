@@ -1,7 +1,7 @@
 "use client";
 
 import { forwardRef } from "react";
-import { motion, type HTMLMotionProps } from "motion/react";
+import { m, type HTMLMotionProps } from "motion/react";
 import { cn } from "@/lib/cn";
 import { springSnappy, tapPress } from "@/lib/motion";
 
@@ -12,7 +12,7 @@ export interface ChipProps extends Omit<HTMLMotionProps<"button">, "ref"> {
 
 export const Chip = forwardRef<HTMLButtonElement, ChipProps>(
   ({ className, active, tone = "default", type = "button", ...props }, ref) => (
-    <motion.button
+    <m.button
       ref={ref}
       type={type}
       data-active={active}

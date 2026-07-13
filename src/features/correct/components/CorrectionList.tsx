@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { cn } from "@/lib/cn";
 import { BLUR, springSoft, tweenSmooth } from "@/lib/motion";
+import { useT } from "@/i18n/I18nProvider";
+import { errorTypeLabel } from "@/lib/cards/errorTypeLabels";
 import KokoroModelNotice from "@/features/speech/components/KokoroModelNotice";
 import type { useKokoroModel } from "@/features/speech/hooks/useKokoroModel";
 import type { ErrorEvent } from "@/lib/cards/schema";
@@ -39,15 +41,17 @@ export function CorrectionList({
   onRemove,
   onOpenSettings,
 }: CorrectionListProps) {
-  const showSettingsLink = Boolean(genError?.toLowerCase().includes("faster ai") && onOpenSettings);
+  const { t } = useT();
+  const timeoutMessage = t("Taking longer than expected. Try fewer corrections or a faster AI.");
+  const showSettingsLink = Boolean(genError === timeoutMessage && onOpenSettings);
 
   return (
     <Card className="overflow-hidden">
       <div className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3 border-b border-line bg-card px-5 py-3">
         <div className="min-w-0">
-          <p className="truncate text-sm font-medium text-ink">Corrections to drill</p>
+          <p className="truncate text-sm font-medium text-ink">{t("Corrections to drill")}</p>
           <p className="text-xs text-ink-muted">
-            {events.length} correction{events.length === 1 ? "" : "s"} ready
+            {events.length === 1 ? t("1 correction ready") : t("{count} corrections ready", { count: events.length })}
           </p>
         </div>
         <Button
@@ -60,10 +64,10 @@ export function CorrectionList({
           {generating ? (
             <>
               <span aria-hidden="true">×</span>
-              Cancel
+              {t("Cancel")}
             </>
           ) : (
-            "Save to study →"
+            t("Save to study →")
           )}
         </Button>
       </div>
@@ -86,7 +90,7 @@ export function CorrectionList({
             <span className="generation-bar" />
           </div>
           <p className="mt-1.5 text-[11px] text-ink-muted">
-            Larger study lists can take a little longer while audio is created. You can cancel safely.
+            {t("Larger study lists can take a little longer while audio is created. You can cancel safely.")}
           </p>
         </motion.div>
       )}
@@ -98,7 +102,7 @@ export function CorrectionList({
             <>
               {" "}
               <button type="button" onClick={onOpenSettings} className="font-medium underline hover:no-underline">
-                Open Settings →
+                {t("Open Settings →")}
               </button>
             </>
           )}
@@ -128,7 +132,7 @@ export function CorrectionList({
                 <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
                   {event.errorTypes.map((type) => (
                     <span key={type} className="rounded border border-line px-1.5 py-0.5 text-xs text-ink-muted">
-                      {type}
+                      {t(errorTypeLabel(type))}
                     </span>
                   ))}
                   {event.rationale && <span className="text-xs text-ink-muted">{event.rationale}</span>}
@@ -137,10 +141,10 @@ export function CorrectionList({
               <Chip
                 className="mt-0.5 shrink-0"
                 disabled={generating}
-                aria-label="Remove correction"
+                aria-label={t("Remove correction")}
                 onClick={() => onRemove(event.id)}
               >
-                Remove
+                {t("Remove")}
               </Chip>
             </motion.li>
           ))}

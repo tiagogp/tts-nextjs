@@ -618,7 +618,7 @@ export default function DiscoverTab({
 
       {deckPreview && (
         <DeckPreview
-          title="Prévia dos cards de prática"
+          title={t("Practice phrase preview")}
           data={deckPreview.data}
           defaultFilename={`${result?.title || "study-list"}.apkg`}
           persist={async (cards) => {

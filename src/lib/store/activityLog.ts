@@ -13,7 +13,8 @@ export type ActivityEventType =
   | "own_source_started"
   | "own_source_completed"
   | "progress_checkin"
-  | "c1_diagnosis_completed";
+  | "c1_diagnosis_completed"
+  | "level_test_completed";
 
 export interface FirstRunStartedPayload {
   source: FirstRunActivationSource;
@@ -78,6 +79,14 @@ export interface C1DiagnosisCompletedPayload {
   dimensionsFlagged: number;
 }
 
+/** A level-up test finished — passed or not. On a pass the profile level was advanced. */
+export interface LevelTestCompletedPayload {
+  attemptId: string;
+  fromLevel: string;
+  targetLevel: string;
+  passed: boolean;
+  score: number;
+}
 type PayloadMap = {
   first_run_started: FirstRunStartedPayload;
   cards_reviewed: CardsReviewedPayload;
@@ -90,6 +99,7 @@ type PayloadMap = {
   own_source_completed: OwnSourceCompletedPayload;
   progress_checkin: ProgressCheckinPayload;
   c1_diagnosis_completed: C1DiagnosisCompletedPayload;
+  level_test_completed: LevelTestCompletedPayload;
 };
 
 export interface ActivityEvent<T extends ActivityEventType = ActivityEventType> {

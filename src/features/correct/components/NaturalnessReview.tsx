@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/i18n/I18nProvider";
 import type { AdvancedReviewSummary, RefinementEvent } from "@/lib/cards/schema";
 
 interface NaturalnessReviewProps {
@@ -8,14 +9,15 @@ interface NaturalnessReviewProps {
 }
 
 export function NaturalnessReview({ refinements, overall }: NaturalnessReviewProps) {
+  const { t } = useT();
   if (refinements.length === 0 && !overall) return null;
 
   return (
     <section className="space-y-3 rounded-lg border border-line bg-surface px-4 py-3">
       <div>
-        <p className="text-sm font-medium text-ink">Naturalness upgrades</p>
+        <p className="text-sm font-medium text-ink">{t("Naturalness upgrades")}</p>
         <p className="text-xs text-ink-muted">
-          Correct, but stronger options a native speaker would likely reach for.
+          {t("Correct, but stronger options a native speaker would likely reach for.")}
         </p>
       </div>
 
@@ -23,13 +25,13 @@ export function NaturalnessReview({ refinements, overall }: NaturalnessReviewPro
         <div className="space-y-1.5 text-xs text-ink-soft">
           {overall.strengths.length > 0 && (
             <p>
-              <span className="font-medium text-ink-muted">Strengths:</span>{" "}
+              <span className="font-medium text-ink-muted">{t("Strengths:")}</span>{" "}
               {overall.strengths.join("; ")}
             </p>
           )}
           {overall.nextFocus && (
             <p>
-              <span className="font-medium text-ink-muted">Next focus:</span> {overall.nextFocus}
+              <span className="font-medium text-ink-muted">{t("Next focus:")}</span> {overall.nextFocus}
             </p>
           )}
         </div>

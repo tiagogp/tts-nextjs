@@ -10,6 +10,7 @@ import ProviderBadge from "@/components/ui/ProviderBadge";
 import Disclosure from "@/components/ui/Disclosure";
 import { cn } from "@/lib/cn";
 import { fadeRise } from "@/lib/motion";
+import { useT } from "@/i18n/I18nProvider";
 import { saveCorrectionDeck } from "@/lib/store/repository";
 import { emitActivity } from "@/lib/store/activityLog";
 import type { AdvancedReview, ErrorEvent, ErrorType } from "@/lib/cards/schema";
@@ -50,6 +51,7 @@ export default function CorrectTab({
   onOpenSettings?: () => void;
   onStudyNow?: () => void;
 }) {
+  const { t } = useT();
   // The deck export synthesizes audio locally, so it needs the Kokoro model on
   // disk. Surface its download state here too — not just in the Anki Export tab.
   const kokoro = useKokoroModel();
@@ -88,14 +90,13 @@ export default function CorrectTab({
 
   const generation = useDeckGeneration({
     timeoutMs: DECK_GENERATION_TIMEOUT_MS,
-    timeoutMessage:
-      "Está demorando mais do que o esperado. Tente menos correções ou uma IA mais rápida.",
-    cancelMessage: "Geração cancelada. Suas correções continuam aqui.",
+    timeoutMessage: t("Taking longer than expected. Try fewer corrections or a faster AI."),
+    cancelMessage: t("Generation canceled. Your corrections are still here."),
     stages: [
-      { untilSeconds: 10, label: "Criando frases focadas para praticar…" },
-      { untilSeconds: 40, label: "Revisando a qualidade das frases…" },
-      { untilSeconds: 90, label: "Preparando áudio e export para Anki…" },
-      { untilSeconds: Infinity, label: "Ainda trabalhando — modelos locais demoram com várias correções…" },
+      { untilSeconds: 10, label: t("Creating focused phrases to practice…") },
+      { untilSeconds: 40, label: t("Reviewing phrase quality…") },
+      { untilSeconds: 90, label: t("Preparing audio and Anki export…") },
+      { untilSeconds: Infinity, label: t("Still working — local models take longer with several corrections…") },
     ],
     // The voice model wasn't ready: the server just kicked off the download, so start
     // tracking progress (the notice below shows the live bar).
@@ -153,7 +154,7 @@ export default function CorrectTab({
     try {
       const parsed = parseErrorsJson(json);
       if (parsed.length === 0) {
-        setImportNote("No usable corrections found (need `original` + `corrected`).");
+        setImportNote(t("No usable corrections found (need `original` + `corrected`)."));
         return;
       }
       // The session context fills in for any imported event that didn't carry its own.
@@ -168,7 +169,7 @@ export default function CorrectTab({
       setGenDone(null);
       setDeckPreview(null);
     } catch {
-      setImportNote("Couldn't parse that — expected JSON (an object or an array of them).");
+      setImportNote(t("Couldn't parse that — expected JSON (an object or an array of them)."));
     }
   };
 
@@ -185,9 +186,11 @@ export default function CorrectTab({
       const data = await generateCorrectionDeck({ provider, selectedModel, events: sourceEvents, signal });
       setDeckPreview({ data, events: sourceEvents });
       const count = data.count ?? data.cards?.length ?? 0;
-      return `${count} practice phrase${count === 1 ? "" : "s"} ready to save.`;
+      return count === 1
+        ? t("1 practice phrase ready to save.")
+        : t("{count} practice phrases ready to save.", { count });
     });
-  }, [events, provider, providerReady, selectedModel, run]);
+  }, [events, provider, providerReady, selectedModel, run, t]);
 
   // E2 — hand the text to the LLM and append the mistakes it finds.
   const evaluate = useCallback(async () => {
@@ -201,7 +204,7 @@ export default function CorrectTab({
       const review = await reviewAdvancedText({ provider, selectedModel, text, context });
       setAdvancedReview(review);
       if (review.errors.length === 0 && review.refinements.length === 0) {
-        setAiNote("No mistakes found — that already sounds natural. 🎉");
+        setAiNote(t("No mistakes found — that already sounds natural. 🎉"));
         return;
       }
       if (review.errors.length > 0) {
@@ -209,18 +212,20 @@ export default function CorrectTab({
         setAiText("");
       }
       if (review.errors.length === 0 && review.refinements.length > 0) {
-        setAiNote("No errors found — see the naturalness upgrades below.");
+        setAiNote(t("No errors found — see the naturalness upgrades below."));
       }
       setDeckPreview(null);
     } catch (err: unknown) {
-      setAiNote(err instanceof Error ? err.message : "Couldn't evaluate the text.");
+      setAiNote(err instanceof Error ? err.message : t("Couldn't evaluate the text."));
     } finally {
       setEvaluating(false);
     }
-  }, [aiText, context, evaluating, hasEvaluator, provider, selectedModel, setGenDone]);
+  }, [aiText, context, evaluating, hasEvaluator, provider, selectedModel, setGenDone, t]);
 
   const evaluatorHint = !hasEvaluator
-    ? `${activeProvider?.label ?? "IA"} is unavailable. Open Settings with the gear button to connect one.`
+    ? t("{provider} is unavailable. Open Settings with the gear button to connect one.", {
+        provider: activeProvider?.label ?? t("AI"),
+      })
     : null;
   const ollamaOffline = provider === "ollama" && ollamaModels.length === 0;
 
@@ -236,32 +241,32 @@ export default function CorrectTab({
       <Card className="space-y-4 p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-sm font-semibold tracking-[-0.01em] text-ink">Turn mistakes into review</p>
+            <p className="text-sm font-semibold tracking-[-0.01em] text-ink">{t("Turn mistakes into review")}</p>
             <p className="mt-0.5 text-xs text-ink-muted">
-              Paste, speak, or enter what you produced. Save only the corrections worth reviewing.
+              {t("Paste, speak, or enter what you produced. Save only the corrections worth reviewing.")}
             </p>
           </div>
           <Segmented<CorrectionInputMode>
-            label="Correction input mode"
+            label={t("Correction input mode")}
             value={mode}
             onChange={switchMode}
-            options={CORRECTION_INPUT_OPTIONS}
+            options={CORRECTION_INPUT_OPTIONS.map((option) => ({ ...option, label: t(option.label) }))}
           />
         </div>
 
         <Field
           label={
             <>
-              Situation <span className="font-normal lowercase opacity-70">— optional</span>
+              {t("Situation")} <span className="font-normal lowercase opacity-70">— {t("optional")}</span>
             </>
           }
-          hint="Tags every mistake below, so your weak spots group by situation — not just grammar."
+          hint={t("Tags every mistake below, so your weak spots group by situation — not just grammar.")}
         >
           <Input
             type="text"
             value={context}
             onChange={(event) => setContext(event.target.value)}
-            placeholder="work, travel, ordering at a restaurant…"
+            placeholder={t("work, travel, ordering at a restaurant…")}
           />
         </Field>
 
@@ -305,8 +310,8 @@ export default function CorrectTab({
         </div>
 
         <Disclosure
-          title="Advanced options"
-          description="Import correction JSON or temporarily change the IA."
+          title={t("Advanced options")}
+          description={t("Import correction JSON or temporarily change the AI.")}
           badge={activeProvider ? <ProviderBadge isLocal={activeProvider.isLocal} available={activeProvider.available} /> : undefined}
           nested
         >
@@ -316,7 +321,7 @@ export default function CorrectTab({
               className={cn(mode === "json" && "border-accent text-accent")}
               onClick={() => switchMode("json")}
             >
-              {mode === "json" ? "JSON import selected" : "Paste correction JSON"}
+              {mode === "json" ? t("JSON import selected") : t("Paste correction JSON")}
             </Button>
             <ProviderPicker selection={selection} disabled={evaluating || generating} />
           </div>
@@ -349,7 +354,7 @@ export default function CorrectTab({
 
       {deckPreview && (
         <DeckPreview
-          title="Correction study list preview"
+          title={t("Correction study list preview")}
           data={deckPreview.data}
           defaultFilename="English - Corrections.apkg"
           persist={async (cards) => {

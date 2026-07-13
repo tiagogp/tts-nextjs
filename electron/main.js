@@ -234,7 +234,7 @@ function spawnService(name, command, args, cwd, baseEnv, options = {}) {
       console.error(`${tag} exited with code ${code}`);
       if (name === "frontend" && mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.loadFile(path.join(__dirname, "loading.html")).then(() => {
-          setStatus("PhraseLoop stopped unexpectedly. Restart the app.");
+          setStatus("O PhraseLoop parou de forma inesperada. Feche e abra o app de novo.", "error");
         }).catch(() => {});
       }
     }
@@ -483,10 +483,14 @@ ipcMain.handle("phrase-loop:reveal-apkg-debug-log", async (event) => {
   }
 });
 
-function setStatus(text) {
+// `kind` mirrors loading.html's protocol: "error" locks the message,
+// "opening"/"preparing" pick the status rotation.
+function setStatus(text, kind = "preparing") {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents
-      .executeJavaScript(`window.setStatus && window.setStatus(${JSON.stringify(text)})`)
+      .executeJavaScript(
+        `window.setStatus && window.setStatus(${JSON.stringify(text)}, ${JSON.stringify(kind)})`,
+      )
       .catch(() => {});
   }
 }
@@ -542,7 +546,7 @@ async function boot() {
 
   if (!fs.existsSync(NEXT_ROOT)) {
     console.error(`Next app not found at ${NEXT_ROOT}. Rebuild the app.`);
-    setStatus("PhraseLoop couldn't open. Check the app logs for details.");
+    setStatus("O PhraseLoop não conseguiu abrir. Verifique os logs do app para detalhes.", "error");
     return;
   }
   const standaloneServer = path.join(NEXT_ROOT, "server.js");
@@ -564,7 +568,7 @@ async function boot() {
 
   // Frontend and all local ML services live in the standalone Node server.
   // Native addons execute expensive work asynchronously; models download on demand.
-  setStatus("Opening PhraseLoop…");
+  setStatus("Abrindo o PhraseLoop…", "opening");
   if (app.isPackaged || fs.existsSync(standaloneServer)) {
     forkBackend(standaloneServer, NEXT_ROOT, {
       ...serviceEnv,
@@ -597,7 +601,7 @@ app.whenReady().then(() => {
   createWindow();
   boot().catch((err) => {
     console.error("Boot failed:", err);
-    setStatus("PhraseLoop couldn't open. Check the app logs for details.");
+    setStatus("O PhraseLoop não conseguiu abrir. Verifique os logs do app para detalhes.", "error");
   });
 
   app.on("activate", () => {

@@ -1,7 +1,7 @@
 "use client";
 
 import { forwardRef } from "react";
-import { motion, type HTMLMotionProps } from "motion/react";
+import { m, type HTMLMotionProps } from "motion/react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/cn";
 import { hoverLift, springSnappy, tapPress } from "@/lib/motion";
@@ -34,7 +34,7 @@ export interface ButtonProps
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, type = "button", ...props }, ref) => (
-    <motion.button
+    <m.button
       ref={ref}
       type={type}
       whileHover={hoverLift}

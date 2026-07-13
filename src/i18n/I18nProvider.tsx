@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, type ReactNode } from "react";
 import { useSyncExternalStore } from "react";
 import { getLearningProfile } from "@/features/settings/learningProfile";
 import { DEFAULT_UI_LANG, resolveInterfaceLang, type UiLang } from "./config";
@@ -43,6 +43,12 @@ export function I18nProvider({
 }) {
   const profileLang = useInterfaceLang();
   const lang = forcedLang ?? profileLang;
+
+  // Keep <html lang> in sync with the resolved UI language (screen readers,
+  // browser translation, hyphenation). The static default in layout.tsx is pt-BR.
+  useEffect(() => {
+    document.documentElement.lang = lang === "pt" ? "pt-BR" : "en";
+  }, [lang]);
 
   const t = useCallback(
     (en: string, vars?: TranslateVars): string => translate(lang, en, vars),
