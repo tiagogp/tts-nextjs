@@ -7,6 +7,7 @@ import { cn } from "@/lib/cn";
 import { assessPronunciation } from "@/features/pronunciation/api";
 import { synthesizeSpeech } from "@/features/converse/api";
 import { savePronunciationAttempt } from "@/lib/store/repository";
+import { emitActivity } from "@/lib/store/activityLog";
 import { useT } from "@/i18n/I18nProvider";
 import type {
   PronunciationAssessment,
@@ -126,6 +127,13 @@ export function PronunciationCoach({
           source,
         };
         void savePronunciationAttempt(attempt).catch(() => {});
+        void emitActivity("method_stage", {
+          stage: "repeat",
+          area: "speaking",
+          source: "pronunciation",
+          minutes: 3,
+          subjectId: cardId ?? lessonId,
+        }).catch(() => {});
       } catch (err: unknown) {
         setNote(err instanceof Error ? err.message : t("Pronunciation assessment failed."));
       } finally {

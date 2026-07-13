@@ -72,6 +72,7 @@ function TabContent({
     return (
       <HojeHome
         onStudy={onOpenPractice}
+        onDiscover={onOpenDiscover}
         onCorrect={onOpenCorrect}
         onFirstLesson={onFirstLesson}
         onLesson={onOpenLesson}
@@ -84,6 +85,7 @@ function TabContent({
         key={discoverPrefill?.nonce ?? "discover"}
         onOpenSettings={onOpenSettings}
         onStudyNow={onOpenPractice}
+        onCorrect={onOpenCorrect}
         prefill={discoverPrefill}
       />
     );
@@ -106,7 +108,7 @@ function HomeContent() {
   // the AI section, even before the tier unlock reveals it by default.
   const [settingsAiIntent, setSettingsAiIntent] = useState(false);
   const [lessonId, setLessonId] = useState<string | null>(null);
-  const [discoverPrefill, setDiscoverPrefill] = useState<{ url: string; nonce: number } | null>(null);
+  const [discoverPrefill] = useState<{ url: string; nonce: number } | null>(null);
   const lessonRequestRef = useRef(0);
   const { tabs, tier, announcement, clearAnnouncement } = useUnlockedTabs();
   const activeTab = tabs.some((item) => item.id === tab) ? tab : "hoje";
@@ -123,13 +125,6 @@ function HomeContent() {
     setTab(tabs.some((item) => item.id === next) ? next : "hoje");
     setOverlay(null);
     setLessonId(null);
-  };
-
-  const openDiscoverWithSource = (url: string) => {
-    setLessonId(null);
-    setOverlay(null);
-    setDiscoverPrefill({ url, nonce: Date.now() });
-    setTab(tabs.some((item) => item.id === "discover") ? "discover" : "hoje");
   };
 
   // "Hoje" -> Start: open the learner's recommended bundled lesson through the
@@ -187,7 +182,6 @@ function HomeContent() {
                     lessonId={lessonId}
                     onBack={() => setLessonId(null)}
                     onStudyNow={() => changeTab("study")}
-                    onTryOwnSource={openDiscoverWithSource}
                   />
                 </m.div>
               </section>

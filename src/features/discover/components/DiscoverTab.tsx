@@ -65,10 +65,12 @@ function waitForAudioEvent(
 export default function DiscoverTab({
   onOpenSettings,
   onStudyNow,
+  onCorrect,
   prefill,
 }: {
   onOpenSettings?: () => void;
   onStudyNow?: () => void;
+  onCorrect?: () => void;
   prefill?: { url: string; nonce: number } | null;
 }) {
   const { t } = useT();
@@ -92,6 +94,7 @@ export default function DiscoverTab({
     data: DeckPayload;
     candidates: PhraseCandidate[];
   } | null>(null);
+  const [productionPrompt, setProductionPrompt] = useState<string | null>(null);
   const [kept, setKept] = useState<Set<number>>(new Set());
   const [playing, setPlaying] = useState<number | null>(null);
   const selection = useProviderSelection();
@@ -126,6 +129,7 @@ export default function DiscoverTab({
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const playRequestRef = useRef(0);
   const sourceInputRef = useRef<HTMLInputElement | null>(null);
+  const resultSourceId = result?.sourceId;
 
   useEffect(() => {
     if (!prefill) return;
@@ -203,7 +207,16 @@ export default function DiscoverTab({
         audio.currentTime = 0;
         try {
           await audio.play();
-          if (playRequestRef.current === requestId) setPlaying(index);
+          if (playRequestRef.current === requestId) {
+            setPlaying(index);
+            void emitActivity("method_stage", {
+              stage: "listen",
+              area: "listening",
+              source: "discover",
+              minutes: 1,
+              subjectId: resultSourceId,
+            });
+          }
         } catch {
           if (playRequestRef.current === requestId) setPlaying(null);
         }
@@ -232,7 +245,16 @@ export default function DiscoverTab({
       stopAtRef.current = end;
       try {
         await audio.play();
-        if (playRequestRef.current === requestId) setPlaying(index);
+        if (playRequestRef.current === requestId) {
+          setPlaying(index);
+          void emitActivity("method_stage", {
+            stage: "listen",
+            area: "listening",
+            source: "discover",
+            minutes: 1,
+            subjectId: resultSourceId,
+          });
+        }
       } catch {
         if (playRequestRef.current === requestId) {
           stopAtRef.current = null;
@@ -240,7 +262,7 @@ export default function DiscoverTab({
         }
       }
     },
-    [playing],
+    [playing, resultSourceId],
   );
 
   const hasSource = sourceKind === "pdf" ? file !== null : url.trim().length > 0;
@@ -259,6 +281,7 @@ export default function DiscoverTab({
     setGenError(null);
     setGenDone(null);
     setDeckPreview(null);
+    setProductionPrompt(null);
     setTranscribeProgress(null);
 
     try {
@@ -365,6 +388,7 @@ export default function DiscoverTab({
     });
     setGenDone(null);
     setDeckPreview(null);
+    setProductionPrompt(null);
   };
 
   const buildCandidates = useCallback((): PhraseCandidate[] => {
@@ -411,6 +435,14 @@ export default function DiscoverTab({
       const activation = markFirstRunPhrasesSaved({ sourceId: result.sourceId });
       void emitActivity("cards_created", { count: cards.length, source: "discover", activation });
       void emitActivity("own_source_completed", { cardsCreated: cards.length });
+      void emitActivity("method_stage", {
+        stage: "notice",
+        area: "structured",
+        source: "discover",
+        minutes: 3,
+        subjectId: result.sourceId,
+      });
+      setProductionPrompt(candidates[0]?.text ?? null);
       setGenDone(
         saved.added === 1
           ? t("1 phrase saved for review. Find it in Study.")
@@ -626,10 +658,43 @@ export default function DiscoverTab({
             const activation = markFirstRunPhrasesSaved({ sourceId: result?.sourceId });
             void emitActivity("cards_created", { count: cards.length, source: "discover", activation });
             void emitActivity("own_source_completed", { cardsCreated: cards.length });
+            void emitActivity("method_stage", {
+              stage: "notice",
+              area: "structured",
+              source: "discover",
+              minutes: 3,
+              subjectId: result?.sourceId,
+            });
+            setProductionPrompt(deckPreview.candidates[0]?.text ?? null);
           }}
           onStudyNow={onStudyNow}
           onDismiss={() => setDeckPreview(null)}
         />
+      )}
+
+      {productionPrompt && (
+        <Card className="space-y-3 p-5">
+          <div>
+            <p className="text-sm font-semibold tracking-[-0.01em] text-ink">{t("Use one phrase now")}</p>
+            <p className="mt-1 text-xs text-ink-muted">
+              {t('Say or write one short answer with "{phrase}", then get focused feedback.', {
+                phrase: productionPrompt,
+              })}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {onCorrect && (
+              <Button variant="primary" size="sm" onClick={onCorrect}>
+                {t("Open Mistakes")}
+              </Button>
+            )}
+            {onStudyNow && (
+              <Button variant="secondary" size="sm" onClick={onStudyNow}>
+                {t("Review saved phrases")}
+              </Button>
+            )}
+          </div>
+        </Card>
       )}
     </div>
   );

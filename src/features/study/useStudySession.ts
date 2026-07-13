@@ -20,6 +20,7 @@ import {
   type Conversation,
   type ReviewRecord,
 } from "@/lib/store/repository";
+import type { ActivityEvent } from "@/lib/store/activityLog";
 import type { Card, ErrorEvent } from "@/lib/cards/schema";
 import type { Grade, SrsRecord } from "@/lib/srs/fsrs";
 import type { PronunciationAttempt } from "@/lib/pronunciation/types";
@@ -36,6 +37,8 @@ import { useAiSettings } from "@/features/settings/context/AiSettingsContext";
 import { markFirstRunReviewCompleted } from "@/features/activation/firstRun";
 import { emitActivity } from "@/lib/store/activityLog";
 import { useT } from "@/i18n/I18nProvider";
+import { getLearningProfile } from "@/features/settings/learningProfile";
+import { deriveMethodPlan } from "@/features/method/learningLoop";
 import type { DueCard, ScaffoldTelemetry } from "./components/StudyCard";
 import type { SessionResult } from "./components/SessionSummary";
 import {
@@ -67,6 +70,7 @@ export function useStudySession() {
   /** P2 #5 — current cards with SRS + speech logs, the inputs the cycle planner reads. */
   const [cardsWithSrs, setCardsWithSrs] = useState<{ card: Card; srs: SrsRecord }[]>([]);
   const [pronAttempts, setPronAttempts] = useState<PronunciationAttempt[]>([]);
+  const [activityEvents, setActivityEvents] = useState<ActivityEvent[]>([]);
   const [sessionResults, setSessionResults] = useState<SessionResult[]>([]);
   /** P1 #4 — "standard" due queue vs. a short "light" round of already-stable cards. */
   const [mode, setMode] = useState<SessionMode>("standard");
@@ -105,6 +109,7 @@ export function useStudySession() {
     setCards(snapshot.cards);
     setCardsWithSrs(snapshot.cardsWithSrs);
     setPronAttempts(snapshot.pronAttempts);
+    setActivityEvents(snapshot.activityEvents);
     setFlipped(false);
   }, []);
 
@@ -378,6 +383,22 @@ export function useStudySession() {
     () => deriveCyclePlan(skillStates, { due: counts.due, lightAvailable }),
     [skillStates, counts.due, lightAvailable],
   );
+  const methodPlan = useMemo(
+    () =>
+      deriveMethodPlan({
+        profile: getLearningProfile(),
+        activity: activityEvents,
+        snapshot: {
+          cards: counts.cards,
+          due: counts.due,
+          reviews,
+          errorEvents,
+          conversations,
+          pronunciationAttempts: pronAttempts,
+        },
+      }),
+    [activityEvents, counts.cards, counts.due, reviews, errorEvents, conversations, pronAttempts],
+  );
 
   return {
     available,
@@ -405,6 +426,7 @@ export function useStudySession() {
     weeklyGoal,
     showAdaptiveDepth,
     cyclePlan,
+    methodPlan,
     flip,
     grade,
     startReinforcement,

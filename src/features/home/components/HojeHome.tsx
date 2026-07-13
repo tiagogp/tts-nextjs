@@ -7,21 +7,25 @@ import { Spinner } from "@/components/ui/Spinner";
 import { isStoreAvailable } from "@/lib/store/db";
 import {
   getCards,
+  getConversations,
   getCounts,
   getDueCards,
   getErrorEvents,
+  getPronunciationAttempts,
   getReviews,
   type ReviewRecord,
 } from "@/lib/store/repository";
 import { getActivityLog } from "@/lib/store/activityLog";
 import { returnMomentFor, type ReturnMoment } from "@/features/home/returnMoment";
 import { computePerformance } from "@/lib/srs/analytics";
+import { deriveMethodPlan, type MethodPlan, type MethodRoute } from "@/features/method/learningLoop";
 import { useT } from "@/i18n/I18nProvider";
 import { completedLessonIdsFromCardIds, firstLesson, nextLessonFor, type Lesson } from "@/features/learn/lessonDeck";
 import { getLearningProfile } from "@/features/settings/learningProfile";
 
 interface HojeHomeProps {
   onStudy: () => void;
+  onDiscover: () => void;
   onCorrect: () => void;
   onFirstLesson: () => void;
   onLesson: (lessonId?: string) => void;
@@ -41,31 +45,48 @@ interface NextAction {
  * due phrases → Study, mistakes → Correct, practice → next phrase, or a
  * brand-new user with no saved phrases → bundled first lesson. One CTA, never a dashboard.
  */
-export function HojeHome({ onStudy, onCorrect, onFirstLesson, onLesson }: HojeHomeProps) {
+export function HojeHome({ onStudy, onDiscover, onCorrect, onFirstLesson, onLesson }: HojeHomeProps) {
   const { t } = useT();
   const [counts, setCounts] = useState({ cards: 0, reviews: 0, due: 0, errors: 0 });
   const [streakDays, setStreakDays] = useState(0);
   const [nextLesson, setNextLesson] = useState<Lesson>(() => nextLessonFor(getLearningProfile(), []) ?? firstLesson());
   const [returnMoment, setReturnMoment] = useState<ReturnMoment | null>(null);
+  const [methodPlan, setMethodPlan] = useState<MethodPlan | null>(null);
   const [countsLoaded, setCountsLoaded] = useState(() => !isStoreAvailable());
 
   useEffect(() => {
     if (!isStoreAvailable()) return;
     let cancelled = false;
     const load = async () => {
-      const [nextCounts, reviews, cards, errors, activity, dueCards] = await Promise.all([
+      const [nextCounts, reviews, cards, errors, activity, dueCards, conversations, pronunciationAttempts] = await Promise.all([
         getCounts(),
         getReviews(),
         getCards(),
         getErrorEvents(),
         getActivityLog(),
         getDueCards(),
+        getConversations(),
+        getPronunciationAttempts(),
       ]);
       if (cancelled) return;
       setCounts({ ...nextCounts, errors: errors.length });
       setStreakDays(computePerformance(reviews as ReviewRecord[], Date.now()).streakDays);
       setReturnMoment(
         returnMomentFor({ dueCards: dueCards.map((item) => item.card), activity, errors }),
+      );
+      setMethodPlan(
+        deriveMethodPlan({
+          profile: getLearningProfile(),
+          activity,
+          snapshot: {
+            cards: nextCounts.cards,
+            due: nextCounts.due,
+            reviews,
+            errorEvents: errors,
+            conversations,
+            pronunciationAttempts,
+          },
+        }),
       );
       setNextLesson(
         nextLessonFor(
@@ -90,11 +111,13 @@ export function HojeHome({ onStudy, onCorrect, onFirstLesson, onLesson }: HojeHo
     t,
     counts,
     onStudy,
+    onDiscover,
     onFirstLesson,
     onCorrect,
     onLesson,
     nextLesson,
     returnMoment,
+    methodPlan,
   });
 
   return (
@@ -136,20 +159,24 @@ function resolveNextAction({
   t,
   counts,
   onStudy,
+  onDiscover,
   onFirstLesson,
   onCorrect,
   onLesson,
   nextLesson,
   returnMoment,
+  methodPlan,
 }: {
   t: (en: string, vars?: Record<string, string | number>) => string;
   counts: { cards: number; reviews: number; due: number; errors: number };
   onStudy: () => void;
+  onDiscover: () => void;
   onFirstLesson: () => void;
   onCorrect: () => void;
   onLesson: (lessonId?: string) => void;
   nextLesson: Lesson;
   returnMoment: ReturnMoment | null;
+  methodPlan: MethodPlan | null;
 }): NextAction {
   // Return-day moment with a true mistake claim: every counted mistake is a due
   // card whose provenance points at a real error. Zero mistake cards falls through
@@ -177,6 +204,23 @@ function resolveNextAction({
         : t("Reviewing your own mistakes is what makes them stick."),
       cta: t("Start today's review"),
       onClick: onStudy,
+    };
+  }
+
+  if (methodPlan) {
+    return {
+      eyebrow: t("Today"),
+      title: t(methodPlan.action.title),
+      detail: t(methodPlan.action.detail),
+      cta: t(methodPlan.action.cta),
+      onClick: routeHandler(methodPlan.action.route, {
+        onStudy,
+        onDiscover,
+        onFirstLesson,
+        onCorrect,
+        onLesson,
+        nextLesson,
+      }),
     };
   }
 
@@ -221,6 +265,25 @@ function resolveNextAction({
     cta: t("Start first lesson"),
     onClick: onFirstLesson,
   };
+}
+
+function routeHandler(
+  route: MethodRoute,
+  handlers: {
+    onStudy: () => void;
+    onDiscover: () => void;
+    onFirstLesson: () => void;
+    onCorrect: () => void;
+    onLesson: (lessonId?: string) => void;
+    nextLesson: Lesson;
+  },
+): () => void {
+  if (route === "review") return handlers.onStudy;
+  if (route === "correct") return handlers.onCorrect;
+  if (route === "discover") return handlers.onDiscover;
+  if (route === "lesson") return handlers.onFirstLesson;
+  if (route === "conversation") return handlers.onCorrect;
+  return () => handlers.onLesson(handlers.nextLesson.id);
 }
 
 function Stat({ value, label }: { value: string; label: string }) {

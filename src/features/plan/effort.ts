@@ -7,6 +7,7 @@ import { dateString } from "./utils";
 /** Approximate cost in minutes for each activity event type. */
 const MINUTES_PER_EVENT: Record<ActivityEventType, (event: ActivityEvent) => number> = {
   first_run_started: () => 0,
+  method_stage: () => 0, // method balance reads these separately; don't change plan effort
   cards_reviewed: (e) => ((e.payload as CardsReviewedPayload).count ?? 1) * 1,
   video_processed: () => 20,
   conversation_turn: () => 1.5,

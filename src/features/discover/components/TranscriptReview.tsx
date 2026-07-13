@@ -30,6 +30,7 @@ interface TranscriptReviewProps {
   generationSeconds: number;
   generateLabel?: string;
   cancelLabel?: string;
+  renderAudio?: boolean;
   onGenerate: () => void;
   onCancel: () => void;
   onToggleKeep: (index: number) => void;
@@ -50,6 +51,7 @@ export function TranscriptReview({
   generationSeconds,
   generateLabel,
   cancelLabel,
+  renderAudio = true,
   onGenerate,
   onCancel,
   onToggleKeep,
@@ -62,7 +64,7 @@ export function TranscriptReview({
 
   return (
     <Card className="overflow-hidden">
-      {result.hasAudio && (
+      {result.hasAudio && renderAudio && (
         <audio
           key={result.sourceId}
           ref={audioRef}

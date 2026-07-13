@@ -16,6 +16,7 @@ import {
   type Conversation,
   type ReviewRecord,
 } from "@/lib/store/repository";
+import { getActivityLog, type ActivityEvent } from "@/lib/store/activityLog";
 import type { Card, ErrorEvent } from "@/lib/cards/schema";
 import type { SrsRecord } from "@/lib/srs/fsrs";
 import type { PronunciationAttempt } from "@/lib/pronunciation/types";
@@ -40,11 +41,22 @@ export interface StudySnapshot extends OrderedDueQueue {
   /** P2 #5 — current cards with SRS + speech logs, the inputs the cycle planner reads. */
   cardsWithSrs: { card: Card; srs: SrsRecord }[];
   pronAttempts: PronunciationAttempt[];
+  activityEvents: ActivityEvent[];
 }
 
 /** Everything the study tab reads, fetched in one parallel round trip. */
 export async function loadStudySnapshot(): Promise<StudySnapshot> {
-  const [due, reviews, errorEvents, conversations, counts, allCards, cardsWithSrs, pronAttempts] =
+  const [
+    due,
+    reviews,
+    errorEvents,
+    conversations,
+    counts,
+    allCards,
+    cardsWithSrs,
+    pronAttempts,
+    activityEvents,
+  ] =
     await Promise.all([
       getDueCards(),
       getReviews(),
@@ -54,6 +66,7 @@ export async function loadStudySnapshot(): Promise<StudySnapshot> {
       getCards(),
       getCardsWithSrs(),
       getPronunciationAttempts(),
+      getActivityLog(),
     ]);
   const { queue, gate } = orderDue(due, reviews, cardsWithSrs, pronAttempts, errorEvents);
   return {
@@ -66,6 +79,7 @@ export async function loadStudySnapshot(): Promise<StudySnapshot> {
     cards: allCards.sort((a, b) => b.createdAt - a.createdAt),
     cardsWithSrs,
     pronAttempts,
+    activityEvents,
   };
 }
 

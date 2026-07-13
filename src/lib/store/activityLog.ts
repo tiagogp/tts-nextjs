@@ -4,6 +4,7 @@ import { STORES, get, getAll, getAllFromIndex, put } from "./db";
 
 export type ActivityEventType =
   | "first_run_started"
+  | "method_stage"
   | "cards_reviewed"
   | "video_processed"
   | "conversation_turn"
@@ -19,6 +20,22 @@ export type ActivityEventType =
 export interface FirstRunStartedPayload {
   source: FirstRunActivationSource;
   sourceId?: string;
+}
+
+export interface MethodStagePayload {
+  stage:
+    | "learn"
+    | "listen"
+    | "notice"
+    | "repeat"
+    | "speak"
+    | "feedback"
+    | "retry"
+    | "review";
+  area: "structured" | "listening" | "speaking" | "readingWriting";
+  source: "home" | "lesson" | "discover" | "study" | "correct" | "pronunciation";
+  minutes?: number;
+  subjectId?: string;
 }
 
 export interface CardsReviewedPayload {
@@ -89,6 +106,7 @@ export interface LevelTestCompletedPayload {
 }
 type PayloadMap = {
   first_run_started: FirstRunStartedPayload;
+  method_stage: MethodStagePayload;
   cards_reviewed: CardsReviewedPayload;
   video_processed: VideoProcessedPayload;
   conversation_turn: ConversationTurnPayload;
