@@ -330,7 +330,7 @@ ou exigir conceitos antes da ativacao.
 | Reduzir calendario no inicio | Med | Done | Dashboard so aparece com progresso real. |
 | Linguagem de aprendiz | Med | Planned | Trocar jargoes por "frases para praticar", "salvar para estudar" etc. |
 | Study local > Anki | Med | Done | CTA principal salva e estuda; Anki fica avancado e escondido ate o loop ser entendido. |
-| PT-BR completo | Med | Partial | Infra existe; ainda ha hardcoded English. |
+| PT-BR completo | Med | Done | Auditoria da primeira sessao concluida (2026-07-13): Correct tab, previews, a11y, metadata e loading screen do Electron cobertos; detalhes em docs/w5/user-facing-language-audit.md. Ferramentas avancadas (tier 3, atras de Settings) ficam em ingles por decisao. |
 | Settings de IA guiado | Med | Partial | Provedores estao em Advanced AI; falta copy "Local no computador" vs "Nuvem mais facil". |
 | Coaching contextual | Low | Planned | Explicar o proximo passo no momento certo. |
 | Tools fora da nav primaria | Low | Done | Ferramentas em Settings/Advanced. |
@@ -339,8 +339,12 @@ ou exigir conceitos antes da ativacao.
 Checklist de launch antes de publico:
 
 1. Build assinado/notarizado sem workaround de Gatekeeper para participantes reais.
+   (Codigo pronto: electron/build-app.sh assina e notariza .app e .dmg quando
+   APPLE_DEVELOPER_ID + credenciais do notarytool estao no env. Falta apenas
+   inscricao no Apple Developer Program e exportar as credenciais.)
 2. Audio bundled real validado com usuarios; sem placeholder audivel.
-3. Auditoria PT-BR da primeira sessao e termos avancados fora do caminho principal.
+3. [x] Auditoria PT-BR da primeira sessao e termos avancados fora do caminho principal.
+   (2026-07-13 — ver "PT-BR Completeness" em docs/w5/user-facing-language-audit.md.)
 4. Restore validado em sessao real com dados de longo prazo.
 5. Taxonomia HTTP para falhas de provedor, timeout/abort e input invalido.
 6. Fallback claro para falha de YouTube/import sem bloquear licao bundled e Study.
