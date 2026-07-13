@@ -1,7 +1,7 @@
 # Graph Report - text-to-speech  (2026-07-13)
 
 ## Corpus Check
-- 367 files · ~681,518 words
+- 367 files · ~681,502 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -689,7 +689,7 @@ Cohesion: 0.50
 Nodes (4): Avancados, Critica De Produto, Iniciantes, Transversal
 
 ### Community 210 - "008 — Remove the redundant FLIP `layout` prop from CorrectionList's list items"
-Cohesion: 0.29
+Cohesion: 0.25
 Nodes (7): 008 — Remove the redundant FLIP `layout` prop from CorrectionList's list items, Boundaries, Problem, Repo conventions to follow, Steps, Target, Verification
 
 ### Community 211 - "009 — Convert Disclosure's expand/collapse to a CSS grid-rows reveal"
@@ -717,7 +717,7 @@ Cohesion: 0.29
 Nodes (7): 003 — Stop re-fetching the entire reviews store on every card grade, Boundaries, Problem, Repo conventions to follow, Steps, Target, Verification
 
 ### Community 228 - "005 — Adopt `LazyMotion` + `m` for the always-mounted shared UI and app shell"
-Cohesion: 0.25
+Cohesion: 0.29
 Nodes (7): 005 — Adopt `LazyMotion` + `m` for the always-mounted shared UI and app shell, Boundaries, Problem, Repo conventions to follow, Steps, Target, Verification
 
 ### Community 229 - "mac"
