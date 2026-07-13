@@ -27,7 +27,7 @@ export function useLandingLanguage() {
   const language = useSyncExternalStore(
     subscribeLandingLanguage,
     readLandingLanguage,
-    (): LandingLanguage => "pt",
+    (): LandingLanguage => "en",
   );
 
   useEffect(() => {
