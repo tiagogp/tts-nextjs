@@ -259,9 +259,8 @@ per-task provider overrides, except crash fixes.
 
 Before recruiting, the material outstanding work is:
 
-1. Record or license genuine native audio for the bundled first lessons.
-2. Produce a signed and notarized macOS build.
-3. Complete a moderator dry run on a wiped clean install.
+1. Produce a signed and notarized macOS build.
+2. Complete a moderator dry run on a wiped clean install.
 
 The W5 outcome decides the next move:
 
@@ -288,6 +287,7 @@ work—remains conditional on this validation.
 ## Source documents
 
 - [Product direction and roadmap](product.md)
+- [100-lesson content roadmap](100-lesson-roadmap.md)
 - [Architecture and build record](README.md)
 - [Validation action plan](validation-action-plan.md)
 - [W5 validation protocol](w5-validation-protocol.md)

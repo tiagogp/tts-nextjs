@@ -10,6 +10,8 @@ Use:
 - [README.md](../README.md) para setup, execucao e visao publica do app.
 - [docs/README.md](README.md) para arquitetura, historico tecnico e features shipped.
 - [docs/design-system.md](design-system.md) para regras visuais.
+- [docs/100-lesson-roadmap.md](100-lesson-roadmap.md) para a expansao de conteudo de 36 para 100
+  licoes, sempre subordinada ao gate W5.
 - [docs/w5-validation-protocol.md](w5-validation-protocol.md) para o gate de validacao que decide
   identidade, plataforma, monetizacao e escopo antes do launch. O plano sequenciado vive nas secoes
   "Prioridade Ativa", "Roadmap Imediato" e "Riscos" deste arquivo.
@@ -72,10 +74,11 @@ explain-back, diferenciacao espontanea e retorno D+1/D+7.
 Decisoes de launch:
 
 1. Rodar o W5 exatamente como escrito antes de reabrir novas superficies de produto.
-2. Reduzir a experiencia visivel a um loop guiado: ouvir um clip nativo curado -> salvar uma frase
+2. Reduzir a experiencia visivel a um loop guiado: ouvir um clipe curto curado -> salvar uma frase
    -> revisar agora -> escrever uma frase -> corrigir -> salvar a correcao para amanha.
-3. Fazer os dois diferenciais reais aparecerem na primeira sessao: audio nativo de material real
-   e erros pessoais virando drills de revisao.
+3. Fazer os diferenciais reais aparecerem na primeira sessao: criacao de cards com pouca friccao
+   e erros pessoais virando drills de revisao. Audio original continua disponivel quando o usuario
+   traz uma fonte com audio, mas nao e requisito do loop bundled.
 4. Primeiro cliente escolhido para launch: autodidata A2-B1 / Anki-adjacent que traz fontes reais,
    entende revisao e sente a dor de transformar material real em pratica.
 5. Empacotar monetizacao em uma dor concreta, nao em um pacote generico de possibilidades.
@@ -241,7 +244,7 @@ Detalhes completos ficam em [docs/README.md](README.md).
 | --- | --- | --- |
 | 1 | W5 manda no roadmap | TTFR do primeiro loop, explain-back, diferenciacao espontanea e D+1/D+7 decidem o proximo ciclo. |
 | 2 | Uma espinha visivel | Ouvir/trazer ingles -> salvar frases -> Study -> Correct -> treino do erro. |
-| 3 | Diferenciais no primeiro uso | Audio nativo de material real e erro pessoal virando drill precisam aparecer sem explicacao. |
+| 3 | Diferenciais no primeiro uso | Criacao sem friccao e erro pessoal virando drill precisam aparecer sem explicacao. |
 | 4 | Primeiro cliente escolhido | Launch para autodidata/Anki que traz fontes reais; W5 pode sobrescrever se iniciantes vencerem claramente. |
 | 5 | Monetizacao por uma dor | Escolher entre nuvem gerenciada, review-anywhere sync ou conteudo graduado curado. |
 | 6 | Congelar adaptive research | Manter o que shipped; nao abrir novo trilho adaptativo antes das prioridades 1-5. |
@@ -257,10 +260,9 @@ ou congelado.
 | Prioridade | Task | Why |
 | --- | --- | --- |
 | P0 | Reescrever Home/onboarding em torno do loop real | Clareza instantanea do produto |
-| P0 | Construir um primeiro loop guiado com clip nativo curado | Prova valor em menos de 2 minutos |
+| P0 | Construir um primeiro loop guiado com audio bundled curado | Prova valor em menos de 2 minutos |
 | P0 | Adicionar metricas de ativacao e dropoff | Torna W5 mensuravel |
 | P0 | Esconder termos avancados de provider/deck/model/export | Reduz friccao antes da ativacao |
-| P1 | Melhorar audio nativo bundled | Primeira impressao |
 | P1 | Mostrar own-source como proximo passo depois do loop | Mostra a magia real sem arriscar ativacao |
 | P1 | Adicionar campos W5 de paid pain e replacement workflow | Valida monetizacao e troca de fluxo |
 | P2 | Polir backup/restore | Confianca local-first |
@@ -312,7 +314,7 @@ Primeira sessao v1, uma unica trilha:
 1. Usuario ouve um clip curto de ingles real curado.
 2. App destaca 2-3 frases uteis.
 3. Usuario salva uma frase.
-4. Usuario revisa essa frase imediatamente com audio nativo.
+4. Usuario revisa essa frase imediatamente com o audio bundled.
 5. Usuario escreve uma frase usando a expressao.
 6. App corrige a frase.
 7. Correcao vira card de revisao de amanha.
@@ -334,7 +336,7 @@ ou exigir conceitos antes da ativacao.
 | Settings de IA guiado | Med | Partial | Provedores estao em Advanced AI; falta copy "Local no computador" vs "Nuvem mais facil". |
 | Coaching contextual | Low | Planned | Explicar o proximo passo no momento certo. |
 | Tools fora da nav primaria | Low | Done | Ferramentas em Settings/Advanced. |
-| Ativacao sem setup | High | Partial | Licoes bundled landed; o loop guiado completa offline (salvar -> escrever frase -> correcao local -> revisar) sem provedor. Falta o audio bundled real: gravar/licenciar clipes nativos, nao Kokoro TTS — TTS contradiz o diferencial "audio nativo, nao releitura robotica" que o W5 mede. Interim (2026-07-03): copy do onboarding corrigida para nao afirmar que o audio bundled e nativo. |
+| Ativacao sem setup | High | Done | Licoes e audio bundled landed; o loop guiado completa offline (salvar -> escrever frase -> correcao local -> revisar) sem provedor. Audio sintetico bundled e aceitavel; gravacoes licenciadas sao melhoria opcional. |
 
 Checklist de launch antes de publico:
 
@@ -342,7 +344,7 @@ Checklist de launch antes de publico:
    (Codigo pronto: electron/build-app.sh assina e notariza .app e .dmg quando
    APPLE_DEVELOPER_ID + credenciais do notarytool estao no env. Falta apenas
    inscricao no Apple Developer Program e exportar as credenciais.)
-2. Audio bundled real validado com usuarios; sem placeholder audivel.
+2. Audio bundled validado com usuarios; sem clipe ausente, corrompido ou ininteligivel.
 3. [x] Auditoria PT-BR da primeira sessao e termos avancados fora do caminho principal.
    (2026-07-13 — ver "PT-BR Completeness" em docs/w5/user-facing-language-audit.md.)
 4. Restore validado em sessao real com dados de longo prazo.
