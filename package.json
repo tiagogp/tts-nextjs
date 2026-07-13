@@ -10,10 +10,12 @@
   "scripts": {
     "postinstall": "node scripts/fix-native-rpaths.mjs",
     "dev": "next dev",
-    "prebuild": "yarn learn:audio",
+    "prebuild": "yarn learn:audio && yarn learn:content:validate",
     "build": "next build",
     "learn:audio": "node scripts/generate-learn-audio.mjs",
     "learn:audio:verify": "node scripts/generate-learn-audio.mjs --verify",
+    "learn:content:validate": "node scripts/validate-lesson-content.mjs",
+    "learn:content:report": "node scripts/validate-lesson-content.mjs --json",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",

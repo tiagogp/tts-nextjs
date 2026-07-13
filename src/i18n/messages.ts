@@ -833,6 +833,66 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "Repeat the lesson phrases and get local feedback.": {
     pt: "Repita as frases da lição e receba feedback local.",
   },
+  "One step left": { pt: "Falta uma etapa" },
+  "Review a saved phrase to finish this lesson": {
+    pt: "Revise uma frase salva para concluir esta lição",
+  },
+  "After the review, your own sources and extra practice will be ready in the app.": {
+    pt: "Depois da revisão, suas próprias fontes e as práticas extras estarão disponíveis no app.",
+  },
+  "Review now and finish": { pt: "Revisar agora e concluir" },
+  "Learn a small set, listen without the transcript, then use one phrase yourself.": {
+    pt: "Aprenda um conjunto pequeno, ouça sem a transcrição e depois use uma frase você mesmo.",
+  },
+  "1 · Learn": { pt: "1 · Aprender" },
+  "Learn three useful phrases": { pt: "Aprenda três frases úteis" },
+  "Learn five useful phrases": { pt: "Aprenda cinco frases úteis" },
+  "Study the meaning, pattern, and situation. You will hear this language next.": {
+    pt: "Estude o significado, o padrão e a situação. Você vai ouvir essa linguagem em seguida.",
+  },
+  "Pattern: {pattern}": { pt: "Padrão: {pattern}" },
+  "Continue to listening": { pt: "Continuar para a escuta" },
+  "2 · Listen": { pt: "2 · Ouvir" },
+  "Listen before reading": { pt: "Ouça antes de ler" },
+  "First catch the situation and one phrase. You do not need to understand every word.": {
+    pt: "Primeiro, identifique a situação e uma frase. Você não precisa entender cada palavra.",
+  },
+  "First catch the situation and two phrases. You do not need to understand every word.": {
+    pt: "Primeiro, identifique a situação e duas frases. Você não precisa entender cada palavra.",
+  },
+  "Audio-only check": { pt: "Verificação apenas com áudio" },
+  "Audio-only clip {count}": { pt: "Áudio {count} sem transcrição" },
+  "{speaker} · audio-only clip {count}": { pt: "{speaker} · áudio {count} sem transcrição" },
+  "Play clip without transcript": { pt: "Tocar áudio sem transcrição" },
+  "Play clip {count} without transcript": { pt: "Tocar áudio {count} sem transcrição" },
+  "Listen at least once before answering.": { pt: "Ouça pelo menos uma vez antes de responder." },
+  "Listened {count} time(s). Replay whenever you need.": {
+    pt: "Você ouviu {count} vez(es). Repita quando precisar.",
+  },
+  "What is the main situation?": { pt: "Qual é a situação principal?" },
+  "Which meaning matches the phrase?": { pt: "Qual significado corresponde à frase?" },
+  "Which meaning matches clip {count}?": { pt: "Qual significado corresponde ao áudio {count}?" },
+  "Check what I heard": { pt: "Verificar o que ouvi" },
+  "Not yet. Replay the clip and focus on the familiar words; there is no penalty for another try.": {
+    pt: "Ainda não. Ouça novamente e foque nas palavras conhecidas; não há penalidade por tentar de novo.",
+  },
+  "You caught the main idea and the phrase meaning.": {
+    pt: "Você identificou a ideia principal e o significado da frase.",
+  },
+  "You caught the main idea and both phrase meanings.": {
+    pt: "Você identificou a ideia principal e o significado das duas frases.",
+  },
+  "You caught the main idea and the important details.": {
+    pt: "Você identificou a ideia principal e os detalhes importantes.",
+  },
+  "Reveal transcript and choose phrases": { pt: "Mostrar transcrição e escolher frases" },
+  "Now compare what you heard with the transcript and notice the phrases worth keeping.": {
+    pt: "Agora compare o que ouviu com a transcrição e observe quais frases vale a pena guardar.",
+  },
+  "Listening transcript": { pt: "Transcrição da escuta" },
+  "Compare the dialogue with what you understood before reading.": {
+    pt: "Compare o diálogo com o que você entendeu antes de ler.",
+  },
 
   /* ── first-loop mistake step ───────────────────────────── */
   "Your turn": { pt: "Sua vez" },
@@ -840,8 +900,12 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   'Use "{phrase}" in your own sentence. You will practice the corrected version tomorrow.': {
     pt: 'Use "{phrase}" em uma frase sua. Amanhã você vai praticar a versão corrigida.',
   },
+  'Use "{phrase}" or its reusable pattern, and add one detail of your own.': {
+    pt: 'Use "{phrase}" ou o padrão reutilizável dela e acrescente um detalhe seu.',
+  },
   "Write your sentence here…": { pt: "Escreva sua frase aqui…" },
   "Check my sentence": { pt: "Corrigir minha frase" },
+  "Checking your sentence…": { pt: "Verificando sua frase…" },
   "Check again": { pt: "Corrigir de novo" },
   "Nothing to fix — nice work.": { pt: "Nada para corrigir — mandou bem." },
   "You wrote": { pt: "Você escreveu" },
@@ -858,6 +922,36 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "End the sentence with punctuation (like . or ?).": {
     pt: "Termine a frase com pontuação (como . ou ?).",
   },
+  "Use the lesson phrase or its reusable pattern.": {
+    pt: "Use a frase da lição ou o padrão reutilizável dela.",
+  },
+  "Add one detail of your own instead of repeating only the model phrase.": {
+    pt: "Acrescente um detalhe seu em vez de repetir apenas a frase modelo.",
+  },
+  "Apply the feedback": { pt: "Aplique o feedback" },
+  "Write the sentence again": { pt: "Escreva a frase novamente" },
+  "Use the feedback above in a new attempt. Saving unlocks only after the second attempt is clear.": {
+    pt: "Use o feedback acima em uma nova tentativa. Você só poderá salvar quando a segunda tentativa estiver clara.",
+  },
+  "Your first answer was clear. Produce it once more from memory before saving it.": {
+    pt: "Sua primeira resposta estava clara. Produza-a mais uma vez de memória antes de salvar.",
+  },
+  "Write your second attempt here…": { pt: "Escreva sua segunda tentativa aqui…" },
+  "Second attempt": { pt: "Segunda tentativa" },
+  "Check second attempt": { pt: "Verificar segunda tentativa" },
+  "Checking second attempt…": { pt: "Verificando a segunda tentativa…" },
+  "Check second attempt again": { pt: "Verificar segunda tentativa de novo" },
+  "Your second attempt applies the feedback and is ready for review.": {
+    pt: "Sua segunda tentativa aplica o feedback e está pronta para revisão.",
+  },
+  "Save the improved sentence for tomorrow": { pt: "Salvar a frase melhorada para amanhã" },
+  "Your message is clear and uses the lesson language.": {
+    pt: "Sua mensagem está clara e usa a linguagem da lição.",
+  },
+  "Focus first: {category}": { pt: "Foque primeiro em: {category}" },
+  "Message clarity": { pt: "Clareza da mensagem" },
+  "Lesson language": { pt: "Linguagem da lição" },
+  "Writing mechanics": { pt: "Mecânica da escrita" },
   "Lesson 1 — Greetings": { pt: "Lição 1 — Cumprimentos" },
   "Lesson 2 — Names": { pt: "Lição 2 — Nomes" },
   "Lesson 3 — Countries and Cities": { pt: "Lição 3 — Países e cidades" },
@@ -873,6 +967,18 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "Lesson 21 — Precision and Emphasis": { pt: "Lição 21 — Precisão e ênfase" },
   "Lesson 22 — Rhetorical Control": { pt: "Lição 22 — Controle retórico" },
   "Example — Everyday Phrases": { pt: "Exemplo — Frases do dia a dia" },
+  "Extra A1 — Weather and Clothes": { pt: "Extra A1 — Clima e roupas" },
+  "Extra A2 — Home and Neighborhood": { pt: "Extra A2 — Casa e bairro" },
+  "Extra B1 — Learning Habits": { pt: "Extra B1 — Hábitos de estudo" },
+  "Extra B2 — Decisions and Trade-offs": { pt: "Extra B2 — Decisões e concessões" },
+  "Extra C1 — Leading Meetings": { pt: "Extra C1 — Conduzindo reuniões" },
+  "Extra C2 — Critical Synthesis": { pt: "Extra C2 — Síntese crítica" },
+  "Weather, clothes, and simple daily choices": { pt: "Clima, roupas e escolhas simples do dia a dia" },
+  "Describing a home and the area around it": { pt: "Descrevendo uma casa e a área ao redor" },
+  "Explaining study routines and learning strategies": { pt: "Explicando rotinas e estratégias de estudo" },
+  "Comparing options and explaining difficult decisions": { pt: "Comparando opções e explicando decisões difíceis" },
+  "Guiding discussion, disagreement, and decisions at work": { pt: "Conduzindo discussões, discordâncias e decisões no trabalho" },
+  "Combining competing evidence into a precise conclusion": { pt: "Combinando evidências concorrentes em uma conclusão precisa" },
   "Greetings and polite first moves": { pt: "Cumprimentos e primeiras interações educadas" },
   "Names and simple introductions": { pt: "Nomes e apresentações simples" },
   "Places, origin, and location": { pt: "Lugares, origem e localização" },

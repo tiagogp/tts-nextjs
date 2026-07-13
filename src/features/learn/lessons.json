@@ -1946,5 +1946,389 @@
         "clip": "/learn/audio/c2-rhetoric/08.wav"
       }
     ]
+  },
+  {
+    "id": "a1-weather",
+    "level": "A1",
+    "title": "Extra A1 — Weather and Clothes",
+    "topic": "Weather, clothes, and simple daily choices",
+    "phrases": [
+      {
+        "en": "It's sunny today.",
+        "pt": "Hoje está ensolarado.",
+        "concept": "weather with it is",
+        "note": "Use it is to describe the weather.",
+        "clip": "/learn/audio/a1-weather/01.wav"
+      },
+      {
+        "en": "It's raining now.",
+        "pt": "Está chovendo agora.",
+        "concept": "present weather",
+        "note": "Use is plus raining for weather happening now.",
+        "clip": "/learn/audio/a1-weather/02.wav"
+      },
+      {
+        "en": "It's cold outside.",
+        "pt": "Está frio lá fora.",
+        "concept": "cold outside",
+        "note": "Outside means not inside a building.",
+        "clip": "/learn/audio/a1-weather/03.wav"
+      },
+      {
+        "en": "I need a jacket.",
+        "pt": "Eu preciso de uma jaqueta.",
+        "concept": "I need",
+        "note": "Use I need for something necessary.",
+        "clip": "/learn/audio/a1-weather/04.wav"
+      },
+      {
+        "en": "I'm wearing a blue shirt.",
+        "pt": "Estou usando uma camisa azul.",
+        "concept": "I am wearing",
+        "note": "Use wearing for clothes on your body now.",
+        "clip": "/learn/audio/a1-weather/05.wav"
+      },
+      {
+        "en": "Do I need an umbrella?",
+        "pt": "Eu preciso de um guarda-chuva?",
+        "concept": "question with do",
+        "note": "Put do before I to ask about a need.",
+        "clip": "/learn/audio/a1-weather/06.wav"
+      },
+      {
+        "en": "The weather is changing.",
+        "pt": "O tempo está mudando.",
+        "concept": "is changing",
+        "note": "Changing means becoming different.",
+        "clip": "/learn/audio/a1-weather/07.wav"
+      },
+      {
+        "en": "Let's stay inside.",
+        "pt": "Vamos ficar dentro de casa.",
+        "concept": "let us",
+        "note": "Let's makes a suggestion for you and another person.",
+        "clip": "/learn/audio/a1-weather/08.wav"
+      }
+    ]
+  },
+  {
+    "id": "a2-neighborhood",
+    "level": "A2",
+    "title": "Extra A2 — Home and Neighborhood",
+    "topic": "Describing a home and the area around it",
+    "phrases": [
+      {
+        "en": "I live in a quiet neighborhood.",
+        "pt": "Eu moro em um bairro tranquilo.",
+        "concept": "live in an area",
+        "note": "Quiet describes a place with little noise.",
+        "clip": "/learn/audio/a2-neighborhood/01.wav"
+      },
+      {
+        "en": "There is a market near my house.",
+        "pt": "Há um mercado perto da minha casa.",
+        "concept": "there is",
+        "note": "Use there is for one place or thing.",
+        "clip": "/learn/audio/a2-neighborhood/02.wav"
+      },
+      {
+        "en": "The bus stop is across the street.",
+        "pt": "O ponto de ônibus fica do outro lado da rua.",
+        "concept": "across the street",
+        "note": "Across the street means on the opposite side.",
+        "clip": "/learn/audio/a2-neighborhood/03.wav"
+      },
+      {
+        "en": "My apartment has two bedrooms.",
+        "pt": "Meu apartamento tem dois quartos.",
+        "concept": "home has",
+        "note": "Use has to describe parts of a home.",
+        "clip": "/learn/audio/a2-neighborhood/04.wav"
+      },
+      {
+        "en": "It takes ten minutes to walk downtown.",
+        "pt": "Leva dez minutos para caminhar até o centro.",
+        "concept": "it takes time",
+        "note": "Use it takes to say how long a journey lasts.",
+        "clip": "/learn/audio/a2-neighborhood/05.wav"
+      },
+      {
+        "en": "The park gets busy on weekends.",
+        "pt": "O parque fica movimentado nos fins de semana.",
+        "concept": "gets busy",
+        "note": "Gets busy means becomes full of people.",
+        "clip": "/learn/audio/a2-neighborhood/06.wav"
+      },
+      {
+        "en": "I moved here last year.",
+        "pt": "Eu me mudei para cá no ano passado.",
+        "concept": "past move",
+        "note": "Moved is the past form of move.",
+        "clip": "/learn/audio/a2-neighborhood/07.wav"
+      },
+      {
+        "en": "Would you like to visit my place?",
+        "pt": "Você gostaria de visitar minha casa?",
+        "concept": "polite invitation",
+        "note": "Would you like is a polite way to invite someone.",
+        "clip": "/learn/audio/a2-neighborhood/08.wav"
+      }
+    ]
+  },
+  {
+    "id": "b1-learning-habits",
+    "level": "B1",
+    "title": "Extra B1 — Learning Habits",
+    "topic": "Explaining study routines and learning strategies",
+    "phrases": [
+      {
+        "en": "I learn faster when I use examples.",
+        "pt": "Eu aprendo mais rápido quando uso exemplos.",
+        "concept": "when condition",
+        "note": "Use when to connect a result with a regular condition.",
+        "clip": "/learn/audio/b1-learning-habits/01.wav"
+      },
+      {
+        "en": "I try to review a little every day.",
+        "pt": "Eu tento revisar um pouco todos os dias.",
+        "concept": "try to",
+        "note": "Try to introduces an effort or habit.",
+        "clip": "/learn/audio/b1-learning-habits/02.wav"
+      },
+      {
+        "en": "Writing things down helps me remember them.",
+        "pt": "Anotar as coisas me ajuda a lembrá-las.",
+        "concept": "gerund as subject",
+        "note": "An activity ending in -ing can be the subject of a sentence.",
+        "clip": "/learn/audio/b1-learning-habits/03.wav"
+      },
+      {
+        "en": "I lose focus if the session is too long.",
+        "pt": "Eu perco o foco se a sessão for longa demais.",
+        "concept": "if condition",
+        "note": "Use if for a condition that changes the result.",
+        "clip": "/learn/audio/b1-learning-habits/04.wav"
+      },
+      {
+        "en": "The hardest part is using new words naturally.",
+        "pt": "A parte mais difícil é usar palavras novas naturalmente.",
+        "concept": "the hardest part",
+        "note": "Use this frame to identify your main difficulty.",
+        "clip": "/learn/audio/b1-learning-habits/05.wav"
+      },
+      {
+        "en": "I've started listening without subtitles.",
+        "pt": "Comecei a ouvir sem legendas.",
+        "concept": "present perfect change",
+        "note": "I've started describes a recent change that matters now.",
+        "clip": "/learn/audio/b1-learning-habits/06.wav"
+      },
+      {
+        "en": "Making mistakes is part of the process.",
+        "pt": "Cometer erros faz parte do processo.",
+        "concept": "part of the process",
+        "note": "Use this phrase to normalize a necessary step.",
+        "clip": "/learn/audio/b1-learning-habits/07.wav"
+      },
+      {
+        "en": "My goal is to speak with less hesitation.",
+        "pt": "Meu objetivo é falar com menos hesitação.",
+        "concept": "goal is to",
+        "note": "Use my goal is to for a concrete objective.",
+        "clip": "/learn/audio/b1-learning-habits/08.wav"
+      }
+    ]
+  },
+  {
+    "id": "b2-decisions",
+    "level": "B2",
+    "title": "Extra B2 — Decisions and Trade-offs",
+    "topic": "Comparing options and explaining difficult decisions",
+    "phrases": [
+      {
+        "en": "Both options have clear advantages.",
+        "pt": "As duas opções têm vantagens claras.",
+        "concept": "both options",
+        "note": "Use both to discuss two alternatives together.",
+        "clip": "/learn/audio/b2-decisions/01.wav"
+      },
+      {
+        "en": "The main trade-off is time versus quality.",
+        "pt": "A principal compensação é tempo versus qualidade.",
+        "concept": "trade-off",
+        "note": "A trade-off is a balance where gaining one thing costs another.",
+        "clip": "/learn/audio/b2-decisions/02.wav"
+      },
+      {
+        "en": "I'm leaning toward the more flexible approach.",
+        "pt": "Estou inclinado à abordagem mais flexível.",
+        "concept": "leaning toward",
+        "note": "Use leaning toward when your preference is not final.",
+        "clip": "/learn/audio/b2-decisions/03.wav"
+      },
+      {
+        "en": "We need to weigh the risks against the benefits.",
+        "pt": "Precisamos comparar os riscos com os benefícios.",
+        "concept": "weigh against",
+        "note": "Weigh something against something means compare their importance.",
+        "clip": "/learn/audio/b2-decisions/04.wav"
+      },
+      {
+        "en": "In the short term, the cheaper option makes sense.",
+        "pt": "No curto prazo, a opção mais barata faz sentido.",
+        "concept": "in the short term",
+        "note": "Use this to limit a judgment to the near future.",
+        "clip": "/learn/audio/b2-decisions/05.wav"
+      },
+      {
+        "en": "That choice could create problems later on.",
+        "pt": "Essa escolha pode criar problemas mais adiante.",
+        "concept": "could create",
+        "note": "Could presents a possible consequence.",
+        "clip": "/learn/audio/b2-decisions/06.wav"
+      },
+      {
+        "en": "I'd rather delay the decision than rush it.",
+        "pt": "Eu preferiria adiar a decisão a tomá-la às pressas.",
+        "concept": "would rather than",
+        "note": "Would rather X than Y compares two actions.",
+        "clip": "/learn/audio/b2-decisions/07.wav"
+      },
+      {
+        "en": "On balance, the long-term option is stronger.",
+        "pt": "Considerando tudo, a opção de longo prazo é melhor.",
+        "concept": "on balance",
+        "note": "On balance introduces a conclusion after comparing factors.",
+        "clip": "/learn/audio/b2-decisions/08.wav"
+      }
+    ]
+  },
+  {
+    "id": "c1-leading-meetings",
+    "level": "C1",
+    "title": "Extra C1 — Leading Meetings",
+    "topic": "Guiding discussion, disagreement, and decisions at work",
+    "phrases": [
+      {
+        "en": "Let's clarify what we need to decide today.",
+        "pt": "Vamos esclarecer o que precisamos decidir hoje.",
+        "concept": "clarify the decision",
+        "note": "Frames the meeting around a concrete outcome.",
+        "clip": "/learn/audio/c1-leading-meetings/01.wav"
+      },
+      {
+        "en": "Before we move on, I'd like to hear the opposing view.",
+        "pt": "Antes de avançarmos, eu gostaria de ouvir a visão contrária.",
+        "concept": "hear the opposing view",
+        "note": "Invites disagreement before closing a topic.",
+        "clip": "/learn/audio/c1-leading-meetings/02.wav"
+      },
+      {
+        "en": "There seems to be broad agreement on the principle.",
+        "pt": "Parece haver amplo acordo sobre o princípio.",
+        "concept": "broad agreement",
+        "note": "Summarizes consensus without claiming unanimity.",
+        "clip": "/learn/audio/c1-leading-meetings/03.wav"
+      },
+      {
+        "en": "The point of disagreement is how quickly we should act.",
+        "pt": "O ponto de discordância é a rapidez com que devemos agir.",
+        "concept": "point of disagreement",
+        "note": "Isolates the exact issue still under debate.",
+        "clip": "/learn/audio/c1-leading-meetings/04.wav"
+      },
+      {
+        "en": "Could you walk us through the assumptions behind that estimate?",
+        "pt": "Você poderia nos explicar as premissas por trás dessa estimativa?",
+        "concept": "walk us through",
+        "note": "Asks for a structured explanation of reasoning.",
+        "clip": "/learn/audio/c1-leading-meetings/05.wav"
+      },
+      {
+        "en": "We may be solving the wrong problem.",
+        "pt": "Talvez estejamos resolvendo o problema errado.",
+        "concept": "wrong problem",
+        "note": "Challenges the framing rather than a proposed solution.",
+        "clip": "/learn/audio/c1-leading-meetings/06.wav"
+      },
+      {
+        "en": "I'll summarize the decision and the remaining actions.",
+        "pt": "Vou resumir a decisão e as ações restantes.",
+        "concept": "summarize decision",
+        "note": "Signals a concise close with ownership and next steps.",
+        "clip": "/learn/audio/c1-leading-meetings/07.wav"
+      },
+      {
+        "en": "Unless there are objections, we'll proceed on that basis.",
+        "pt": "A menos que haja objeções, prosseguiremos com base nisso.",
+        "concept": "unless objections",
+        "note": "Checks for final objections before confirming a decision.",
+        "clip": "/learn/audio/c1-leading-meetings/08.wav"
+      }
+    ]
+  },
+  {
+    "id": "c2-critical-synthesis",
+    "level": "C2",
+    "title": "Extra C2 — Critical Synthesis",
+    "topic": "Combining competing evidence into a precise conclusion",
+    "phrases": [
+      {
+        "en": "Taken together, the evidence points to a more qualified conclusion.",
+        "pt": "Consideradas em conjunto, as evidências apontam para uma conclusão mais ponderada.",
+        "concept": "taken together",
+        "note": "Synthesizes several sources before stating a conclusion.",
+        "clip": "/learn/audio/c2-critical-synthesis/01.wav"
+      },
+      {
+        "en": "The two accounts are not mutually exclusive.",
+        "pt": "As duas explicações não são mutuamente excludentes.",
+        "concept": "not mutually exclusive",
+        "note": "Shows that two explanations can both be true.",
+        "clip": "/learn/audio/c2-critical-synthesis/02.wav"
+      },
+      {
+        "en": "One explanation operates at the individual level, the other at the institutional level.",
+        "pt": "Uma explicação opera no nível individual, a outra no nível institucional.",
+        "concept": "different levels",
+        "note": "Reconciles arguments by separating their level of analysis.",
+        "clip": "/learn/audio/c2-critical-synthesis/03.wav"
+      },
+      {
+        "en": "The apparent contradiction dissolves once that distinction is made.",
+        "pt": "A aparente contradição desaparece quando essa distinção é feita.",
+        "concept": "contradiction dissolves",
+        "note": "Explains why a conflict was only superficial.",
+        "clip": "/learn/audio/c2-critical-synthesis/04.wav"
+      },
+      {
+        "en": "The strongest claim supported by the data is considerably narrower.",
+        "pt": "A afirmação mais forte sustentada pelos dados é consideravelmente mais restrita.",
+        "concept": "strongest supported claim",
+        "note": "Limits a conclusion to what the evidence actually establishes.",
+        "clip": "/learn/audio/c2-critical-synthesis/05.wav"
+      },
+      {
+        "en": "That limitation does not invalidate the broader insight.",
+        "pt": "Essa limitação não invalida a percepção mais ampla.",
+        "concept": "does not invalidate",
+        "note": "Acknowledges a limit while preserving a useful conclusion.",
+        "clip": "/learn/audio/c2-critical-synthesis/06.wav"
+      },
+      {
+        "en": "A plausible synthesis must account for both patterns.",
+        "pt": "Uma síntese plausível precisa explicar os dois padrões.",
+        "concept": "account for both",
+        "note": "Sets a requirement for an adequate combined explanation.",
+        "clip": "/learn/audio/c2-critical-synthesis/07.wav"
+      },
+      {
+        "en": "I would therefore resist reducing the issue to a single cause.",
+        "pt": "Portanto, eu evitaria reduzir a questão a uma única causa.",
+        "concept": "resist reducing",
+        "note": "Rejects an oversimplified conclusion after synthesis.",
+        "clip": "/learn/audio/c2-critical-synthesis/08.wav"
+      }
+    ]
   }
 ]

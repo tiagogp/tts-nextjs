@@ -5,6 +5,8 @@ import type { LearningProfile } from "@/features/settings/learningProfile";
 import lessonsData from "./lessons.json";
 
 export interface LessonPhrase {
+  /** Stable content identifier. Required for roadmap lessons, optional for the original 36. */
+  id?: string;
   en: string;
   pt: string;
   concept: string;
@@ -12,7 +14,36 @@ export interface LessonPhrase {
   clip: string;
 }
 
-export interface Lesson {
+export interface LessonDialogueLine {
+  speaker: string;
+  en: string;
+  pt: string;
+  clip: string;
+}
+
+export type LessonComprehensionKind = "mainIdea" | "detail" | "sequence";
+
+export interface LessonComprehensionQuestion {
+  kind: LessonComprehensionKind;
+  prompt: string;
+  options: string[];
+  answer: string;
+}
+
+/**
+ * Optional on the original curriculum so it can be migrated incrementally.
+ * The content validator makes these fields mandatory for every roadmap lesson.
+ */
+export interface LessonMaterial {
+  objective?: string;
+  pronunciationFocus?: string;
+  dialogue?: LessonDialogueLine[];
+  comprehension?: LessonComprehensionQuestion[];
+  productionPrompt?: string;
+  retryHint?: string;
+}
+
+export interface Lesson extends LessonMaterial {
   id: string;
   level: EnglishLevel;
   title: string;
@@ -34,8 +65,9 @@ export function buildDeckFromPhrases(
 
   const candidates: PhraseCandidate[] = sorted.map((i) => {
     const phrase = phrases[i];
+    const phraseId = phrase.id ?? String(i);
     return {
-      id: `${sourceId}-${i}`,
+      id: `${sourceId}-${phraseId}`,
       sourceId,
       text: phrase.en,
       translation: phrase.pt,
@@ -49,12 +81,13 @@ export function buildDeckFromPhrases(
 
   const cards: Card[] = sorted.map((i) => {
     const phrase = phrases[i];
+    const phraseId = phrase.id ?? String(i);
     return {
-      id: `${sourceId}-card-${i}`,
+      id: `${sourceId}-card-${phraseId}`,
       front: phrase.en,
       back: phrase.pt,
       concept: phrase.concept,
-      source: { kind: "phrase", id: `${sourceId}-${i}` },
+      source: { kind: "phrase", id: `${sourceId}-${phraseId}` },
       audioClipPath: phrase.clip,
       createdAt: now,
     };
@@ -75,21 +108,19 @@ export function lessonById(id: string): Lesson | undefined {
 export const OWN_SENTENCE_CARD_PREFIX = "own-sentence-";
 
 export function lessonCardIds(lesson: Lesson): string[] {
-  return lesson.phrases.map((_, i) => `lesson-${lesson.id}-card-${i}`);
+  return lesson.phrases.map((phrase, i) => `lesson-${lesson.id}-card-${phrase.id ?? i}`);
 }
 
 export function completedLessonIdsFromCardIds(cardIds: Iterable<string>): Set<string> {
   const completed = new Set<string>();
-  const counts = new Map<string, number>();
   for (const cardId of cardIds) {
-    const match = /^lesson-(.+)-card-\d+$/.exec(cardId);
+    const match = /^lesson-(.+)-card-[a-z0-9-]+$/i.exec(cardId);
     if (!match) continue;
-    counts.set(match[1], (counts.get(match[1]) ?? 0) + 1);
-  }
-  for (const lesson of LESSONS) {
-    if ((counts.get(lesson.id) ?? 0) >= lesson.phrases.length) {
-      completed.add(lesson.id);
-    }
+    // Saving is the lesson's completion action. Learners deliberately curate
+    // the phrase set, so one or more saved cards prove completion; requiring
+    // every authored phrase would recommend a finished lesson again whenever
+    // even one phrase was deselected.
+    if (LESSONS.some((lesson) => lesson.id === match[1])) completed.add(match[1]);
   }
   return completed;
 }

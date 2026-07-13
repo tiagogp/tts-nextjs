@@ -1,4 +1,4 @@
-import type { ErrorType } from "@/lib/cards/schema";
+import type { ErrorEvent, ErrorType } from "@/lib/cards/schema";
 
 /**
  * Deterministic, on-device correction for the guided first lesson's "write one
@@ -9,6 +9,8 @@ import type { ErrorType } from "@/lib/cards/schema";
 
 export interface LocalCorrectionIssue {
   type: ErrorType;
+  category: "messageClarity" | "lessonLanguage" | "mechanics";
+  priority: "blocking" | "important" | "polish";
   /** English source string for the learner-facing note; render through t(). */
   note: string;
 }
@@ -25,6 +27,42 @@ export const PHRASE_SPELLING_NOTE = "Check the spelling of the lesson phrase.";
 export const CAPITAL_I_NOTE = 'In English, "I" is always capitalized.';
 export const SENTENCE_START_NOTE = "Start the sentence with a capital letter.";
 export const PUNCTUATION_NOTE = "End the sentence with punctuation (like . or ?).";
+export const MISSING_LESSON_LANGUAGE_NOTE = "Use the lesson phrase or its reusable pattern.";
+export const OWN_DETAIL_NOTE = "Add one detail of your own instead of repeating only the model phrase.";
+
+const PRIORITY_RANK: Record<LocalCorrectionIssue["priority"], number> = {
+  blocking: 0,
+  important: 1,
+  polish: 2,
+};
+
+function feedbackIssue(
+  type: ErrorType,
+  category: LocalCorrectionIssue["category"],
+  priority: LocalCorrectionIssue["priority"],
+  note: string,
+): LocalCorrectionIssue {
+  return { type, category, priority, note };
+}
+
+function categoryForModelError(errorTypes: ErrorType[]): LocalCorrectionIssue["category"] {
+  return errorTypes.some((type) =>
+    ["collocation", "idiom", "register", "vocabulary"].includes(type),
+  )
+    ? "messageClarity"
+    : "lessonLanguage";
+}
+
+function uniqueSortedIssues(issues: LocalCorrectionIssue[]): LocalCorrectionIssue[] {
+  const unique = new Map<string, LocalCorrectionIssue>();
+  for (const issue of issues) {
+    const key = `${issue.type}:${issue.category}:${issue.note}`;
+    if (!unique.has(key)) unique.set(key, issue);
+  }
+  return [...unique.values()].sort(
+    (left, right) => PRIORITY_RANK[left.priority] - PRIORITY_RANK[right.priority],
+  );
+}
 
 function levenshtein(a: string, b: string): number {
   if (a === b) return 0;
@@ -51,6 +89,30 @@ function core(token: string): string {
     .replace(/’/g, "'")
     .replace(/^[^\p{L}\p{N}']+|[^\p{L}\p{N}']+$/gu, "")
     .toLowerCase();
+}
+
+function expandCore(token: string): string[] {
+  const value = core(token);
+  const contractions: Record<string, string[]> = {
+    "i'm": ["i", "am"],
+    "you're": ["you", "are"],
+    "we're": ["we", "are"],
+    "they're": ["they", "are"],
+    "he's": ["he", "is"],
+    "she's": ["she", "is"],
+    "it's": ["it", "is"],
+    "what's": ["what", "is"],
+    "that's": ["that", "is"],
+    "i've": ["i", "have"],
+    "we've": ["we", "have"],
+    "i'll": ["i", "will"],
+    "we'll": ["we", "will"],
+  };
+  return contractions[value] ?? (value ? [value] : []);
+}
+
+function expandedCores(tokens: string[]): string[] {
+  return tokens.flatMap(expandCore);
 }
 
 /** Trailing punctuation of a token (e.g. the "!" of "morning!"). */
@@ -99,7 +161,26 @@ function findPhraseWindow(tokenCores: string[], phraseCores: string[]): PhraseWi
   return best;
 }
 
-export function correctSentenceLocally(input: string, targetPhrase: string): LocalCorrectionResult {
+function reusablePrefixWindow(
+  inputCores: string[],
+  modelCores: string[],
+): { window: PhraseWindow; length: number } | null {
+  // A model with at least three normalized words can expose its leading frame:
+  // “I am …”, “My name is …”, “I live in …”. The learner must add something
+  // after the frame, so a two-word fixed phrase such as “Good morning” is not
+  // weakened into the meaningless pattern “Good …”.
+  for (let length = modelCores.length - 1; length >= 2; length--) {
+    const window = findPhraseWindow(inputCores, modelCores.slice(0, length));
+    if (window?.distance === 0) return { window, length };
+  }
+  return null;
+}
+
+export function correctSentenceLocally(
+  input: string,
+  targetPhrase: string,
+  targetPattern?: string,
+): LocalCorrectionResult {
   const issues: LocalCorrectionIssue[] = [];
   const sentence = input.trim().replace(/\s+/g, " ");
   if (!sentence) return { corrected: "", issues: [], usedPhrase: false };
@@ -114,8 +195,22 @@ export function correctSentenceLocally(input: string, targetPhrase: string): Loc
 
   let tokens = sentence.split(" ");
   const window = findPhraseWindow(tokens.map(core), phraseCores);
-  const usedPhrase = window !== null;
+  const inputExpandedCores = expandedCores(tokens);
+  const modelExpandedCores = expandedCores(phraseWords);
+  const patternCores = expandedCores((targetPattern ?? "").trim().split(/\s+/));
+  const patternAppearsInModel = findPhraseWindow(modelExpandedCores, patternCores)?.distance === 0;
+  const patternWindow = patternAppearsInModel
+    ? findPhraseWindow(inputExpandedCores, patternCores)
+    : null;
+  const inferredPattern = reusablePrefixWindow(inputExpandedCores, modelExpandedCores);
+  const usedPhrase =
+    window !== null || patternWindow?.distance === 0 || inferredPattern !== null;
   const phraseAtEnd = window !== null && window.start + phraseCores.length === tokens.length;
+  const matchedLanguageLength = window
+    ? modelExpandedCores.length
+    : patternWindow?.distance === 0
+      ? patternCores.length
+      : inferredPattern?.length ?? 0;
 
   // Misspelled phrase → substitute the canonical wording, keeping the learner's
   // surrounding words and the trailing punctuation they typed after it.
@@ -132,7 +227,7 @@ export function correctSentenceLocally(input: string, targetPhrase: string): Loc
       ...replacement,
       ...tokens.slice(window.start + phraseCores.length),
     ];
-    issues.push({ type: "vocabulary", note: PHRASE_SPELLING_NOTE });
+    issues.push(feedbackIssue("vocabulary", "lessonLanguage", "important", PHRASE_SPELLING_NOTE));
   }
 
   // "i" / "i'm" / "i've" … → capital I.
@@ -144,7 +239,7 @@ export function correctSentenceLocally(input: string, targetPhrase: string): Loc
     }
     return token;
   });
-  if (fixedCapitalI) issues.push({ type: "other", note: CAPITAL_I_NOTE });
+  if (fixedCapitalI) issues.push(feedbackIssue("other", "mechanics", "polish", CAPITAL_I_NOTE));
 
   let corrected = tokens.join(" ");
 
@@ -155,15 +250,67 @@ export function correctSentenceLocally(input: string, targetPhrase: string): Loc
       corrected.slice(0, firstLetter.index) +
       firstLetter[0].toUpperCase() +
       corrected.slice(firstLetter.index + 1);
-    issues.push({ type: "other", note: SENTENCE_START_NOTE });
+    issues.push(feedbackIssue("other", "mechanics", "polish", SENTENCE_START_NOTE));
   }
 
   // Terminal punctuation; when the sentence ends with the lesson phrase, reuse
   // the phrase's own mark (e.g. "How are you?" keeps the question mark).
   if (!/[.!?…]$/.test(corrected)) {
     corrected += phraseAtEnd && phraseTerminal ? phraseTerminal : ".";
-    issues.push({ type: "other", note: PUNCTUATION_NOTE });
+    issues.push(feedbackIssue("other", "mechanics", "polish", PUNCTUATION_NOTE));
   }
 
-  return { corrected, issues, usedPhrase };
+  if (!usedPhrase) {
+    issues.push(
+      feedbackIssue("vocabulary", "lessonLanguage", "blocking", MISSING_LESSON_LANGUAGE_NOTE),
+    );
+  } else if (inputExpandedCores.length <= matchedLanguageLength) {
+    issues.push(feedbackIssue("other", "messageClarity", "blocking", OWN_DETAIL_NOTE));
+  }
+
+  return { corrected, issues: uniqueSortedIssues(issues), usedPhrase };
+}
+
+/**
+ * Add configured model feedback to the provider-free lesson check. Model
+ * corrections are exact-fragment replacements, matching the correction API's
+ * contract; the resulting sentence then passes through the deterministic check
+ * again so punctuation and lesson-pattern validation remain consistent.
+ */
+export function mergeEvaluatedCorrection(
+  input: string,
+  targetPhrase: string,
+  targetPattern: string | undefined,
+  events: ErrorEvent[],
+): LocalCorrectionResult {
+  const local = correctSentenceLocally(input, targetPhrase, targetPattern);
+  let evaluated = input.trim().replace(/\s+/g, " ");
+  const modelIssues: LocalCorrectionIssue[] = [];
+
+  for (const event of events) {
+    const original = event.original.trim();
+    const corrected = event.corrected.trim();
+    if (!original || !corrected || original === corrected) continue;
+
+    const index = evaluated.indexOf(original);
+    if (index >= 0) {
+      evaluated =
+        evaluated.slice(0, index) + corrected + evaluated.slice(index + original.length);
+    }
+    modelIssues.push(
+      feedbackIssue(
+        event.errorTypes[0] ?? "other",
+        categoryForModelError(event.errorTypes),
+        "blocking",
+        event.rationale?.trim() || `Change “${original}” to “${corrected}”.`,
+      ),
+    );
+  }
+
+  const final = correctSentenceLocally(evaluated, targetPhrase, targetPattern);
+  return {
+    corrected: final.corrected,
+    issues: uniqueSortedIssues([...modelIssues, ...local.issues, ...final.issues]),
+    usedPhrase: final.usedPhrase,
+  };
 }

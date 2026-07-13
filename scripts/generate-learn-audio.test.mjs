@@ -6,7 +6,6 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   buildCoverage,
   collectNativeRecordings,
-  firstRunLessonIds,
   installNativeRecordings,
   isRiffWave,
   lessonAudioItems,
@@ -103,13 +102,6 @@ describe("lessonAudioItems", () => {
     const publicDir = path.join(os.tmpdir(), "pl-public");
     const lessons = [{ id: "evil", level: "A1", phrases: [{ en: "Nope.", clip: "/../outside.wav" }] }];
     expect(() => lessonAudioItems(lessons, publicDir)).toThrow(/Invalid lesson audio path/);
-  });
-});
-
-describe("firstRunLessonIds", () => {
-  it("takes the first A1/A2/B1 lesson plus any demo-clip lesson, nothing else", () => {
-    const ids = firstRunLessonIds(lessonFixture());
-    expect([...ids].sort()).toEqual(["a1-greetings", "a2-food", "b1-everyday-demo", "b1-opinions"]);
   });
 });
 
@@ -218,7 +210,7 @@ describe("synthesisTargets", () => {
 });
 
 describe("buildCoverage", () => {
-  it("scores per-lesson coverage and fails the gate on synthetic first-run clips", () => {
+  it("reports synthetic clips as valid coverage", () => {
     const lessons = lessonFixture();
     const installed = new Set([
       "/learn/audio/a1-greetings/01.wav",
@@ -230,12 +222,14 @@ describe("buildCoverage", () => {
     const coverage = buildCoverage(lessons, installed, present);
 
     const greetings = coverage.rows.find((row) => row.lessonId === "a1-greetings");
-    expect(greetings).toMatchObject({ total: 2, native: 1, synthetic: 1, missing: 0, inGate: true });
-    expect(coverage.gate.complete).toBe(false);
-    expect(coverage.gate.gaps).toEqual(["/learn/audio/a1-greetings/02.wav"]);
+    expect(greetings).toMatchObject({ total: 2, native: 1, synthetic: 1, missing: 0 });
+    expect(coverage.missingClips).toEqual([
+      "/learn/audio/a1-second/01.wav",
+      "/learn/audio/b2-arguments/01.wav",
+    ]);
   });
 
-  it("passes the gate once every first-run clip is native", () => {
+  it("reports every missing declared clip regardless of lesson level", () => {
     const lessons = lessonFixture();
     const installed = new Set([
       "/learn/audio/a1-greetings/01.wav",
@@ -245,9 +239,12 @@ describe("buildCoverage", () => {
       "/demo/audio/01.wav",
     ]);
     const coverage = buildCoverage(lessons, installed, installed);
-    expect(coverage.gate.complete).toBe(true);
     const b2 = coverage.rows.find((row) => row.lessonId === "b2-arguments");
-    expect(b2).toMatchObject({ native: 0, missing: 1, inGate: false });
+    expect(b2).toMatchObject({ native: 0, missing: 1 });
+    expect(coverage.missingClips).toEqual([
+      "/learn/audio/a1-second/01.wav",
+      "/learn/audio/b2-arguments/01.wav",
+    ]);
   });
 });
 

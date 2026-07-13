@@ -39,10 +39,6 @@ const VOICE_IDS = {
   bm_george: 26,
 };
 
-// The W5 guided loop only ever starts on these levels (ICP is A2-B1 plus one
-// bundled-only beginner); B2+ entry lessons are out of the validation gate.
-export const FIRST_RUN_LEVELS = ["A1", "A2", "B1"];
-
 const NATIVE_LIBRARY_IGNORED = new Set(["manifest.json", "README.md", ".DS_Store", ".gitkeep"]);
 
 function usage() {
@@ -54,9 +50,8 @@ Ensures the lesson/demo .wav files declared in src/features/learn/lessons.json:
 Native recordings are never overwritten by synthesis, --force included.
 
 Modes:
-  --verify   Report native coverage per lesson and fail (exit 1) if any clip of
-             the guided first-run lessons (first A1/A2/B1 lesson + the demo) is
-             not a native recording. Read-only; downloads nothing.
+  --verify   Report native/synthetic coverage per lesson and fail (exit 1) only
+             when a declared clip is missing. Read-only; downloads nothing.
   --dry-run  Report what would be installed/generated, then exit.
   --force    Regenerate synthetic clips even if present (native clips are kept).
 
@@ -266,22 +261,6 @@ export function lessonClipMap(lessons) {
   return map;
 }
 
-export function firstRunLessonIds(lessons) {
-  const ids = new Set();
-  const seenLevels = new Set();
-  for (const lesson of Array.isArray(lessons) ? lessons : []) {
-    if (FIRST_RUN_LEVELS.includes(lesson?.level) && !seenLevels.has(lesson.level)) {
-      seenLevels.add(lesson.level);
-      ids.add(lesson.id);
-    }
-    const phrases = Array.isArray(lesson?.phrases) ? lesson.phrases : [];
-    if (phrases.some((phrase) => isDeclarableClip(phrase) && phrase.clip.startsWith("/demo/"))) {
-      ids.add(lesson.id);
-    }
-  }
-  return ids;
-}
-
 export async function isRiffWave(file) {
   const handle = await open(file, "r");
   try {
@@ -390,22 +369,18 @@ export function synthesisTargets(items, nativeClips, presentClips, regenerate) {
 }
 
 export function buildCoverage(lessons, installedClips, presentClips) {
-  const gateIds = firstRunLessonIds(lessons);
   const rows = [];
-  const gateGaps = [];
+  const missingClips = [];
   for (const [lessonId, clips] of lessonClipMap(lessons)) {
     const native = clips.filter((clip) => installedClips.has(clip)).length;
     const missing = clips.filter((clip) => !presentClips.has(clip)).length;
     const synthetic = clips.length - native - missing;
-    const inGate = gateIds.has(lessonId);
-    rows.push({ lessonId, total: clips.length, native, synthetic, missing, inGate });
-    if (inGate) {
-      for (const clip of clips) {
-        if (!installedClips.has(clip)) gateGaps.push(clip);
-      }
+    rows.push({ lessonId, total: clips.length, native, synthetic, missing });
+    for (const clip of clips) {
+      if (!presentClips.has(clip)) missingClips.push(clip);
     }
   }
-  return { rows, gate: { lessonIds: gateIds, gaps: gateGaps, complete: gateGaps.length === 0 } };
+  return { rows, missingClips };
 }
 
 export async function nativeInstallState(recordings, itemsByClip) {
@@ -457,13 +432,12 @@ async function loadNativeLibrary(items) {
 }
 
 function printCoverage(coverage, pendingInstall) {
-  console.log("Native audio coverage (first-run gate = first A1/A2/B1 lesson + demo clips):");
+  console.log("Lesson audio coverage:");
   const width = Math.max(...[...coverage.rows.map((row) => row.lessonId.length), 6]);
   for (const row of coverage.rows) {
-    const flag = row.inGate ? "  [first-run gate]" : "";
     console.log(
       `  ${row.lessonId.padEnd(width)}  native ${row.native}/${row.total}` +
-        `${row.synthetic ? `  synthetic ${row.synthetic}` : ""}${row.missing ? `  missing ${row.missing}` : ""}${flag}`,
+        `${row.synthetic ? `  synthetic ${row.synthetic}` : ""}${row.missing ? `  missing ${row.missing}` : ""}`,
     );
   }
   if (pendingInstall.length > 0) {
@@ -499,14 +473,14 @@ async function main() {
     }
     const coverage = buildCoverage(lessons, installed, presentClips);
     printCoverage(coverage, pending);
-    if (coverage.gate.complete) {
-      console.log("\nFirst-run gate: PASS — every guided first-run clip is a native recording.");
+    if (coverage.missingClips.length === 0) {
+      console.log("\nAudio verification: PASS — every declared lesson clip is present.");
       return;
     }
     console.log(
-      `\nFirst-run gate: FAIL — ${coverage.gate.gaps.length} first-run clip(s) are still synthetic or missing:`,
+      `\nAudio verification: FAIL — ${coverage.missingClips.length} declared clip(s) are missing:`,
     );
-    for (const clip of coverage.gate.gaps) console.log(`  ${clip}`);
+    for (const clip of coverage.missingClips) console.log(`  ${clip}`);
     process.exit(1);
   }
 

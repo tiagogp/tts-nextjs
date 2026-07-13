@@ -12,6 +12,18 @@ import {
 } from "./lessonDeck";
 
 describe("lessonDeck", () => {
+  it("ships a substantial lesson library across every CEFR level", () => {
+    const expectedLevels = ["A1", "A2", "B1", "B2", "C1", "C2"];
+    expect(LESSONS.length).toBeGreaterThanOrEqual(36);
+    expect(LESSONS.reduce((count, lesson) => count + lesson.phrases.length, 0)).toBeGreaterThanOrEqual(292);
+    for (const level of expectedLevels) {
+      expect(LESSONS.filter((lesson) => lesson.level === level).length).toBeGreaterThanOrEqual(3);
+    }
+    const lessonIds = LESSONS.map((lesson) => lesson.id);
+    expect(new Set(lessonIds).size).toBe(lessonIds.length);
+    expect(LESSONS.every((lesson) => lesson.phrases.length >= 8)).toBe(true);
+  });
+
   it("builds provider-free decks with stable ids", () => {
     const lesson = LESSONS[0];
     const first = buildDeckFromPhrases(`lesson-${lesson.id}`, lesson.phrases, [2, 0]);
@@ -28,12 +40,26 @@ describe("lessonDeck", () => {
     });
     expect(first.candidates.every((candidate) => candidate.status === "accepted")).toBe(true);
     expect(first.cards.map((card) => card.source.id)).toEqual(first.candidates.map((candidate) => candidate.id));
+
+    const authored = buildDeckFromPhrases(
+      `lesson-${lesson.id}`,
+      lesson.phrases.map((phrase, index) => ({ ...phrase, id: `target-${index + 1}` })),
+      [0],
+    );
+    expect(authored.cards[0]).toMatchObject({
+      id: `lesson-${lesson.id}-card-target-1`,
+      source: { kind: "phrase", id: `lesson-${lesson.id}-target-1` },
+    });
   });
 
   it("detects completed lessons from stable card ids", () => {
     const lesson = LESSONS[0];
     expect(completedLessonIdsFromCardIds(lessonCardIds(lesson))).toEqual(new Set([lesson.id]));
-    expect(completedLessonIdsFromCardIds(lessonCardIds(lesson).slice(0, 2))).toEqual(new Set());
+    expect(completedLessonIdsFromCardIds(lessonCardIds(lesson).slice(0, 2))).toEqual(
+      new Set([lesson.id]),
+    );
+    expect(completedLessonIdsFromCardIds([])).toEqual(new Set());
+    expect(completedLessonIdsFromCardIds(["lesson-not-real-card-0"])).toEqual(new Set());
   });
 
   it("selects the next lesson at the learner level before advancing", () => {
