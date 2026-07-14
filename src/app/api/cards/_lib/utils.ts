@@ -53,25 +53,6 @@ export function parseThemePhraseCount(value: unknown): number {
     : DEFAULT_THEME_PHRASE_COUNT;
 }
 
-export function fallbackThemePhrases(theme: string, count: number): string[] {
-  const clean = theme.trim() || "everyday conversation";
-  const generic = [
-    `Could you help me with ${clean}?`,
-    `I'm trying to figure out ${clean}.`,
-    `What would you recommend for ${clean}?`,
-    `I need a little more time to decide.`,
-    `Could you say that another way?`,
-    `That works for me, thank you.`,
-    `I'm not sure I understood the last part.`,
-    `Can we go over the details again?`,
-    `I'd like to make sure I got this right.`,
-    `Is there anything else I should know?`,
-    `That sounds good, but I have one question.`,
-    `Could we start with the most important point?`,
-  ];
-  return generic.slice(0, count);
-}
-
 export function linesFromText(text: string): string[] {
   return text
     .split(/\r?\n/)

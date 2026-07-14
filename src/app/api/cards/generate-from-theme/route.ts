@@ -5,13 +5,12 @@ import { isProviderAvailable, resolveProvider } from "@/lib/cards/registry";
 import type { ProviderKind } from "@/lib/cards/provider";
 import { getDefaultProvider } from "@/server/aiSettings";
 import { isHttpError, isProviderKind, readJsonObject, safeString } from "@/server/http/validation";
-import { failureResponse, providerFailure } from "@/server/http/providerFailure";
+import { classifyProviderFailure, failureResponse, providerFailure } from "@/server/http/providerFailure";
 import { languageLabel } from "@/features/settings/languages";
 import { MAX_CORRECTION_JSON_BYTES } from "@/lib/constants";
 import { logger } from "@/lib/logger";
 import { MAX_THEME_CHARS } from "@/app/api/cards/_lib/constants";
 import {
-  fallbackThemePhrases,
   linesFromText,
   parseThemePhraseCount,
   uniquePhrases,
@@ -48,29 +47,37 @@ export async function POST(req: NextRequest) {
   const targetLabel = languageLabel(targetLang);
   const model = safeString(obj.ollamaModel, "", 100) || undefined;
   const provider = resolveProvider(kind, { learnerLang: sourceLang, targetLang, model });
-  let phrases: string[] = [];
-
-  if (provider.converse) {
-    const prompt = [
-      `Generate ${count} natural, useful ${targetLabel} phrases for this theme: ${theme}.`,
-      `Return exactly one phrase per line.`,
-      `No numbering, no translations, no explanations.`,
-      `Prefer phrases a learner can actually say in the situation.`,
-    ].join(" ");
-    try {
-      const text = await provider.converse([], {
-        scenario: prompt,
-        targetLang,
-        sourceLang,
-        level: safeString(obj.level, "A1", 8),
-      }, { signal: req.signal, timeoutMs: 60_000 });
-      phrases = linesFromText(text);
-    } catch (error) {
-      logger.error({ err: error }, "Theme phrase generation failed; falling back locally");
-    }
+  if (!provider.converse) {
+    return failureResponse(providerFailure("provider_not_configured"));
   }
 
-  phrases = uniquePhrases(phrases.length > 0 ? phrases : fallbackThemePhrases(theme, count), count);
+  const prompt = [
+    `Generate ${count} natural, useful ${targetLabel} phrases for this theme: ${theme}.`,
+    `Return exactly one phrase per line.`,
+    `No numbering, no translations, no explanations.`,
+    `Prefer phrases a learner can actually say in the situation.`,
+  ].join(" ");
+
+  let phrases: string[];
+  try {
+    const text = await provider.converse([], {
+      scenario: prompt,
+      targetLang,
+      sourceLang,
+      level: safeString(obj.level, "A1", 8),
+    }, { signal: req.signal, timeoutMs: 60_000 });
+    phrases = uniquePhrases(linesFromText(text), count);
+  } catch (error) {
+    // Fail loudly: surface a real provider error instead of silently returning
+    // generic template phrases the learner would mistake for AI-generated ones.
+    logger.error({ err: error }, "Theme phrase generation failed");
+    return failureResponse(classifyProviderFailure(error, { signal: req.signal }));
+  }
+
+  if (phrases.length === 0) {
+    return failureResponse(providerFailure("empty_result"));
+  }
+
   const sourceId = `theme-${crypto.randomUUID()}`;
   const now = Date.now();
   const context = normalizeContext(theme);
