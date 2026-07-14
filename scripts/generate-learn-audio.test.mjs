@@ -9,6 +9,7 @@ import {
   installNativeRecordings,
   isRiffWave,
   lessonAudioItems,
+  lessonClipMap,
   nativeInstallState,
   readNativeManifest,
   synthesisTargets,
@@ -102,6 +103,27 @@ describe("lessonAudioItems", () => {
     const publicDir = path.join(os.tmpdir(), "pl-public");
     const lessons = [{ id: "evil", level: "A1", phrases: [{ en: "Nope.", clip: "/../outside.wav" }] }];
     expect(() => lessonAudioItems(lessons, publicDir)).toThrow(/Invalid lesson audio path/);
+  });
+
+  it("collects dialogue clips, which roadmap lessons declare alongside phrases", () => {
+    const publicDir = path.join(os.tmpdir(), "pl-public");
+    const lessons = [
+      {
+        id: "a2-hotel",
+        level: "A2",
+        phrases: [{ en: "I have a reservation.", clip: "/learn/audio/a2-hotel/01.wav" }],
+        dialogue: [
+          { speaker: "Clerk", en: "Do you have a reservation?", clip: "/learn/audio/a2-hotel/d01.wav" },
+          { speaker: "Guest", en: "Yes, under Silva.", clip: "/learn/audio/a2-hotel/d02.wav" },
+        ],
+      },
+    ];
+    expect(lessonAudioItems(lessons, publicDir).map((item) => item.clip)).toEqual([
+      "/learn/audio/a2-hotel/01.wav",
+      "/learn/audio/a2-hotel/d01.wav",
+      "/learn/audio/a2-hotel/d02.wav",
+    ]);
+    expect(lessonClipMap(lessons).get("a2-hotel")).toHaveLength(3);
   });
 });
 

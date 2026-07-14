@@ -222,25 +222,37 @@ function isDeclarableClip(phrase) {
   return phrase.clip.startsWith("/") && phrase.clip.endsWith(".wav");
 }
 
+/**
+ * Every spoken line a lesson declares. Roadmap lessons add a dialogue on top of
+ * their phrases, and the content validator requires those clips to exist too, so
+ * synthesis has to see both lists.
+ */
+function lessonSpokenLines(lesson) {
+  return [
+    ...(Array.isArray(lesson?.phrases) ? lesson.phrases : []),
+    ...(Array.isArray(lesson?.dialogue) ? lesson.dialogue : []),
+  ];
+}
+
 export function lessonAudioItems(lessons, publicDir = defaultPublicDir) {
   const items = [];
   const byClip = new Map();
   for (const lesson of Array.isArray(lessons) ? lessons : []) {
-    for (const phrase of Array.isArray(lesson?.phrases) ? lesson.phrases : []) {
-      if (!isDeclarableClip(phrase)) continue;
-      const text = phrase.en.trim();
+    for (const line of lessonSpokenLines(lesson)) {
+      if (!isDeclarableClip(line)) continue;
+      const text = line.en.trim();
       if (!text) continue;
-      const existing = byClip.get(phrase.clip);
+      const existing = byClip.get(line.clip);
       if (existing) {
         if (!existing.lessonIds.includes(lesson.id)) existing.lessonIds.push(lesson.id);
         continue;
       }
-      const target = path.resolve(publicDir, phrase.clip.slice(1));
+      const target = path.resolve(publicDir, line.clip.slice(1));
       if (!target.startsWith(`${publicDir}${path.sep}`)) {
-        throw new Error(`Invalid lesson audio path: ${phrase.clip}`);
+        throw new Error(`Invalid lesson audio path: ${line.clip}`);
       }
-      const item = { text, clip: phrase.clip, target, lessonIds: [lesson.id] };
-      byClip.set(phrase.clip, item);
+      const item = { text, clip: line.clip, target, lessonIds: [lesson.id] };
+      byClip.set(line.clip, item);
       items.push(item);
     }
   }
@@ -251,9 +263,9 @@ export function lessonClipMap(lessons) {
   const map = new Map();
   for (const lesson of Array.isArray(lessons) ? lessons : []) {
     const clips = [];
-    for (const phrase of Array.isArray(lesson?.phrases) ? lesson.phrases : []) {
-      if (isDeclarableClip(phrase) && phrase.en.trim() && !clips.includes(phrase.clip)) {
-        clips.push(phrase.clip);
+    for (const line of lessonSpokenLines(lesson)) {
+      if (isDeclarableClip(line) && line.en.trim() && !clips.includes(line.clip)) {
+        clips.push(line.clip);
       }
     }
     if (clips.length > 0) map.set(lesson.id, clips);

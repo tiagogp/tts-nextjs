@@ -7,7 +7,9 @@ decision gate in [product.md](product.md).
 
 Grow the bundled English curriculum from **36 lessons / 292 phrases** to **100 lessons / about
 804 phrases**, while keeping the launch focus on Brazilian A2-B1 self-learners and preserving the
-input-to-output loop:
+input-to-output loop. Wave 1, all four Wave 2 development batches, all three Wave 3 batches, and the
+all three Wave 4 batches are merged in the working tree, taking the bundle to **100 lessons / 804 phrases**;
+they are not yet shipped, for the reasons in the progress ledger.
 
 ```text
 Learn five targets -> hear two clips -> answer for meaning -> notice useful language ->
@@ -19,15 +21,18 @@ production, feedback, retry, review, PT-BR copy, and audio assets pass the defin
 
 ## Current baseline
 
+Counts below are the working tree after the final Wave 4 content batch. `yarn learn:content:report`
+derives them from `lessons.json`; this table is a summary, not a second source of truth.
+
 | Level | Current lessons | Current role |
 | --- | ---: | --- |
-| A1 | 9 | Zero-setup support for guided beginners |
-| A2 | 8 | Lower half of the launch ICP |
-| B1 | 8 | Upper half of the launch ICP |
-| B2 | 5 | Post-ICP progression and professional depth |
-| C1 | 3 | Advanced precision and workplace depth |
-| C2 | 3 | Advanced synthesis and rhetorical control |
-| **Total** | **36** | **292 bundled phrases** |
+| A1 | 15 | Zero-setup support for guided beginners |
+| A2 | 22 | Lower half of the launch ICP |
+| B1 | 25 | Upper half of the launch ICP |
+| B2 | 18 | Post-ICP progression and professional depth |
+| C1 | 12 | Advanced precision and workplace depth |
+| C2 | 8 | Advanced synthesis and rhetorical control |
+| **Total** | **100** | **804 bundled phrases** |
 
 The current source of truth is
 [`src/features/learn/lessons.json`](../src/features/learn/lessons.json). Lesson selection already
@@ -41,13 +46,13 @@ while retaining a complete path from A1 through C2.
 
 | Level | Current | Target | Add | Final share |
 | --- | ---: | ---: | ---: | ---: |
-| A1 | 9 | 15 | 6 | 15% |
-| A2 | 8 | 22 | 14 | 22% |
-| B1 | 8 | 25 | 17 | 25% |
-| B2 | 5 | 18 | 13 | 18% |
-| C1 | 3 | 12 | 9 | 12% |
-| C2 | 3 | 8 | 5 | 8% |
-| **Total** | **36** | **100** | **64** | **100%** |
+| A1 | 15 | 15 | 0 | 15% |
+| A2 | 22 | 22 | 0 | 22% |
+| B1 | 25 | 25 | 0 | 25% |
+| B2 | 18 | 18 | 0 | 18% |
+| C1 | 12 | 12 | 0 | 12% |
+| C2 | 8 | 8 | 0 | 8% |
+| **Total** | **100** | **100** | **0** | **100%** |
 
 ## Release gates and waves
 
@@ -72,6 +77,10 @@ Add 14 lessons: **A2 +6, B1 +8**.
 Purpose: close the most obvious real-world gaps for the launch user—work, travel friction,
 clarification, messages, and personal routines.
 
+Status: all 14 lessons are written and pass technical QA (`yarn learn:content:validate`). They are
+**not** through the exit gate: audio is Kokoro-synthetic, and no English/PT-BR editorial review or
+moderated learner pilot has happened yet.
+
 Exit gate: three content batches pass technical QA; at least one moderated A2 group and one B1
 group complete the new lessons without coaching.
 
@@ -80,6 +89,11 @@ group complete the new lessons without coaching.
 Add 20 lessons: **A1 +4, A2 +5, B1 +6, B2 +5**.
 
 Purpose: make the library useful for sustained daily study rather than only first-run activation.
+
+Status: all four five-lesson development batches are written. The fourth adds `b2-cause-effect`,
+`b2-persuasion`, `b2-project-management`, `b2-feedback-leadership`, and
+`b2-data-interpretation`. Technical QA uses `yarn learn:content:validate`; audio is
+Kokoro-synthetic, and editorial review and learner pilots remain outstanding.
 
 Exit gate: no level has a major communicative-function gap in the A1-B2 coverage matrix, and the
 review queue remains manageable after a five-lesson sample path.
@@ -91,6 +105,11 @@ Add 15 lessons: **A1 +2, A2 +3, B1 +3, B2 +4, C1 +3**.
 Purpose: complete beginner coverage, deepen independent conversation, and establish the B2-C1
 bridge.
 
+Status: all three five-lesson development batches are written. The third adds `b2-media-bias`,
+`b2-uncertainty`, `c1-diplomatic-disagreement`, `c1-presentations-q-and-a`, and `c1-stakeholders`,
+completing Wave 3. Technical QA uses `yarn learn:content:validate`; audio is Kokoro-synthetic, and
+editorial review and learner pilots remain outstanding.
+
 Exit gate: level progression and content ordering are validated with real review histories; the
 learner is not advanced merely for completing lessons.
 
@@ -100,6 +119,11 @@ Add 15 lessons: **B2 +4, C1 +6, C2 +5**.
 
 Purpose: complete the professional, analytical, and rhetorical ladder after the launch wedge is
 proven.
+
+Status: all three five-lesson development batches are written. The final two add the remaining C1
+and C2 backlog, from `c1-policy-analysis` through `c2-debate-synthesis`. Technical QA uses
+`yarn learn:content:validate`; audio is Kokoro-synthetic, and editorial review and learner pilots
+remain outstanding.
 
 Exit gate: all 100 lessons pass the definition of done, native-audio provenance is recorded, and
 the final coverage audit has no duplicate lesson purpose.
@@ -324,10 +348,24 @@ coverage/provenance manifest. Roadmap lesson ids are parsed from this document, 
 | --- | ---: | ---: | --- |
 | Baseline | 36 | — | Complete in working tree |
 | W5 gate | 36 | 0 | Pending decision round |
-| Wave 1 | 50 | 14 | Not started |
-| Wave 2 | 70 | 20 | Not started |
-| Wave 3 | 85 | 15 | Not started |
-| Wave 4 | 100 | 15 | Not started |
+| Wave 1 | 50 | 14 | Content merged, **not shipped** — see below |
+| Wave 2 | 70 | 20 | Content merged, **not shipped** |
+| Wave 3 | 85 | 15 / 15 | All three content batches merged, **not shipped** |
+| Wave 4 | 100 | 15 / 15 | All three development batches merged, **not shipped** |
 
 Update this ledger only when lessons meet the definition of done; drafts and synthetic-only release
 assets do not count as shipped lessons.
+
+Wave 1 therefore stays open. The 14 lessons satisfy the content and technical-acceptance sections of
+the definition of done, but three requirements are outstanding, and each is a release blocker:
+
+1. **Audio provenance.** All 196 new clips are Kokoro-synthetic. The definition of done requires
+   release audio from proficient speakers, recorded in `native-audio/` with the manifest fields.
+2. **Language review.** No proficient English editor has passed on phrase usefulness and CEFR load,
+   and no reviewer has passed on the PT-BR translations and register.
+3. **Learner pilot.** No moderated A2 or B1 group has completed the lessons without coaching, so the
+   batch gates (completion, first-attempt listening accuracy, retry completion) have no readings.
+
+Wave 1 was also produced ahead of the Gate 0 exit condition: the W5 Decision Record in
+[product.md](product.md) is still `pending` at 0/10 rows, so the launch route these lessons assume
+is not yet evidence-backed.

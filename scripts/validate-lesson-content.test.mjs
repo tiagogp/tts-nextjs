@@ -77,6 +77,17 @@ describe("lesson roadmap parsing", () => {
       new Set(["Lesson title"]),
     );
   });
+
+  it("extracts unquoted identifier keys, which translate like any other", () => {
+    const source = [
+      '  Travel: { pt: "Viagem" },',
+      '  "Rent": { pt: "Aluguel" },',
+      '  "Multi": {',
+      '    pt: "Multi",',
+      "  },",
+    ].join("\n");
+    expect(extractMessageKeys(source)).toEqual(new Set(["Travel", "Rent", "Multi"]));
+  });
 });
 
 describe("lesson content validation", () => {

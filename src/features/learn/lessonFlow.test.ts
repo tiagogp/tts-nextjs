@@ -23,13 +23,25 @@ describe("lessonFlow", () => {
     for (const lesson of LESSONS) {
       expect(learningPhrases(lesson)).toHaveLength(5);
       const challenge = buildListeningChallenge(lesson, LESSONS);
-      expect(challenge.audio).toHaveLength(2);
-      expect(new Set(challenge.audio.map((audio) => audio.clip)).size).toBe(2);
-      expect(challenge.questions).toHaveLength(3);
-      expect(challenge.questions[0].kind).toBe("mainIdea");
+
+      // Roadmap lessons carry an authored dialogue and comprehension set; the
+      // original curriculum still generates its check from the learned phrases.
+      // Both must produce a solvable challenge with one unambiguous answer.
+      const authored = Boolean(lesson.dialogue?.length && lesson.comprehension?.length);
+      const clips = challenge.audio.map((audio) => audio.clip);
+      expect(clips.length).toBeGreaterThanOrEqual(2);
+      expect(new Set(clips).size).toBe(clips.length);
+      expect(challenge.questions.length).toBeGreaterThanOrEqual(3);
+      expect(challenge.questions.filter((question) => question.kind === "mainIdea")).toHaveLength(1);
+      if (!authored) {
+        expect(challenge.audio).toHaveLength(2);
+        expect(challenge.questions).toHaveLength(3);
+        expect(challenge.questions[0].kind).toBe("mainIdea");
+      }
+
       for (const question of challenge.questions) {
         expect(new Set(question.options).size).toBe(question.options.length);
-        expect(question.options).toHaveLength(3);
+        expect(question.options.length).toBeGreaterThanOrEqual(3);
         expect(question.options.filter((option) => option === question.answer)).toHaveLength(1);
       }
     }

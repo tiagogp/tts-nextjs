@@ -61,13 +61,21 @@ export function parseRoadmap(markdown) {
 export function extractMessageKeys(source) {
   const keys = new Set();
   for (const line of source.split("\n")) {
-    const match = line.match(/^\s*"((?:\\.|[^"\\])*)"\s*:/);
-    if (!match) continue;
-    try {
-      keys.add(JSON.parse(`"${match[1]}"`));
-    } catch {
-      // TypeScript parsing will report malformed source; this extractor only gates lesson keys.
+    const quoted = line.match(/^\s*"((?:\\.|[^"\\])*)"\s*:/);
+    if (quoted) {
+      try {
+        keys.add(JSON.parse(`"${quoted[1]}"`));
+      } catch {
+        // TypeScript parsing will report malformed source; this extractor only gates lesson keys.
+      }
+      continue;
     }
+    // Keys that are valid identifiers are written unquoted (Travel, Study, Continue).
+    // They translate at runtime like any other, so the validator has to see them or it
+    // reports a missing PT-BR message for a string that is in fact translated. Entries
+    // open a brace, which keeps the inner language lines (pt: "...") out of the set.
+    const bare = line.match(/^ {2}([A-Za-z_$][\w$]*)\s*:\s*\{/);
+    if (bare) keys.add(bare[1]);
   }
   return keys;
 }

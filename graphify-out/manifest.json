@@ -140,13 +140,13 @@
     "semantic_hash": "9906155825d1e20da66dab7e45c11092"
   },
   "scripts/generate-learn-audio.mjs": {
-    "mtime": 1783972462.2368405,
-    "ast_hash": "596a4a788ae27e89a18b665b9a243d0f",
+    "mtime": 1783998044.359071,
+    "ast_hash": "87340db4bf149dec5712f25ff473857b",
     "semantic_hash": ""
   },
   "scripts/generate-learn-audio.test.mjs": {
-    "mtime": 1783972462.322718,
-    "ast_hash": "57a293832ce95cdbe0020ff97eeb946c",
+    "mtime": 1783998058.3914444,
+    "ast_hash": "265afa4c683d16753b4cd8b52e11be7f",
     "semantic_hash": ""
   },
   "scripts/score-w5-decision-gate.mjs": {
@@ -635,8 +635,8 @@
     "semantic_hash": "17e7dcfcb50eb8a8000fc6f1fc02ec73"
   },
   "src/features/home/components/HojeHome.tsx": {
-    "mtime": 1783995186.26092,
-    "ast_hash": "701eb47e6ba312cb8e4066bae171da7a",
+    "mtime": 1783996305.1083534,
+    "ast_hash": "7935a1c6386c151bad2e935ca964f1aa",
     "semantic_hash": ""
   },
   "src/features/learn/components/LessonView.tsx": {
@@ -660,8 +660,8 @@
     "semantic_hash": ""
   },
   "src/features/learn/lessons.json": {
-    "mtime": 1783969858.2922118,
-    "ast_hash": "b4d7142ee7000c2c4ee7530233630084",
+    "mtime": 1784005079.4816859,
+    "ast_hash": "c3946804f7ca20984787a734a4e480e9",
     "semantic_hash": ""
   },
   "src/features/learn/localCorrection.test.ts": {
@@ -955,8 +955,8 @@
     "semantic_hash": "626e67d4231ecd1b4c46fd729cc021a4"
   },
   "src/i18n/messages.ts": {
-    "mtime": 1783972995.6956372,
-    "ast_hash": "e1b1b0f674df883acca8a9c8733eb0ab",
+    "mtime": 1784005169.2616622,
+    "ast_hash": "a8bbae4360b55760ab77101964257421",
     "semantic_hash": ""
   },
   "src/i18n/translate.test.ts": {
@@ -1915,8 +1915,8 @@
     "semantic_hash": ""
   },
   "src/features/learn/lessonFlow.test.ts": {
-    "mtime": 1783971158.1204367,
-    "ast_hash": "7b929ead94fb653a672f35d965faa86f",
+    "mtime": 1783999284.3053775,
+    "ast_hash": "a4aa3e1733db64362a0d8f1d5f1b43ff",
     "semantic_hash": ""
   },
   "src/features/learn/lessonFlow.ts": {
@@ -1925,18 +1925,18 @@
     "semantic_hash": ""
   },
   "scripts/validate-lesson-content.mjs": {
-    "mtime": 1783971656.16956,
-    "ast_hash": "e6aede32879473f9d20f50921e8c9d3e",
+    "mtime": 1783999685.5379705,
+    "ast_hash": "2b47e449086307e4a3b9d93ce987bb37",
     "semantic_hash": ""
   },
   "scripts/validate-lesson-content.test.mjs": {
-    "mtime": 1783971645.649095,
-    "ast_hash": "7199f2aeaa2d9e3dc5b5c24b12050081",
+    "mtime": 1783999694.350709,
+    "ast_hash": "d14b8757646b743098ccafd5708dd351",
     "semantic_hash": ""
   },
   "docs/100-lesson-roadmap.md": {
-    "mtime": 1783972462.476952,
-    "ast_hash": "413f42ba0bbe64a77e5869cfb0dcf6c9",
+    "mtime": 1784005187.0178368,
+    "ast_hash": "febf99600f57f793ba1b85d2323729c8",
     "semantic_hash": ""
   },
   "apps/landing/src/app/robots.ts": {

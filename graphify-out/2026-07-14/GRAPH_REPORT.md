@@ -1,7 +1,7 @@
 # Graph Report - text-to-speech  (2026-07-14)
 
 ## Corpus Check
-- 380 files · ~759,760 words
+- 380 files · ~752,844 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -656,7 +656,7 @@ Cohesion: 0.33
 Nodes (5): Backup/Restore Validation — Moderated Protocol, Capture Table, Known Limits (disclose if asked), Participant, Session Steps
 
 ### Community 123 - "defaultPlans.ts"
-Cohesion: 0.29
+Cohesion: 0.25
 Nodes (7): 002 — Wrap each primary tab in an error boundary, Boundaries, Problem, Repo conventions to follow, Steps, Target, Verification
 
 ### Community 124 - "store.ts"
@@ -700,7 +700,7 @@ Cohesion: 0.15
 Nodes (16): isLevelAtLeast(), LEVEL_RANK, GOAL_OPTIONS, OnboardingDialog(), Step, STEPS, subscribe(), NATIVE_LANGUAGES (+8 more)
 
 ### Community 210 - "008 — Remove the redundant FLIP `layout` prop from CorrectionList's list items"
-Cohesion: 0.25
+Cohesion: 0.29
 Nodes (7): 008 — Remove the redundant FLIP `layout` prop from CorrectionList's list items, Boundaries, Problem, Repo conventions to follow, Steps, Target, Verification
 
 ### Community 211 - "009 — Convert Disclosure's expand/collapse to a CSS grid-rows reveal"
