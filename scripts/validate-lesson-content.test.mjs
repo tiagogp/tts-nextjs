@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildCoverageReport,
   extractMessageKeys,
+  extractTranslatedMessageKeys,
   inspectWavBuffer,
   parseRoadmap,
   purposeSimilarity,
@@ -88,6 +89,26 @@ describe("lesson roadmap parsing", () => {
     ].join("\n");
     expect(extractMessageKeys(source)).toEqual(new Set(["Travel", "Rent", "Multi"]));
   });
+
+  it("gates on a real pt value, not merely the presence of a key", () => {
+    const source = [
+      '  Travel: { pt: "Viagem" },',
+      '  "Translated": { pt: "Traduzido" },',
+      '  "Multi": {',
+      '    pt: "Multi",',
+      "  },",
+      '  "Empty": { pt: "" },',
+      '  "OtherLangsOnly": { de: "Reise", es: "Viaje" },',
+      '  "NoValue": {},',
+    ].join("\n");
+
+    // The old key-only extractor cannot tell these apart, which is why lesson copy
+    // is gated on the translated set instead.
+    expect(extractMessageKeys(source)).toContain("NoValue");
+    expect(extractTranslatedMessageKeys(source)).toEqual(
+      new Set(["Travel", "Translated", "Multi"]),
+    );
+  });
 });
 
 describe("lesson content validation", () => {
@@ -98,6 +119,32 @@ describe("lesson content validation", () => {
 
   it("accepts a complete roadmap lesson", () => {
     expect(validateLessonModel([roadmapLesson()], roadmap).errors).toEqual([]);
+  });
+
+  it("requires PT-BR copy for lessons outside the roadmap backlog", () => {
+    // nextLessonFor can serve a lesson above the learner's level while their profile
+    // keeps the Portuguese UI, so an untranslated lesson renders English copy to a
+    // Portuguese learner whether or not the roadmap happens to list it.
+    const lesson = roadmapLesson({ id: "c2-unlisted", level: "C2", title: "Unlisted lesson" });
+    const { errors } = validateLessonModel([lesson], roadmap, new Set());
+
+    expect(errors).toEqual(
+      expect.arrayContaining([expect.stringContaining('is missing a PT-BR message for "Unlisted lesson"')]),
+    );
+  });
+
+  it("passes a lesson whose copy is fully translated", () => {
+    const lesson = roadmapLesson();
+    const translated = new Set([
+      lesson.title,
+      lesson.topic,
+      lesson.objective,
+      lesson.productionPrompt,
+      lesson.retryHint,
+      ...lesson.comprehension.flatMap((question) => [question.prompt, ...question.options]),
+    ]);
+
+    expect(validateLessonModel([lesson], roadmap, translated).errors).toEqual([]);
   });
 
   it("rejects missing authored material and ambiguous answer options", () => {

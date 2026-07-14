@@ -33,7 +33,15 @@ export interface MethodStagePayload {
     | "retry"
     | "review";
   area: "structured" | "listening" | "speaking" | "readingWriting";
-  source: "home" | "lesson" | "discover" | "study" | "correct" | "pronunciation";
+  source: "home" | "lesson" | "discover" | "study" | "correct" | "pronunciation" | "converse";
+  /**
+   * The canonical minute ledger for the method balance. Every stage that costs the
+   * learner time emits one of these; `learningLoop` counts nothing else twice.
+   *
+   * Measured, not assumed — `useStageTimer` reports the focused, non-idle time the stage
+   * actually took, clamped by `MAX_STAGE_MINUTES`. Optional because events logged before
+   * measurement existed carry no value; those fall back to `DEFAULT_STAGE_MINUTES`.
+   */
   minutes?: number;
   subjectId?: string;
 }

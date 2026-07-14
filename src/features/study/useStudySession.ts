@@ -35,6 +35,7 @@ import { deriveSkillStates } from "@/lib/srs/skillState";
 import type { BandGateResult } from "@/lib/srs/band";
 import { useAiSettings } from "@/features/settings/context/AiSettingsContext";
 import { markFirstRunReviewCompleted } from "@/features/activation/firstRun";
+import { useStageTimer } from "@/features/method/useStageTimer";
 import { emitActivity } from "@/lib/store/activityLog";
 import { useT } from "@/i18n/I18nProvider";
 import { getLearningProfile } from "@/features/settings/learningProfile";
@@ -54,6 +55,7 @@ import { loadOrderedDueQueue, loadStudySnapshot } from "./studySession";
 export function useStudySession() {
   const { t } = useT();
   const { settings } = useAiSettings();
+  const reviewTimer = useStageTimer("review", 1);
   const defaultProvider = settings.providers.find(
     (provider) => provider.kind === settings.defaultProvider,
   );
@@ -212,6 +214,18 @@ export function useStudySession() {
           cardIds: [current.card.id],
           activation,
         });
+        // Stage 8 — retrieval is the structured half of the method. `cards_reviewed`
+        // stays for activation/plan metrics; this is what the method balance counts.
+        // One window per card: commit what this card took, then reopen for the next.
+        const reviewMinutes = reviewTimer.commit();
+        reviewTimer.start();
+        void emitActivity("method_stage", {
+          stage: "review",
+          area: "structured",
+          source: "study",
+          minutes: reviewMinutes,
+          subjectId: current.card.id,
+        });
         // P1 #4 — track the running window and raise the cooldown prompt on a genuine bad
         // streak. Only in a standard session; a light round is already the gentle path.
         const answers = [...recentAnswers, { grade: g, latencyMs }];
@@ -245,7 +259,7 @@ export function useStudySession() {
         setGrading(false);
       }
     },
-    [current, queue, reinforcing, mode, cooldown, recentAnswers, reloadStandardQueue, reviews],
+    [current, queue, reinforcing, mode, cooldown, recentAnswers, reloadStandardQueue, reviews, reviewTimer],
   );
 
   /** D5 — start a focused drill on a weak concept/error-type, on top of the due queue. */
@@ -391,13 +405,10 @@ export function useStudySession() {
         snapshot: {
           cards: counts.cards,
           due: counts.due,
-          reviews,
           errorEvents,
-          conversations,
-          pronunciationAttempts: pronAttempts,
         },
       }),
-    [activityEvents, counts.cards, counts.due, reviews, errorEvents, conversations, pronAttempts],
+    [activityEvents, counts.cards, counts.due, errorEvents],
   );
 
   return {

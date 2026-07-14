@@ -13,6 +13,7 @@ import {
   completeOnboarding,
   getLearningProfile,
   isOnboardingComplete,
+  type MethodObjective,
 } from "@/features/settings/learningProfile";
 import { resolveInterfaceLang } from "@/i18n/config";
 import { translate } from "@/i18n/translate";
@@ -21,12 +22,15 @@ const subscribe = () => () => {};
 type Step = "welcome" | "profile";
 const STEPS: Step[] = ["welcome", "profile"];
 
-const GOAL_OPTIONS = [
-  { value: "travel", label: "Travel" },
-  { value: "work", label: "Work" },
-  { value: "conversation", label: "Conversation" },
-  { value: "media", label: "Movies & podcasts" },
-] as const;
+/** `objective` drives the method's study distribution; `label` is display/prompt text
+ * only. Keep them separate — a translated label must never change the distribution. */
+const GOAL_OPTIONS: readonly { objective: MethodObjective; label: string }[] = [
+  { objective: "conversation", label: "Conversation" },
+  { objective: "travel", label: "Travel" },
+  { objective: "professional", label: "Work" },
+  { objective: "academic", label: "Study & exams" },
+  { objective: "media", label: "Movies & podcasts" },
+];
 
 export default function OnboardingDialog({ onOpenSettings: _onOpenSettings }: Readonly<{ onOpenSettings: () => void }>) {
   void _onOpenSettings;
@@ -35,7 +39,7 @@ export default function OnboardingDialog({ onOpenSettings: _onOpenSettings }: Re
   const [profile] = useState(getLearningProfile);
   const [level, setLevel] = useState<EnglishLevel>(profile.level);
   const [nativeLang, setNativeLang] = useState(profile.nativeLang);
-  const [focusPreset, setFocusPreset] = useState<(typeof GOAL_OPTIONS)[number]["value"]>("conversation");
+  const [objective, setObjective] = useState<MethodObjective>(profile.objective);
   const firstVisit = useSyncExternalStore(
     subscribe,
     () => !isOnboardingComplete(),
@@ -50,12 +54,13 @@ export default function OnboardingDialog({ onOpenSettings: _onOpenSettings }: Re
   const languageOptions = NATIVE_LANGUAGES.map((l) => ({ value: l.code, label: t(l.label) }));
 
   const finish = async () => {
-    const focus = GOAL_OPTIONS.find((item) => item.value === focusPreset)?.label || "";
+    const focus = GOAL_OPTIONS.find((item) => item.objective === objective)?.label ?? "";
     completeOnboarding({
       track: "beginner",
       level,
       nativeLang,
       targetLang: "en",
+      objective,
       focus,
       goal: profile.goal,
     });
@@ -129,10 +134,13 @@ export default function OnboardingDialog({ onOpenSettings: _onOpenSettings }: Re
           <Field label={t("Main goal")}>
             <Segmented
               label={t("Main goal")}
-              value={focusPreset}
-              onChange={setFocusPreset}
+              value={objective}
+              onChange={setObjective}
               variant="fill"
-              options={GOAL_OPTIONS.map((item) => ({ value: item.value, label: t(item.label) }))}
+              options={GOAL_OPTIONS.map((item) => ({
+                value: item.objective,
+                label: t(item.label),
+              }))}
             />
           </Field>
         </div>

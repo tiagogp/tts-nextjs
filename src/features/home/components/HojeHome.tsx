@@ -7,12 +7,9 @@ import { Spinner } from "@/components/ui/Spinner";
 import { isStoreAvailable } from "@/lib/store/db";
 import {
   getCards,
-  getConversations,
   getCounts,
   getDueCards,
   getErrorEvents,
-  getPronunciationAttempts,
-  getReviews,
 } from "@/lib/store/repository";
 import { getActivityLog } from "@/lib/store/activityLog";
 import { returnMomentFor, type ReturnMoment } from "@/features/home/returnMoment";
@@ -27,6 +24,7 @@ interface HojeHomeProps {
   onCorrect: () => void;
   onFirstLesson: () => void;
   onLesson: (lessonId?: string) => void;
+  onSpeak: () => void;
 }
 
 interface NextAction {
@@ -43,7 +41,7 @@ interface NextAction {
  * due phrases → Study, mistakes → Correct, practice → next phrase, or a
  * brand-new user with no saved phrases → bundled first lesson. One CTA, never a dashboard.
  */
-export function HojeHome({ onStudy, onDiscover, onCorrect, onFirstLesson, onLesson }: HojeHomeProps) {
+export function HojeHome({ onStudy, onDiscover, onCorrect, onFirstLesson, onLesson, onSpeak }: HojeHomeProps) {
   const { t } = useT();
   const [counts, setCounts] = useState({ cards: 0, reviews: 0, due: 0, errors: 0 });
   const [nextLesson, setNextLesson] = useState<Lesson>(() => nextLessonFor(getLearningProfile(), []) ?? firstLesson());
@@ -58,15 +56,12 @@ export function HojeHome({ onStudy, onDiscover, onCorrect, onFirstLesson, onLess
 
   const load = useCallback(async () => {
     try {
-      const [nextCounts, reviews, cards, errors, activity, dueCards, conversations, pronunciationAttempts] = await Promise.all([
+      const [nextCounts, cards, errors, activity, dueCards] = await Promise.all([
         getCounts(),
-        getReviews(),
         getCards(),
         getErrorEvents(),
         getActivityLog(),
         getDueCards(),
-        getConversations(),
-        getPronunciationAttempts(),
       ]);
       setCounts({ ...nextCounts, errors: errors.length });
       setReturnMoment(
@@ -79,10 +74,7 @@ export function HojeHome({ onStudy, onDiscover, onCorrect, onFirstLesson, onLess
           snapshot: {
             cards: nextCounts.cards,
             due: nextCounts.due,
-            reviews,
             errorEvents: errors,
-            conversations,
-            pronunciationAttempts,
           },
         }),
       );
@@ -128,6 +120,7 @@ export function HojeHome({ onStudy, onDiscover, onCorrect, onFirstLesson, onLess
     onFirstLesson,
     onCorrect,
     onLesson,
+    onSpeak,
     nextLesson,
     returnMoment,
     methodPlan,
@@ -175,6 +168,7 @@ function resolveNextAction({
   onFirstLesson,
   onCorrect,
   onLesson,
+  onSpeak,
   nextLesson,
   returnMoment,
   methodPlan,
@@ -186,6 +180,7 @@ function resolveNextAction({
   onFirstLesson: () => void;
   onCorrect: () => void;
   onLesson: (lessonId?: string) => void;
+  onSpeak: () => void;
   nextLesson: Lesson;
   returnMoment: ReturnMoment | null;
   methodPlan: MethodPlan | null;
@@ -231,6 +226,7 @@ function resolveNextAction({
         onFirstLesson,
         onCorrect,
         onLesson,
+        onSpeak,
         nextLesson,
       }),
     };
@@ -287,12 +283,14 @@ function routeHandler(
     onFirstLesson: () => void;
     onCorrect: () => void;
     onLesson: (lessonId?: string) => void;
+    onSpeak: () => void;
     nextLesson: Lesson;
   },
 ): () => void {
   if (route === "review") return handlers.onStudy;
   if (route === "correct") return handlers.onCorrect;
   if (route === "discover") return handlers.onDiscover;
+  if (route === "speak") return handlers.onSpeak;
   if (route === "lesson") return handlers.onFirstLesson;
   return () => handlers.onLesson(handlers.nextLesson.id);
 }

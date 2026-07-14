@@ -1,13 +1,6 @@
-import type { LearningProfile } from "@/features/settings/learningProfile";
+import type { LearningProfile, MethodObjective } from "@/features/settings/learningProfile";
 import type { ErrorEvent } from "@/lib/cards/schema";
-import type { PronunciationAttempt } from "@/lib/pronunciation/types";
-import type {
-  ActivityEvent,
-  CardsCreatedPayload,
-  CardsReviewedPayload,
-  MethodStagePayload,
-} from "@/lib/store/activityLog";
-import type { Conversation, ReviewRecord } from "@/lib/store/repository";
+import type { ActivityEvent, MethodStagePayload } from "@/lib/store/activityLog";
 
 const DAY_MS = 86_400_000;
 const WEEK_MS = 7 * DAY_MS;
@@ -24,7 +17,7 @@ export type MethodStage =
   | "retry"
   | "review";
 
-export type MethodRoute = "lesson" | "discover" | "review" | "correct";
+export type MethodRoute = "lesson" | "discover" | "review" | "correct" | "speak";
 
 export interface MethodTarget {
   structured: number;
@@ -63,12 +56,14 @@ export interface MethodPlan {
 export interface MethodSnapshot {
   cards: number;
   due: number;
-  reviews: ReviewRecord[];
   errorEvents: ErrorEvent[];
-  conversations: Conversation[];
-  pronunciationAttempts: PronunciationAttempt[];
 }
 
+/**
+ * Fallback for a profile with no stated objective — one written before onboarding asked.
+ * This is not "the method's split": the five distributions in `TARGETS` are canonical and
+ * every onboarded profile carries one.
+ */
 const DEFAULT_TARGET: MethodTarget = {
   structured: 0.4,
   listening: 0.3,
@@ -76,11 +71,32 @@ const DEFAULT_TARGET: MethodTarget = {
   readingWriting: 0.1,
 };
 
-const TARGETS: Record<"conversation" | "professional" | "academic" | "travel", MethodTarget> = {
+/**
+ * Per-emit ceiling for one stage. A single measured window longer than this is idle
+ * time, not study time. The ledger clamps on write (`useStageTimer`) and again on read,
+ * so a stale or buggy client can never skew the week's balance.
+ */
+export const MAX_STAGE_MINUTES: Record<MethodStage, number> = {
+  learn: 15,
+  listen: 10,
+  notice: 10,
+  repeat: 5,
+  speak: 8,
+  feedback: 8,
+  retry: 5,
+  review: 5,
+};
+
+/** What a stage event with no measured `minutes` is worth. Events logged before the
+ * timer existed rely on this. */
+export const DEFAULT_STAGE_MINUTES = 2;
+
+const TARGETS: Record<MethodObjective, MethodTarget> = {
   conversation: { structured: 0.3, listening: 0.35, speaking: 0.25, readingWriting: 0.1 },
   professional: { structured: 0.35, listening: 0.25, speaking: 0.2, readingWriting: 0.2 },
   academic: { structured: 0.3, listening: 0.2, speaking: 0.15, readingWriting: 0.35 },
   travel: { structured: 0.25, listening: 0.3, speaking: 0.35, readingWriting: 0.1 },
+  media: { structured: 0.25, listening: 0.4, speaking: 0.25, readingWriting: 0.1 },
 };
 
 const AREA_LABEL: Record<MethodArea, string> = {
@@ -95,22 +111,24 @@ function recent<T>(items: T[], now: number, getTime: (item: T) => number): T[] {
   return items.filter((item) => getTime(item) >= since);
 }
 
-function targetForProfile(profile: Pick<LearningProfile, "focus" | "track">): MethodTarget {
-  const focus = profile.focus.toLowerCase();
-  if (/\b(academic|exam|ielts|toefl|university|research|paper|reading)\b/.test(focus)) {
-    return TARGETS.academic;
-  }
-  if (/\b(work|professional|email|meeting|presentation|business|interview)\b/.test(focus)) {
-    return TARGETS.professional;
-  }
-  if (/\b(travel|trip|restaurant|hotel|airport)\b/.test(focus)) return TARGETS.travel;
-  return profile.track === "intermediate" ? TARGETS.conversation : DEFAULT_TARGET;
+function targetForProfile(profile: Pick<LearningProfile, "objective">): MethodTarget {
+  return TARGETS[profile.objective] ?? DEFAULT_TARGET;
 }
 
 function add(minutes: Record<MethodArea, number>, area: MethodArea, value: number): void {
   minutes[area] += Math.max(0, value);
 }
 
+/**
+ * The week's minutes per area.
+ *
+ * `method_stage` is the single source of truth: every stage that costs the learner
+ * time emits one, so counting anything else that mirrors a stage (a review record and
+ * its `cards_reviewed` event, a conversation turn and its `conversation_turn` event,
+ * a pronunciation attempt and its `repeat` stage) inflates that area and skews the
+ * shares `weakestArea` routes on. The only extras are the assessments, which consume
+ * real time but sit outside the eight-stage loop.
+ */
 function activityMinutes(events: ActivityEvent[], now: number): Record<MethodArea, number> {
   const minutes: Record<MethodArea, number> = {
     structured: 0,
@@ -122,23 +140,8 @@ function activityMinutes(events: ActivityEvent[], now: number): Record<MethodAre
   for (const event of recent(events, now, (item) => item.ts)) {
     if (event.type === "method_stage") {
       const payload = event.payload as MethodStagePayload;
-      add(minutes, payload.area, payload.minutes ?? 2);
-    } else if (event.type === "cards_reviewed") {
-      const payload = event.payload as CardsReviewedPayload;
-      add(minutes, "structured", payload.count);
-    } else if (event.type === "cards_created") {
-      const payload = event.payload as CardsCreatedPayload;
-      add(minutes, payload.source === "discover" ? "listening" : "structured", payload.count * 0.5);
-    } else if (event.type === "video_processed" || event.type === "own_source_completed") {
-      add(minutes, "listening", 5);
-    } else if (event.type === "own_source_started") {
-      add(minutes, "listening", 2);
-    } else if (event.type === "conversation_turn") {
-      add(minutes, "speaking", 2);
-    } else if (event.type === "mistake_submitted") {
-      add(minutes, "readingWriting", 3);
-    } else if (event.type === "correction_generated") {
-      add(minutes, "readingWriting", 3);
+      const cap = MAX_STAGE_MINUTES[payload.stage] ?? DEFAULT_STAGE_MINUTES;
+      add(minutes, payload.area, Math.min(payload.minutes ?? DEFAULT_STAGE_MINUTES, cap));
     } else if (event.type === "progress_checkin") {
       add(minutes, "readingWriting", 5);
     } else if (event.type === "c1_diagnosis_completed") {
@@ -149,27 +152,6 @@ function activityMinutes(events: ActivityEvent[], now: number): Record<MethodAre
   }
 
   return minutes;
-}
-
-function addSnapshotMinutes(
-  minutes: Record<MethodArea, number>,
-  snapshot: MethodSnapshot,
-  now: number,
-): void {
-  add(minutes, "speaking", recent(snapshot.pronunciationAttempts, now, (item) => item.createdAt).length * 3);
-
-  const recentConversations = recent(snapshot.conversations, now, (item) => item.startedAt);
-  const userTurns = recentConversations.reduce(
-    (sum, conversation) => sum + conversation.turns.filter((turn) => turn.role === "user").length,
-    0,
-  );
-  add(minutes, "speaking", userTurns * 2);
-
-  const recentReviews = recent(snapshot.reviews, now, (item) => item.reviewedAt).length;
-  add(minutes, "structured", recentReviews);
-
-  const recentErrors = recent(snapshot.errorEvents, now, (item) => item.createdAt).length;
-  add(minutes, "readingWriting", recentErrors);
 }
 
 function balanceFor(
@@ -215,53 +197,94 @@ function weakestArea(balance: MethodBalance[]): MethodBalance {
   return [...balance].sort((a, b) => b.deficit - a.deficit)[0] ?? balance[0];
 }
 
-function actionForArea(area: MethodArea): MethodAction {
-  if (area === "listening") {
-    return {
-      stage: "listen",
-      area,
-      route: "discover",
-      title: "Listen before adding more cards",
-      detail: "Spend a few minutes with real English. Catch the topic, known words, and one useful phrase.",
-      cta: "Find listening",
-      minutes: 9,
-    };
-  }
+/**
+ * Which stage the weakest area needs, read off the week's stages so the method's
+ * ordering survives:
+ *
+ *   Notice follows Listen  — input was heard but nothing was kept from it.
+ *   Repeat follows Notice and precedes Speak — a phrase was kept but never said aloud.
+ *
+ * `events` is already scoped to the rolling week, so a notice from three weeks ago
+ * cannot pin the learner on `repeat` forever. With nothing logged every `lastStageAt`
+ * is 0, both comparisons are false, and a brand-new learner is sent to `speak` — never
+ * to `repeat`, which would have nothing to imitate.
+ */
+function stageForArea(area: MethodArea, weekEvents: ActivityEvent[]): MethodStage {
+  if (area === "listening") return "listen";
+  if (area === "readingWriting") return "feedback";
   if (area === "speaking") {
-    return {
-      stage: "speak",
-      area,
-      route: "correct",
-      title: "Produce English out loud",
-      detail: "Use a phrase you already saved in one short answer, then get focused feedback.",
-      cta: "Speak or write",
-      minutes: 6,
-    };
+    return lastStageAt(weekEvents, "notice") > lastStageAt(weekEvents, "repeat") ? "repeat" : "speak";
   }
-  if (area === "readingWriting") {
-    return {
-      stage: "feedback",
-      area,
-      route: "correct",
-      title: "Write, get feedback, then try again",
-      detail: "A short answer is enough. The important step is applying the correction immediately.",
-      cta: "Open Mistakes",
-      minutes: 3,
-    };
+  return lastStageAt(weekEvents, "listen") > lastStageAt(weekEvents, "notice") ? "notice" : "review";
+}
+
+function actionForStage(stage: MethodStage, area: MethodArea): MethodAction {
+  switch (stage) {
+    case "listen":
+      return {
+        stage,
+        area,
+        route: "discover",
+        title: "Listen before adding more cards",
+        detail: "Spend a few minutes with real English. Catch the topic, known words, and one useful phrase.",
+        cta: "Find listening",
+        minutes: 9,
+      };
+    case "notice":
+      return {
+        stage,
+        area,
+        route: "discover",
+        title: "Keep what you just heard",
+        detail: "You listened, but nothing was saved. Pull out the two or three phrases you would actually use.",
+        cta: "Pick phrases to keep",
+        minutes: 5,
+      };
+    case "repeat":
+      return {
+        stage,
+        area,
+        route: "speak",
+        title: "Say the phrase out loud",
+        detail: "Imitate the model line first. Repeating what you noticed is what makes it available when you speak.",
+        cta: "Listen and repeat",
+        minutes: 4,
+      };
+    case "speak":
+      return {
+        stage,
+        area,
+        route: "speak",
+        title: "Produce English out loud",
+        detail: "Answer one short prompt in your own voice, using a phrase you already saved.",
+        cta: "Speak now",
+        minutes: 6,
+      };
+    case "feedback":
+      return {
+        stage,
+        area,
+        route: "correct",
+        title: "Write, get feedback, then try again",
+        detail: "A short answer is enough. The important step is applying the correction immediately.",
+        cta: "Open Mistakes",
+        minutes: 3,
+      };
+    default:
+      return {
+        stage: "review",
+        area,
+        route: "review",
+        title: "Review to make phrases usable",
+        detail: "Use active recall before adding new material, so your useful phrases stay available.",
+        cta: "Review now",
+        minutes: 12,
+      };
   }
-  return {
-    stage: "review",
-    area,
-    route: "review",
-    title: "Review to make phrases usable",
-    detail: "Use active recall before adding new material, so your useful phrases stay available.",
-    cta: "Review now",
-    minutes: 12,
-  };
 }
 
 export function deriveMethodPlan(input: {
-  profile: Pick<LearningProfile, "focus" | "track">;
+  profile: Pick<LearningProfile, "objective">;
   activity: ActivityEvent[];
   snapshot: MethodSnapshot;
   now?: number;
@@ -269,8 +292,8 @@ export function deriveMethodPlan(input: {
   const now = input.now ?? Date.now();
   const target = targetForProfile(input.profile);
   const minutes = activityMinutes(input.activity, now);
-  addSnapshotMinutes(minutes, input.snapshot, now);
   const { balance, weeklyMinutes } = balanceFor(minutes, target);
+  const weekEvents = recent(input.activity, now, (item) => item.ts);
 
   let action: MethodAction;
   if (input.snapshot.cards === 0) {
@@ -287,8 +310,10 @@ export function deriveMethodPlan(input: {
     action = {
       stage: "review",
       area: "structured",
+      // A built string can never match an i18n key, so this title stays static and the
+      // count is carried by the surrounding copy, which the UI already localizes.
       route: "review",
-      title: `${input.snapshot.due} practice phrase${input.snapshot.due === 1 ? "" : "s"} due`,
+      title: "Practice phrases are due",
       detail: "Review first. Retrieval is the structured part that keeps input available for speaking.",
       cta: "Review now",
       minutes: Math.min(12, Math.max(3, input.snapshot.due)),
@@ -304,7 +329,8 @@ export function deriveMethodPlan(input: {
       minutes: 6,
     };
   } else {
-    action = actionForArea(weakestArea(balance).area);
+    const area = weakestArea(balance).area;
+    action = actionForStage(stageForArea(area, weekEvents), area);
   }
 
   return {

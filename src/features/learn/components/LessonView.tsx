@@ -21,6 +21,7 @@ import {
   passedListeningChallenge,
 } from "@/features/learn/lessonFlow";
 import { MistakeStep } from "@/features/learn/components/MistakeStep";
+import { useStageTimer } from "@/features/method/useStageTimer";
 import { saveGeneratedDeck } from "@/lib/store/repository";
 import { emitActivity } from "@/lib/store/activityLog";
 import { cn } from "@/lib/cn";
@@ -112,6 +113,33 @@ function LessonViewContent({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const playRequestRef = useRef(0);
 
+  // The lesson opens on the learn step and the notice step runs until the learner saves,
+  // so both are measured from mount.
+  const learnTimer = useStageTimer("learn", 4);
+  const noticeTimer = useStageTimer("notice", 3);
+
+  // Listening is credited for the seconds actually played, not once per press of play.
+  // The clips run a few seconds each, so the old flat minute-per-play booked a replayed
+  // clip as several minutes of listening.
+  const listenTimer = useStageTimer("listen", 1, { autoStart: false });
+  const listenedRef = useRef(false);
+  const listenEmittedRef = useRef(false);
+
+  const commitListen = useCallback(() => {
+    if (listenEmittedRef.current || !listenedRef.current) return;
+    listenEmittedRef.current = true;
+    void emitActivity("method_stage", {
+      stage: "listen",
+      area: "listening",
+      source: "lesson",
+      minutes: listenTimer.commit(),
+      subjectId: lesson.id,
+    });
+  }, [lesson.id, listenTimer]);
+
+  // A learner who closes the lesson mid-listen still listened. Bank it on the way out.
+  useEffect(() => commitListen, [commitListen]);
+
   useEffect(() => {
     void fetch("/api/models/whisper", { method: "POST" }).catch(() => {});
   }, []);
@@ -119,10 +147,13 @@ function LessonViewContent({
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
-    const onEnded = () => setPlaying(null);
+    const onEnded = () => {
+      listenTimer.pause();
+      setPlaying(null);
+    };
     audio.addEventListener("ended", onEnded);
     return () => audio.removeEventListener("ended", onEnded);
-  }, [result]);
+  }, [result, listenTimer]);
 
   const playClip = useCallback(
     async (index: number, segment: TranscriptSegment, challengeIndex?: number) => {
@@ -133,11 +164,13 @@ function LessonViewContent({
 
       if (playing === index) {
         audio.pause();
+        listenTimer.pause();
         setPlaying(null);
         return;
       }
 
       audio.pause();
+      listenTimer.pause();
       setPlaying(null);
       if (audio.src !== new URL(segment.clipUrl, window.location.href).href) {
         audio.src = segment.clipUrl;
@@ -150,6 +183,8 @@ function LessonViewContent({
         await audio.play();
         if (playRequestRef.current === requestId) {
           setPlaying(index);
+          listenedRef.current = true;
+          listenTimer.start();
           if (!transcriptRevealed && challengeIndex !== undefined) {
             setChallengePlays((counts) =>
               counts.map((count, currentIndex) =>
@@ -157,19 +192,12 @@ function LessonViewContent({
               ),
             );
           }
-          void emitActivity("method_stage", {
-            stage: "listen",
-            area: "listening",
-            source: "lesson",
-            minutes: 1,
-            subjectId: lesson.id,
-          });
         }
       } catch {
         if (playRequestRef.current === requestId) setPlaying(null);
       }
     },
-    [lesson.id, playing, transcriptRevealed],
+    [playing, transcriptRevealed, listenTimer],
   );
 
   const completeLearn = () => {
@@ -178,7 +206,7 @@ function LessonViewContent({
       stage: "learn",
       area: "structured",
       source: "lesson",
-      minutes: 4,
+      minutes: learnTimer.commit(),
       subjectId: lesson.id,
     });
   };
@@ -191,6 +219,7 @@ function LessonViewContent({
     const passed = passedListeningChallenge(listeningChallenge, comprehensionAnswers);
     setListeningChecked(true);
     setListeningPassed(passed);
+    commitListen();
   };
 
   const chooseComprehensionAnswer = (questionIndex: number, answer: string) => {
@@ -230,7 +259,7 @@ function LessonViewContent({
         stage: "notice",
         area: "structured",
         source: "lesson",
-        minutes: 3,
+        minutes: noticeTimer.commit(),
         subjectId: lesson.id,
       });
       setDone(
@@ -485,6 +514,9 @@ function LessonViewContent({
 
       {done && exercisePhrase && !mistakeSaved && (
         <MistakeStep
+          // The method's Rule #1: speaking is present from the very first lesson. The mic
+          // leads and typing stays available, so a denied mic never blocks the loop.
+          voiceFirst
           lessonId={lesson.id}
           phrase={exercisePhrase}
           productionPrompt={lesson.productionPrompt}

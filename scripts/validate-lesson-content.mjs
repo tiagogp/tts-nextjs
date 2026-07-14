@@ -80,6 +80,43 @@ export function extractMessageKeys(source) {
   return keys;
 }
 
+/**
+ * Keys that carry a non-empty pt value. extractMessageKeys only proves a key
+ * exists, so `"Foo": {}` would satisfy the gate while rendering English to a
+ * Portuguese learner. Lesson copy is gated on this set instead.
+ */
+export function extractTranslatedMessageKeys(source) {
+  const keys = new Set();
+  let current = null;
+  const hasPt = (line) => {
+    const match = line.match(/(?:^|[{,\s])pt\s*:\s*"((?:\\.|[^"\\])*)"/);
+    return Boolean(match) && match[1].trim() !== "";
+  };
+  for (const line of source.split("\n")) {
+    const quoted = line.match(/^\s*"((?:\\.|[^"\\])*)"\s*:/);
+    const bare = line.match(/^ {2}([A-Za-z_$][\w$]*)\s*:\s*\{/);
+    if (quoted || bare) {
+      current = null;
+      if (quoted) {
+        try {
+          current = JSON.parse(`"${quoted[1]}"`);
+        } catch {
+          // TypeScript parsing reports malformed source; this extractor only gates lesson keys.
+        }
+      } else {
+        current = bare[1];
+      }
+      // Single-line entries carry their pt value on the same line as the key.
+      if (current && hasPt(line)) keys.add(current);
+      continue;
+    }
+    if (!current) continue;
+    if (hasPt(line)) keys.add(current);
+    if (/^\s*\},?\s*$/.test(line)) current = null;
+  }
+  return keys;
+}
+
 function addDuplicateErrors(values, label, errors) {
   const seen = new Map();
   for (const { value, owner } of values) {
@@ -151,6 +188,27 @@ export function validateLessonModel(lessons, roadmap, translatedStrings) {
       }
     }
 
+    // Every lesson needs PT-BR copy, not just roadmap ones: nextLessonFor can serve a
+    // lesson above the learner's level while their profile — and so the Portuguese UI —
+    // stays put, and translate() falls back to the English source on a missing key.
+    if (translatedStrings) {
+      const localized = [
+        lesson.title,
+        lesson.topic,
+        lesson.objective,
+        lesson.pronunciationFocus,
+        lesson.productionPrompt,
+        lesson.retryHint,
+        ...(lesson.comprehension ?? []).flatMap((question) => [
+          question?.prompt,
+          ...(question?.options ?? []),
+        ]),
+      ].filter(nonEmptyString);
+      for (const value of localized) {
+        if (!translatedStrings.has(value)) errors.push(`${owner} is missing a PT-BR message for "${value}".`);
+      }
+    }
+
     if (!roadmapEntry) continue;
     for (const field of REQUIRED_MATERIAL_FIELDS) {
       const value = lesson[field];
@@ -193,23 +251,6 @@ export function validateLessonModel(lessons, roadmap, translatedStrings) {
       }
     }
 
-    if (translatedStrings) {
-      const localized = [
-        lesson.title,
-        lesson.topic,
-        lesson.objective,
-        lesson.pronunciationFocus,
-        lesson.productionPrompt,
-        lesson.retryHint,
-        ...(lesson.comprehension ?? []).flatMap((question) => [
-          question?.prompt,
-          ...(question?.options ?? []),
-        ]),
-      ].filter(nonEmptyString);
-      for (const value of localized) {
-        if (!translatedStrings.has(value)) errors.push(`${owner} is missing a PT-BR message for "${value}".`);
-      }
-    }
   }
 
   addDuplicateErrors(lessonIds, "Lesson id", errors);
@@ -429,7 +470,7 @@ async function main() {
     readFile(path.join(rootDir, "src/i18n/messages.ts"), "utf8"),
   ]);
   const roadmap = parseRoadmap(roadmapMarkdown);
-  const model = validateLessonModel(lessons, roadmap, extractMessageKeys(messagesSource));
+  const model = validateLessonModel(lessons, roadmap, extractTranslatedMessageKeys(messagesSource));
   const audio = await validateAudio(lessons, {
     publicDir: path.join(rootDir, "public"),
     nativeDir: path.join(rootDir, "native-audio"),

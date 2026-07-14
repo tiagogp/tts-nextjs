@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { m } from "motion/react";
 import { BLUR, springSoft, TRAVEL } from "@/lib/motion";
 import AppHeader from "@/components/app/AppHeader";
@@ -16,6 +16,8 @@ import { TabErrorBoundary } from "@/components/app/TabErrorBoundary";
 import DiscoverTab from "@/features/discover/components/DiscoverTab";
 import { LEVEL_RANK } from "@/features/discover/levels";
 import { HojeHome } from "@/features/home/components/HojeHome";
+import { GuidedSpeaking } from "@/features/pronunciation/components/GuidedSpeaking";
+import { useProviderSelection } from "@/features/cards/hooks/useProviderSelection";
 import { LessonView } from "@/features/learn/components/LessonView";
 import { completedLessonIdsFromCardIds, firstLesson, lessonById, nextLessonFor } from "@/features/learn/lessonDeck";
 import SettingsScreen from "@/features/settings/components/SettingsScreen";
@@ -52,7 +54,7 @@ function TabContent({
   onOpenSettings,
   onOpenDiscover,
   onOpenPractice,
-  onOpenConversation,
+  onSpeak,
   onOpenCorrect,
   onFirstLesson,
   onOpenLesson,
@@ -62,7 +64,8 @@ function TabContent({
   onOpenSettings: () => void;
   onOpenDiscover: () => void;
   onOpenPractice: () => void;
-  onOpenConversation?: () => void;
+  /** Always defined: the method requires speaking to be reachable from day 1. */
+  onSpeak: () => void;
   onOpenCorrect: () => void;
   onFirstLesson: () => void;
   onOpenLesson: (lessonId?: string) => void;
@@ -76,6 +79,7 @@ function TabContent({
         onCorrect={onOpenCorrect}
         onFirstLesson={onFirstLesson}
         onLesson={onOpenLesson}
+        onSpeak={onSpeak}
       />
     );
   }
@@ -90,7 +94,7 @@ function TabContent({
       />
     );
   }
-  if (tab === "study") return <StudyTab onDiscover={onOpenDiscover} onConversation={onOpenConversation} />;
+  if (tab === "study") return <StudyTab onDiscover={onOpenDiscover} onConversation={onSpeak} />;
   if (tab === "correct") return <CorrectTab onOpenSettings={onOpenSettings} onStudyNow={onOpenPractice} />;
   return null;
 }
@@ -98,7 +102,8 @@ function TabContent({
 // Conversation/VAD is demoted out of the primary tabs (W3) but stays fully
 // functional, reachable as an overlay rather than a phantom tab. C1 diagnosis (experimental,
 // experimental diagnosis follows the same pattern: never a primary tab.
-type Overlay = "settings" | "tools" | "converse" | "c1" | null;
+// `speak` is the beginner half of that pair — see `openSpeaking`.
+type Overlay = "settings" | "tools" | "converse" | "speak" | "c1" | null;
 
 function HomeContent() {
   const { t } = useT();
@@ -111,9 +116,26 @@ function HomeContent() {
   const [discoverPrefill] = useState<{ url: string; nonce: number } | null>(null);
   const lessonRequestRef = useRef(0);
   const { tabs, tier, announcement, clearAnnouncement } = useUnlockedTabs();
+  const { hasEvaluator } = useProviderSelection({ fallbackToEvaluator: true });
   const activeTab = tabs.some((item) => item.id === tab) ? tab : "hoje";
   const advancedSurfacesUnlocked = tier >= 3;
   useDockDueBadge();
+
+  /**
+   * The method's Rule #1: speaking is present from the beginning. Which speaking surface
+   * the learner gets is decided by a real capability, not by the tier alone.
+   *
+   * `ConverseTab`'s open roleplay cannot even start without an LLM provider
+   * (`canStart = hasEvaluator`), and tier 3 is reached the moment a learner saves their
+   * first own sentence — long before most of them configure one. Routing on the tier
+   * alone would therefore drop a provider-less beginner straight onto a dead end. The
+   * guided drill runs on local Whisper + local Kokoro, so it always works; roleplay is
+   * offered only once it can actually run.
+   */
+  const openSpeaking = useCallback(() => {
+    setLessonId(null);
+    setOverlay(advancedSurfacesUnlocked && hasEvaluator ? "converse" : "speak");
+  }, [advancedSurfacesUnlocked, hasEvaluator]);
 
   useEffect(() => {
     if (!announcement) return;
@@ -216,6 +238,23 @@ function HomeContent() {
                   />
                 </div>
               </div>
+            ) : overlay === "speak" ? (
+              <div className="h-full overflow-y-auto pb-16 app-scroll-region sm:pb-20">
+                <div className="mx-auto max-w-5xl px-4 py-6 sm:py-8">
+                  <div className="mb-6 flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setOverlay(null)}
+                      className="rounded-md border border-line px-2.5 py-1.5 text-sm text-ink-soft transition-colors hover:text-ink"
+                      aria-label={t("Back")}
+                    >
+                      ←
+                    </button>
+                    <h2 className="text-xl font-semibold text-ink">{t("Speak")}</h2>
+                  </div>
+                  <GuidedSpeaking onDone={() => setOverlay(null)} />
+                </div>
+              </div>
             ) : overlay === "converse" ? (
               <div className="h-full overflow-y-auto pb-16 app-scroll-region sm:pb-20">
                 <div className="mx-auto max-w-5xl px-4 py-6 sm:py-8">
@@ -290,14 +329,7 @@ function HomeContent() {
                           }}
                           onOpenDiscover={() => changeTab("discover")}
                           onOpenPractice={() => changeTab("study")}
-                          onOpenConversation={
-                            advancedSurfacesUnlocked
-                              ? () => {
-                                  setLessonId(null);
-                                  setOverlay("converse");
-                                }
-                              : undefined
-                          }
+                          onSpeak={openSpeaking}
                           onOpenCorrect={() => changeTab("correct")}
                           onFirstLesson={startFirstLesson}
                           onOpenLesson={openLesson}

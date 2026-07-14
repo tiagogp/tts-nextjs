@@ -23,6 +23,7 @@ import {
   type Conversation,
 } from "@/lib/store/repository";
 import { emitActivity } from "@/lib/store/activityLog";
+import { useStageTimer } from "@/features/method/useStageTimer";
 import { useProviderSelection } from "@/features/cards/hooks/useProviderSelection";
 import { ProviderPicker } from "@/features/cards/components/ProviderPicker";
 import { exportAndSaveDeck } from "@/features/cards/exportDeck";
@@ -52,6 +53,7 @@ import {
 export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () => void }) {
   const selection = useProviderSelection({ fallbackToEvaluator: true });
   const { provider, activeProvider, hasEvaluator, selectedModel } = selection;
+  const speakTimer = useStageTimer("speak", 2);
 
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [past, setPast] = useState<Conversation[]>([]);
@@ -255,6 +257,17 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
         scenarioId: conversation.context,
         turnIndex: withUser.turns.length - 1,
       });
+      // Stage 5 — original production, as opposed to the `repeat` stage's imitation.
+      // One window per turn: commit this turn, then reopen for the next.
+      const speakMinutes = speakTimer.commit();
+      speakTimer.start();
+      void emitActivity("method_stage", {
+        stage: "speak",
+        area: "speaking",
+        source: "converse",
+        minutes: speakMinutes,
+        subjectId: conversation.id,
+      });
       setTyped("");
       try {
         const { reply } = await sendConversationTurn({
@@ -282,7 +295,7 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
         setBusy(false);
       }
     },
-    [busy, conversation, provider, selectedModel, persist, synthReply, speak],
+    [busy, conversation, provider, selectedModel, persist, synthReply, speak, speakTimer],
   );
   useEffect(() => {
     sendTurnRef.current = sendTurn;

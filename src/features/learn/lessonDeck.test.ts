@@ -3,6 +3,8 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import a1b1 from "@/plans/a1-b1.json";
 import type { PlanGenerationResult } from "@/features/plan/schema";
+import { resolveInterfaceLang } from "@/i18n/config";
+import { translate } from "@/i18n/translate";
 import {
   LESSONS,
   buildDeckFromPhrases,
@@ -75,6 +77,17 @@ describe("lessonDeck", () => {
 
     const b1Ids = LESSONS.filter((lesson) => lesson.level === "B1").map((lesson) => lesson.id);
     expect(nextLessonFor({ level: "B1" }, b1Ids)?.level).toBe("B2");
+  });
+
+  it("serves translated higher-level lesson copy to A2 Portuguese learners", () => {
+    const a2Ids = LESSONS.filter((lesson) => lesson.level === "A2").map((lesson) => lesson.id);
+    const lesson = nextLessonFor({ level: "A2" }, a2Ids);
+    const lang = resolveInterfaceLang({ level: "A2", nativeLang: "pt" });
+
+    expect(lesson?.level).toBe("B1");
+    expect(lang).toBe("pt");
+    expect(translate(lang, lesson?.title ?? "")).toBe("Lição 16 — Opiniões e concordância");
+    expect(translate(lang, lesson?.topic ?? "")).toBe("Dar opiniões e reagir a elas");
   });
 
   it("keeps every referenced lesson id valid in the A1-B1 default plan", () => {

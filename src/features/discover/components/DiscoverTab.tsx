@@ -25,6 +25,7 @@ import { curateDiscoverSegments, extractDiscoverSource, generateDiscoverDeck } f
 import { DEFAULT_LEARNING_PROFILE, getLearningProfile } from "@/features/settings/learningProfile";
 import { markFirstRunPhrasesSaved, startFirstRunActivation } from "@/features/activation/firstRun";
 import { emitActivity } from "@/lib/store/activityLog";
+import { useStageTimer } from "@/features/method/useStageTimer";
 import { useT } from "@/i18n/I18nProvider";
 
 /**
@@ -126,10 +127,16 @@ export default function DiscoverTab({
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const stopAtRef = useRef<number | null>(null);
+
+  // Listening is credited for the seconds actually played, and banked once — not a flat
+  // minute every time the learner presses play on the same segment.
+  const listenTimer = useStageTimer("listen", 1, { autoStart: false });
+  const noticeTimer = useStageTimer("notice", 3);
+  const listenedRef = useRef(false);
+  const listenEmittedRef = useRef(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const playRequestRef = useRef(0);
   const sourceInputRef = useRef<HTMLInputElement | null>(null);
-  const resultSourceId = result?.sourceId;
 
   useEffect(() => {
     if (!prefill) return;
@@ -155,6 +162,24 @@ export default function DiscoverTab({
     [],
   );
 
+  const commitListen = useCallback(
+    (subjectId?: string) => {
+      if (listenEmittedRef.current || !listenedRef.current) return;
+      listenEmittedRef.current = true;
+      void emitActivity("method_stage", {
+        stage: "listen",
+        area: "listening",
+        source: "discover",
+        minutes: listenTimer.commit(),
+        subjectId,
+      });
+    },
+    [listenTimer],
+  );
+
+  // A learner who leaves Discover mid-clip still listened. Bank it on the way out.
+  useEffect(() => () => commitListen(), [commitListen]);
+
   // Stop clip playback at the segment boundary.
   useEffect(() => {
     const audio = audioRef.current;
@@ -162,12 +187,18 @@ export default function DiscoverTab({
     const onTimeUpdate = () => {
       if (stopAtRef.current != null && audio.currentTime >= stopAtRef.current) {
         audio.pause();
+        listenTimer.pause();
         stopAtRef.current = null;
         setPlaying(null);
+        return;
       }
+      // Audio playing is itself attention — keep the idle window from closing on a
+      // learner who is listening rather than clicking.
+      listenTimer.touch();
     };
     // Bundled clips (demo) play to their natural end rather than to a timestamp.
     const onEnded = () => {
+      listenTimer.pause();
       stopAtRef.current = null;
       setPlaying(null);
     };
@@ -177,7 +208,7 @@ export default function DiscoverTab({
       audio.removeEventListener("timeupdate", onTimeUpdate);
       audio.removeEventListener("ended", onEnded);
     };
-  }, [result]);
+  }, [result, listenTimer]);
 
   const playClip = useCallback(
     async (index: number, seg: TranscriptSegment) => {
@@ -209,13 +240,8 @@ export default function DiscoverTab({
           await audio.play();
           if (playRequestRef.current === requestId) {
             setPlaying(index);
-            void emitActivity("method_stage", {
-              stage: "listen",
-              area: "listening",
-              source: "discover",
-              minutes: 1,
-              subjectId: resultSourceId,
-            });
+            listenedRef.current = true;
+            listenTimer.start();
           }
         } catch {
           if (playRequestRef.current === requestId) setPlaying(null);
@@ -247,13 +273,8 @@ export default function DiscoverTab({
         await audio.play();
         if (playRequestRef.current === requestId) {
           setPlaying(index);
-          void emitActivity("method_stage", {
-            stage: "listen",
-            area: "listening",
-            source: "discover",
-            minutes: 1,
-            subjectId: resultSourceId,
-          });
+          listenedRef.current = true;
+          listenTimer.start();
         }
       } catch {
         if (playRequestRef.current === requestId) {
@@ -262,7 +283,7 @@ export default function DiscoverTab({
         }
       }
     },
-    [playing, resultSourceId],
+    [playing, listenTimer],
   );
 
   const hasSource = sourceKind === "pdf" ? file !== null : url.trim().length > 0;
@@ -435,11 +456,13 @@ export default function DiscoverTab({
       const activation = markFirstRunPhrasesSaved({ sourceId: result.sourceId });
       void emitActivity("cards_created", { count: cards.length, source: "discover", activation });
       void emitActivity("own_source_completed", { cardsCreated: cards.length });
+      // Keeping phrases is the end of the listening pass that produced them.
+      commitListen(result.sourceId);
       void emitActivity("method_stage", {
         stage: "notice",
         area: "structured",
         source: "discover",
-        minutes: 3,
+        minutes: noticeTimer.commit(),
         subjectId: result.sourceId,
       });
       setProductionPrompt(candidates[0]?.text ?? null);
@@ -451,7 +474,7 @@ export default function DiscoverTab({
     } catch (err: unknown) {
       setGenError(err instanceof Error ? err.message : t("Could not save these phrases."));
     }
-  }, [result, kept, buildCandidates, setGenError, setGenDone, t]);
+  }, [result, kept, buildCandidates, setGenError, setGenDone, t, commitListen, noticeTimer]);
 
   const generateCards = useCallback(async () => {
     if (!result || kept.size === 0) return;
@@ -658,11 +681,12 @@ export default function DiscoverTab({
             const activation = markFirstRunPhrasesSaved({ sourceId: result?.sourceId });
             void emitActivity("cards_created", { count: cards.length, source: "discover", activation });
             void emitActivity("own_source_completed", { cardsCreated: cards.length });
+            commitListen(result?.sourceId);
             void emitActivity("method_stage", {
               stage: "notice",
               area: "structured",
               source: "discover",
-              minutes: 3,
+              minutes: noticeTimer.commit(),
               subjectId: result?.sourceId,
             });
             setProductionPrompt(deckPreview.candidates[0]?.text ?? null);

@@ -8,6 +8,7 @@ import { assessPronunciation } from "@/features/pronunciation/api";
 import { synthesizeSpeech } from "@/features/converse/api";
 import { savePronunciationAttempt } from "@/lib/store/repository";
 import { emitActivity } from "@/lib/store/activityLog";
+import { useStageTimer } from "@/features/method/useStageTimer";
 import { useT } from "@/i18n/I18nProvider";
 import type {
   PronunciationAssessment,
@@ -48,6 +49,7 @@ export function PronunciationCoach({
   compact = false,
 }: PronunciationCoachProps) {
   const { t } = useT();
+  const repeatTimer = useStageTimer("repeat", 3);
   const [recording, setRecording] = useState(false);
   const [assessing, setAssessing] = useState(false);
   const [playingReference, setPlayingReference] = useState(false);
@@ -127,11 +129,14 @@ export function PronunciationCoach({
           source,
         };
         void savePronunciationAttempt(attempt).catch(() => {});
+        // One window per attempt: commit this one, then reopen for the next take.
+        const repeatMinutes = repeatTimer.commit();
+        repeatTimer.start();
         void emitActivity("method_stage", {
           stage: "repeat",
           area: "speaking",
           source: "pronunciation",
-          minutes: 3,
+          minutes: repeatMinutes,
           subjectId: cardId ?? lessonId,
         }).catch(() => {});
       } catch (err: unknown) {
@@ -140,7 +145,7 @@ export function PronunciationCoach({
         setAssessing(false);
       }
     },
-    [cardId, lessonId, source, targetLang, targetText, t],
+    [cardId, lessonId, source, targetLang, targetText, t, repeatTimer],
   );
 
   const startRecording = useCallback(async () => {

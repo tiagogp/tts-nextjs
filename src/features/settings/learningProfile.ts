@@ -10,6 +10,24 @@ const PROFILE_KEY = "phraseloop.learningProfile.v1";
 
 export type LearningTrack = "beginner" | "intermediate";
 
+/** The learner's main objective, picked during onboarding. It selects the method's
+ * study distribution (structured/listening/speaking/reading+writing). `media` is our
+ * extension for the "movies & podcasts" goal, which is listening-led. */
+export type MethodObjective =
+  | "conversation"
+  | "professional"
+  | "academic"
+  | "travel"
+  | "media";
+
+export const METHOD_OBJECTIVES: readonly MethodObjective[] = [
+  "conversation",
+  "professional",
+  "academic",
+  "travel",
+  "media",
+];
+
 export interface LearningProfile {
   /** CEFR level of the language being learned (`targetLang`). */
   level: EnglishLevel;
@@ -19,6 +37,9 @@ export interface LearningProfile {
   targetLang: string;
   /** Beginner is the product track for the sub-B1 audience. */
   track: LearningTrack;
+  /** Drives the method study distribution. Structured so it survives localization —
+   * `focus` is a display/prompt string and must never be parsed back into a goal. */
+  objective: MethodObjective;
   focus: string;
   goal: number;
   createdAt: number;
@@ -34,6 +55,7 @@ export const DEFAULT_LEARNING_PROFILE: LearningProfile = {
   nativeLang: "pt",
   targetLang: "en",
   track: "beginner",
+  objective: "conversation",
   focus: "",
   goal: 3,
   createdAt: 0,
@@ -78,6 +100,27 @@ function trackOrDefault(track: unknown): LearningTrack {
     : DEFAULT_LEARNING_PROFILE.track;
 }
 
+/** Profiles written before `objective` existed only stored the English preset label.
+ * Recover the goal once, on read, so an existing learner keeps the distribution they
+ * chose instead of silently reverting to the default. */
+function objectiveFromLegacyFocus(focus: unknown): MethodObjective | null {
+  if (typeof focus !== "string") return null;
+  const value = focus.trim().toLowerCase();
+  if (!value) return null;
+  if (value.startsWith("travel")) return "travel";
+  if (value.startsWith("work")) return "professional";
+  if (value.startsWith("conversation")) return "conversation";
+  if (value.startsWith("movies")) return "media";
+  return null;
+}
+
+function objectiveOrDefault(objective: unknown, focus: unknown): MethodObjective {
+  if (METHOD_OBJECTIVES.includes(objective as MethodObjective)) {
+    return objective as MethodObjective;
+  }
+  return objectiveFromLegacyFocus(focus) ?? DEFAULT_LEARNING_PROFILE.objective;
+}
+
 function unlockedTabTierOrDefault(tier: unknown): number {
   const n = typeof tier === "number" ? tier : Number(tier);
   if (!Number.isFinite(n)) return DEFAULT_LEARNING_PROFILE.unlockedTabTier;
@@ -92,6 +135,7 @@ function normalizeProfile(value: unknown): LearningProfile {
     nativeLang: nativeLangOrDefault(raw.nativeLang),
     targetLang: targetLangOrDefault(raw.targetLang),
     track: trackOrDefault(raw.track),
+    objective: objectiveOrDefault(raw.objective, raw.focus),
     focus: typeof raw.focus === "string" ? raw.focus.trim() : "",
     goal: clampGoal(raw.goal),
     createdAt,

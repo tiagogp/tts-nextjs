@@ -52,11 +52,17 @@ export function LandingHeader({
           marginTop: scrolled ? 10 : 16,
           padding: scrolled ? "0.55rem 1.35rem" : "0.75rem 1rem",
           borderRadius: scrolled ? 999 : 14,
+
           backgroundColor: scrolled
             ? "color-mix(in srgb, var(--surface-card) 92%, transparent)"
             : "rgba(255, 255, 255, 0)",
+
           borderColor: scrolled ? "var(--border)" : "rgba(255, 255, 255, 0)",
-          boxShadow: scrolled ? "var(--shadow-soft)" : "0 0 0 rgb(0 0 0 / 0)",
+
+          boxShadow: scrolled
+            ? "0 8px 32px rgba(0, 0, 0, 0.4)"
+            : "0 8px 32px rgba(0, 0, 0, 0)",
+
           backdropFilter: scrolled ? "blur(14px)" : "blur(0px)",
         }}
         transition={headerTransition}

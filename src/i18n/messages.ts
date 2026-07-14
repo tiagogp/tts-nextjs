@@ -298,6 +298,7 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   Work: { de: "Arbeit", es: "Trabajo", fr: "Travail", ja: "仕事", pt: "Trabalho", ar: "العمل", cs: "Práce", it: "Lavoro", ko: "업무", nl: "Werk", zh: "工作" },
   Conversation: { de: "Konversation", es: "Conversación", fr: "Conversation", ja: "会話", pt: "Conversação", ar: "المحادثة", cs: "Konverzace", it: "Conversazione", ko: "회화", nl: "Conversatie", zh: "对话" },
   "Movies & podcasts": { de: "Filme & Podcasts", es: "Películas y podcasts", fr: "Films et podcasts", ja: "映画・ポッドキャスト", pt: "Filmes e podcasts", ar: "أفلام وبودكاست", cs: "Filmy a podcasty", it: "Film e podcast", ko: "영화 & 팟캐스트", nl: "Films & podcasts", zh: "电影和播客" },
+  "Study & exams": { de: "Studium & Prüfungen", es: "Estudios y exámenes", fr: "Études et examens", ja: "学習・試験", pt: "Estudos e provas", ar: "الدراسة والامتحانات", cs: "Studium a zkoušky", it: "Studio ed esami", ko: "학업 & 시험", nl: "Studie & examens", zh: "学习与考试" },
   "Intermediate is English-only.": {
     de: "Die Mittelstufe ist nur Englisch.",
     es: "Intermedio es solo inglés.",
@@ -2719,6 +2720,622 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "Use We can confirm... only for verified facts, name one unknown with still establishing, decline speculation, and give a specific time for the next update.": {
     pt: "Use We can confirm... apenas para fatos verificados, mencione um aspecto desconhecido com still establishing, recuse-se a especular e informe um horário específico para a próxima atualização.",
   },
+  /* c1-policy-analysis */
+  "Lesson 84 — Analysing Policy Choices": {
+    pt: "Lição 84 — Analisando escolhas de política pública",
+  },
+  "Evaluating policy aims, mechanisms, and side effects": {
+    pt: "Avaliação de objetivos, mecanismos e efeitos colaterais de políticas",
+  },
+  "Evaluate whether a policy's mechanism can achieve its stated aim, identify likely side effects, and recommend proportionate revisions.": {
+    pt: "Avaliar se o mecanismo de uma política é capaz de atingir o objetivo declarado, identificar prováveis efeitos colaterais e recomendar revisões proporcionais.",
+  },
+  "Use contrastive stress to separate intention from mechanism: the AIM is reasonable; the INCENTIVE may work against it.": {
+    pt: "Use a ênfase contrastiva para separar intenção de mecanismo: the AIM is reasonable; the INCENTIVE may work against it.",
+  },
+  "How do Ana and Ben revise the transport policy?": {
+    pt: "Como Ana e Ben revisam a política de transporte?",
+  },
+  "They add a targeted exemption and an outcomes review": {
+    pt: "Eles acrescentam uma isenção direcionada e uma avaliação de resultados",
+  },
+  "They replace the charge with a ban on all city travel": {
+    pt: "Eles substituem a taxa por uma proibição de todo deslocamento na cidade",
+  },
+  "They apply the charge only where buses are most frequent": {
+    pt: "Eles aplicam a taxa apenas onde os ônibus são mais frequentes",
+  },
+  "What condition may limit the policy's effectiveness?": {
+    pt: "Que condição pode limitar a eficácia da política?",
+  },
+  "Some workers lack viable transport alternatives": {
+    pt: "Alguns trabalhadores não têm alternativas viáveis de transporte",
+  },
+  "The city has too many empty buses at peak hours": {
+    pt: "A cidade tem ônibus vazios demais nos horários de pico",
+  },
+  "Drivers do not know where the city centre is": {
+    pt: "Os motoristas não sabem onde fica o centro da cidade",
+  },
+  "Which possible side effect concerns them?": {
+    pt: "Que possível efeito colateral os preocupa?",
+  },
+  "The burden may fall unfairly across income groups": {
+    pt: "O ônus pode recair de forma injusta entre as faixas de renda",
+  },
+  "Every short car journey may become longer": {
+    pt: "Todo trajeto curto de carro pode ficar mais longo",
+  },
+  "Public transport may become completely free": {
+    pt: "O transporte público pode se tornar totalmente gratuito",
+  },
+  "Analyse a policy from work, education, transport, health, or public life. Separate its aim from its mechanism, identify a condition and unintended effect, and recommend a safeguard and review measure.": {
+    pt: "Analise uma política do trabalho, da educação, do transporte, da saúde ou da vida pública. Separe o objetivo do mecanismo, identifique uma condição e um efeito não intencional e recomende uma salvaguarda e uma medida de revisão.",
+  },
+  "Use is intended to for the aim, depends on for a necessary condition, and could have for a side effect; finish with an outcome the policy should be reviewed against.": {
+    pt: "Use is intended to para o objetivo, depends on para uma condição necessária e could have para um efeito colateral; termine com um resultado em relação ao qual a política deva ser avaliada.",
+  },
+
+  /* c1-research-discussion */
+  "Lesson 85 — Discussing Research Responsibly": {
+    pt: "Lição 85 — Discutindo pesquisa com responsabilidade",
+  },
+  "Discussing evidence, limitations, and implications": {
+    pt: "Discussão de evidências, limitações e implicações",
+  },
+  "Discuss a research finding by separating results from interpretation, evaluating limitations, and drawing implications that remain within the evidence.": {
+    pt: "Discutir um achado de pesquisa separando resultados de interpretação, avaliando limitações e extraindo implicações que não ultrapassem as evidências.",
+  },
+  "Downstep from finding to qualification: the association was CONSISTENT, although the effect was MODEST.": {
+    pt: "Reduza o tom ao passar do achado para a ressalva: the association was CONSISTENT, although the effect was MODEST.",
+  },
+  "What conclusion do Maya and Theo draw from the study?": {
+    pt: "Que conclusão Maya e Theo tiram do estudo?",
+  },
+  "It justifies a broader controlled pilot": {
+    pt: "Ele justifica um piloto controlado mais amplo",
+  },
+  "It proves every employee should work remotely": {
+    pt: "Ele prova que todo funcionário deveria trabalhar remotamente",
+  },
+  "It shows remote work reduces concentration": {
+    pt: "Ele mostra que o trabalho remoto reduz a concentração",
+  },
+  "Why can the study not establish causation?": {
+    pt: "Por que o estudo não é capaz de estabelecer causalidade?",
+  },
+  "Participants selected themselves into the arrangement": {
+    pt: "Os participantes aderiram ao formato por escolha própria",
+  },
+  "The study measured concentration more than once": {
+    pt: "O estudo mediu a concentração mais de uma vez",
+  },
+  "Absenteeism remained stable during the study": {
+    pt: "O absenteísmo permaneceu estável durante o estudo",
+  },
+  "What limits how widely the result can be applied?": {
+    pt: "O que limita a abrangência de aplicação do resultado?",
+  },
+  "The sample came from one technology company": {
+    pt: "A amostra veio de uma única empresa de tecnologia",
+  },
+  "The analysis used several reasonable methods": {
+    pt: "A análise usou vários métodos razoáveis",
+  },
+  "The study continued for three months": {
+    pt: "O estudo durou três meses",
+  },
+  "Discuss a research result or evidence-based claim. State the finding, distinguish association from causation, identify a limitation or alternative explanation, and propose a proportionate implication.": {
+    pt: "Discuta um resultado de pesquisa ou uma afirmação baseada em evidências. Enuncie o achado, distinga associação de causalidade, identifique uma limitação ou explicação alternativa e proponha uma implicação proporcional.",
+  },
+  "Report what the study found before interpreting it, qualify the scope with may not be representative, and make the recommendation no stronger than the evidence.": {
+    pt: "Relate o que o estudo encontrou antes de interpretá-lo, delimite o alcance com may not be representative e não faça uma recomendação mais forte do que as evidências permitem.",
+  },
+
+  /* c1-mentoring */
+  "Lesson 86 — Mentoring Through Questions": {
+    pt: "Lição 86 — Mentoria por meio de perguntas",
+  },
+  "Coaching, reframing, and asking productive questions": {
+    pt: "Orientação, reenquadramento e perguntas produtivas",
+  },
+  "Guide a mentoring conversation with diagnostic questions, constructive reframing, and a learner-owned next step instead of prescribing a solution.": {
+    pt: "Conduzir uma conversa de mentoria com perguntas diagnósticas, reenquadramento construtivo e um próximo passo escolhido pelo próprio aprendiz, em vez de prescrever uma solução.",
+  },
+  "Use an open rise for exploratory questions and a calm fall for reframing: what have you TRIED?; this is a PRIORITY problem.": {
+    pt: "Use uma entonação ascendente aberta nas perguntas exploratórias e uma descendente serena no reenquadramento: what have you TRIED?; this is a PRIORITY problem.",
+  },
+  "What next step does the learner choose?": {
+    pt: "Que próximo passo o aprendiz escolhe?",
+  },
+  "Acknowledge requests and agree realistic deadlines": {
+    pt: "Confirmar o recebimento das solicitações e combinar prazos realistas",
+  },
+  "Ignore every new request until the month ends": {
+    pt: "Ignorar toda nova solicitação até o fim do mês",
+  },
+  "Work on all incoming requests immediately": {
+    pt: "Atender imediatamente a todas as solicitações que chegam",
+  },
+  "How does the mentor reframe the problem?": {
+    pt: "Como o mentor reenquadra o problema?",
+  },
+  "As a prioritisation issue rather than a lack of capability": {
+    pt: "Como uma questão de priorização, e não de falta de capacidade",
+  },
+  "As proof that the learner needs a different profession": {
+    pt: "Como prova de que o aprendiz precisa de outra profissão",
+  },
+  "As a technical failure in the request system": {
+    pt: "Como uma falha técnica no sistema de solicitações",
+  },
+  "Which assumption has shaped the learner's behaviour?": {
+    pt: "Que pressuposto moldou o comportamento do aprendiz?",
+  },
+  "A delayed reply will disappoint people": {
+    pt: "Uma resposta demorada vai decepcionar as pessoas",
+  },
+  "Daily lists are forbidden at work": {
+    pt: "Listas diárias são proibidas no trabalho",
+  },
+  "Every colleague prefers monthly replies": {
+    pt: "Todo colega prefere respostas mensais",
+  },
+  "Coach someone through a challenge without solving it for them. Clarify the desired outcome, ask about prior attempts, offer a tentative reframe, and help them choose a testable next step.": {
+    pt: "Oriente alguém diante de um desafio sem resolvê-lo por essa pessoa. Esclareça o resultado desejado, pergunte sobre tentativas anteriores, ofereça um reenquadramento provisório e ajude-a a escolher um próximo passo testável.",
+  },
+  "Ask two genuine questions before offering a reframe, use It sounds as though... tentatively, and leave the final choice and measure of progress with the learner.": {
+    pt: "Faça duas perguntas genuínas antes de propor um reenquadramento, use It sounds as though... com cautela e deixe a decisão final e a medida de progresso com o aprendiz.",
+  },
+
+  /* c1-strategic-priorities */
+  "Lesson 87 — Setting Strategic Priorities": {
+    pt: "Lição 87 — Definindo prioridades estratégicas",
+  },
+  "Distinguishing urgent work from strategically important work": {
+    pt: "Distinção entre trabalho urgente e trabalho estrategicamente importante",
+  },
+  "Distinguish urgent activity from strategic importance, make opportunity costs explicit, and define sequencing criteria for competing priorities.": {
+    pt: "Distinguir atividade urgente de importância estratégica, explicitar custos de oportunidade e definir critérios de sequenciamento para prioridades concorrentes.",
+  },
+  "Contrast immediate pressure with long-term value: it is URGENT, but it is not our highest LEVERAGE work.": {
+    pt: "Contraste a pressão imediata com o valor de longo prazo: it is URGENT, but it is not our highest LEVERAGE work.",
+  },
+  "Which work do the leaders prioritise?": {
+    pt: "Que trabalho os líderes priorizam?",
+  },
+  "Reducing customer cancellations": {
+    pt: "Reduzir os cancelamentos de clientes",
+  },
+  "Launching in a new market immediately": {
+    pt: "Entrar imediatamente em um novo mercado",
+  },
+  "Completing a full visual redesign": {
+    pt: "Concluir uma reformulação visual completa",
+  },
+  "Why do they delay expansion?": {
+    pt: "Por que eles adiam a expansão?",
+  },
+  "Current cancellations would absorb much of the growth": {
+    pt: "Os cancelamentos atuais absorveriam boa parte do crescimento",
+  },
+  "No customers are interested in the new market": {
+    pt: "Nenhum cliente tem interesse no novo mercado",
+  },
+  "The redesign has already increased retention": {
+    pt: "A reformulação já aumentou a retenção",
+  },
+  "What will trigger reconsideration?": {
+    pt: "O que fará com que reconsiderem?",
+  },
+  "Cancellations staying below four percent for two months": {
+    pt: "Os cancelamentos ficarem abaixo de quatro por cento por dois meses",
+  },
+  "Any team describing its work as urgent": {
+    pt: "Qualquer equipe descrever seu trabalho como urgente",
+  },
+  "The completion of one essential design fix": {
+    pt: "A conclusão de uma correção essencial de design",
+  },
+  "Prioritise three competing projects or responsibilities. Separate urgency from strategic value, name an opportunity cost, choose what to deprioritise, and define evidence that would change the sequence.": {
+    pt: "Priorize três projetos ou responsabilidades concorrentes. Separe urgência de valor estratégico, aponte um custo de oportunidade, escolha o que despriorizar e defina que evidência mudaria a ordem.",
+  },
+  "Name the long-term goal first, compare leverage rather than enthusiasm, state the opportunity cost explicitly, and attach reprioritisation to a measurable trigger.": {
+    pt: "Enuncie primeiro o objetivo de longo prazo, compare alavancagem em vez de entusiasmo, explicite o custo de oportunidade e vincule a repriorização a um gatilho mensurável.",
+  },
+
+  /* c1-nuanced-narratives */
+  "Lesson 88 — Telling a Nuanced Story": {
+    pt: "Lição 88 — Contando uma história com nuances",
+  },
+  "Telling complex stories with shifts in stance and perspective": {
+    pt: "Narrativas complexas com mudanças de posicionamento e perspectiva",
+  },
+  "Tell a complex narrative that distinguishes earlier beliefs from later understanding, integrates multiple perspectives, and avoids a falsely tidy conclusion.": {
+    pt: "Contar uma narrativa complexa que distinga as crenças de então da compreensão posterior, integre múltiplas perspectivas e evite uma conclusão falsamente arrumada.",
+  },
+  "Mark shifts in perspective with a reset in pitch: at the TIME, I saw it differently; in RETROSPECT, the warning was clear.": {
+    pt: "Marque as mudanças de perspectiva reiniciando o tom: at the TIME, I saw it differently; in RETROSPECT, the warning was clear.",
+  },
+  "How does the narrator's understanding change?": {
+    pt: "Como a compreensão do narrador muda?",
+  },
+  "The conflict becomes a mismatch of assumptions as well as timing": {
+    pt: "O conflito passa a ser também um descompasso de pressupostos, e não apenas de momento",
+  },
+  "Leila admits that she opposed every form of consultation": {
+    pt: "Leila admite que se opunha a qualquer forma de consulta",
+  },
+  "The narrator learns that no decisions had ever been discussed": {
+    pt: "O narrador descobre que nenhuma decisão jamais havia sido discutida",
+  },
+  "What did Leila believe the group was deciding?": {
+    pt: "O que Leila acreditava que o grupo estava decidindo?",
+  },
+  "Whether the plan should exist": {
+    pt: "Se o plano deveria existir",
+  },
+  "Who should write the final meeting notes": {
+    pt: "Quem deveria redigir a ata final da reunião",
+  },
+  "When the fixed plan would be announced": {
+    pt: "Quando o plano já definido seria anunciado",
+  },
+  "Why does the narrator avoid a simple moral?": {
+    pt: "Por que o narrador evita uma moral simples?",
+  },
+  "Both unclear consultation and late objections mattered": {
+    pt: "Tanto a consulta pouco clara quanto as objeções tardias tiveram peso",
+  },
+  "The project ended before anyone could speak": {
+    pt: "O projeto terminou antes que alguém pudesse se manifestar",
+  },
+  "Every participant now remembers events identically": {
+    pt: "Todos os participantes agora se lembram dos fatos de forma idêntica",
+  },
+  "Tell a story about a misunderstanding or changed judgement. Contrast what you believed then with what you understand now, include another perspective, and end without erasing unresolved tension.": {
+    pt: "Conte uma história sobre um mal-entendido ou uma mudança de julgamento. Contraste o que você acreditava então com o que entende agora, inclua outra perspectiva e termine sem apagar a tensão que ficou sem solução.",
+  },
+  "Signal the time shift with At the time and In retrospect, attribute another perspective carefully, and use partly or at the same time to preserve complexity.": {
+    pt: "Sinalize a mudança temporal com At the time e In retrospect, atribua a outra perspectiva com cuidado e use partly ou at the same time para preservar a complexidade.",
+  },
+
+  /* c2-implicit-assumptions */
+  "Lesson 89 — Exposing Hidden Assumptions": {
+    pt: "Lição 89 — Revelando pressupostos ocultos",
+  },
+  "Exposing assumptions and expressing epistemic caution": {
+    pt: "Explicitação de pressupostos e expressão de cautela epistêmica",
+  },
+  "Expose the implicit assumptions carrying an argument, assess how conclusions depend on them, and express epistemic caution without becoming evasive.": {
+    pt: "Revelar os pressupostos implícitos que sustentam um argumento, avaliar em que medida as conclusões dependem deles e expressar cautela epistêmica sem se tornar evasivo.",
+  },
+  "How do Iris and Sam evaluate the report's conclusion?": {
+    pt: "Como Iris e Sam avaliam a conclusão do relatório?",
+  },
+  "They expose its assumptions while preserving relevant negative evidence": {
+    pt: "Eles explicitam seus pressupostos e preservam as evidências negativas relevantes",
+  },
+  "They accept promotion as the only possible measure of value": {
+    pt: "Eles aceitam a promoção como a única medida possível de valor",
+  },
+  "They dismiss every measured outcome as unimportant": {
+    pt: "Eles descartam como irrelevante todo resultado medido",
+  },
+  "Which assumptions underlie the report?": {
+    pt: "Que pressupostos sustentam o relatório?",
+  },
+  "Promotion is the right measure and six months is sufficient": {
+    pt: "Que a promoção é a medida correta e que seis meses são suficientes",
+  },
+  "Retention always changes before training begins": {
+    pt: "Que a retenção sempre muda antes do início do treinamento",
+  },
+  "Internal mobility can never be measured": {
+    pt: "Que a mobilidade interna nunca pode ser medida",
+  },
+  "What evidence could weaken the broader interpretation?": {
+    pt: "Que evidência poderia enfraquecer a interpretação mais ampla?",
+  },
+  "No later change in retention or role mobility": {
+    pt: "Nenhuma mudança posterior em retenção ou mobilidade de cargo",
+  },
+  "A different title for the training programme": {
+    pt: "Um nome diferente para o programa de treinamento",
+  },
+  "More promotion data from the same six months": {
+    pt: "Mais dados de promoção do mesmo período de seis meses",
+  },
+  "Examine an argument whose conclusion seems stronger than its evidence. Identify an implicit assumption, show how the conclusion depends on it, calibrate your confidence, and name disconfirming evidence.": {
+    pt: "Examine um argumento cuja conclusão pareça mais forte do que suas evidências. Identifique um pressuposto implícito, mostre como a conclusão depende dele, calibre seu grau de confiança e aponte uma evidência que o refutaria.",
+  },
+  "State the hidden premise as an assumption, use only if to expose the dependency, then say what evidence would change your view.": {
+    pt: "Enuncie a premissa oculta como um pressuposto, use only if para expor a dependência e depois diga que evidência mudaria sua opinião.",
+  },
+
+  /* c2-analogy-metaphor */
+  "Lesson 90 — Reasoning with Analogy and Metaphor": {
+    pt: "Lição 90 — Raciocinando com analogia e metáfora",
+  },
+  "Using and critiquing analogy, metaphor, and framing": {
+    pt: "Uso e crítica de analogia, metáfora e enquadramento",
+  },
+  "Use analogy and metaphor to illuminate structure while testing where the comparison breaks down and how its framing guides judgement.": {
+    pt: "Usar analogia e metáfora para iluminar a estrutura de um problema, testando onde a comparação deixa de valer e como seu enquadramento orienta o julgamento.",
+  },
+  "Why do Nadia and Owen prefer the portfolio analogy?": {
+    pt: "Por que Nadia e Owen preferem a analogia do portfólio?",
+  },
+  "It better represents uncertainty and reallocation": {
+    pt: "Ela representa melhor a incerteza e a realocação",
+  },
+  "It proves creative work behaves exactly like finance": {
+    pt: "Ela prova que o trabalho criativo se comporta exatamente como as finanças",
+  },
+  "It removes the need to explain innovation": {
+    pt: "Ela elimina a necessidade de explicar a inovação",
+  },
+  "What does the pipeline metaphor obscure?": {
+    pt: "O que a metáfora do pipeline oculta?",
+  },
+  "Ideas can combine, pause, and return": {
+    pt: "Que as ideias podem se combinar, pausar e retornar",
+  },
+  "Some ideas eventually reach a market": {
+    pt: "Que algumas ideias acabam chegando ao mercado",
+  },
+  "Selection requires any criteria at all": {
+    pt: "Que a seleção exige algum critério",
+  },
+  "What limitation does Nadia see in the portfolio analogy?": {
+    pt: "Que limitação Nadia vê na analogia do portfólio?",
+  },
+  "It may frame creative teams as financial assets": {
+    pt: "Ela pode enquadrar equipes criativas como ativos financeiros",
+  },
+  "It contains no concept of uncertainty": {
+    pt: "Ela não contempla nenhuma noção de incerteza",
+  },
+  "It assumes resources can be allocated": {
+    pt: "Ela pressupõe que recursos podem ser alocados",
+  },
+  "Use an analogy or metaphor to explain a complex process or choice. State the relevant similarity, identify where the comparison breaks down, and explain what the framing highlights and obscures.": {
+    pt: "Use uma analogia ou metáfora para explicar um processo ou uma escolha complexa. Enuncie a semelhança relevante, identifique onde a comparação deixa de valer e explique o que o enquadramento destaca e o que ele oculta.",
+  },
+  "Name the shared structure with useful because, mark the boundary with breaks down when, and do not let a vivid comparison replace the mechanism.": {
+    pt: "Nomeie a estrutura compartilhada com useful because, marque o limite com breaks down when e não deixe que uma comparação vívida substitua o mecanismo.",
+  },
+
+  /* c2-high-stakes-negotiation */
+  "Lesson 91 — Negotiating Under Pressure": {
+    pt: "Lição 91 — Negociando sob pressão",
+  },
+  "Strategic ambiguity and precise concessions": {
+    pt: "Ambiguidade estratégica e concessões precisas",
+  },
+  "Negotiate under high stakes by separating interests from positions, managing strategic ambiguity, and making conditional concessions without accidental commitment.": {
+    pt: "Negociar em contextos de alto risco separando interesses de posições, administrando a ambiguidade estratégica e fazendo concessões condicionais sem se comprometer por acidente.",
+  },
+  "Where do the negotiators find possible movement?": {
+    pt: "Onde os negociadores encontram espaço para avançar?",
+  },
+  "A shorter exclusivity term linked to volume and later pricing": {
+    pt: "Um prazo de exclusividade mais curto, vinculado a volume e a preços posteriores",
+  },
+  "Unlimited liability in exchange for permanent exclusivity": {
+    pt: "Responsabilidade ilimitada em troca de exclusividade permanente",
+  },
+  "Immediate agreement without board approval": {
+    pt: "Acordo imediato sem aprovação do conselho",
+  },
+  "Which boundary does the supplier maintain?": {
+    pt: "Que limite o fornecedor mantém?",
+  },
+  "Liability cannot exceed the contract value": {
+    pt: "A responsabilidade não pode exceder o valor do contrato",
+  },
+  "Exclusivity must last at least five years": {
+    pt: "A exclusividade deve durar pelo menos cinco anos",
+  },
+  "Prices can never change after signing": {
+    pt: "Os preços nunca podem mudar após a assinatura",
+  },
+  "Why does the buyer clarify the meaning of silence?": {
+    pt: "Por que o comprador esclarece o significado do silêncio?",
+  },
+  "To prevent it being treated as acceptance on liability": {
+    pt: "Para evitar que ele seja tratado como aceitação quanto à responsabilidade",
+  },
+  "To accept every term without further discussion": {
+    pt: "Para aceitar todos os termos sem mais discussão",
+  },
+  "To withdraw the request for supply security": {
+    pt: "Para retirar o pedido de garantia de fornecimento",
+  },
+  "Negotiate two linked high-stakes terms. Identify the interests beneath each position, state one firm boundary, exchange conditional concessions, and clarify what remains exploratory or subject to approval.": {
+    pt: "Negocie dois termos interligados de alto risco. Identifique os interesses por trás de cada posição, estabeleça um limite firme, troque concessões condicionais e deixe claro o que ainda é exploratório ou depende de aprovação.",
+  },
+  "Use subject to and contingent on for genuine conditions, pair every concession with reciprocity, and state when language is not yet an offer.": {
+    pt: "Use subject to e contingent on para condições reais, associe cada concessão a uma contrapartida e diga quando uma formulação ainda não constitui uma oferta.",
+  },
+
+  /* c2-editorial-argument */
+  "Lesson 92 — Crafting an Editorial Argument": {
+    pt: "Lição 92 — Construindo um argumento editorial",
+  },
+  "Building a concise, rhetorically controlled editorial argument": {
+    pt: "Construção de um argumento editorial conciso e retoricamente controlado",
+  },
+  "Build a concise editorial argument with a defensible thesis, a fair concession, controlled rhetoric, and a proportionate call to action.": {
+    pt: "Construir um argumento editorial conciso, com uma tese defensável, uma concessão justa, retórica controlada e uma chamada à ação proporcional.",
+  },
+  "How does the writer revise the editorial?": {
+    pt: "Como o autor revisa o editorial?",
+  },
+  "It argues for a monitored extension of a limited trial": {
+    pt: "Ele passa a defender a extensão monitorada de um teste limitado",
+  },
+  "It demands an immediate permanent ban across the city": {
+    pt: "Ele exige uma proibição permanente e imediata em toda a cidade",
+  },
+  "It withdraws any claim that the trial produced evidence": {
+    pt: "Ele retira qualquer afirmação de que o teste produziu evidências",
+  },
+  "What is the strongest objection?": {
+    pt: "Qual é a objeção mais forte?",
+  },
+  "Traffic may be displaced to neighbouring streets": {
+    pt: "O trânsito pode ser deslocado para as ruas vizinhas",
+  },
+  "Emergency vehicles were unable to enter the area": {
+    pt: "Veículos de emergência não conseguiram entrar na área",
+  },
+  "Footfall declined throughout the trial": {
+    pt: "O fluxo de pedestres caiu ao longo do teste",
+  },
+  "Which baseline does the editor recommend?": {
+    pt: "Que parâmetro de comparação o editor recomenda?",
+  },
+  "The current situation": {
+    pt: "A situação atual",
+  },
+  "A perfect transport system": {
+    pt: "Um sistema de transporte perfeito",
+  },
+  "A city with no central streets": {
+    pt: "Uma cidade sem ruas centrais",
+  },
+  "Make a concise editorial case for a specific action. Narrow the thesis to the evidence, state the strongest objection fairly, compare action with the status quo, and end with a proportionate call to action.": {
+    pt: "Defenda de forma concisa uma ação específica em um editorial. Ajuste a tese ao que as evidências sustentam, apresente com justiça a objeção mais forte, compare a ação com o status quo e termine com uma chamada à ação proporcional.",
+  },
+  "Replace sweeping language with the strongest defensible claim, concede one legitimate concern, and match rhetorical urgency to the evidence.": {
+    pt: "Substitua as generalizações pela afirmação mais forte que você consiga defender, reconheça uma preocupação legítima e ajuste a urgência retórica ao peso das evidências.",
+  },
+
+  /* c2-debate-synthesis */
+  "Lesson 93 — Synthesising a Complex Debate": {
+    pt: "Lição 93 — Sintetizando um debate complexo",
+  },
+  "Synthesizing dense debate without flattening disagreement": {
+    pt: "Síntese de debates densos sem achatar as divergências",
+  },
+  "Synthesise a dense debate by mapping distinct claims, evidence, values, and uncertainties while preserving disagreements that cannot honestly be reconciled.": {
+    pt: "Sintetizar um debate denso mapeando afirmações, evidências, valores e incertezas distintos, preservando as divergências que não podem ser honestamente conciliadas.",
+  },
+  "What does the analyst's synthesis preserve?": {
+    pt: "O que a síntese do analista preserva?",
+  },
+  "Limited empirical agreement and a genuine ethical disagreement": {
+    pt: "Um acordo empírico limitado e uma divergência ética genuína",
+  },
+  "Complete consensus that automated screening is harmless": {
+    pt: "Um consenso completo de que a triagem automatizada é inofensiva",
+  },
+  "A single question with one uncontested answer": {
+    pt: "Uma única pergunta com uma resposta incontestada",
+  },
+  "Which short-term claim has the strongest evidence?": {
+    pt: "Que afirmação de curto prazo tem as evidências mais fortes?",
+  },
+  "Screening detects more inconsistent applications": {
+    pt: "A triagem detecta mais inscrições inconsistentes",
+  },
+  "Screening eliminates every wrong decision": {
+    pt: "A triagem elimina toda decisão equivocada",
+  },
+  "Screening has no effect on administrative work": {
+    pt: "A triagem não tem efeito algum sobre o trabalho administrativo",
+  },
+  "What issue remains unresolved?": {
+    pt: "Que questão permanece sem solução?",
+  },
+  "Who should bear the risk of a wrong decision": {
+    pt: "Quem deve arcar com o risco de uma decisão equivocada",
+  },
+  "Whether errors can occur in public administration": {
+    pt: "Se podem ocorrer erros na administração pública",
+  },
+  "Whether applications contain any information": {
+    pt: "Se as inscrições contêm alguma informação",
+  },
+  "Synthesise a complex debate with several speakers or sources. Separate the questions and claim types, state where evidence and values align or diverge, and preserve one genuinely unresolved issue.": {
+    pt: "Sintetize um debate complexo com vários interlocutores ou fontes. Separe as perguntas e os tipos de afirmação, indique onde evidências e valores convergem ou divergem e preserve uma questão genuinamente sem solução.",
+  },
+  "Do not average positions into vague middle ground; classify each claim, distinguish apparent from genuine contradiction, and state the residual disagreement precisely.": {
+    pt: "Não faça a média das posições em um meio-termo vago; classifique cada afirmação, distinga contradição aparente de contradição genuína e enuncie com precisão a divergência remanescente.",
+  },
+
+  /* a2-shopping */
+  "Lesson 11 — Shopping": { pt: "Lição 11 — Compras" },
+  "Shopping and prices": { pt: "Compras e preços" },
+
+  /* a2-past */
+  "Lesson 12 — Last Weekend": { pt: "Lição 12 — No fim de semana passado" },
+  "Simple past for everyday stories": { pt: "Passado simples para histórias do dia a dia" },
+
+  /* a2-plans */
+  "Lesson 13 — Making Plans": { pt: "Lição 13 — Fazendo planos" },
+  "Inviting, suggesting, and confirming": { pt: "Convidar, sugerir e confirmar" },
+
+  /* a2-travel */
+  "Lesson 14 — Getting around": { pt: "Lição 14 — Circulando pela cidade" },
+  "Travel and public transport": { pt: "Viagens e transporte público" },
+
+  /* a2-health */
+  "Lesson 15 — At the doctor": { pt: "Lição 15 — No médico" },
+  "Health and feeling unwell": { pt: "Saúde e mal-estar" },
+
+  /* b1-opinions */
+  "Lesson 16 — Opinions and Agreement": { pt: "Lição 16 — Opiniões e concordância" },
+  "Giving opinions and reacting to them": { pt: "Dar opiniões e reagir a elas" },
+
+  /* b1-experiences */
+  "Lesson 17 — Past Experiences": { pt: "Lição 17 — Experiências passadas" },
+  "Present perfect for life experiences": { pt: "Present perfect para experiências de vida" },
+
+  /* b1-future */
+  "Lesson 18 — Future Plans": { pt: "Lição 18 — Planos futuros" },
+  "Talking about plans and predictions": { pt: "Falar sobre planos e previsões" },
+
+  /* b1-work */
+  "Lesson 19 — At Work": { pt: "Lição 19 — No trabalho" },
+  "Everyday phrases for the workplace": { pt: "Frases do dia a dia no ambiente de trabalho" },
+
+  /* b1-problems */
+  "Lesson 20 — Sorting out problems": { pt: "Lição 20 — Resolvendo problemas" },
+  "Complaints and finding a solution": { pt: "Reclamações e busca de solução" },
+
+  /* b1-phone */
+  "Lesson 21 — On the phone": { pt: "Lição 21 — Ao telefone" },
+  "Handling everyday phone calls": { pt: "Lidar com ligações do dia a dia" },
+
+  /* b2-arguments */
+  "Lesson 22 — Making Arguments": { pt: "Lição 22 — Construindo argumentos" },
+  "Debating and defending a position": { pt: "Debater e defender uma posição" },
+
+  /* b2-conditionals */
+  "Lesson 23 — Hypotheticals": { pt: "Lição 23 — Hipóteses" },
+  "Conditionals and unreal situations": { pt: "Condicionais e situações irreais" },
+
+  /* b2-negotiation */
+  "Lesson 24 — Negotiating": { pt: "Lição 24 — Negociando" },
+  "Reaching an agreement": { pt: "Chegar a um acordo" },
+
+  /* b2-trends */
+  "Lesson 25 — Trends and Data": { pt: "Lição 25 — Tendências e dados" },
+  "Describing changes and numbers": { pt: "Descrever mudanças e números" },
+
+  /* c1-nuance */
+  "Lesson 26 — Nuance and Stance": { pt: "Lição 26 — Nuances e posicionamento" },
+
+  /* c1-register */
+  "Lesson 27 — Register and Professional Tone": { pt: "Lição 27 — Registro e tom profissional" },
+
+  /* c2-precision */
+  "Lesson 28 — Precision and Emphasis": { pt: "Lição 28 — Precisão e ênfase" },
+
+  /* c2-rhetoric */
+  "Lesson 29 — Rhetorical Control": { pt: "Lição 29 — Controle retórico" },
   "Complete Lesson 1 — Greetings": { pt: "Complete a Lição 1 — Cumprimentos" },
   "Complete Lesson 2 — Names": { pt: "Complete a Lição 2 — Nomes" },
   "Complete Lesson 3 — Countries and Cities": { pt: "Complete a Lição 3 — Países e cidades" },
@@ -2868,6 +3485,18 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "Playing...": { pt: "Tocando..." },
   "Checking...": { pt: "Verificando..." },
   "Try again": { pt: "Tentar de novo" },
+  "Write it again, using the correction": { pt: "Escreva de novo, usando a correção" },
+  "Feedback sticks when you use it immediately. Say the same idea, the clearer way.": {
+    pt: "O feedback fixa quando você usa na hora. Diga a mesma ideia, do jeito mais claro.",
+  },
+  "Check my second attempt": { pt: "Verificar minha segunda tentativa" },
+  "That's clear now. Saved for tomorrow's practice.": {
+    pt: "Agora ficou claro. Salvo para a prática de amanhã.",
+  },
+  "Still one thing to fix: {correction}": { pt: "Ainda falta um ajuste: {correction}" },
+  "Still {count} things to fix. Compare with the corrections above.": {
+    pt: "Ainda faltam {count} ajustes. Compare com as correções acima.",
+  },
   "Record": { pt: "Gravar" },
   "Completeness": { pt: "Completude" },
   "Rhythm": { pt: "Ritmo" },
@@ -3146,4 +3775,77 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   AI: { pt: "IA" },
   unavailable: { pt: "indisponível" },
   "Ollama model": { pt: "Modelo Ollama" },
+
+  // The method's next-action card (learningLoop) and the speaking surfaces. The eight
+  // stages are what Hoje recommends, so this copy is the learner's whole view of the
+  // method — it was previously English-only even for PT-BR learners.
+  "Listen before adding more cards": { pt: "Ouça antes de adicionar mais cartões" },
+  "Spend a few minutes with real English. Catch the topic, known words, and one useful phrase.": {
+    pt: "Passe alguns minutos com inglês real. Capte o tema, palavras conhecidas e uma frase útil.",
+  },
+  "Find listening": { pt: "Encontrar áudio" },
+  "Keep what you just heard": { pt: "Guarde o que você acabou de ouvir" },
+  "You listened, but nothing was saved. Pull out the two or three phrases you would actually use.": {
+    pt: "Você ouviu, mas nada foi salvo. Separe as duas ou três frases que você realmente usaria.",
+  },
+  "Pick phrases to keep": { pt: "Escolher frases para guardar" },
+  "Say the phrase out loud": { pt: "Diga a frase em voz alta" },
+  "Imitate the model line first. Repeating what you noticed is what makes it available when you speak.": {
+    pt: "Imite o modelo primeiro. Repetir o que você notou é o que deixa a frase disponível na hora de falar.",
+  },
+  "Listen and repeat": { pt: "Ouvir e repetir" },
+  "Produce English out loud": { pt: "Produza inglês em voz alta" },
+  "Answer one short prompt in your own voice, using a phrase you already saved.": {
+    pt: "Responda a uma pergunta curta com a sua voz, usando uma frase que você já salvou.",
+  },
+  "Speak now": { pt: "Falar agora" },
+  "Write, get feedback, then try again": { pt: "Escreva, receba feedback e tente de novo" },
+  "A short answer is enough. The important step is applying the correction immediately.": {
+    pt: "Uma resposta curta basta. O importante é aplicar a correção imediatamente.",
+  },
+  "Open Mistakes": { pt: "Abrir Erros" },
+  "Review to make phrases usable": { pt: "Revise para tornar as frases utilizáveis" },
+  "Use active recall before adding new material, so your useful phrases stay available.": {
+    pt: "Use recuperação ativa antes de adicionar material novo, para que suas frases úteis continuem disponíveis.",
+  },
+  "Start with one useful phrase": { pt: "Comece com uma frase útil" },
+  "Learn it, hear it, repeat it, then use it in your own sentence.": {
+    pt: "Aprenda, ouça, repita e use em uma frase sua.",
+  },
+  "Try a corrected idea again": { pt: "Tente de novo uma ideia corrigida" },
+  "Feedback only sticks when you immediately say or write a clearer version.": {
+    pt: "O feedback só fixa quando você diz ou escreve uma versão mais clara na hora.",
+  },
+
+  // Guided speaking (the beginner Speak surface) and the lesson's spoken production.
+  // "Speak", "Back", and "Try again" are already translated above.
+  Done: { pt: "Concluído" },
+  "Warm up, then say something of your own": { pt: "Aqueça e depois diga algo seu" },
+  "Imitate the model line first. You do not need to sound perfect — you need to be understood.": {
+    pt: "Imite o modelo primeiro. Você não precisa soar perfeito — precisa ser compreendido.",
+  },
+  "Repeat {current} of {total}": { pt: "Repetição {current} de {total}" },
+  "Listen, then say it back. Match the rhythm, not every sound.": {
+    pt: "Ouça e repita. Acompanhe o ritmo, não cada som.",
+  },
+  "Say one sentence of your own using this phrase.": {
+    pt: "Diga uma frase sua usando esta expressão.",
+  },
+  "No speaking material is available yet.": { pt: "Ainda não há material de fala disponível." },
+  "You spoke English and saved a sentence of your own. It comes back in review tomorrow.": {
+    pt: "Você falou inglês e salvou uma frase sua. Ela volta na revisão amanhã.",
+  },
+  "Say your sentence": { pt: "Diga sua frase" },
+  "Say it again": { pt: "Diga de novo" },
+  "Speak, or write your sentence here…": { pt: "Fale, ou escreva sua frase aqui…" },
+  "Say one sentence in English": { pt: "Diga uma frase em inglês" },
+
+  // The method-balance card (the learner's only view of the four study areas).
+  "Input → output method": { pt: "Método entrada → saída" },
+  "Practice phrases are due": { pt: "Há frases para revisar" },
+  "Review first. Retrieval is the structured part that keeps input available for speaking.": {
+    pt: "Revise primeiro. A recuperação é a parte estruturada que mantém o input disponível para falar.",
+  },
+  "~{count} min": { pt: "~{count} min" },
+  // The four area labels ("Study" / "Listen" / "Speak" / "Write") are already translated.
 };

@@ -44,8 +44,6 @@ description: Build/launch/drive recipe for verifying PhraseLoop changes end-to-e
   mounted across switches (state persists per session).
 - `window.confirm` dialogs are auto-dismissed by Playwright (destructive Settings
   actions are therefore safe-by-default in scripts).
-- W5 moderator card: visible only after visiting `?w5=1` (persists in
-  localStorage; `?w5=0` clears).
 
 ## Flows worth driving
 

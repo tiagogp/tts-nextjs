@@ -224,6 +224,50 @@ the final coverage audit has no duplicate lesson purpose.
 | 4 | `c2-editorial-argument` | Building a concise, rhetorically controlled editorial argument |
 | 4 | `c2-debate-synthesis` | Synthesizing dense debate without flattening disagreement |
 
+## Post-100 candidate pool
+
+These are **not scheduled production lessons** and do not change the 100-lesson target above. Treat
+them as a parking lot for the first expansion after the current 100 pass the definition of done,
+release audio provenance is complete, and launch validation shows that bundled curriculum should
+grow again. A candidate becomes real work only after it is moved into a scheduled wave table and
+given the full content model, audio plan, editorial review, and learner pilot.
+
+Provisional expansion shape: **100 -> 125 lessons**, with 12 of the 25 candidates still in the
+A2-B1 launch band and the rest filling practical breadth and advanced precision.
+
+| Level | Candidate id | Lesson focus | Why it belongs after 100 |
+| --- | --- | --- | --- |
+| A1 | `a1-supermarket-basics` | Finding items, prices, quantities, and checkout phrases | Extends survival English beyond classroom and cafe scripts |
+| A1 | `a1-phone-numbers` | Phone numbers, spelling names, and confirming details | Supports common service interactions without adding grammar load |
+| A1 | `a1-weather-plans` | Weather, clothing, and simple plan changes | Connects everyday small talk to immediate decisions |
+| A2 | `a2-pharmacy` | Symptoms, medicine instructions, and simple safety questions | High-utility travel/life situation not covered by general health lessons |
+| A2 | `a2-bank-basics` | Accounts, payments, cards, and simple transaction problems | Gives practical language for money tasks below B1 finance depth |
+| A2 | `a2-public-transport` | Routes, tickets, platforms, delays, and asking for help | Complements airport/hotel travel with city movement |
+| A2 | `a2-neighborhood` | Describing local places, services, and safety concerns | Bridges place vocabulary with real local needs |
+| A2 | `a2-simple-opinions` | Agreeing, disagreeing, and giving short reasons politely | Prepares learners for B1 argument without overloading them |
+| A2 | `a2-work-schedule` | Shifts, availability, breaks, and swapping times | Adds practical workplace language before B1 meetings |
+| B1 | `b1-customer-support` | Explaining a problem, requesting a fix, and following up | Turns complaints into structured, polite service interactions |
+| B1 | `b1-renting-home` | Viewing, renting, deposits, repairs, and house rules | Combines everyday housing language with negotiation-lite phrasing |
+| B1 | `b1-team-conflict` | Naming tension, proposing next steps, and keeping tone calm | Adds interpersonal repair before B2 professional disagreement |
+| B1 | `b1-online-learning` | Courses, assignments, deadlines, and asking instructors for help | Fits self-learners and remote study contexts |
+| B1 | `b1-local-news-discussion` | Discussing local events with facts, reactions, and uncertainty | Extends news/media work into personal conversation |
+| B1 | `b1-decision-making` | Comparing options, trade-offs, and simple recommendations | Strengthens reasoning language before B2 proposals |
+| B2 | `b2-performance-review` | Reflecting on impact, evidence, gaps, and development goals | Adds a concrete professional ritual with high transfer value |
+| B2 | `b2-service-recovery` | Responding to a failed service experience without defensiveness | Useful for support, hospitality, and customer-facing work |
+| B2 | `b2-technical-explanations` | Explaining systems, constraints, incidents, and workarounds | Bridges workplace English with clear technical communication |
+| B2 | `b2-risk-tradeoffs` | Weighing risk, cost, reversibility, and mitigation | Deepens cause/effect and proposal language with decision framing |
+| B2 | `b2-cross-cultural-work` | Working across norms, expectations, silence, and directness | Extends cultural-difference language into professional collaboration |
+| C1 | `c1-executive-summary` | Compressing complex information into a short decision-ready brief | Builds a practical output form for advanced workplace learners |
+| C1 | `c1-register-shifting` | Rewriting the same message for peers, clients, and leadership | Directly targets naturalness and register control from the C1 proposal |
+| C1 | `c1-complex-feedback` | Giving feedback when evidence is mixed and stakes are personal | Goes beyond balanced feedback into tact, ambiguity, and trust |
+| C2 | `c2-mediation` | Mediating between entrenched positions without false neutrality | Extends debate synthesis into live facilitation |
+| C2 | `c2-public-statement` | Drafting precise public language under scrutiny | Combines rhetorical control, caution, and audience management |
+
+First post-100 batch, if evidence supports expansion: `a2-pharmacy`, `a2-public-transport`,
+`b1-customer-support`, `b1-decision-making`, and `b2-technical-explanations`. That batch keeps the
+center of gravity on practical A2-B1 utility while testing whether learners want more bundled
+coverage after the first 100.
+
 ## Lesson definition of done
 
 Starting with Wave 1, each lesson must include the following.

@@ -11,7 +11,9 @@ import {
   type LocalCorrectionResult,
 } from "@/features/learn/localCorrection";
 import { evaluateCorrectionText } from "@/features/correct/api";
+import { useCorrectionAudio } from "@/features/correct/hooks/useCorrectionAudio";
 import { useProviderSelection } from "@/features/cards/hooks/useProviderSelection";
+import { useStageTimer } from "@/features/method/useStageTimer";
 import { OWN_SENTENCE_CARD_PREFIX, type LessonPhrase } from "@/features/learn/lessonDeck";
 import type { Card, ErrorEvent, ErrorType, PhraseCandidate } from "@/lib/cards/schema";
 import { saveCorrectionDeck, saveGeneratedDeck } from "@/lib/store/repository";
@@ -29,18 +31,25 @@ const CATEGORY_LABEL: Record<LocalCorrectionIssue["category"], string> = {
  * local check and adds general language feedback when an existing evaluator is
  * available. Saving is gated on a real second response that applies the focused
  * feedback instead of treating a click on “save” as a retry.
+ *
+ * Production can be spoken or typed. Speaking it is what puts the method's `speak`
+ * stage on the learner's first day — the mic runs on local Whisper, so it needs no
+ * provider — while typing stays a first-class path for a denied or missing mic.
  */
 export function MistakeStep({
   lessonId,
   phrase,
   productionPrompt,
   retryHint,
+  voiceFirst = false,
   onSaved,
 }: {
   lessonId: string;
   phrase: LessonPhrase;
   productionPrompt?: string;
   retryHint?: string;
+  /** Lead with the mic. Typing stays available either way. */
+  voiceFirst?: boolean;
   onSaved: (hadMistake: boolean) => void;
 }) {
   const { t } = useT();
@@ -60,6 +69,32 @@ export function MistakeStep({
   const submittedRef = useRef(false);
   const retryLoggedRef = useRef(false);
   const firstAttemptAtRef = useRef(0);
+  /** Whether the attempt being checked came from the mic. Decides which stage it credits. */
+  const spokenRef = useRef(false);
+  const retrySpokenRef = useRef(false);
+
+  // One window per attempt. The production stage is only known on submit (spoken → speak,
+  // typed → feedback), so the stage is passed at commit rather than at creation.
+  const productionTimer = useStageTimer("feedback", 3);
+  const retryTimer = useStageTimer("retry", 2);
+
+  const note = (message: string | null) => setError(message ? t(message) : null);
+
+  const productionAudio = useCorrectionAudio({
+    onNote: note,
+    onText: (updater) => {
+      spokenRef.current = true;
+      setSentence(updater);
+    },
+  });
+
+  const retryAudio = useCorrectionAudio({
+    onNote: note,
+    onText: (updater) => {
+      retrySpokenRef.current = true;
+      setRetrySentence(updater);
+    },
+  });
 
   const evaluateAttempt = async (text: string): Promise<LocalCorrectionResult> => {
     const local = correctSentenceLocally(text, phrase.en, phrase.concept);
@@ -92,12 +127,16 @@ export function MistakeStep({
     firstAttemptAtRef.current = Date.now();
     if (!submittedRef.current) {
       submittedRef.current = true;
+      const spoken = spokenRef.current;
       void emitActivity("mistake_submitted", { source: "lesson", lessonId });
+      // Spoken production is stage 5 (`speak`); typed production is credited as stage 6
+      // (`feedback`), as it always was. One stage per attempt, so a single window is
+      // never counted into two areas.
       void emitActivity("method_stage", {
-        stage: "feedback",
-        area: "readingWriting",
+        stage: spoken ? "speak" : "feedback",
+        area: spoken ? "speaking" : "readingWriting",
         source: "lesson",
-        minutes: 3,
+        minutes: productionTimer.commit(spoken ? "speak" : "feedback"),
         subjectId: lessonId,
       });
     }
@@ -121,9 +160,9 @@ export function MistakeStep({
         retryLoggedRef.current = true;
         void emitActivity("method_stage", {
           stage: "retry",
-          area: "readingWriting",
+          area: retrySpokenRef.current ? "speaking" : "readingWriting",
           source: "lesson",
-          minutes: 2,
+          minutes: retryTimer.commit(),
           subjectId: lessonId,
         });
       }
@@ -197,7 +236,7 @@ export function MistakeStep({
       <div>
         <p className="text-xs uppercase tracking-[0.7px] text-accent">{t("Your turn")}</p>
         <h3 className="mt-1 text-lg font-semibold tracking-[-0.01em] text-ink">
-          {t("Write one sentence in English")}
+          {voiceFirst ? t("Say one sentence in English") : t("Write one sentence in English")}
         </h3>
         <p className="mt-1 text-sm text-ink-soft">
           {productionPrompt
@@ -211,7 +250,10 @@ export function MistakeStep({
       <div className="space-y-2">
         <textarea
           value={sentence}
-          onChange={(event) => setSentence(event.target.value)}
+          onChange={(event) => {
+            spokenRef.current = false;
+            setSentence(event.target.value);
+          }}
           onKeyDown={(event) => {
             if (event.key === "Enter" && !event.shiftKey) {
               event.preventDefault();
@@ -219,21 +261,30 @@ export function MistakeStep({
             }
           }}
           rows={2}
-          placeholder={t("Write your sentence here…")}
+          placeholder={voiceFirst ? t("Speak, or write your sentence here…") : t("Write your sentence here…")}
           className="w-full resize-none rounded border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-accent/40"
           disabled={saving || checking}
         />
-        <Button
-          variant="primary"
-          onClick={() => void check()}
-          disabled={!sentence.trim() || saving || checking}
-        >
-          {checking
-            ? t("Checking your sentence…")
-            : result && !changedSinceCheck
-              ? t("Check again")
-              : t("Check my sentence")}
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <VoiceButton
+            audio={productionAudio}
+            disabled={saving || checking}
+            label={t("Say your sentence")}
+            // Speaking is the method's stage 5; typing is the fallback, not the default.
+            variant={voiceFirst ? "primary" : "secondary"}
+          />
+          <Button
+            variant={voiceFirst ? "secondary" : "primary"}
+            onClick={() => void check()}
+            disabled={!sentence.trim() || saving || checking}
+          >
+            {checking
+              ? t("Checking your sentence…")
+              : result && !changedSinceCheck
+                ? t("Check again")
+                : t("Check my sentence")}
+          </Button>
+        </div>
       </div>
 
       {result && !changedSinceCheck && (
@@ -256,7 +307,10 @@ export function MistakeStep({
             </div>
             <textarea
               value={retrySentence}
-              onChange={(event) => setRetrySentence(event.target.value)}
+              onChange={(event) => {
+                retrySpokenRef.current = false;
+                setRetrySentence(event.target.value);
+              }}
               onKeyDown={(event) => {
                 if (event.key === "Enter" && !event.shiftKey) {
                   event.preventDefault();
@@ -269,17 +323,24 @@ export function MistakeStep({
               className="w-full resize-none rounded border border-line bg-card px-3 py-2 text-sm text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-accent/40"
               disabled={saving || checkingRetry}
             />
-            <Button
-              variant="secondary"
-              onClick={() => void checkRetry()}
-              disabled={!retrySentence.trim() || saving || checkingRetry}
-            >
-              {checkingRetry
-                ? t("Checking second attempt…")
-                : retryResult && !retryChangedSinceCheck
-                  ? t("Check second attempt again")
-                  : t("Check second attempt")}
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <VoiceButton
+                audio={retryAudio}
+                disabled={saving || checkingRetry}
+                label={t("Say it again")}
+              />
+              <Button
+                variant="secondary"
+                onClick={() => void checkRetry()}
+                disabled={!retrySentence.trim() || saving || checkingRetry}
+              >
+                {checkingRetry
+                  ? t("Checking second attempt…")
+                  : retryResult && !retryChangedSinceCheck
+                    ? t("Check second attempt again")
+                    : t("Check second attempt")}
+              </Button>
+            </div>
 
             {retryResult && !retryChangedSinceCheck && retryResult.issues.length > 0 && (
               <FeedbackIssues issues={retryResult.issues} />
@@ -302,6 +363,37 @@ export function MistakeStep({
 
       {error && <Notice tone="error">{error}</Notice>}
     </PanelCard>
+  );
+}
+
+/**
+ * The mic for one attempt. Transcription runs on local Whisper, so this works with no
+ * provider configured — but it is always additive: a refused or missing mic leaves the
+ * textarea and the save path untouched.
+ */
+function VoiceButton({
+  audio,
+  disabled,
+  label,
+  variant = "secondary",
+}: {
+  audio: ReturnType<typeof useCorrectionAudio>;
+  disabled: boolean;
+  label: string;
+  variant?: "primary" | "secondary";
+}) {
+  const { t } = useT();
+  const { recording, transcribing, startRecording, stopRecording } = audio;
+
+  return (
+    <Button
+      variant={variant}
+      onClick={() => (recording ? stopRecording() : void startRecording())}
+      disabled={disabled || transcribing}
+      aria-pressed={recording}
+    >
+      {transcribing ? t("Transcribing…") : recording ? t("Stop recording") : label}
+    </Button>
   );
 }
 

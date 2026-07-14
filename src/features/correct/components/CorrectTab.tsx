@@ -13,6 +13,7 @@ import { fadeRise } from "@/lib/motion";
 import { useT } from "@/i18n/I18nProvider";
 import { saveCorrectionDeck } from "@/lib/store/repository";
 import { emitActivity } from "@/lib/store/activityLog";
+import { useStageTimer } from "@/features/method/useStageTimer";
 import type { AdvancedReview, ErrorEvent, ErrorType } from "@/lib/cards/schema";
 import { normalizeContext } from "@/lib/cards/context";
 import { DECK_GENERATION_TIMEOUT_MS } from "@/features/cards/constants";
@@ -31,6 +32,7 @@ import { AiEvaluateForm } from "@/features/correct/components/AiEvaluateForm";
 import { ManualEntryForm } from "@/features/correct/components/ManualEntryForm";
 import { JsonImportForm } from "@/features/correct/components/JsonImportForm";
 import { CorrectionList } from "@/features/correct/components/CorrectionList";
+import { RetryStep } from "@/features/correct/components/RetryStep";
 import { NaturalnessReview } from "@/features/correct/components/NaturalnessReview";
 
 /**
@@ -52,6 +54,8 @@ export default function CorrectTab({
   onStudyNow?: () => void;
 }) {
   const { t } = useT();
+  const feedbackTimer = useStageTimer("feedback", 3);
+  const retryTimer = useStageTimer("retry", 2, { autoStart: false });
   // The deck export synthesizes audio locally, so it needs the Kokoro model on
   // disk. Surface its download state here too — not just in the Anki Export tab.
   const kokoro = useKokoroModel();
@@ -73,6 +77,14 @@ export default function CorrectTab({
   const [aiText, setAiText] = useState("");
   const [evaluating, setEvaluating] = useState(false);
   const [aiNote, setAiNote] = useState<string | null>(null);
+
+  // Stage 7 — the second attempt. `retryOf` holds the mistakes the learner has to
+  // apply; it drives the retry panel and clears once the rewrite comes back clean.
+  const [retryOf, setRetryOf] = useState<ErrorEvent[] | null>(null);
+  const [retryText, setRetryText] = useState("");
+  const [retryChecking, setRetryChecking] = useState(false);
+  const [retryClear, setRetryClear] = useState(false);
+  const [retryNote, setRetryNote] = useState<string | null>(null);
   const {
     fileInputRef,
     recording,
@@ -200,6 +212,10 @@ export default function CorrectTab({
     setAiNote(null);
     setAdvancedReview(null);
     setGenDone(null);
+    setRetryOf(null);
+    setRetryText("");
+    setRetryClear(false);
+    setRetryNote(null);
     try {
       const review = await reviewAdvancedText({ provider, selectedModel, text, context });
       setAdvancedReview(review);
@@ -210,6 +226,18 @@ export default function CorrectTab({
       if (review.errors.length > 0) {
         setEvents((prev) => [...prev, ...review.errors]);
         setAiText("");
+        // Stages 6→7. The method treats a correction the learner never re-produces as
+        // incomplete, so opening the retry panel is part of delivering the feedback.
+        void emitActivity("mistake_submitted", { source: "correct" });
+        void emitActivity("method_stage", {
+          stage: "feedback",
+          area: "readingWriting",
+          source: "correct",
+          minutes: feedbackTimer.commit(),
+        });
+        // The retry window opens with the retry panel, not on mount.
+        retryTimer.start();
+        setRetryOf(review.errors);
       }
       if (review.errors.length === 0 && review.refinements.length > 0) {
         setAiNote(t("No errors found — see the naturalness upgrades below."));
@@ -220,7 +248,42 @@ export default function CorrectTab({
     } finally {
       setEvaluating(false);
     }
-  }, [aiText, context, evaluating, hasEvaluator, provider, selectedModel, setGenDone, t]);
+  }, [aiText, context, evaluating, hasEvaluator, provider, selectedModel, setGenDone, t, feedbackTimer, retryTimer]);
+
+  // Stage 7 — re-evaluate the rewrite. A clean second attempt is what the method's
+  // `retry` stage means, so it is the only thing that credits it (and clears Home's
+  // "try a corrected idea again" nudge). Mistakes found here are reported, not
+  // appended: they would otherwise breed cards the learner never asked for.
+  const checkRetry = useCallback(async () => {
+    const text = retryText.trim();
+    if (!text || retryChecking || !hasEvaluator) return;
+    setRetryChecking(true);
+    setRetryNote(null);
+    try {
+      const review = await reviewAdvancedText({ provider, selectedModel, text, context });
+      if (review.errors.length === 0) {
+        setRetryClear(true);
+        void emitActivity("method_stage", {
+          stage: "retry",
+          area: "readingWriting",
+          source: "correct",
+          minutes: retryTimer.commit(),
+        });
+        return;
+      }
+      setRetryNote(
+        review.errors.length === 1
+          ? t("Still one thing to fix: {correction}", { correction: review.errors[0].corrected })
+          : t("Still {count} things to fix. Compare with the corrections above.", {
+              count: review.errors.length,
+            }),
+      );
+    } catch (err: unknown) {
+      setRetryNote(err instanceof Error ? err.message : t("Couldn't evaluate the text."));
+    } finally {
+      setRetryChecking(false);
+    }
+  }, [retryText, retryChecking, hasEvaluator, provider, selectedModel, context, t, retryTimer]);
 
   const evaluatorHint = !hasEvaluator
     ? t("{provider} is unavailable. Open Settings with the gear button to connect one.", {
@@ -327,6 +390,18 @@ export default function CorrectTab({
           </div>
         </Disclosure>
       </Card>
+
+      {retryOf && retryOf.length > 0 && (
+        <RetryStep
+          corrections={retryOf}
+          value={retryText}
+          onChange={setRetryText}
+          checking={retryChecking}
+          clear={retryClear}
+          note={retryNote}
+          onCheck={() => void checkRetry()}
+        />
+      )}
 
       {advancedReview && (
         <NaturalnessReview
