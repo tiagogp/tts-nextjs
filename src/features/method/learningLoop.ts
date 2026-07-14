@@ -24,7 +24,7 @@ export type MethodStage =
   | "retry"
   | "review";
 
-export type MethodRoute = "lesson" | "discover" | "review" | "correct" | "conversation" | "none";
+export type MethodRoute = "lesson" | "discover" | "review" | "correct";
 
 export interface MethodTarget {
   structured: number;

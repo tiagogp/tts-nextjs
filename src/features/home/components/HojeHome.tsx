@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
@@ -13,11 +13,9 @@ import {
   getErrorEvents,
   getPronunciationAttempts,
   getReviews,
-  type ReviewRecord,
 } from "@/lib/store/repository";
 import { getActivityLog } from "@/lib/store/activityLog";
 import { returnMomentFor, type ReturnMoment } from "@/features/home/returnMoment";
-import { computePerformance } from "@/lib/srs/analytics";
 import { deriveMethodPlan, type MethodPlan, type MethodRoute } from "@/features/method/learningLoop";
 import { useT } from "@/i18n/I18nProvider";
 import { completedLessonIdsFromCardIds, firstLesson, nextLessonFor, type Lesson } from "@/features/learn/lessonDeck";
@@ -48,16 +46,18 @@ interface NextAction {
 export function HojeHome({ onStudy, onDiscover, onCorrect, onFirstLesson, onLesson }: HojeHomeProps) {
   const { t } = useT();
   const [counts, setCounts] = useState({ cards: 0, reviews: 0, due: 0, errors: 0 });
-  const [streakDays, setStreakDays] = useState(0);
   const [nextLesson, setNextLesson] = useState<Lesson>(() => nextLessonFor(getLearningProfile(), []) ?? firstLesson());
   const [returnMoment, setReturnMoment] = useState<ReturnMoment | null>(null);
   const [methodPlan, setMethodPlan] = useState<MethodPlan | null>(null);
-  const [countsLoaded, setCountsLoaded] = useState(() => !isStoreAvailable());
+  // Start "loading" on both server and client so the first render matches during
+  // hydration. isStoreAvailable() is false during SSR and true in the browser, so
+  // seeding this from it directly rendered the loaded state on the server and the
+  // spinner on the client — a hydration mismatch on the first screen. load()'s
+  // finally flips it once the read settles (even if the store is unavailable).
+  const [countsLoaded, setCountsLoaded] = useState(false);
 
-  useEffect(() => {
-    if (!isStoreAvailable()) return;
-    let cancelled = false;
-    const load = async () => {
+  const load = useCallback(async () => {
+    try {
       const [nextCounts, reviews, cards, errors, activity, dueCards, conversations, pronunciationAttempts] = await Promise.all([
         getCounts(),
         getReviews(),
@@ -68,9 +68,7 @@ export function HojeHome({ onStudy, onDiscover, onCorrect, onFirstLesson, onLess
         getConversations(),
         getPronunciationAttempts(),
       ]);
-      if (cancelled) return;
       setCounts({ ...nextCounts, errors: errors.length });
-      setStreakDays(computePerformance(reviews as ReviewRecord[], Date.now()).streakDays);
       setReturnMoment(
         returnMomentFor({ dueCards: dueCards.map((item) => item.card), activity, errors }),
       );
@@ -94,15 +92,30 @@ export function HojeHome({ onStudy, onDiscover, onCorrect, onFirstLesson, onLess
           completedLessonIdsFromCardIds(cards.map((card) => card.id)),
         ) ?? firstLesson(),
       );
+    } finally {
       setCountsLoaded(true);
-    };
-    void load().catch(() => {
-      if (!cancelled) setCountsLoaded(true);
-    });
-    return () => {
-      cancelled = true;
-    };
+    }
   }, []);
+
+  useEffect(() => {
+    void load().catch(() => undefined);
+  }, [load]);
+
+  // Keep the next-action card fresh if a method_stage (or any activity) event
+  // fires while the learner is sitting on Hoje — e.g. a Discover tab kept
+  // open in another pane — rather than only refreshing on remount.
+  useEffect(() => {
+    if (!isStoreAvailable()) return;
+    const handle = () => {
+      void load().catch(() => undefined);
+    };
+    window.addEventListener("phraseloop:activity", handle);
+    window.addEventListener("phraseloop:lesson-saved", handle);
+    return () => {
+      window.removeEventListener("phraseloop:activity", handle);
+      window.removeEventListener("phraseloop:lesson-saved", handle);
+    };
+  }, [load]);
 
   const hasProgress = counts.cards > 0 || counts.reviews > 0;
   const loading = !countsLoaded;
@@ -145,8 +158,7 @@ export function HojeHome({ onStudy, onDiscover, onCorrect, onFirstLesson, onLess
       </Card>
 
       {!loading && hasProgress && (
-        <div className="grid grid-cols-3 gap-3">
-          <Stat value={`${streakDays}`} label={t("day streak")} />
+        <div className="grid grid-cols-2 gap-3">
           <Stat value={`${counts.due}`} label={t("to review")} />
           <Stat value={`${counts.cards}`} label={t("practice phrases")} />
         </div>
@@ -282,7 +294,6 @@ function routeHandler(
   if (route === "correct") return handlers.onCorrect;
   if (route === "discover") return handlers.onDiscover;
   if (route === "lesson") return handlers.onFirstLesson;
-  if (route === "conversation") return handlers.onCorrect;
   return () => handlers.onLesson(handlers.nextLesson.id);
 }
 
