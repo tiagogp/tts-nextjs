@@ -5,7 +5,7 @@ export type { LandingLanguage } from "@landing/types/landing";
 export const LANDING_LANGUAGE_KEY = "phraseloop.landing.language";
 const LANDING_LANGUAGE_EVENT = "phraseloop:landing-language";
 
-let memoryLanguage: LandingLanguage = "en";
+let memoryLanguage: LandingLanguage = "pt";
 
 const ENGLISH_COPY: Record<string, string> = {
   "Como funciona": "How it works",
@@ -161,11 +161,11 @@ const ENGLISH_COPY: Record<string, string> = {
 };
 
 export function normalizeLandingLanguage(value: unknown): LandingLanguage {
-  return value === "pt" ? "pt" : "en";
+  return value === "en" ? "en" : "pt";
 }
 
 export function readLandingLanguage(): LandingLanguage {
-  if (typeof window === "undefined") return "en";
+  if (typeof window === "undefined") return "pt";
   try {
     memoryLanguage = normalizeLandingLanguage(
       localStorage.getItem(LANDING_LANGUAGE_KEY),
