@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ActivityEvent, ActivityEventType } from "@/lib/store/activityLog";
-import { computeW5Metrics, formatActivationDuration, TTFR_TARGET_MS } from "./metrics";
+import { computeActivationMetrics, formatActivationDuration, TTFR_TARGET_MS } from "./metrics";
 
 let seq = 0;
 function event<T extends ActivityEventType>(
@@ -13,9 +13,9 @@ function event<T extends ActivityEventType>(
 
 const DAY = 24 * 60 * 60 * 1000;
 
-describe("computeW5Metrics", () => {
+describe("computeActivationMetrics", () => {
   it("returns empty metrics with no activity", () => {
-    const m = computeW5Metrics([]);
+    const m = computeActivationMetrics([]);
     expect(m.activationSource).toBeNull();
     expect(m.timeToSavedPhraseMs).toBeNull();
     expect(m.timeToFirstReviewMs).toBeNull();
@@ -42,7 +42,7 @@ describe("computeW5Metrics", () => {
       }),
     ];
 
-    const m = computeW5Metrics(events);
+    const m = computeActivationMetrics(events);
     expect(m.activationSource).toBe("bundled_lesson");
     expect(m.startedAt).toBe(start);
     expect(m.timeToSavedPhraseMs).toBe(40_000);
@@ -69,7 +69,7 @@ describe("computeW5Metrics", () => {
       event("mistake_submitted", start + 80_000, { source: "lesson", lessonId: "lesson-1" }),
     ];
 
-    const m = computeW5Metrics(events);
+    const m = computeActivationMetrics(events);
     expect(m.firstLoopCompleted).toBe(false);
     expect(m.dropoffStep).toBe("correction");
   });
@@ -91,7 +91,7 @@ describe("computeW5Metrics", () => {
       event("correction_generated", start + 95_000, { cardsCreated: 1, source: "manual" }),
     ];
 
-    const m = computeW5Metrics(events);
+    const m = computeActivationMetrics(events);
     expect(m.startedAt).toBe(start);
     expect(m.timeToFirstLoopMs).toBe(95_000);
     expect(m.firstLoopUnderTarget).toBe(true);
@@ -118,7 +118,7 @@ describe("computeW5Metrics", () => {
       }),
     ];
 
-    const m = computeW5Metrics(events);
+    const m = computeActivationMetrics(events);
     expect(m.firstLoopCompleted).toBe(true);
     expect(m.timeToFirstLoopMs).toBe(100_000);
     expect(m.dropoffStep).toBe("own_source");
@@ -141,14 +141,14 @@ describe("computeW5Metrics", () => {
       }),
     ];
 
-    const m = computeW5Metrics(events);
+    const m = computeActivationMetrics(events);
     expect(m.firstLoopCompleted).toBe(false);
     expect(m.dropoffStep).toBe("mistake");
   });
 
   it("reports save-phrase dropoff after first-run start", () => {
     const start = Date.UTC(2026, 5, 1, 12, 0, 0);
-    const m = computeW5Metrics([
+    const m = computeActivationMetrics([
       event("first_run_started", start, { source: "own_source", sourceId: "https://example.com/video" }),
     ]);
 
@@ -177,12 +177,12 @@ describe("computeW5Metrics", () => {
       event("correction_generated", start + 95_000, { cardsCreated: 1, source: "lesson" }),
     ];
 
-    const untouched = computeW5Metrics(loop);
+    const untouched = computeActivationMetrics(loop);
     expect(untouched.ownSourceStarted).toBe(false);
     expect(untouched.ownSourceCompleted).toBe(false);
     expect(untouched.dropoffStep).toBe("own_source");
 
-    const attempted = computeW5Metrics([
+    const attempted = computeActivationMetrics([
       ...loop,
       event("own_source_started", start + 120_000, {
         sourceKind: "youtube",
@@ -193,7 +193,7 @@ describe("computeW5Metrics", () => {
     expect(attempted.ownSourceCompleted).toBe(false);
     expect(attempted.dropoffStep).toBe("own_source");
 
-    const completed = computeW5Metrics([
+    const completed = computeActivationMetrics([
       ...loop,
       event("own_source_started", start + 120_000, { sourceKind: "youtube" }),
       event("own_source_completed", start + 200_000, { cardsCreated: 4 }),
@@ -206,13 +206,13 @@ describe("computeW5Metrics", () => {
   it("scores legacy logs through the old discover signals", () => {
     const start = Date.UTC(2026, 5, 1, 12, 0, 0);
 
-    const attempted = computeW5Metrics([
+    const attempted = computeActivationMetrics([
       event("video_processed", start, { sourceUrl: "https://example.com/v", cardsCreated: 3 }),
     ]);
     expect(attempted.ownSourceStarted).toBe(true);
     expect(attempted.ownSourceCompleted).toBe(false);
 
-    const completed = computeW5Metrics([
+    const completed = computeActivationMetrics([
       event("cards_created", start, { count: 3, source: "discover" }),
     ]);
     expect(completed.ownSourceStarted).toBe(true);
@@ -221,7 +221,7 @@ describe("computeW5Metrics", () => {
 
   it("flags TTFR over the 2-minute activation gate", () => {
     const start = Date.UTC(2026, 5, 1, 12, 0, 0);
-    const m = computeW5Metrics([
+    const m = computeActivationMetrics([
       event("cards_reviewed", start + TTFR_TARGET_MS + 1000, {
         count: 1,
         cardIds: ["c1"],
@@ -238,7 +238,7 @@ describe("computeW5Metrics", () => {
 
   it("treats exactly 2 minutes as outside the strictly-under target", () => {
     const start = Date.UTC(2026, 5, 1, 12, 0, 0);
-    const m = computeW5Metrics([
+    const m = computeActivationMetrics([
       event("first_run_started", start, { source: "bundled_lesson", sourceId: "lesson-1" }),
       event("cards_reviewed", start + TTFR_TARGET_MS, {
         count: 1,
@@ -259,7 +259,7 @@ describe("computeW5Metrics", () => {
 
   it("reports own-source activation separately from bundled lessons", () => {
     const start = Date.UTC(2026, 5, 1, 12, 0, 0);
-    const m = computeW5Metrics([
+    const m = computeActivationMetrics([
       event("cards_created", start + 30_000, {
         count: 3,
         source: "discover",
@@ -273,7 +273,7 @@ describe("computeW5Metrics", () => {
 
   it("detects D+1 and D+7 return from later activity days", () => {
     const start = Date.UTC(2026, 5, 1, 12, 0, 0);
-    const m = computeW5Metrics([
+    const m = computeActivationMetrics([
       event("cards_created", start, { count: 5, source: "learn" }),
       event("cards_reviewed", start + DAY, { count: 1, cardIds: ["c1"] }),
       event("cards_reviewed", start + 7 * DAY, { count: 1, cardIds: ["c2"] }),
@@ -285,7 +285,7 @@ describe("computeW5Metrics", () => {
 
   it("does not count a day-2 return as D+1 or D+7", () => {
     const start = Date.UTC(2026, 5, 1, 12, 0, 0);
-    const m = computeW5Metrics([
+    const m = computeActivationMetrics([
       event("cards_created", start, { count: 5, source: "learn" }),
       event("cards_reviewed", start + 2 * DAY, { count: 1, cardIds: ["c1"] }),
     ]);
@@ -295,7 +295,7 @@ describe("computeW5Metrics", () => {
 
   it("does not let a single late return satisfy the D+1 gate", () => {
     const start = Date.UTC(2026, 5, 1, 12, 0, 0);
-    const m = computeW5Metrics([
+    const m = computeActivationMetrics([
       event("cards_created", start, { count: 5, source: "learn" }),
       event("cards_reviewed", start + 30 * DAY, { count: 1, cardIds: ["c1"] }),
     ]);

@@ -7,7 +7,7 @@ otherwise filled by Kokoro synthesis) and **never** synthesizes over a native re
 `--force` included.
 
 Recorded replacements are an optional content-quality upgrade. They still require provenance
-and licensing, but W5 and the guided first-run loop do not require them.
+and licensing, but the guided first-run loop does not require them.
 
 ## How to add a recording
 

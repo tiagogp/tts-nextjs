@@ -749,10 +749,6 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "First task started with": { pt: "Início da primeira tarefa" },
   "Own material": { pt: "Material próprio" },
   "Bundled lesson": { pt: "Lição incluída" },
-  "W5 validation": { pt: "Validação W5" },
-  "First-task times and return visits recorded on this device for the W5 session.": {
-    pt: "Tempos da primeira tarefa e retornos registrados neste dispositivo para a sessão W5.",
-  },
   "Local activity data is unavailable in this build.": {
     pt: "Os dados locais de atividade não estão disponíveis nesta build.",
   },
@@ -2924,7 +2920,7 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
     pt: "Mais erros desse tipo na sua escrita ao longo do tempo",
   },
 
-  /* ── c1 diagnosis (experimental, pre-W5 exception) ─────────── */
+  /* ── c1 diagnosis (experimental) ─────────── */
   "C1 diagnosis": { pt: "Diagnóstico C1" },
   "C1 diagnosis (experimental)": { pt: "Diagnóstico C1 (experimental)" },
   "Register, naturalness, and collocation feedback for past B1/B2 writing.": {

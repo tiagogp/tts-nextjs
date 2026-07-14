@@ -226,10 +226,10 @@ The interface takes inspiration from Intercom’s warm, editorial clarity:
 The product should feel focused and reassuring: a learner sees the next useful action rather
 than every available tool.
 
-## 13. What W5 is validating
+## 13. What launch validation checks
 
-W5 is the pre-launch decision gate. It tests whether fresh users can complete and understand
-the first loop without coaching, then return.
+Launch validation tests whether fresh users can complete and understand the first loop without
+coaching, then return.
 
 For a ten-person ICP decision round, the gate requires:
 
@@ -247,22 +247,19 @@ The differentiators participants should discover on their own are original/nativ
 audio and personal mistakes becoming drills. The own-source funnel—complete the guided loop,
 then begin and complete an import of personal material—is the key conversion after activation.
 
-The current W5 decision record is **pending**: no decision-round participants have yet been
-scored. Until that evidence exists, a friendly response or a large feature list does not change
-the roadmap.
+Until this evidence exists, a friendly response or a large feature list does not change the roadmap.
 
 ## 14. Current constraints and next decisions
 
-The app is in a validation phase, not broad-launch mode. New feature work is frozen on Speak/
-Converse, the 90-day plan, adaptive-band/cycle research, theme generation, AnkiConnect, and
-per-task provider overrides, except crash fixes.
+The app is in a validation phase, not broad-launch mode. New feature work should stay connected to
+the first-run loop, reliability, or clear launch learning.
 
 Before recruiting, the material outstanding work is:
 
 1. Produce a signed and notarized macOS build.
 2. Complete a moderator dry run on a wiped clean install.
 
-The W5 outcome decides the next move:
+Observed activation decides the next move:
 
 - Activation or comprehension fails: simplify the front door, then re-test.
 - Differentiation fails: correct the positioning and visible proof first.
@@ -281,8 +278,8 @@ work—remains conditional on this validation.
 | --- | --- | --- |
 | **Shipped foundation** | Exists and supports the core learning loop. | Discover, Correct, card quality pipeline, FSRS Study, local store, reinforcement. |
 | **Visible validation wedge** | The small experience being tested now. | Guided native-audio lesson → review → correction → own-source bridge. |
-| **Secondary / hidden depth** | Built, but should not distract from the wedge. | Export, provider setup, Converse, 90-day plan, advanced speech tools, C1 diagnosis MVP (experimental, pre-W5 exception — see [c1-phase-proposal.md](c1-phase-proposal.md)). |
-| **Blocked / gated** | Cannot drive scope until W5 evidence permits it. | Billing, mobile sync, the rest of the C1 phase (content ladder, multi-domain builder, skill/fluency dashboards), broad multi-language, tutor expansion. |
+| **Secondary / hidden depth** | Built, but should not distract from the wedge. | Export, provider setup, Converse, 90-day plan, advanced speech tools, C1 diagnosis MVP (experimental — see [c1-phase-proposal.md](c1-phase-proposal.md)). |
+| **Blocked / gated** | Cannot drive scope until launch evidence permits it. | Billing, mobile sync, the rest of the C1 phase (content ladder, multi-domain builder, skill/fluency dashboards), broad multi-language, tutor expansion. |
 
 ## Source documents
 
@@ -290,8 +287,6 @@ work—remains conditional on this validation.
 - [100-lesson content roadmap](100-lesson-roadmap.md)
 - [Architecture and build record](README.md)
 - [Validation action plan](validation-action-plan.md)
-- [W5 validation protocol](w5-validation-protocol.md)
 - [Project structure](project-structure.md)
 - [Design system](design-system.md)
 - [C1 phase proposal](c1-phase-proposal.md)
-- [W5 materials](w5/)

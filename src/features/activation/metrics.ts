@@ -7,14 +7,14 @@ import type {
 import type { FirstRunActivationSource } from "@/features/activation/firstRun";
 
 /**
- * W5 validation gate metrics, derived from the persistent local activity log.
+ * First-run activation metrics, derived from the persistent local activity log.
  *
  * The activation timer (see ./firstRun) writes timing onto the `cards_created`
- * and `cards_reviewed` events as they happen; this module reads it back out so a
- * moderator can score a session against the protocol in docs/w5-validation-protocol.md.
- * Durations are null when the relevant step has not happened yet on this device.
+ * and `cards_reviewed` events as they happen; this module reads those values back
+ * for local diagnostics and product analysis. Durations are null when the
+ * relevant step has not happened yet on this device.
  */
-export type W5DropoffStep =
+export type ActivationDropoffStep =
   | "clip"
   | "save_phrase"
   | "review"
@@ -22,7 +22,7 @@ export type W5DropoffStep =
   | "correction"
   | "own_source";
 
-export interface W5Metrics {
+export interface ActivationMetrics {
   /** Source path that produced activation timing, if captured. */
   activationSource: FirstRunActivationSource | null;
   /** First-run handover timestamp captured by the activation timer, if any. */
@@ -48,7 +48,7 @@ export interface W5Metrics {
   /** Own-source funnel: cards from the learner's own material were saved. */
   ownSourceCompleted: boolean;
   /** Earliest missing protocol step (save → review → mistake → correction → own source). */
-  dropoffStep: W5DropoffStep | null;
+  dropoffStep: ActivationDropoffStep | null;
   /** Distinct local-calendar days with activity, offset from the first active day. */
   activeDayOffsets: number[];
   /** Returned exactly on the day after the first session (classic D+1). */
@@ -69,7 +69,7 @@ function localDayIndex(ts: number): number {
   return Math.round(d.getTime() / DAY_MS);
 }
 
-function emptyMetrics(): W5Metrics {
+function emptyMetrics(): ActivationMetrics {
   return {
     activationSource: null,
     startedAt: null,
@@ -96,7 +96,7 @@ function isCorrectionSavedEvent(event: ActivityEvent): boolean {
   return (event.payload as CardsCreatedPayload).source === "correct";
 }
 
-export function computeW5Metrics(events: ActivityEvent[]): W5Metrics {
+export function computeActivationMetrics(events: ActivityEvent[]): ActivationMetrics {
   if (events.length === 0) return emptyMetrics();
 
   const sorted = [...events].sort((a, b) => a.ts - b.ts);
@@ -150,7 +150,7 @@ export function computeW5Metrics(events: ActivityEvent[]): W5Metrics {
         (e.type === "first_run_started" &&
           (e.payload as FirstRunStartedPayload).source === "own_source"),
     );
-  const dropoffStep: W5DropoffStep | null =
+  const dropoffStep: ActivationDropoffStep | null =
     firstLoopCompleted
       ? ownSourceCompleted
         ? null

@@ -141,8 +141,8 @@ const ENGLISH_COPY: Record<string, string> = {
     "Ollama support keeps assisted card creation on your Mac.",
   "Quer testar com os seus vídeos e os seus erros?":
     "Want to test it with your videos and your mistakes?",
-  "A rodada W5 procura pessoas com Mac Apple Silicon que já tentam transformar inglês real em prática. Responda às três perguntas para receber um convite quando sua vaga estiver pronta.":
-    "The W5 round is looking for people with Apple Silicon Macs who already try to turn real English into practice. Answer all three questions to receive an invite when a spot is ready.",
+  "A próxima rodada procura pessoas com Mac Apple Silicon que já tentam transformar inglês real em prática. Responda às três perguntas para receber um convite quando sua vaga estiver pronta.":
+    "The next round is looking for people with Apple Silicon Macs who already try to turn real English into practice. Answer all three questions to receive an invite when a spot is ready.",
   "Próxima rodada": "Next round",
   "Teste o PhraseLoop antes do lançamento.":
     "Test PhraseLoop before launch.",

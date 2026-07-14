@@ -1,11 +1,11 @@
-# PhraseLoop landing — W5 demand test
+# PhraseLoop landing — demand test
 
 PT-BR landing page with the qualified waitlist for the Phase 2 demand test in
 [docs/validation-action-plan.md](../../docs/validation-action-plan.md). It reuses the
 desktop app's UI (repo-root `src/*` via the `@/*` alias, see `next.config.ts`), so it must
 be built from inside the monorepo — it is not a standalone app.
 
-PT-BR is the default because W5 targets Brazilian learners. The header PT/EN selector
+PT-BR is the default because the launch audience is Brazilian learners. The header PT/EN selector
 switches the full landing page and embedded app preview, updates document language/metadata,
 and persists the choice in `localStorage` without changing the learner's CEFR profile.
 
@@ -28,7 +28,7 @@ forwards it as JSON to `PHRASELOOP_WAITLIST_WEBHOOK_URL`:
   "email": "learner@example.com",
   "platform": "Mac Apple Silicon",
   "workflow": "Copio frases de séries para o Anki…",
-  "source": "landing-w5",
+  "source": "landing",
   "createdAt": "2026-07-10T12:00:00.000Z"
 }
 ```
@@ -37,8 +37,8 @@ Any webhook that appends to a spreadsheet works (Google Apps Script doPost → S
 Zapier). Without the env var, entries are only logged server-side — **do not run the demand
 test without the webhook set**, or signups are lost when the deployment recycles.
 
-The platform question feeds the W5 decision gate: export the collected entries as a JSON
-array and pass it to `yarn w5:score … --waitlist export.json`.
+The platform question feeds launch planning: export the collected entries as a JSON array when
+comparing device demand.
 
 ## Deploying to Vercel
 
@@ -69,4 +69,4 @@ simulation currently in its place does not satisfy that checklist item.
 
 The public CTAs deliberately lead to the waitlist, not `/api/download/macos`, until the
 Phase 1 build is signed and notarized. Do not restore a public download CTA to an ad-hoc
-signed build: Gatekeeper friction would contaminate the W5 activation timer.
+signed build: Gatekeeper friction would contaminate the activation timer.

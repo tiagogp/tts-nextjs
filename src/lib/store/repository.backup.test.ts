@@ -128,8 +128,7 @@ describe("local backup round-trip (W6)", () => {
 /**
  * Phase 4 "Trust & Proof" — zero-loss backup on weeks-scale organic data.
  *
- * The moderated [backup-restore protocol](../../../docs/w5/backup-restore-validation.md)
- * proves zero loss on ONE real participant. This test proves the same property
+ * A moderated restore run proves zero loss on ONE real participant. This test proves the same property
  * automatically, across ALL 12 stores, through the exact real path a user hits:
  * export → serialize to a JSON file → parse the file back → dry-run validate →
  * restore. It fills every store with weeks of data (not the handful the high-level

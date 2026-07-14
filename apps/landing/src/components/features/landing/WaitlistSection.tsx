@@ -20,7 +20,7 @@ export function WaitlistSection({ language }: { language: LandingLanguage }) {
                 {t("Quer testar com os seus vídeos e os seus erros?")}
               </h2>
               <p className="mt-4 max-w-2xl text-lg leading-8 text-white/85">
-                {t("A rodada W5 procura pessoas com Mac Apple Silicon que já tentam transformar inglês real em prática. Responda às três perguntas para receber um convite quando sua vaga estiver pronta.")}
+                {t("A próxima rodada procura pessoas com Mac Apple Silicon que já tentam transformar inglês real em prática. Responda às três perguntas para receber um convite quando sua vaga estiver pronta.")}
               </p>
             </div>
             <div className="rounded-xl border border-line bg-card p-6 shadow-[0_24px_60px_rgba(0,0,0,0.18)]">

@@ -39,7 +39,7 @@ interface FlaggedItem {
 }
 
 /**
- * Experimental, pre-W5 exception (docs/c1-phase-proposal.md): diagnosis using the existing
+ * Experimental diagnosis using the existing
  * `errorTypes` signal + one short writing-sample check, one domain, one
  * write -> feedback -> speak loop. Reached only from Settings, not part of the tested
  * first-loop.

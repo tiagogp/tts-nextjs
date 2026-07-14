@@ -355,7 +355,7 @@ export async function getProgressAssessments(): Promise<StoredProgressAssessment
   return assessments.sort((a, b) => b.createdAt - a.createdAt);
 }
 
-/* ──────────────────────────── C1 diagnosis (experimental, pre-W5 exception) ──────────────────────────── */
+/* ──────────────────────────── C1 diagnosis (experimental) ──────────────────────────── */
 
 export function saveC1Diagnosis(diagnosis: C1Diagnosis): Promise<void> {
   return put(STORES.c1Diagnoses, diagnosis);

@@ -1,16 +1,11 @@
 # PhraseLoop — Post-B1/B2 Plateau (C1 Phase Proposal)
 
-> **Status: MVP slice implemented as a deliberate, scoped exception — not a W5 pass.**
-> The W5 Decision Record in [product.md](product.md) still reads 0/10 rows scored, pending;
-> Phase 6 ("Tutor Vision Unlock") has not opened in
-> [validation-action-plan.md](validation-action-plan.md). By explicit product decision, the
-> MVP slice described below — diagnosis using the existing `errorTypes` signal plus one short
-> writing-sample check, one domain, one write → feedback → speak loop — was built ahead of
-> that gate as an experimental surface reached only from Settings, not part of the tested
-> first-loop or default navigation, and not to be treated as validated. Everything else in
-> this doc (Native Content Ladder, multi-domain C1 builder, Skill Balance Score, Fluency
-> Progress Graph, automated study-ratio enforcement) remains unbuilt and still gated on
-> Phase 6 opening.
+> **Status: MVP slice implemented as a deliberate experimental surface.**
+> The slice described below — diagnosis using the existing `errorTypes` signal plus one short
+> writing-sample check, one domain, one write → feedback → speak loop — is reached only from
+> Settings, not part of the first-loop or default navigation, and not to be treated as validated.
+> Everything else in this doc (Native Content Ladder, multi-domain C1 builder, Skill Balance
+> Score, Fluency Progress Graph, automated study-ratio enforcement) remains unbuilt.
 
 ## Why this doc exists
 
@@ -27,9 +22,8 @@ twice before the review existed:
 
 - [product.md](product.md) → "Critica De Produto" → "Avancados": _"C1 precisa naturalidade,
   registro, idiomaticidade e colocacao, nao so erro gramatical."_
-- [validation-action-plan.md](validation-action-plan.md) Phase 6: _"A1 and C1-C2 band mechanisms
-  (graduated input + L1 scaffolding for A1; naturalness/register/collocation feedback for C1)
-  before 'A1-C2' appears in any public copy."_
+- [validation-action-plan.md](validation-action-plan.md): keep advanced tutor work behind evidence
+  from the launch loop.
 
 This is that bullet, written out — not a new product, not a decided next phase.
 
@@ -80,7 +74,7 @@ framing over content the learner already supplies, not a library this team maint
 ## C1 domain scope
 
 Not a five-domain builder (tech/business/medical/academic/interview) at once. **One domain**,
-picked by whatever goal the eventual W5-passing cohort actually states it needs (work,
+picked by whatever goal validated learners actually state they need (work,
 university, immigration) — proven on one domain before any second domain is considered.
 
 ## Protected differentiator
@@ -99,9 +93,8 @@ one write → feedback → speak loop. Nothing else from this doc gets built in 
 
 The MVP slice needs the same discipline the diagnosis instrument imposes on itself: a signal that
 says continue and a signal that says stop, named before the phase opens rather than rationalized
-after. Exact thresholds wait for a real Phase 6 cohort — the same reason [product.md](product.md)
-refuses to pre-judge W5 — so these are the directions those thresholds point, not numbers to defend
-today.
+after. Exact thresholds wait for a real advanced cohort, so these are the directions those
+thresholds point, not numbers to defend today.
 
 - **Continue signal** — the bar sits on the write → feedback → speak chain, not on the dashboard.
   A learner who writes, gets register/collocation feedback, and re-speaks the corrected version
@@ -125,7 +118,6 @@ today.
 
 ## Gate
 
-This file is inert until the W5 Decision Record in [product.md](product.md) shows a pass and
-Phase 6 opens in [validation-action-plan.md](validation-action-plan.md). No checklist boxes live
-here — when Phase 6 actually opens, todo items get written against the MVP slice above, not
-the full list this doc describes.
+This file is inert until advanced tutor work becomes the active product priority. No checklist
+boxes live here — when that phase actually opens, todo items get written against the MVP slice
+above, not the full list this doc describes.

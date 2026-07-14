@@ -1,7 +1,7 @@
 # PhraseLoop Roadmap to 100 Lessons
 
-Status: pre-production foundation implemented; lesson production remains subordinate to the W5
-decision gate in [product.md](product.md).
+Status: pre-production foundation implemented; lesson production remains subordinate to the launch
+focus in [product.md](product.md).
 
 ## Outcome
 
@@ -58,17 +58,17 @@ while retaining a complete path from A1 through C2.
 
 ### Gate 0 — validate the current wedge (36 lessons)
 
-Do not mass-produce the remaining curriculum before W5 resolves the launch route.
+Do not mass-produce more curriculum until the first-run loop and launch route are clear.
 
-- Run the 10-session W5 round and record the decision in `docs/product.md`.
+- Observe the first-run loop with target learners and record the launch route in `docs/product.md`.
 - Verify that bundled audio is present, decodes cleanly, and is understandable in the first A1,
   A2, and B1 lessons; synthetic audio is acceptable.
-- Confirm that the expanded Learn/Listen steps do not push median first-loop time beyond the W5
-  threshold.
+- Confirm that the expanded Learn/Listen steps do not push the median first-loop time beyond the
+  launch target.
 - Use participant explain-backs to revise lesson terminology before applying it to 64 more lessons.
 
-Exit gate: W5 has a recorded pass/fail and a clear segment route. If W5 fails, fix the first loop
-before producing Wave 1.
+Exit gate: the product has a clear segment route. If the loop fails, fix the first loop before
+producing Wave 1.
 
 ### Wave 1 — ICP core (36 -> 50)
 
@@ -289,7 +289,7 @@ interface LessonMaterial {
 ```
 
 Keep backward-compatible fallbacks until the original 36 lessons are migrated. This work belongs
-to the guided Learn/Listen loop, not `src/features/plan/`; the 90-day Plan stays frozen until W5.
+to the guided Learn/Listen loop, not `src/features/plan/`.
 
 ## Production workflow
 
@@ -347,7 +347,7 @@ coverage/provenance manifest. Roadmap lesson ids are parsed from this document, 
 | Milestone | Lessons | Added | Status |
 | --- | ---: | ---: | --- |
 | Baseline | 36 | — | Complete in working tree |
-| W5 gate | 36 | 0 | Pending decision round |
+| Launch validation | 36 | 0 | Pending segment route |
 | Wave 1 | 50 | 14 | Content merged, **not shipped** — see below |
 | Wave 2 | 70 | 20 | Content merged, **not shipped** |
 | Wave 3 | 85 | 15 / 15 | All three content batches merged, **not shipped** |
@@ -366,6 +366,5 @@ the definition of done, but three requirements are outstanding, and each is a re
 3. **Learner pilot.** No moderated A2 or B1 group has completed the lessons without coaching, so the
    batch gates (completion, first-attempt listening accuracy, retry completion) have no readings.
 
-Wave 1 was also produced ahead of the Gate 0 exit condition: the W5 Decision Record in
-[product.md](product.md) is still `pending` at 0/10 rows, so the launch route these lessons assume
+Wave 1 was also produced ahead of the Gate 0 exit condition: the launch route these lessons assume
 is not yet evidence-backed.

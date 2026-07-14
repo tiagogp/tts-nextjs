@@ -55,7 +55,7 @@ export interface ConversationTurnPayload {
   turnIndex: number;
 }
 
-/** The learner submitted a sentence to be corrected (the W5 "mistake" step). */
+/** The learner submitted a sentence to be corrected during the first learning loop. */
 export interface MistakeSubmittedPayload {
   source: "lesson" | "correct";
   lessonId?: string;
@@ -78,7 +78,7 @@ export interface OwnSourceStartedPayload {
   sourceId?: string;
 }
 
-/** Own-source cards were saved — the W5 funnel's completion step. */
+/** Own-source cards were saved, completing the own-material import funnel. */
 export interface OwnSourceCompletedPayload {
   cardsCreated: number;
 }

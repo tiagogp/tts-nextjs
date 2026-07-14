@@ -18,9 +18,9 @@ Two things a manual flashcard app and a generic chatbot don't do for you:
   _Writing/speech mistake → corrected phrase → weak-spot reinforcement._
 
 Everything else — local spaced repetition, zero-setup first lesson, Anki export,
-local-first storage — exists to keep that loop calm and daily. Launch validation is gated by
-W5: users must complete the first loop quickly, explain it without jargon, notice native
-audio or mistake drills, and name a repeated paid pain before billing moves forward.
+local-first storage — exists to keep that loop calm and daily. Launch validation asks whether
+users complete the first loop quickly, explain it without jargon, notice native audio or mistake
+drills, and name a repeated paid pain before billing moves forward.
 
 ### Head to head
 
@@ -39,8 +39,8 @@ PhraseLoop's launch wedge is the combined desktop loop of source audio, local re
 mistakes becoming tomorrow's practice.
 
 Launch status: this is a research-to-launch candidate. It should not be treated as broadly
-launch-ready until W5 proves activation, explain-back, D+1/D+7 return, differentiation, and one
-repeated paid pain.
+launch-ready until activation, explain-back, D+1/D+7 return, differentiation, and one repeated paid
+pain are observed.
 
 ## Stack
 

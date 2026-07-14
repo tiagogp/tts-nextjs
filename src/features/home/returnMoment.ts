@@ -6,8 +6,7 @@ import type { Card } from "@/lib/cards/schema";
  *   • the return moment on "Hoje" — "N cards para hoje — 1 veio do seu erro de ontem"
  *   • the tomorrow preview at the end of a study session — the reason to come back
  *
- * Both serve the W5 D+1/D+7 gates directly. Two honesty rules, because this copy
- * is exactly what the W5 differentiation gate measures:
+ * Two honesty rules keep this habit copy grounded in real review data:
  *
  *   1. A "came from your mistake" claim must be backed by a due card whose
  *      provenance (`card.source.kind === "error"`) points at a real ErrorEvent —

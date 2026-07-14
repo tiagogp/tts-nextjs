@@ -660,8 +660,8 @@
     "semantic_hash": ""
   },
   "src/features/learn/lessons.json": {
-    "mtime": 1784004444.1497848,
-    "ast_hash": "132daf3c9bb076f6f3da3fec975b85c7",
+    "mtime": 1784005079.4816859,
+    "ast_hash": "c3946804f7ca20984787a734a4e480e9",
     "semantic_hash": ""
   },
   "src/features/learn/localCorrection.test.ts": {
@@ -955,8 +955,8 @@
     "semantic_hash": "626e67d4231ecd1b4c46fd729cc021a4"
   },
   "src/i18n/messages.ts": {
-    "mtime": 1784004533.1485102,
-    "ast_hash": "2f9ed741dd9f744dbfc854379db23a73",
+    "mtime": 1784005169.2616622,
+    "ast_hash": "a8bbae4360b55760ab77101964257421",
     "semantic_hash": ""
   },
   "src/i18n/translate.test.ts": {
@@ -1935,8 +1935,8 @@
     "semantic_hash": ""
   },
   "docs/100-lesson-roadmap.md": {
-    "mtime": 1784004548.694182,
-    "ast_hash": "33bca10850098c6ca631597f26c3ae9c",
+    "mtime": 1784005187.0178368,
+    "ast_hash": "febf99600f57f793ba1b85d2323729c8",
     "semantic_hash": ""
   },
   "apps/landing/src/app/robots.ts": {

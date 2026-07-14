@@ -97,7 +97,7 @@ function TabContent({
 
 // Conversation/VAD is demoted out of the primary tabs (W3) but stays fully
 // functional, reachable as an overlay rather than a phantom tab. C1 diagnosis (experimental,
-// pre-W5 exception — docs/c1-phase-proposal.md) follows the same pattern: never a primary tab.
+// experimental diagnosis follows the same pattern: never a primary tab.
 type Overlay = "settings" | "tools" | "converse" | "c1" | null;
 
 function HomeContent() {

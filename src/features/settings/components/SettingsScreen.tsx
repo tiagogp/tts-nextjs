@@ -27,7 +27,6 @@ import {
   type BackupValidationResult,
 } from "@/lib/store/repository";
 import type { StoreName } from "@/lib/store/db";
-import W5ValidationCard from "@/features/settings/components/W5ValidationCard";
 import { useT } from "@/i18n/I18nProvider";
 
 type StatusTone = NonNullable<StatusPillProps["tone"]>;
@@ -652,8 +651,6 @@ export default function SettingsScreen({
           {t("From B1 the interface switches to English.")}
         </p>
       </Card>
-
-      <W5ValidationCard />
     </div>
   );
 }

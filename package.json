@@ -19,7 +19,6 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "w5:score": "node scripts/score-w5-decision-gate.mjs",
     "app": "env -u ELECTRON_RUN_AS_NODE electron electron/main.js",
     "app:dist": "bash electron/build-app.sh",
     "app:linux": "bash electron/build-linux.sh",
