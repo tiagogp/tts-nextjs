@@ -332,7 +332,7 @@ Ordered by priority for the older build-out. For the active product sequence, us
 
 - [x] **Batch audio generator → Theme-based phrase generator** — Replace the batch tool in Speech tab with a theme input (e.g. "ordering at a restaurant") → LLM generates phrase list → user toggles keep/discard → only confirmed phrases get synthesized + exported as APKG. New route: `/api/cards/generate-from-theme`.
 - [x] **JSON import in Correct tab** — Hide behind an "Advanced" disclosure or remove entirely. Too niche; creates visual noise for most users.
-- [x] **Local Heuristic provider** — Remove from the main provider selector. Present only as an "offline fallback" label, not a first-class option.
+- [x] **Local Heuristic provider** — Removed entirely; the provider set is now `openrouter | ollama | claude | openai` (`src/lib/cards/provider.ts`).
 
 ### Nice-to-Have
 
@@ -347,7 +347,7 @@ Ordered by priority for the older build-out. For the active product sequence, us
 
 - [ ] Browser extension for clipboard/selection mining
 - [ ] Mobile card review sync
-- [ ] Multi-language support (currently English-only)
+- [x] Multi-language UI — interface localized to 11 languages via `src/i18n/messages.ts` (learning content is English-teaching by design)
 - [x] Sentence-level audio playback in Discover transcript review
 - [ ] AnkiWeb sync (for users not on AnkiConnect)
 - [x] Structured logging (replace scattered `console.error()` with pino)
@@ -357,8 +357,8 @@ Ordered by priority for the older build-out. For the active product sequence, us
 ## 5. Conversation practice — shipped
 
 > **Status: ✅ all four phases below ship today.** Provider `converse()` lives in
-> `src/lib/cards/providers/{claude,openai,ollama}.ts` (the local heuristic has none — it
-> returns a 422); the API is `src/app/api/conversation/route.ts`; the UI is
+> `src/lib/cards/providers/{claude,openai,ollama,openrouter}.ts`; the API is
+> `src/app/api/conversation/route.ts`; the UI is
 > `src/features/converse/components/ConverseTab.tsx`; the `conversations` store, the
 > Phase-2 context-tagged correction (`correctReview` + `correctedAt` guard), and the
 > Phase-3 Study **ExposureMeter** (`src/features/study/components/ExposureMeter.tsx`) are
