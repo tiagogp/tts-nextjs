@@ -15,7 +15,10 @@ export type ActivityEventType =
   | "own_source_completed"
   | "progress_checkin"
   | "c1_diagnosis_completed"
-  | "level_test_completed";
+  | "level_test_completed"
+  | "listening_attempt"
+  | "production_attempt"
+  | "retry_outcome";
 
 export interface FirstRunStartedPayload {
   source: FirstRunActivationSource;
@@ -112,6 +115,89 @@ export interface LevelTestCompletedPayload {
   passed: boolean;
   score: number;
 }
+
+export interface ListeningAttemptPayload {
+  attemptId: string;
+  lessonId: string;
+  sourceId: string;
+  questions: { kind: "mainIdea" | "detail" | "sequence"; prompt: string }[];
+  answers: (string | null)[];
+  questionCount: number;
+  answeredCount: number;
+  correctCount: number;
+  mainIdeaCorrect: boolean;
+  detailCorrect: number;
+  detailTotal: number;
+  playCounts: number[];
+  transcriptVisible: boolean;
+  playbackRate: number;
+  speakerIds: string[];
+  durationMs?: number;
+  finished?: boolean;
+  playbackRates?: number[];
+  speakerFamiliarity?: "familiar" | "mixed" | "unfamiliar";
+  subtitleUsed?: boolean;
+  scaffoldUsed?: boolean;
+  skipped?: boolean;
+  startedAt?: number;
+  completedAt: number;
+}
+
+export interface ProductionAttemptPayload {
+  attemptId: string;
+  lessonId?: string;
+  source: "lesson" | "correct" | "conversation" | "study";
+  context?: string;
+  prompt?: string;
+  durationMs?: number;
+  text: string;
+  spoken: boolean;
+  recordingId?: string;
+  wordCount: number;
+  finished: boolean;
+  issueCount: number;
+  evaluated?: boolean;
+  stage?: "repeat" | "production" | "retry";
+  retryOf?: string;
+  noticedPhraseId?: string;
+  feedbackIds?: string[];
+  transferKind?: "phrase_to_situation" | "open_cloze" | "correction_recall" | "topic_retell" | "reading_to_meaning" | "listening_recognition" | "error_reconstruction";
+  transferSourceId?: string;
+  transferOutcome?: "clear" | "needs_support";
+  newContext?: boolean;
+  retold?: boolean;
+  listeningRecognition?: boolean;
+  avoidedErrorIds?: string[];
+  comprehensionScore?: number;
+  writingScore?: number;
+  scaffoldUsed?: boolean;
+  preparationMs?: number;
+  skipped?: boolean;
+  fluency?: {
+    wordsPerMinute: number;
+    pauseCount?: number;
+    longestPauseMs?: number;
+  };
+  createdAt: number;
+}
+
+export interface RetryOutcomePayload {
+  attemptId: string;
+  retryOf: string;
+  feedbackIds?: string[];
+  source: "lesson" | "correct" | "conversation";
+  recordingId?: string;
+  text: string;
+  spoken: boolean;
+  wordCount: number;
+  durationMs?: number;
+  resolved: boolean;
+  resolution?: "completed" | "deferred" | "dismissed";
+  issueCount: number;
+  scaffoldUsed?: boolean;
+  skipped?: boolean;
+  createdAt: number;
+}
 type PayloadMap = {
   first_run_started: FirstRunStartedPayload;
   method_stage: MethodStagePayload;
@@ -126,6 +212,9 @@ type PayloadMap = {
   progress_checkin: ProgressCheckinPayload;
   c1_diagnosis_completed: C1DiagnosisCompletedPayload;
   level_test_completed: LevelTestCompletedPayload;
+  listening_attempt: ListeningAttemptPayload;
+  production_attempt: ProductionAttemptPayload;
+  retry_outcome: RetryOutcomePayload;
 };
 
 export interface ActivityEvent<T extends ActivityEventType = ActivityEventType> {
@@ -154,6 +243,19 @@ export function getActivityByType<T extends ActivityEventType>(
   type: T,
 ): Promise<ActivityEvent<T>[]> {
   return getAllFromIndex<ActivityEvent<T>>(STORES.activityLog, "type", type);
+}
+
+/** Typed performance evidence queries used by progress and coaching surfaces. */
+export function getListeningAttempts(): Promise<ActivityEvent<"listening_attempt">[]> {
+  return getActivityByType("listening_attempt");
+}
+
+export function getProductionAttempts(): Promise<ActivityEvent<"production_attempt">[]> {
+  return getActivityByType("production_attempt");
+}
+
+export function getRetryOutcomes(): Promise<ActivityEvent<"retry_outcome">[]> {
+  return getActivityByType("retry_outcome");
 }
 
 export function getActivitySince(sinceTs: number): Promise<ActivityEvent[]> {

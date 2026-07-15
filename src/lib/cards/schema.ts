@@ -22,6 +22,8 @@ export type ErrorType =
   | "idiom"
   | "vocabulary"
   | "register"
+  | "missing-information"
+  | "pronunciation"
   | "other";
 
 /** One captured mistake: what the learner said vs. how a native would say it. */

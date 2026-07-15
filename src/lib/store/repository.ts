@@ -17,6 +17,13 @@ import type { StoredProgressAssessment } from "@/features/progress/model";
 import type { C1Diagnosis } from "@/features/c1/types";
 import type { StoredLevelTestAttempt } from "@/features/levelup/testModel";
 import type { ConversationTurn } from "@/lib/cards/provider";
+import type {
+  AudioRecording,
+  ListeningAttempt,
+  ProductionAttempt,
+  RetryOutcome,
+} from "@/lib/performance/types";
+import type { MethodProgressionState } from "@/features/method/progression";
 import {
   STORES,
   clearAll,
@@ -377,6 +384,89 @@ export async function getLevelTestAttempts(): Promise<StoredLevelTestAttempt[]> 
   return attempts.sort((a, b) => b.createdAt - a.createdAt);
 }
 
+/* ──────────────────────────── method performance evidence ──────────────────────────── */
+
+function notifyPerformanceEvidenceSaved(): void {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("phraseloop:performance-evidence"));
+  }
+}
+
+export async function saveListeningAttempt(attempt: ListeningAttempt): Promise<void> {
+  await put(STORES.listeningAttempts, attempt);
+  notifyPerformanceEvidenceSaved();
+}
+
+export function getListeningAttempts(): Promise<ListeningAttempt[]> {
+  return getAll<ListeningAttempt>(STORES.listeningAttempts);
+}
+
+export function getListeningAttemptsForLesson(lessonId: string): Promise<ListeningAttempt[]> {
+  return getAllFromIndex<ListeningAttempt>(STORES.listeningAttempts, "lessonId", lessonId);
+}
+
+export async function saveProductionAttempt(attempt: ProductionAttempt): Promise<void> {
+  await put(STORES.productionAttempts, attempt);
+  notifyPerformanceEvidenceSaved();
+}
+
+export function getProductionAttempts(): Promise<ProductionAttempt[]> {
+  return getAll<ProductionAttempt>(STORES.productionAttempts);
+}
+
+export function getProductionAttemptsForLesson(lessonId: string): Promise<ProductionAttempt[]> {
+  return getAllFromIndex<ProductionAttempt>(STORES.productionAttempts, "lessonId", lessonId);
+}
+
+export async function saveRetryOutcome(outcome: RetryOutcome): Promise<void> {
+  await put(STORES.retryOutcomes, outcome);
+  notifyPerformanceEvidenceSaved();
+}
+
+export function getRetryOutcomes(): Promise<RetryOutcome[]> {
+  return getAll<RetryOutcome>(STORES.retryOutcomes);
+}
+
+export function getRetryOutcomesForAttempt(retryOf: string): Promise<RetryOutcome[]> {
+  return getAllFromIndex<RetryOutcome>(STORES.retryOutcomes, "retryOf", retryOf);
+}
+
+export function saveMethodProgression(state: MethodProgressionState): Promise<void> {
+  return put(STORES.methodProgression, state);
+}
+
+export function getMethodProgression(): Promise<MethodProgressionState | undefined> {
+  return get<MethodProgressionState>(STORES.methodProgression, "current");
+}
+
+/* ──────────────────────────── bounded local recordings ──────────────────────────── */
+
+const MAX_RECORDING_COUNT = 80;
+const MAX_RECORDING_BYTES = 80 * 1024 * 1024;
+
+export async function saveAudioRecording(recording: AudioRecording): Promise<void> {
+  await put(STORES.audioRecordings, recording);
+  const all = (await getAll<AudioRecording>(STORES.audioRecordings)).sort(
+    (a, b) => b.createdAt - a.createdAt,
+  );
+  let bytes = 0;
+  const keep = new Set<string>();
+  for (const item of all) {
+    if (keep.size >= MAX_RECORDING_COUNT || bytes + item.sizeBytes > MAX_RECORDING_BYTES) continue;
+    keep.add(item.id);
+    bytes += item.sizeBytes;
+  }
+  await Promise.all(all.filter((item) => !keep.has(item.id)).map((item) => del(STORES.audioRecordings, item.id)));
+}
+
+export function getAudioRecording(id: string): Promise<AudioRecording | undefined> {
+  return get<AudioRecording>(STORES.audioRecordings, id);
+}
+
+export function deleteAudioRecording(id: string): Promise<void> {
+  return del(STORES.audioRecordings, id);
+}
+
 /* ──────────────────────────── conversations (Phase 1) ──────────────────────────── */
 
 /**
@@ -393,6 +483,9 @@ export interface Conversation {
   sourceLang: string;
   level?: string;
   challenge?: boolean;
+  progressionStage?: string;
+  /** Familiar personal topics are deliberately rotated and revisited over time. */
+  topicId?: string;
   turns: ConversationTurn[];
   startedAt: number;
   endedAt?: number;
@@ -449,6 +542,48 @@ export interface LocalBackup {
   dbName: string;
   exportedAt: string;
   stores: Record<StoreName, unknown[]>;
+}
+
+interface SerializedAudioRecording {
+  id: string;
+  mimeType: string;
+  sizeBytes: number;
+  createdAt: number;
+  /** Data URL keeps local recordings portable without exposing a filesystem path. */
+  blobDataUrl: string;
+}
+
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = "";
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary);
+}
+
+function base64ToBytes(value: string): Uint8Array {
+  const binary = atob(value);
+  return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+}
+
+async function serializeAudioRecording(recording: AudioRecording): Promise<SerializedAudioRecording> {
+  const bytes = new Uint8Array(await recording.blob.arrayBuffer());
+  return {
+    id: recording.id,
+    mimeType: recording.mimeType,
+    sizeBytes: recording.sizeBytes,
+    createdAt: recording.createdAt,
+    blobDataUrl: `data:${recording.mimeType};base64,${bytesToBase64(bytes)}`,
+  };
+}
+
+function restoreAudioRecording(row: SerializedAudioRecording): AudioRecording {
+  const [, base64 = ""] = row.blobDataUrl.split(",", 2);
+  return {
+    id: row.id,
+    mimeType: row.mimeType,
+    sizeBytes: row.sizeBytes,
+    createdAt: row.createdAt,
+    blob: new Blob([base64ToBytes(base64).buffer as ArrayBuffer], { type: row.mimeType }),
+  };
 }
 
 export interface BackupValidationResult {
@@ -536,7 +671,13 @@ export function validateLocalBackup(raw: unknown): BackupValidationResult {
 export async function exportLocalBackup(): Promise<LocalBackup> {
   const storeNames = Object.values(STORES) as StoreName[];
   const entries = await Promise.all(
-    storeNames.map(async (store) => [store, await getAll<unknown>(store)] as const),
+    storeNames.map(async (store) => {
+      const rows = await getAll<unknown>(store);
+      const exported = store === STORES.audioRecordings
+        ? await Promise.all((rows as AudioRecording[]).map(serializeAudioRecording))
+        : rows;
+      return [store, exported] as const;
+    }),
   );
   return {
     app: "PhraseLoop",
@@ -553,7 +694,11 @@ export async function restoreLocalBackup(raw: unknown): Promise<BackupValidation
 
   for (const store of Object.values(STORES) as StoreName[]) {
     const rows = raw.stores[store];
-    if (Array.isArray(rows) && rows.length > 0) await putMany(store, rows);
+    if (!Array.isArray(rows) || rows.length === 0) continue;
+    const restored = store === STORES.audioRecordings
+      ? rows.map((row) => restoreAudioRecording(row as SerializedAudioRecording))
+      : rows;
+    await putMany(store, restored);
   }
 
   if (typeof window !== "undefined") {

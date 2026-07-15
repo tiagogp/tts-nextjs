@@ -156,6 +156,11 @@ describe("local backup round-trip — weeks-scale zero-loss proof (Phase 4)", ()
     [STORES.progressAssessments]: "id",
     [STORES.c1Diagnoses]: "id",
     [STORES.levelTests]: "id",
+    [STORES.listeningAttempts]: "id",
+    [STORES.productionAttempts]: "id",
+    [STORES.retryOutcomes]: "id",
+    [STORES.audioRecordings]: "id",
+    [STORES.methodProgression]: "id",
   };
 
   function buildSeed(): Record<StoreName, Record<string, unknown>[]> {
@@ -257,6 +262,64 @@ describe("local backup round-trip — weeks-scale zero-loss proof (Phase 4)", ()
         createdAt: START + i * 5 * DAY,
         passed: i === 2,
       })),
+      [STORES.listeningAttempts]: Array.from({ length: 4 }, (_, i) => ({
+        id: `listening-${i}`,
+        lessonId: `lesson-${i}`,
+        sourceId: `lesson-lesson-${i}`,
+        questionCount: 3,
+        answeredCount: 3,
+        correctCount: i,
+        mainIdeaCorrect: i > 0,
+        detailCorrect: Math.max(0, i - 1),
+        detailTotal: 2,
+        playCounts: [1, 2],
+        transcriptVisible: i > 0,
+        playbackRate: 1,
+        speakerIds: [`speaker-${i}`],
+        questions: [],
+        answers: [],
+        startedAt: START + i * DAY,
+        completedAt: START + i * DAY + 1_000,
+      })),
+      [STORES.productionAttempts]: Array.from({ length: 5 }, (_, i) => ({
+        id: `production-${i}`,
+        lessonId: `lesson-${i % 3}`,
+        source: "lesson",
+        text: `sentence ${i}`,
+        spoken: i % 2 === 0,
+        wordCount: 2,
+        finished: true,
+        issueCount: i % 3,
+        createdAt: START + i * DAY,
+      })),
+      [STORES.retryOutcomes]: Array.from({ length: 5 }, (_, i) => ({
+        id: `retry-${i}`,
+        retryOf: `production-${i}`,
+        source: "lesson",
+        text: `retry ${i}`,
+        spoken: false,
+        wordCount: 2,
+        resolved: i % 2 === 0,
+        issueCount: i % 2,
+        createdAt: START + i * DAY + 2_000,
+      })),
+      [STORES.audioRecordings]: Array.from({ length: 3 }, (_, i) => ({
+        id: `recording-${i}`,
+        mimeType: "audio/webm",
+        sizeBytes: 4,
+        blob: new Blob([`audio-${i}`], { type: "audio/webm" }),
+        createdAt: START + i * DAY,
+      })),
+      [STORES.methodProgression]: [{
+        id: "current",
+        listeningStage: "main_idea",
+        speakingStage: "variation",
+        listeningScore: 82,
+        speakingScore: 79,
+        listeningSamples: 4,
+        speakingSamples: 5,
+        updatedAt: START + 20 * DAY,
+      }],
     };
   }
 
@@ -265,7 +328,7 @@ describe("local backup round-trip — weeks-scale zero-loss proof (Phase 4)", ()
       String(a[KEY_FIELD[store]]).localeCompare(String(b[KEY_FIELD[store]])),
     );
 
-  it("loses nothing across all 11 stores through export → JSON file → restore", async () => {
+  it("loses nothing across all 12 stores through export → JSON file → restore", async () => {
     const seed = buildSeed();
     const storeNames = Object.values(STORES) as StoreName[];
 

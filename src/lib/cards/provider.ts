@@ -41,6 +41,8 @@ export interface CorrectOptions {
 export interface ConversationTurn {
   role: "user" | "assistant";
   text: string;
+  /** Present for learner turns when the response came from the microphone. */
+  spoken?: boolean;
 }
 
 /** What `converse()` needs to role-play a scenario at the learner's level. */
@@ -55,6 +57,12 @@ export interface ConverseOptions {
   level?: string;
   /** For advanced practice: press the learner with follow-ups and counterpoints. */
   challenge?: boolean;
+  /** Evidence-based support level supplied by the method progression engine. */
+  conversationStage?: string;
+  maxTurns?: number;
+  followUpDepth?: "single" | "layered" | "counterpoint";
+  promptStyle?: string;
+  speakerFamiliarity?: "familiar" | "mixed" | "unfamiliar";
 }
 
 export type ProviderKind = "openrouter" | "ollama" | "claude" | "openai";

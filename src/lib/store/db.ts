@@ -7,8 +7,8 @@
  */
 
 const DB_NAME = "tts-cards";
-// v8: adds level-up test attempts (level advancement).
-const DB_VERSION = 8;
+// v11: persists the current listening/speaking support stages.
+const DB_VERSION = 11;
 
 export const STORES = {
   errorEvents: "errorEvents",
@@ -24,6 +24,11 @@ export const STORES = {
   progressAssessments: "progressAssessments",
   c1Diagnoses: "c1Diagnoses",
   levelTests: "levelTests",
+  listeningAttempts: "listeningAttempts",
+  productionAttempts: "productionAttempts",
+  retryOutcomes: "retryOutcomes",
+  audioRecordings: "audioRecordings",
+  methodProgression: "methodProgression",
 } as const;
 
 export type StoreName = (typeof STORES)[keyof typeof STORES];
@@ -94,6 +99,29 @@ export function openDb(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains(STORES.levelTests)) {
         const s = db.createObjectStore(STORES.levelTests, { keyPath: "id" });
         s.createIndex("createdAt", "createdAt");
+      }
+      if (!db.objectStoreNames.contains(STORES.listeningAttempts)) {
+        const s = db.createObjectStore(STORES.listeningAttempts, { keyPath: "id" });
+        s.createIndex("lessonId", "lessonId");
+        s.createIndex("completedAt", "completedAt");
+      }
+      if (!db.objectStoreNames.contains(STORES.productionAttempts)) {
+        const s = db.createObjectStore(STORES.productionAttempts, { keyPath: "id" });
+        s.createIndex("lessonId", "lessonId");
+        s.createIndex("createdAt", "createdAt");
+      }
+      if (!db.objectStoreNames.contains(STORES.retryOutcomes)) {
+        const s = db.createObjectStore(STORES.retryOutcomes, { keyPath: "id" });
+        s.createIndex("retryOf", "retryOf");
+        s.createIndex("createdAt", "createdAt");
+      }
+      if (!db.objectStoreNames.contains(STORES.audioRecordings)) {
+        const s = db.createObjectStore(STORES.audioRecordings, { keyPath: "id" });
+        s.createIndex("createdAt", "createdAt");
+      }
+      if (!db.objectStoreNames.contains(STORES.methodProgression)) {
+        const s = db.createObjectStore(STORES.methodProgression, { keyPath: "id" });
+        s.createIndex("updatedAt", "updatedAt");
       }
     };
     req.onsuccess = () => resolve(req.result);

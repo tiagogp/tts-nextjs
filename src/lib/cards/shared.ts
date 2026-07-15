@@ -39,6 +39,8 @@ const ERROR_TYPES: ErrorType[] = [
   "idiom",
   "vocabulary",
   "register",
+  "missing-information",
+  "pronunciation",
   "other",
 ];
 
@@ -473,7 +475,7 @@ export function buildCorrectRequest(
   const rationaleLang = rationaleLanguage(learnerLang, targetLang, level);
   const system = [
     `You are a meticulous ${targetLang} tutor for a learner whose first language is ${learnerLang}.`,
-    `The learner gives you something they wrote or said in ${targetLang}. Find each spot where a native speaker would phrase it differently and return one correction per distinct mistake.`,
+    `The learner gives you something they wrote or said in ${targetLang}. Find the highest-signal mistakes first: communication-blocking meaning, missing information, recurring grammar, word order, or vocabulary problems. Return at most 3 corrections; do not enumerate minor polish that does not affect understanding.`,
     `Isolate mistakes: if a sentence has a wrong preposition AND a wrong tense, that's two corrections, each scoped to the smallest fragment that carries the error — never the whole passage.`,
     `Only flag real errors (grammar, collocation, naturalness, register) — not style preferences. If the text is already natural and correct, return an empty list.`,
     `The corrected field must be written only in ${targetLang}; never translate it into ${learnerLang}.`,
@@ -536,7 +538,7 @@ export function buildAdvancedReviewRequest(
     `You are a senior ${targetLang} language coach for a learner whose first language is ${learnerLang}.`,
     `Review what the learner wrote or said in ${targetLang}. Separate real errors from optional refinements.`,
     `Errors are objectively wrong or misleading fragments. Refinements are correct-but-less-native fragments where a native speaker would likely choose a stronger option.`,
-    `Do not rewrite the whole passage. Return only high-signal items a motivated advanced learner can act on.`,
+    `Do not rewrite the whole passage. Return only the highest-signal items a motivated advanced learner can act on: at most 3 real errors and at most 3 optional refinements. Minor polish must never crowd out communication problems.`,
     `The corrected and suggested fields must be written only in ${targetLang}; never translate them into ${learnerLang}.`,
     `Never invent a topic, claim, or intent the learner did not express.`,
   ].join(" ");
@@ -550,8 +552,8 @@ export function buildAdvancedReviewRequest(
     `"""`,
     ``,
     `Return:`,
-    `- errors: one item per real mistake. Use the same rules as correction: smallest exact original fragment, native-correct replacement, one or more errorTypes from ${ERROR_TYPES.join(", ")}, and a short rationale in ${rationaleLang}. Empty array if there are no real mistakes.`,
-    `- refinements: 0 to 7 optional upgrades. Each original must be an exact fragment from the learner. suggested must preserve the learner's meaning while sounding more native, better registered, more precise, more idiomatic, or better connected. Do not include trivial preferences.`,
+    `- errors: up to 3 real mistakes, prioritized by communication impact. Use the same rules as correction: smallest exact original fragment, native-correct replacement, one or more errorTypes from ${ERROR_TYPES.join(", ")}, and a short rationale in ${rationaleLang}. Empty array if there are no real mistakes.`,
+    `- refinements: 0 to 3 optional upgrades. Each original must be an exact fragment from the learner. suggested must preserve the learner's meaning while sounding more native, better registered, more precise, more idiomatic, or better connected. Do not include trivial preferences.`,
     `- overall: short strengths and the single nextFocus, or null if the text is too short to summarize.`,
   ].join("\n");
 
@@ -664,14 +666,27 @@ export const CONVERSATION_KICKOFF =
 export function buildConverseSystem(opts: ConverseOptions): string {
   const sourceLang = opts.sourceLang || DEFAULT_LEARNER_LANG;
   const levelLine = cefrLanguageLine(opts.level);
-  const depthLine = opts.challenge
-    ? `Use an advanced, open conversation style: ask follow-up questions, request examples, introduce a mild counterpoint, and push the learner to clarify tradeoffs or defend a view. Keep it supportive, but do not let the exchange become a script.`
-    : `Keep every one of your turns short — 1 to 3 sentences — and end with a question or prompt that invites them to respond, so they do most of the talking.`;
+  const depthLine = opts.followUpDepth === "counterpoint" || opts.challenge
+    ? `Use an advanced, open conversation style: ask layered follow-up questions, request examples, introduce a mild counterpoint, and push the learner to clarify tradeoffs or defend a view. Keep it supportive, but do not let the exchange become a script.`
+    : opts.followUpDepth === "layered"
+      ? `Ask one clear follow-up after each answer. Invite one extra detail or reason, but do not introduce debate yet.`
+      : `Keep every one of your turns short — 1 to 3 sentences — and end with one concrete question or prompt that invites them to respond, so they do most of the talking.`;
+  const supportLine = opts.promptStyle
+    ? `The learner's current speaking support is ${opts.conversationStage ?? "guided"}: ${opts.promptStyle}`
+    : "Use a concrete, familiar prompt before increasing abstraction.";
+  const speakerLine = opts.speakerFamiliarity === "unfamiliar"
+    ? "Use natural but clearly articulated speech and occasional connected phrasing, as an unfamiliar real-world speaker would."
+    : opts.speakerFamiliarity === "mixed"
+      ? "Vary sentence length and use a few natural connectors while remaining easy to follow."
+      : "Use familiar vocabulary and clearly signposted questions.";
   return [
     `You are a warm, encouraging conversation partner helping someone practice ${opts.targetLang} by speaking.`,
     `Role-play this scenario with them: "${opts.scenario}". Stay in character and speak only ${opts.targetLang}.`,
     levelLine,
     depthLine,
+    supportLine,
+    speakerLine,
+    opts.maxTurns ? `This practice is limited to about ${opts.maxTurns} learner turns; make each follow-up purposeful.` : "",
     opts.challenge
       ? `Your turns may be 2 to 4 sentences when needed, but always end with a concrete prompt that makes the learner produce a longer answer.`
       : `Avoid turning this into an interview; vary your prompts naturally.`,
@@ -700,7 +715,7 @@ export function normalizeCorrected(
 ): ErrorEvent[] {
   const now = Date.now();
   const out: ErrorEvent[] = [];
-  for (const e of raw.errors ?? []) {
+  for (const e of (raw.errors ?? []).slice(0, 3)) {
     const original = (e.original ?? "").trim();
     const corrected = (e.corrected ?? "").trim();
     // Drop non-corrections: no change means there was nothing to learn.
@@ -734,7 +749,7 @@ export function normalizeAdvancedReview(
   const refinements: RefinementEvent[] = [];
   const seen = new Set<string>();
 
-  for (const r of raw.refinements ?? []) {
+  for (const r of (raw.refinements ?? []).slice(0, 3)) {
     const original = (r.original ?? "").trim();
     const suggested = (r.suggested ?? "").trim();
     if (!original || !suggested || original === suggested) continue;

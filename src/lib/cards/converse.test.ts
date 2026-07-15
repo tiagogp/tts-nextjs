@@ -84,8 +84,8 @@ describe("buildAdvancedReviewRequest", () => {
   it("asks for separate errors and refinements", () => {
     const req = buildAdvancedReviewRequest("It works fine, but I need better results.", "pt", "en", "C1");
 
-    expect(req.user).toContain("errors: one item per real mistake");
-    expect(req.user).toContain("refinements: 0 to 7 optional upgrades");
+    expect(req.user).toContain("errors: up to 3 real mistakes, prioritized by communication impact");
+    expect(req.user).toContain("refinements: 0 to 3 optional upgrades");
     expect(req.system).toContain("Separate real errors from optional refinements");
   });
 });
@@ -120,5 +120,27 @@ describe("normalizeAdvancedReview", () => {
       context: "work",
     });
     expect(review.overall?.nextFocus).toBe("Use more idiomatic phrasing.");
+  });
+
+  it("caps provider output so minor polish cannot crowd out the retry loop", () => {
+    const review = normalizeAdvancedReview({
+      errors: Array.from({ length: 5 }, (_, index) => ({
+        original: `wrong ${index}`,
+        corrected: `right ${index}`,
+        errorTypes: ["tense"],
+        rationale: "Fix the tense.",
+      })),
+      refinements: Array.from({ length: 5 }, (_, index) => ({
+        original: `phrase ${index}`,
+        suggested: `better phrase ${index}`,
+        dimension: "naturalness",
+        rationale: "More natural.",
+        impact: null,
+      })),
+      overall: null,
+    }, "pt", "en");
+
+    expect(review.errors).toHaveLength(3);
+    expect(review.refinements).toHaveLength(3);
   });
 });
