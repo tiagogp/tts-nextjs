@@ -26,6 +26,12 @@ describe("stageTimer", () => {
     expect(creditedMs(paused, t0 + 5 * MINUTE)).toBe(30 * SECOND);
   });
 
+  it("does not add idle grace after a manually stopped listening clip is later committed", () => {
+    const stopped = pauseTimer(createTimer(t0), t0 + 10 * SECOND);
+
+    expect(stageMinutes("listen", creditedMs(stopped, t0 + 5 * MINUTE), 1)).toBe(0.5);
+  });
+
   it("adds a resumed segment to what was already banked", () => {
     const paused = pauseTimer(createTimer(t0), t0 + 30 * SECOND);
     const resumed = resumeTimer(paused, t0 + 5 * MINUTE);

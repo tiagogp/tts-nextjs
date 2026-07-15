@@ -51,6 +51,47 @@ export interface MethodPlan {
   target: MethodTarget;
   balance: MethodBalance[];
   weeklyMinutes: number;
+  rhythm: WeeklyRhythm;
+}
+
+export interface WeeklyRhythm {
+  activeDays: number;
+  remainingDays: number;
+  stageDays: Partial<Record<MethodStage, number>>;
+  focusDays: Partial<Record<WeeklyMethodFocus, number>>;
+  nextFocus: WeeklyMethodFocus;
+  guidance: string;
+}
+
+export type WeeklyMethodFocus = "introduce" | "listen" | "speak" | "expand" | "simulate" | "transfer" | "reflect";
+
+export interface WeeklyMethodDay {
+  day: number;
+  focus: WeeklyMethodFocus;
+  title: string;
+  stages: MethodStage[];
+  recovery: string;
+}
+
+/** Soft weekly rhythm from the method; missed days are recovered, not punished. */
+export const WEEKLY_METHOD_TEMPLATE: readonly WeeklyMethodDay[] = [
+  { day: 1, focus: "introduce", title: "Introduce useful language", stages: ["learn", "listen", "speak"], recovery: "Start with a short phrase and one simple personal answer." },
+  { day: 2, focus: "listen", title: "Listen and notice", stages: ["listen", "notice"], recovery: "If time is short, listen and keep one phrase." },
+  { day: 3, focus: "speak", title: "Repeat and produce", stages: ["repeat", "speak", "feedback"], recovery: "A short spoken attempt still counts as useful output." },
+  { day: 4, focus: "expand", title: "Expand the message", stages: ["learn", "notice", "review"], recovery: "Reuse one phrase in a different situation." },
+  { day: 5, focus: "simulate", title: "Simulate a real situation", stages: ["speak", "feedback", "retry"], recovery: "Focus retry on the one issue that affects communication most." },
+  { day: 6, focus: "transfer", title: "Transfer across contexts", stages: ["listen", "speak", "review"], recovery: "Use a saved phrase or recurring error in a new context." },
+  { day: 7, focus: "reflect", title: "Review and reflect", stages: ["review", "feedback"], recovery: "Review what helped; the next week can recover anything missed." },
+];
+
+export function weeklyMethodTemplate(): WeeklyMethodDay[] {
+  return WEEKLY_METHOD_TEMPLATE.map((day) => ({ ...day, stages: [...day.stages] }));
+}
+
+/** Map a calendar date to the method's Monday-first rhythm without duplicating date math in UI. */
+export function weeklyMethodDayForDate(date = new Date()): WeeklyMethodDay {
+  const mondayIndex = (date.getDay() + 6) % 7;
+  return WEEKLY_METHOD_TEMPLATE[mondayIndex] ?? WEEKLY_METHOD_TEMPLATE[0];
 }
 
 export interface MethodSnapshot {
@@ -111,7 +152,8 @@ function recent<T>(items: T[], now: number, getTime: (item: T) => number): T[] {
   return items.filter((item) => getTime(item) >= since);
 }
 
-function targetForProfile(profile: Pick<LearningProfile, "objective">): MethodTarget {
+/** The single objective-to-distribution policy used by planning and progress coaching. */
+export function targetForProfile(profile: Pick<LearningProfile, "objective">): MethodTarget {
   return TARGETS[profile.objective] ?? DEFAULT_TARGET;
 }
 
@@ -182,6 +224,45 @@ function lastStageAt(events: ActivityEvent[], stage: MethodStage): number {
     }
   }
   return newest;
+}
+
+export function weeklyRhythm(events: ActivityEvent[], now = Date.now()): WeeklyRhythm {
+  const weekStart = now - WEEK_MS;
+  const recentEvents = events.filter((event) => event.ts >= weekStart);
+  const activeDays = new Set(recentEvents.map((event) => new Date(event.ts).toISOString().slice(0, 10))).size;
+  const stageDays: Partial<Record<MethodStage, number>> = {};
+  for (const stage of ["learn", "listen", "notice", "repeat", "speak", "feedback", "retry", "review"] as MethodStage[]) {
+    stageDays[stage] = new Set(
+      recentEvents
+        .filter((event): event is ActivityEvent<"method_stage"> => event.type === "method_stage" && (event.payload as MethodStagePayload).stage === stage)
+        .map((event) => new Date(event.ts).toISOString().slice(0, 10)),
+    ).size;
+  }
+  const focusDays: Partial<Record<WeeklyMethodFocus, number>> = {};
+  for (const day of WEEKLY_METHOD_TEMPLATE) {
+    const dates = new Set(
+      recentEvents
+        .filter((event) => {
+          const methodDay = weeklyMethodDayForDate(new Date(event.ts)).day;
+          return methodDay === day.day && event.type === "method_stage" && day.stages.includes((event.payload as MethodStagePayload).stage);
+        })
+        .map((event) => new Date(event.ts).toISOString().slice(0, 10)),
+    );
+    focusDays[day.focus] = dates.size;
+  }
+  const nextFocus = [...WEEKLY_METHOD_TEMPLATE]
+    .sort((left, right) => (focusDays[left.focus] ?? 0) - (focusDays[right.focus] ?? 0))[0]?.focus ?? "introduce";
+  const remainingDays = Math.max(0, 7 - activeDays);
+  return {
+    activeDays,
+    remainingDays,
+    stageDays,
+    focusDays,
+    nextFocus,
+    guidance: activeDays >= 5
+      ? "Your weekly rhythm is on track; use the weakest area as the next focus."
+      : `${remainingDays} flexible day${remainingDays === 1 ? "" : "s"} remain this week; recover missing stages without a daily penalty.`,
+  };
 }
 
 function needsRetry(snapshot: MethodSnapshot, events: ActivityEvent[], now: number): boolean {
@@ -339,5 +420,6 @@ export function deriveMethodPlan(input: {
     target,
     balance,
     weeklyMinutes,
+    rhythm: weeklyRhythm(input.activity, now),
   };
 }
