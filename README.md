@@ -210,8 +210,8 @@ to Kokoro audio otherwise. Import the result with Anki's `File → Import`.
 
 ## Project Structure
 
-See [docs/project-structure.md](docs/project-structure.md) for the canonical
-map of app boundaries, module ownership, and where new work should go.
+See [docs/README.md](docs/README.md) for the canonical architecture, app boundaries,
+module ownership, and build record.
 
 ```
 .

@@ -1,7 +1,7 @@
 # PhraseLoop landing — demand test
 
-PT-BR landing page with the qualified waitlist for the Phase 2 demand test in
-[docs/validation-action-plan.md](../../docs/validation-action-plan.md). It reuses the
+PT-BR landing page with the qualified waitlist for the demand test described in
+[docs/product.md](../../docs/product.md). It reuses the
 desktop app's UI (repo-root `src/*` via the `@/*` alias, see `next.config.ts`), so it must
 be built from inside the monorepo — it is not a standalone app.
 

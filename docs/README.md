@@ -1,10 +1,9 @@
 # PhraseLoop — Architecture & Build Record
 
-Technical source of truth for the card pipeline, architecture, and shipped build history.
-Product direction and active priorities live in [product.md](product.md); visual/UI rules live
-in [design-system.md](design-system.md); repo layout and module ownership live in
-[project-structure.md](project-structure.md); user-facing setup and the feature list live
-in the [root README](../README.md).
+Um dos dois documentos canonicos do projeto. Concentra arquitetura, historico de implementacao,
+regras de UI/UX e backlog tecnico. Direcao de produto, metodo, validacao e roadmap de conteudo
+vivem em [product.md](product.md); setup e lista publica de features ficam no
+[README da raiz](../README.md).
 
 **Contents**
 
@@ -14,6 +13,9 @@ in the [root README](../README.md).
 4. [Pre-launch TODO](#4-pre-launch-todo)
 5. [Conversation practice — shipped](#5-conversation-practice--shipped)
 6. [Structured 90-day learning plan — shipped](#6-structured-90-day-learning-plan--shipped)
+7. [Method implementation status](#7-method-implementation-status)
+8. [Design and UX rules](#8-design-and-ux-rules)
+9. [Technical backlog](#9-technical-backlog)
 
 ---
 
@@ -696,3 +698,89 @@ Semana fechada   → resumo: "Você fez Y% do plano. Aqui está o ajuste para a 
 3. **Home screen "Hoje"** — mostra tarefa do dia, deeplink para aba
 4. **EffortSnapshot semanal** — cálculo automático, exibição simples
 5. **Adaptação** — revisão semanal por LLM com base no esforço
+
+---
+
+## 7. Method implementation status
+
+O audit de 2026-07-14 comparou o working tree, dados, conteudo e testes com o metodo
+Input-to-Output. A fundacao esta implementada:
+
+- distribuicao semanal baseada no objetivo e recomendacao do proximo tipo de pratica;
+- fluxo Learn -> Listen -> Notice -> Repeat -> Speak -> Feedback -> Retry -> Review;
+- Discover com fontes reais, audio local, cards contextualizados e curadoria;
+- correcao, pronuncia, conversa adaptativa e retry;
+- FSRS, fraquezas, reforco e sinais de progresso baseados em desempenho;
+- evidencia persistida de listening/production/retry, progressao por estagio, transferencia,
+  comparacao de gravacoes e session composer.
+
+Os checks do audit passaram (testes, TypeScript, lint e validacao das 100 licoes). Isso prova
+consistencia interna, nao conformidade pedagogica completa. Gaps que ainda importam:
+
+1. **Audio curricular:** o bundle ainda depende de audio sintetico com pouca diversidade; faltam
+   velocidade natural progressiva, vozes, sotaques e proveniencia real.
+2. **Progressao avancada:** os estagios ja influenciam suporte e dificuldade, mas ainda nao
+   controlam toda profundidade de conversa, prompts avancados e monologos longos.
+3. **Orquestracao:** o composer e retomavel e abre superficies ligadas, mas ainda pode reduzir a
+   navegacao manual entre atividades.
+4. **Transferencia:** leitura/escrita, uso em novos contextos e confianca precisam de mais tarefas
+   e evidencia longitudinal.
+5. **Feedback unificado:** categorias e prioridades sao normalizadas; falta garantir o mesmo
+   contrato renderizado em todos os caminhos locais e com provider.
+
+Regra de implementacao: nao confundir minutos/completion com aprendizagem. Esforco, performance e
+retencao devem continuar campos separados. Reusar os contratos existentes de metodo, FSRS,
+pronuncia, provider, IndexedDB e backup/restore.
+
+## 8. Design and UX rules
+
+### Linguagem visual
+
+- Superficies quentes e calmas, com texto de alto contraste e laranja reservado para acao/marca.
+- Tokens de referencia: `#111111` (texto), `#faf9f6` (surface), `#dedbd6` (border), `#ff5600`
+  (accent). Usar os tokens reais do app em vez de duplicar hex no componente.
+- Geometria contida: 4px em botoes, 6px em navegacao, 8px em cards; profundidade por borda e
+  tonalidade, nao por sombras fortes.
+- Headings compactos, body legivel, labels curtos e hierarquia clara. Fontes devem degradar para
+  system UI sem alterar o fluxo.
+- Spacing baseado em 8px, com valores intermediarios existentes quando necessarios.
+- Motion deve explicar estado e respeitar `prefers-reduced-motion`; nao usar escala exagerada em
+  controles recorrentes.
+
+### Regras de jornada
+
+- Toda pagina primaria tem um unico heading e uma descricao curta.
+- Today mostra uma acao dominante; contagens e plano sao suporte.
+- Phrases e Mistakes mostram orientacao de etapas sem mudar a ordem pedagogica.
+- Provider, JSON, export e controles opcionais ficam em disclosures avancados.
+- Review mostra due count na navegacao.
+- Overlays compartilham header e retorno; Settings oferece navegacao por secoes.
+- Tablist implementa roving focus, setas, Home/End e um unico tab stop ativo.
+- Layouts permanecem fluidos em largura estreita; foco visivel, acessibilidade e estados de erro
+  fazem parte da definicao de pronto.
+
+O review visual de 2026-07-15 aplicou essas regras sem mudar scheduling, unlocks, persistencia,
+fallbacks, audio ou evidence tracking. A verificacao registrada passou TypeScript, ESLint, 446
+testes e inspecao desktop/mobile em dark mode.
+
+## 9. Technical backlog
+
+Os planos detalhados do audit React foram consolidados aqui. Itens concluidos:
+
+- guard contra double-submit em `grade()`;
+- error boundary por tab;
+- evitar scan completo de reviews a cada grade;
+- memoizar derivacoes da sessao de Study;
+- `LazyMotion` no shell e nos componentes compartilhados mais frequentes.
+
+Pendencias selecionadas, em ordem livre por serem independentes:
+
+- migrar `GradeButtons` para `m` sob o boundary `LazyMotion` existente;
+- remover o `layout` FLIP redundante dos itens de `CorrectionList`;
+- trocar o reveal de `Disclosure` por CSS grid rows, mantendo o chevron e reduced motion;
+- completar focus trap e retorno de foco do `Modal` compartilhado.
+
+Follow-ups que exigem decisao propria: terminar a migracao `LazyMotion`, optimistic queue advance
+com rollback em `grade()`, Suspense por tab, um primitive compartilhado de live region, keyboard
+scrub no audio, formatacao de datas segura para hydration, wiring de labels, limpeza de exports
+nao usados e decomposicao de `DiscoverTab`/`ConverseTab`.

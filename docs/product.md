@@ -1,20 +1,13 @@
 # PhraseLoop - Produto, Pesquisa e Roadmap
 
-Este e o documento canonico de produto. Ele unifica o que antes estava espalhado por
-`PROPOSAL.md`, `IMPROVEMENTS.md`, `CRITICA-PRODUTO.md`,
-`deep-research-report.md`, `docs/product-improvement-plan.md`,
-`docs/product-strategy.md` e `docs/cycle-implementation-plan.md`.
+Este e um dos dois documentos canonicos do projeto. Ele concentra direcao de produto,
+metodo de aprendizagem, validacao, pesquisa e roadmap de conteudo.
 
 Use:
 
 - [README.md](../README.md) para setup, execucao e visao publica do app.
-- [docs/README.md](README.md) para arquitetura, historico tecnico e features shipped.
-- [docs/design-system.md](design-system.md) para regras visuais.
-- [docs/100-lesson-roadmap.md](100-lesson-roadmap.md) para a expansao de conteudo de 36 para 100
-  licoes e seus gates editoriais.
-- [docs/validation-action-plan.md](validation-action-plan.md) para a validacao de launch e o plano
-  sequenciado.
-- Este arquivo para direcao de produto, pesquisa aplicada, prioridades e backlog.
+- [docs/README.md](README.md) para arquitetura, implementacao, design e backlog tecnico.
+- Este arquivo para todas as decisoes de produto e aprendizagem.
 
 ## Produto Em Uma Frase
 
@@ -253,6 +246,129 @@ Fora do escopo do proximo ciclo:
 - Social/growth mechanics.
 - Framework geral de notificacoes.
 
+## Plano De Validacao
+
+A fase ativa valida o primeiro loop guiado e a menor evidencia necessaria para escolher o
+proximo ciclo. O escopo observado e: licao inicial, Discover -> Study -> Correct, metricas de
+ativacao/drop-off, PT-BR e acessibilidade, persistencia/restore e confiabilidade.
+
+Decisoes devem usar sessoes observadas, entrevistas, waitlist e eventos locais:
+
+- Se conclusao sem ajuda ou tempo ate valor falhar, corrigir primeiro o passo bloqueador.
+- Se o usuario nao conseguir explicar o produto, revisar historia e termos com a linguagem dele.
+- Se feedback/retry falhar, melhorar a correcao sem exigir provedor no primeiro uso.
+- Se D+1/D+7 falhar, testar o retorno e a passagem para Review antes de ampliar o tutor.
+- Se diferenciacao ou substituicao do fluxo atual falhar, rever o wedge antes de billing.
+
+Smoke tests, retencao prevista pelo SRS e feedback amigavel nao contam como retencao observada.
+Em auditorias, usar **“No systemic dishonesty found”**, nao a afirmacao absoluta “No dishonesty
+found”: houve um pequeno edge case de contagem no pause manual do Discover, hoje coberto por
+regressao.
+
+## Curriculo De 100 Licoes
+
+O bundle atual contem **100 licoes e 804 frases** em `src/features/learn/lessons.json`. O foco
+editorial continua em A2-B1, mas existe uma trilha completa de A1 a C2. O numero de licoes nao e
+evidencia de aprendizagem; uma licao so esta pronta para release depois de revisao de ingles e
+PT-BR, audio com proveniencia, QA tecnico e piloto com learners.
+
+| Level | Current | Target | Add | Final share |
+| --- | ---: | ---: | ---: | ---: |
+| A1 | 15 | 15 | 0 | 15% |
+| A2 | 22 | 22 | 0 | 22% |
+| B1 | 25 | 25 | 0 | 25% |
+| B2 | 18 | 18 | 0 | 18% |
+| C1 | 12 | 12 | 0 | 12% |
+| C2 | 8 | 8 | 0 | 8% |
+
+### Gates editoriais
+
+1. Conteudo: objetivo comunicativo, contexto real, frases uteis, dialogo, compreensao,
+   producao, feedback, retry e review conectados.
+2. Audio: texto e clip correspondem, entrega natural adequada ao nivel, diversidade de vozes e
+   proveniencia/licenca registrada. Kokoro e fallback sintetico, nao audio nativo.
+3. Pedagogia: naturalidade, traducao PT-BR, carga CEFR e utilidade revisadas; nao tratar a falta
+   de compreensao palavra por palavra como fracasso.
+4. Tecnico: IDs unicos, clips decodificaveis, perguntas nao ambiguas, traducoes presentes e
+   testes/typecheck/lint/build aprovados.
+5. Evidencia: piloto mede conclusao, compreensao, retry, frases salvas e retorno D+1/D+7.
+
+### Backlog original incorporado pelo validador
+
+As 64 adicoes abaixo ja existem no bundle. A tabela permanece porque
+`scripts/validate-lesson-content.mjs` usa os IDs para validar a cobertura e os campos expandidos.
+
+| Wave | Proposed id | Lesson focus |
+| --- | --- | --- |
+| 2 | `a1-classroom` | Classroom objects and simple instructions |
+| 2 | `a1-time-dates` | Clock time, days, dates, and schedules |
+| 2 | `a1-likes` | Likes, dislikes, and simple reasons |
+| 2 | `a1-abilities` | What I can and cannot do |
+| 3 | `a1-errands` | Simple errands and everyday requests |
+| 3 | `a1-feelings` | Feelings, preferences, and immediate needs |
+| 1 | `a2-cooking` | Ingredients, quantities, and cooking instructions |
+| 1 | `a2-hobbies` | Free-time activities and frequency |
+| 1 | `a2-hotel` | Checking in, room needs, and simple complaints |
+| 1 | `a2-airport` | Check-in, security, gates, and delays |
+| 1 | `a2-appointments` | Booking and changing appointments |
+| 1 | `a2-clarification` | Asking someone to repeat, slow down, or explain |
+| 2 | `a2-responsibilities` | Chores, responsibilities, and routine obligations |
+| 2 | `a2-technology` | Devices, messages, passwords, and basic problems |
+| 2 | `a2-comparisons` | Comparing people, places, and products |
+| 2 | `a2-childhood` | Childhood routines and simple memories |
+| 2 | `a2-obligations` | Rules with have to, must, and can |
+| 3 | `a2-home-problems` | Repairs and common problems at home |
+| 3 | `a2-celebrations` | Invitations, birthdays, and celebrations |
+| 3 | `a2-social-plans` | Hosting, joining, confirming, and declining social events |
+| 1 | `b1-job-interviews` | Experience, strengths, and interview follow-ups |
+| 1 | `b1-work-meetings` | Updates, questions, and action items |
+| 1 | `b1-email-messages` | Clear professional email and chat tone |
+| 1 | `b1-travel-problems` | Missed connections, lost items, and alternatives |
+| 1 | `b1-personal-finance` | Budgets, bills, saving, and everyday money decisions |
+| 1 | `b1-storytelling` | Sequencing and adding detail to personal stories |
+| 1 | `b1-recommendations` | Reviews, recommendations, and supporting reasons |
+| 1 | `b1-apologies` | Apologizing, taking responsibility, and repairing a situation |
+| 2 | `b1-reasons-examples` | Explaining a point with reasons and examples |
+| 2 | `b1-news-media` | Summarizing news and distinguishing fact from opinion |
+| 2 | `b1-health-fitness` | Exercise, wellbeing, and sustainable routines |
+| 2 | `b1-habits-change` | Describing change, setbacks, and progress |
+| 2 | `b1-processes` | Explaining how a familiar process works |
+| 2 | `b1-goals-progress` | Setting goals and reflecting on progress |
+| 3 | `b1-cultural-differences` | Comparing customs without overgeneralizing |
+| 3 | `b1-community-services` | Public services, local issues, and asking for support |
+| 3 | `b1-relationships-boundaries` | Expectations, boundaries, and respectful disagreement |
+| 2 | `b2-cause-effect` | Explaining causes, consequences, and contributing factors |
+| 2 | `b2-persuasion` | Persuading without overstating a claim |
+| 2 | `b2-project-management` | Scope, deadlines, dependencies, and risks |
+| 2 | `b2-feedback-leadership` | Giving balanced feedback and setting expectations |
+| 2 | `b2-data-interpretation` | Interpreting charts, changes, and uncertainty |
+| 3 | `b2-ethical-dilemmas` | Weighing principles and practical consequences |
+| 3 | `b2-remote-work` | Collaboration, autonomy, and communication trade-offs |
+| 3 | `b2-media-bias` | Framing, evidence selection, and source reliability |
+| 3 | `b2-uncertainty` | Speculation, probability, and calibrated confidence |
+| 4 | `b2-proposals` | Presenting and defending a structured proposal |
+| 4 | `b2-professional-disagreement` | Disagreeing clearly while preserving cooperation |
+| 4 | `b2-root-causes` | Diagnosing problems beyond immediate symptoms |
+| 4 | `b2-competing-views` | Summarizing and comparing competing positions |
+| 3 | `c1-diplomatic-disagreement` | Challenging assumptions with diplomatic precision |
+| 3 | `c1-presentations-q-and-a` | Handling difficult questions after a presentation |
+| 3 | `c1-stakeholders` | Aligning stakeholders with conflicting priorities |
+| 4 | `c1-crisis-communication` | Communicating uncertainty and action under pressure |
+| 4 | `c1-policy-analysis` | Evaluating policy aims, mechanisms, and side effects |
+| 4 | `c1-research-discussion` | Discussing evidence, limitations, and implications |
+| 4 | `c1-mentoring` | Coaching, reframing, and asking productive questions |
+| 4 | `c1-strategic-priorities` | Distinguishing urgent work from strategically important work |
+| 4 | `c1-nuanced-narratives` | Telling complex stories with shifts in stance and perspective |
+| 4 | `c2-implicit-assumptions` | Exposing assumptions and expressing epistemic caution |
+| 4 | `c2-analogy-metaphor` | Using and critiquing analogy, metaphor, and framing |
+| 4 | `c2-high-stakes-negotiation` | Strategic ambiguity and precise concessions |
+| 4 | `c2-editorial-argument` | Building a concise, rhetorically controlled editorial argument |
+| 4 | `c2-debate-synthesis` | Synthesizing dense debate without flattening disagreement |
+
+Status: todos os quatro waves foram escritos e passam o QA estrutural, mas continuam pendentes
+de proveniencia de audio, revisao editorial e pilotos. Expansao alem de 100 licoes so entra no
+roadmap se a validacao mostrar demanda por mais curriculo bundled.
+
 ## Tracker De Produto
 
 | Area | Status | Nota |
@@ -339,9 +455,8 @@ Historico de ativacao shipped:
 
 ### Avancados
 
-- C1 precisa naturalidade, registro, idiomaticidade e colocacao, nao so erro gramatical. Ver
-  [c1-phase-proposal.md](c1-phase-proposal.md) para a proposta detalhada (fase 6, ainda nao
-  iniciada).
+- C1 precisa naturalidade, registro, idiomaticidade e colocacao, nao so erro gramatical. A
+  proposta experimental esta resumida em [Fase C1 experimental](#fase-c1-experimental).
 - FSRS/flashcards perdem valor se o conteudo for trivial.
 - Conversa precisa ser menos enlatada e mais aberta.
 - Falta feedback de discurso longo.
@@ -364,6 +479,25 @@ Recomendacao critica:
 2. P1: avaliacao de pronuncia real.
 3. P2: feedback de naturalidade para intermediario/avancado.
 4. P3: progresso por resultado e loop de habito.
+
+## Fase C1 Experimental
+
+O slice C1 existe como superficie deliberadamente experimental em Settings; nao faz parte da
+navegacao principal nem deve ser tratado como validado. O problema a testar e se learners acima
+de B1/B2 precisam menos de correcao gramatical e mais de naturalidade, registro, idiomaticidade e
+colocacao.
+
+O MVP fica limitado a:
+
+1. Diagnostico com os `errorTypes` existentes e uma amostra curta de escrita.
+2. Evidencia ao lado de cada gap; nunca mostrar um rotulo “Weak” sem frase/exemplo real.
+3. Um unico dominio escolhido a partir da necessidade observada.
+4. Um loop write -> feedback -> speak para verificar transferencia.
+
+Continuar apenas se learners confiarem nos gaps, completarem o loop e voltarem a ele sem prompt.
+Se aceitarem o relatorio mas nao mudarem a pratica, cortar a ideia. Biblioteca curada de conteudo
+nativo, builder multidominio, dashboards de skill/fluencia e enforcement automatico de proporcao
+ficam adiados.
 
 ## Pesquisa Aplicada
 
