@@ -1,6 +1,7 @@
 import type { EnglishLevel } from "@/features/discover/types";
+import type { MethodObjective } from "@/features/settings/learningProfile";
 
-export type TaskType = "discover" | "study" | "converse" | "correct" | "lesson";
+export type TaskType = "discover" | "study" | "converse" | "correct" | "lesson" | "readWrite";
 
 export interface TaskItem {
   id: string;
@@ -13,6 +14,9 @@ export interface TaskItem {
     quantity: number;
   };
   completedAt?: number;
+  /** Set when a matching learning event, rather than a checkbox, proves the task. */
+  evidenceAt?: number;
+  evidenceCount?: number;
 }
 
 export interface DailyTask {
@@ -39,6 +43,8 @@ export interface PlanMeta {
   availabilityMinutes: number;
   planDays: number;
   language: string;
+  /** Structured objective used by the same policy as weekly method balance. */
+  objective?: MethodObjective;
 }
 
 export interface LearningPlan {

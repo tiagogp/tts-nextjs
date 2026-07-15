@@ -21,6 +21,7 @@ import {
 import { logger } from "@/lib/logger";
 import { extractJsonObject, validatePlanResult } from "@/features/plan/contract";
 import { buildPlanPrompt } from "@/features/plan/prompts";
+import { METHOD_OBJECTIVES, type MethodObjective } from "@/features/settings/learningProfile";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -52,6 +53,9 @@ export async function POST(req: NextRequest) {
         ? Math.max(5, Math.min(120, obj.availabilityMinutes))
         : 20;
     const model = safeStr(obj.ollamaModel, "", 100) || undefined;
+    const objective = METHOD_OBJECTIVES.includes(obj.objective as MethodObjective)
+      ? (obj.objective as MethodObjective)
+      : "conversation";
 
     const kind = planProviderKind(obj.provider);
     if (!isProviderAvailable(kind)) {
@@ -68,7 +72,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const prompt = buildPlanPrompt({ goal, currentLevel, targetLevel, availabilityMinutes, planDays, language });
+    const prompt = buildPlanPrompt({ goal, currentLevel, targetLevel, availabilityMinutes, planDays, language, objective });
     const raw = await provider.complete(prompt);
 
     let parsed: unknown;

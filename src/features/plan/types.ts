@@ -17,6 +17,8 @@ export interface PlanTaskRowProps {
   onComplete: () => void;
   onGo?: () => void;
   hideGoAction?: boolean;
+  /** Marks the task the method recommends doing next — at most one per list. */
+  highlight?: boolean;
   completeButtonLabel?: {
     done: string;
     pending: string;

@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import { isStoreAvailable } from "@/lib/store/db";
 import type { DailyTask, LearningPlan } from "../schema";
 import { getActivePlan, getTodayTasks, updateDayTask } from "../store";
+import { getActivitySince, type ActivityEvent } from "@/lib/store/activityLog";
+import { countTaskEvidence, taskEvidenceMeetsTarget } from "../evidence";
 
 export interface TodayPlanState {
   loading: boolean;
@@ -25,7 +27,19 @@ export function useTodayPlan(): TodayPlanState {
     const activePlan = await getActivePlan();
     setPlan(activePlan);
     if (activePlan) {
-      const todayTasks = await getTodayTasks(activePlan.id);
+      let todayTasks = await getTodayTasks(activePlan.id);
+      if (todayTasks) {
+        const dayStart = new Date(`${todayTasks.date}T00:00:00`).getTime();
+        const events = await getActivitySince(dayStart).catch(() => [] as ActivityEvent[]);
+        for (const task of todayTasks.tasks) {
+          if (task.completedAt != null) continue;
+          if (taskEvidenceMeetsTarget(task, events)) {
+            const count = countTaskEvidence(task, events);
+            await updateDayTask(activePlan.id, todayTasks.date, task.id, Date.now(), { at: Date.now(), count });
+          }
+        }
+        todayTasks = await getTodayTasks(activePlan.id);
+      }
       setToday(todayTasks);
     } else {
       setToday(null);
@@ -41,9 +55,13 @@ export function useTodayPlan(): TodayPlanState {
     void load();
     const onPlanUpdated = () => void refresh();
     window.addEventListener("phraseloop:plan-updated", onPlanUpdated);
+    // Task completion is evidence-driven, so a lesson, speaking attempt, review,
+    // or transfer must re-check today's tasks without requiring a page reload.
+    window.addEventListener("phraseloop:activity", onPlanUpdated);
     return () => {
       cancelled = true;
       window.removeEventListener("phraseloop:plan-updated", onPlanUpdated);
+      window.removeEventListener("phraseloop:activity", onPlanUpdated);
     };
   }, [refresh]);
 

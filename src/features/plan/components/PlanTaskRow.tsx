@@ -7,6 +7,7 @@ export function PlanTaskRow({
   onGo,
   onComplete,
   hideGoAction = false,
+  highlight = false,
   completeButtonLabel = {
     done: "Mark as not done",
     pending: "Mark as done",
@@ -18,13 +19,15 @@ export function PlanTaskRow({
   return (
     <li
       className={`flex items-center gap-3 rounded-lg border px-3 py-2.5 transition-colors ${
-        done ? "border-line bg-surface opacity-60" : "border-line bg-canvas"
+        done ? "border-line bg-surface opacity-60" : highlight ? "border-accent/50 bg-accent/5" : "border-line bg-canvas"
       }`}
     >
       <button
         type="button"
         aria-label={done ? t(completeButtonLabel.done) : t(completeButtonLabel.pending)}
         onClick={onComplete}
+        disabled={!done}
+        title={!done ? t("Complete this task by doing the linked activity") : undefined}
         className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
           done
             ? "border-emerald-500 bg-emerald-500 text-white"
@@ -45,6 +48,11 @@ export function PlanTaskRow({
       </button>
 
       <div className="flex min-w-0 flex-1 items-center gap-2">
+        {highlight && !done && (
+          <span className="shrink-0 rounded bg-accent px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white">
+            {t("Next")}
+          </span>
+        )}
         <span
           className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
             TASK_COLORS[task.type]

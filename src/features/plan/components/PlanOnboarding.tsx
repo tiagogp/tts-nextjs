@@ -83,6 +83,7 @@ export function PlanOnboarding({
           availabilityMinutes,
           planDays,
           language: languageLabel(profile.targetLang),
+          objective: profile.objective,
         },
         provider,
         ollamaModel: selectedModel,

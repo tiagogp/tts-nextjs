@@ -2,6 +2,7 @@ import { nanoid } from "nanoid";
 import { STORES, get, getAll, put, del } from "@/lib/store/db";
 import type { DailyTask, EffortSnapshot, LearningPlan, PlanMeta, PlanGenerationResult, Phase } from "./schema";
 import { addDays, dateString } from "./utils";
+import { applyObjectiveDistribution } from "./objectivePolicy";
 
 export { getIsoWeek } from "./utils";
 
@@ -9,10 +10,11 @@ const ACTIVE_PLAN_KEY = "phraseloop.activePlanId.v1";
 
 /** Build a full LearningPlan from the LLM result + meta, anchored to today. */
 export function buildPlan(meta: PlanMeta, result: PlanGenerationResult): LearningPlan {
+  const shaped = meta.objective ? applyObjectiveDistribution(result, meta.objective) : result;
   const startsOn = dateString(new Date());
   const start = new Date(startsOn);
 
-  const phases: Phase[] = result.phases.map((p) => ({
+  const phases: Phase[] = shaped.phases.map((p) => ({
     number: p.number,
     title: p.title,
     focus: p.focus,
@@ -20,7 +22,7 @@ export function buildPlan(meta: PlanMeta, result: PlanGenerationResult): Learnin
     endDay: p.endDay,
   }));
 
-  const days: DailyTask[] = result.days.map((d) => ({
+  const days: DailyTask[] = shaped.days.map((d) => ({
     date: dateString(addDays(start, d.dayNumber - 1)),
     phase: d.phase,
     estimatedMinutes: d.estimatedMinutes,
@@ -78,6 +80,7 @@ export async function updateDayTask(
   date: string,
   taskId: string,
   completedAt: number,
+  evidence?: { at: number; count: number },
 ): Promise<void> {
   const plan = await get<LearningPlan>(STORES.learningPlan, planId);
   if (!plan) return;
@@ -89,7 +92,9 @@ export async function updateDayTask(
       return {
         ...d,
         completedAt: allDone ? completedAt : undefined,
-        tasks: d.tasks.map((t) => (t.id === taskId ? { ...t, completedAt } : t)),
+        tasks: d.tasks.map((t) => (t.id === taskId
+          ? { ...t, completedAt, ...(evidence ? { evidenceAt: evidence.at, evidenceCount: evidence.count } : {}) }
+          : t)),
       };
     }),
   };

@@ -1,4 +1,4 @@
-import { PLAN_TASK_TYPES } from "./constants";
+import { PLAN_METRIC_ACTIONS, PLAN_TASK_TYPES } from "./constants";
 import type { PlanGenerationResult } from "./schema";
 
 type GeneratedTask = PlanGenerationResult["days"][number]["tasks"][number];
@@ -22,7 +22,7 @@ function validateTask(raw: unknown): GeneratedTask | null {
   let targetMetric: GeneratedTask["targetMetric"];
   if (task.targetMetric && typeof task.targetMetric === "object") {
     const metric = task.targetMetric as Record<string, unknown>;
-    if (typeof metric.action === "string" && metric.action.length > 0 && typeof metric.quantity === "number") {
+    if (typeof metric.action === "string" && PLAN_METRIC_ACTIONS.includes(metric.action as typeof PLAN_METRIC_ACTIONS[number]) && typeof metric.quantity === "number" && Number.isFinite(metric.quantity) && metric.quantity > 0) {
       targetMetric = {
         action: metric.action,
         quantity: metric.quantity,

@@ -19,6 +19,7 @@ export async function generateAndSavePlan(opts: GeneratePlanOptions): Promise<Le
       availabilityMinutes: opts.meta.availabilityMinutes,
       planDays: opts.meta.planDays,
       language: opts.meta.language,
+      objective: opts.meta.objective,
       provider: opts.provider,
       ollamaModel: opts.ollamaModel || undefined,
     }),

@@ -20,6 +20,9 @@ const MINUTES_PER_EVENT: Record<ActivityEventType, (event: ActivityEvent) => num
   progress_checkin: () => 5,
   c1_diagnosis_completed: () => 5,
   level_test_completed: () => 15,
+  listening_attempt: () => 0, // performance evidence; listening minutes come from method_stage
+  production_attempt: () => 0, // performance evidence; effort is measured by method_stage
+  retry_outcome: () => 0, // performance evidence; effort is measured by method_stage
 };
 
 function startOfWeek(date: Date): Date {
