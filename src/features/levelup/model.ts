@@ -3,7 +3,7 @@
  * `analytics.ts` / `band.ts`): no new storage, readiness is derived on read from the
  * progress snapshot, the weakness list, and current card/SRS state.
  *
- * The trust rule from docs/c1-phase-proposal.md applies here: a gap is only surfaced
+ * The trust rule from docs/product.md applies here: a gap is only surfaced
  * when real evidence (the learner's own sentence or phrase) can be attached to it —
  * a bare "Weak" label with no example is dropped, not shown.
  */

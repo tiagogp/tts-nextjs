@@ -22,11 +22,10 @@ export function PerformanceStats({
   return (
     <Card className="p-5">
       <p className="mb-4 text-sm font-semibold tracking-[-0.01em] text-ink">{t("Performance")}</p>
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-3 gap-4">
         <Stat label={t("Phrases")} value={String(cardsCount)} />
         <Stat label={t("Reviews")} value={String(stats.totalReviews)} />
         <Stat label={t("Accuracy")} value={`${Math.round(stats.accuracy * 100)}%`} />
-        <Stat label={t("Streak")} value={`${stats.streakDays}d`} />
       </div>
 
       {retention && retention.missGaps > 0 && (

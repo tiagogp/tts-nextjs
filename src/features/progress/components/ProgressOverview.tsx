@@ -7,16 +7,22 @@ import { Notice } from "@/components/ui/Notice";
 import { Spinner } from "@/components/ui/Spinner";
 import { useProviderSelection } from "@/features/cards/hooks/useProviderSelection";
 import { evaluateCorrectionText } from "@/features/correct/api";
+import { focusFeedback, prioritizeFeedback } from "@/features/correct/feedbackContract";
 import { DEFAULT_LEARNING_PROFILE, getLearningProfile } from "@/features/settings/learningProfile";
 import { cn } from "@/lib/cn";
+import { useT } from "@/i18n/I18nProvider";
 import { emitActivity } from "@/lib/store/activityLog";
 import { isStoreAvailable } from "@/lib/store/db";
 import {
   getConversations,
   getErrorEvents,
+  getListeningAttempts,
+  getMethodProgression,
+  getProductionAttempts,
   getProgressAssessments,
   getPronunciationAttempts,
   getReviews,
+  getRetryOutcomes,
   saveErrorEvents,
   saveProgressAssessment,
   type Conversation,
@@ -24,6 +30,8 @@ import {
 } from "@/lib/store/repository";
 import type { ErrorEvent } from "@/lib/cards/schema";
 import type { PronunciationAttempt } from "@/lib/pronunciation/types";
+import type { ListeningAttempt, ProductionAttempt, RetryOutcome } from "@/lib/performance/types";
+import { deriveProgressionState, type MethodProgressionState } from "@/features/method/progression";
 import {
   computeProgressSnapshot,
   type ProgressSnapshot,
@@ -35,6 +43,10 @@ interface ProgressData {
   errorEvents: ErrorEvent[];
   conversations: Conversation[];
   pronunciationAttempts: PronunciationAttempt[];
+  listeningAttempts: ListeningAttempt[];
+  productionAttempts: ProductionAttempt[];
+  retryOutcomes: RetryOutcome[];
+  progression?: MethodProgressionState;
   assessments: StoredProgressAssessment[];
 }
 
@@ -43,6 +55,10 @@ const EMPTY_DATA: ProgressData = {
   errorEvents: [],
   conversations: [],
   pronunciationAttempts: [],
+  listeningAttempts: [],
+  productionAttempts: [],
+  retryOutcomes: [],
+  progression: undefined,
   assessments: [],
 };
 
@@ -59,14 +75,24 @@ export function ProgressOverview({
 
   const load = useCallback(async () => {
     if (!isStoreAvailable()) return;
-    const [reviews, errorEvents, conversations, pronunciationAttempts, assessments] = await Promise.all([
+    const [reviews, errorEvents, conversations, pronunciationAttempts, listeningAttempts, productionAttempts, retryOutcomes, assessments, previousProgression] = await Promise.all([
       getReviews(),
       getErrorEvents(),
       getConversations(),
       getPronunciationAttempts(),
+      getListeningAttempts(),
+      getProductionAttempts(),
+      getRetryOutcomes(),
       getProgressAssessments(),
+      getMethodProgression(),
     ]);
-    setData({ reviews, errorEvents, conversations, pronunciationAttempts, assessments });
+    const progression = deriveProgressionState({
+      listeningAttempts,
+      productionAttempts,
+      retryOutcomes,
+      previous: previousProgression,
+    });
+    setData({ reviews, errorEvents, conversations, pronunciationAttempts, listeningAttempts, productionAttempts, retryOutcomes, progression, assessments });
   }, []);
 
   useEffect(() => {
@@ -122,7 +148,8 @@ export function ProgressOverview({
 
   return (
     <div className={compact ? "space-y-3" : "space-y-5"}>
-      <ProgressSnapshotCard snapshot={snapshot} latest={data.assessments[0]} compact={compact} />
+      <ProgressSnapshotCard snapshot={snapshot} progression={data.progression} latest={data.assessments[0]} compact={compact} />
+      {!compact && data.errorEvents.length > 0 && <FeedbackPriorityCard events={data.errorEvents} />}
       {showCheckIn && (
         <ProgressCheckInCard
           data={data}
@@ -134,12 +161,40 @@ export function ProgressOverview({
   );
 }
 
+function FeedbackPriorityCard({ events }: { events: ErrorEvent[] }) {
+  const { t } = useT();
+  const issues = focusFeedback(prioritizeFeedback(events), 3);
+  return (
+    <Card className="space-y-3 p-5">
+      <div>
+        <p className="text-xs uppercase tracking-[0.7px] text-accent">{t("Shared feedback focus")}</p>
+        <p className="mt-1 text-sm text-ink-soft">{t("The same priority contract drives lessons, corrections, conversations, and progress.")}</p>
+      </div>
+      <ul className="space-y-2">
+        {issues.map((issue) => (
+          <li key={issue.event.id} className="rounded border border-line bg-surface px-3 py-2">
+            <div className="flex flex-wrap items-center gap-1.5 text-[11px] uppercase tracking-[0.4px] text-ink-muted">
+              <span className="rounded border border-accent/30 px-1.5 py-0.5 text-accent">{t(issue.priority)}</span>
+              <span>{t(issue.category)}</span>
+            </div>
+            <p className="mt-1 text-xs text-ink-muted line-through">{issue.event.original}</p>
+            <p className="text-sm font-medium text-ink">{issue.event.corrected}</p>
+            <p className="mt-1 text-xs text-ink-muted">{t(issue.suggestedRetrySupport)}</p>
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+}
+
 function ProgressSnapshotCard({
   snapshot,
+  progression,
   latest,
   compact,
 }: {
   snapshot: ProgressSnapshot;
+  progression?: MethodProgressionState;
   latest?: StoredProgressAssessment;
   compact: boolean;
 }) {
@@ -157,6 +212,15 @@ function ProgressSnapshotCard({
             <span className="text-xs uppercase tracking-[0.7px] text-ink-muted">{snapshot.confidence} confidence</span>
           </div>
           <p className="mt-1 text-sm text-ink-soft">{snapshot.nextFocus}</p>
+          {progression && (progression.listeningSamples > 0 || progression.speakingSamples > 0) && (
+            <div className="mt-1 space-y-1 text-xs text-ink-muted">
+              <p>
+                Support level · listening {progression.listeningStage.replaceAll("_", " ")} · speaking {progression.speakingStage.replaceAll("_", " ")} · reading/writing {progression.readingWritingStage?.replaceAll("_", " ") ?? "guided reading"}
+              </p>
+              {progression.listeningReason && <p>{progression.listeningReason}</p>}
+              {progression.speakingReason && <p>{progression.speakingReason}</p>}
+            </div>
+          )}
         </div>
         <div className="text-right">
           <p className="text-2xl font-semibold tabular-nums text-ink">{snapshot.averageScore}</p>
@@ -187,6 +251,41 @@ function ProgressSnapshotCard({
               </p>
             )}
           </div>
+        </div>
+      )}
+      {!compact && (
+        <div className="mt-3 grid gap-2 text-xs text-ink-muted sm:grid-cols-3">
+          <p className="rounded border border-line bg-surface px-3 py-2">
+            Spoken attempts: <span className="font-medium text-ink">{snapshot.confidenceIndicators.spokenAttempts}</span>
+          </p>
+          <p className="rounded border border-line bg-surface px-3 py-2">
+            Recording length: <span className="font-medium text-ink">{snapshot.confidenceIndicators.averageRecordingSeconds}s</span>
+            {snapshot.confidenceIndicators.recordingGrowthPercent !== 0 && ` (${snapshot.confidenceIndicators.recordingGrowthPercent > 0 ? "+" : ""}${snapshot.confidenceIndicators.recordingGrowthPercent}%)`}
+          </p>
+          <p className="rounded border border-line bg-surface px-3 py-2">
+            Retry resolution: <span className="font-medium text-ink">{snapshot.confidenceIndicators.resolvedRetryRate}%</span>
+          </p>
+          <p className="rounded border border-line bg-surface px-3 py-2">
+            Reading/writing: <span className="font-medium text-ink">{snapshot.confidenceIndicators.readingWritingAttempts}</span> attempts · {snapshot.confidenceIndicators.transferAttempts} transfers
+          </p>
+          <p className="rounded border border-line bg-surface px-3 py-2">
+            Listening: <span className="font-medium text-ink">{snapshot.confidenceIndicators.listeningAccuracy}%</span> accuracy · {snapshot.confidenceIndicators.listeningAttempts} checks
+          </p>
+          <p className="rounded border border-line bg-surface px-3 py-2">
+            Fluency: <span className="font-medium text-ink">{snapshot.confidenceIndicators.averageWordsPerMinute || "—"}</span> words/min · {snapshot.confidenceIndicators.fluencySamples} samples
+          </p>
+          <p className="rounded border border-line bg-surface px-3 py-2">
+            Support: <span className="font-medium text-ink">{snapshot.confidenceIndicators.scaffoldedAttempts}</span> scaffolded · {snapshot.confidenceIndicators.skippedAttempts} skipped
+          </p>
+          <p className="rounded border border-line bg-surface px-3 py-2">
+            Independence: <span className="font-medium text-ink">{snapshot.confidenceIndicators.independentAttempts}</span> attempts · {snapshot.confidenceIndicators.scaffoldRate}% supported
+          </p>
+          <p className="rounded border border-line bg-surface px-3 py-2">
+            Transfer: <span className="font-medium text-ink">{snapshot.confidenceIndicators.transferSuccessRate}%</span> clear · {snapshot.confidenceIndicators.avoidedErrorCount} old errors avoided
+          </p>
+          <p className="rounded border border-line bg-surface px-3 py-2">
+            Preparation: <span className="font-medium text-ink">{snapshot.confidenceIndicators.averagePreparationSeconds || "—"}s</span> average · {snapshot.confidenceIndicators.preparationSamples} samples
+          </p>
         </div>
       )}
     </Card>

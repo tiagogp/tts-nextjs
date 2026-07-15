@@ -35,6 +35,16 @@ function snapshot(overrides: {
     milestones: [],
     nextCheckpointAt: NOW,
     checkpointDue: false,
+    confidenceIndicators: {
+      spokenAttempts: 0,
+      averageRecordingSeconds: 0,
+      recordingGrowthPercent: 0,
+      resolvedRetryRate: 0,
+      unresolvedRetries: 0,
+      readingWritingAttempts: 0,
+      transferAttempts: 0,
+      uniqueTransferSources: 0,
+    },
   };
 }
 

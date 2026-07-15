@@ -14,6 +14,7 @@ import {
   MIN_GOAL,
   type ExposureZone,
 } from "@/features/study/weeklyGoal";
+import { useT } from "@/i18n/I18nProvider";
 
 const ZONE: Record<ExposureZone, { label: string; tone: string; bar: string }> = {
   building: { label: "Building up", tone: "text-ink-muted", bar: "bg-accent" },
@@ -22,6 +23,7 @@ const ZONE: Record<ExposureZone, { label: string; tone: string; bar: string }> =
 };
 
 export function ExposureMeter({ activity }: { activity: WeeklyActivity }) {
+  const { t } = useT();
   const goal = useSyncExternalStore(subscribeWeeklyGoal, getWeeklyGoal, () => DEFAULT_WEEKLY_GOAL);
   const updateGoal = (next: number) => {
     setWeeklyGoal(next);
@@ -35,26 +37,26 @@ export function ExposureMeter({ activity }: { activity: WeeklyActivity }) {
   return (
     <Card className="p-5">
       <div className="mb-4 flex items-center justify-between gap-3">
-        <p className="text-sm font-semibold tracking-[-0.01em] text-ink">This week</p>
-        <span className={cn("text-xs font-medium", z.tone)}>{z.label}</span>
+        <p className="text-sm font-semibold tracking-[-0.01em] text-ink">{t("This week")}</p>
+        <span className={cn("text-xs font-medium", z.tone)}>{t(z.label)}</span>
       </div>
 
       <div className="mb-4 grid grid-cols-3 gap-4">
-        <Stat label="Conversations" value={activity.conversations} />
-        <Stat label="Output turns" value={activity.turns} />
-        <Stat label="Reviews" value={activity.reviews} />
+        <Stat label={t("Conversations")} value={activity.conversations} />
+        <Stat label={t("Output turns")} value={activity.turns} />
+        <Stat label={t("Reviews")} value={activity.reviews} />
       </div>
 
       <div className="mb-2 flex items-center justify-between text-xs">
-        <span className="text-ink-muted">Weekly goal</span>
+        <span className="text-ink-muted">{t("Weekly goal")}</span>
         <div className="flex items-center gap-1.5">
-          <GoalButton onClick={() => updateGoal(goal - 1)} disabled={goal <= MIN_GOAL} label="Decrease goal">
+          <GoalButton onClick={() => updateGoal(goal - 1)} disabled={goal <= MIN_GOAL} label={t("Decrease goal")}>
             −
           </GoalButton>
           <span className="w-14 text-center tabular-nums text-ink">
             {activity.conversations} / {goal}
           </span>
-          <GoalButton onClick={() => updateGoal(goal + 1)} disabled={goal >= MAX_GOAL} label="Increase goal">
+          <GoalButton onClick={() => updateGoal(goal + 1)} disabled={goal >= MAX_GOAL} label={t("Increase goal")}>
             +
           </GoalButton>
         </div>
@@ -66,10 +68,10 @@ export function ExposureMeter({ activity }: { activity: WeeklyActivity }) {
 
       <p className="mt-2 text-xs text-ink-muted">
         {zone === "building"
-          ? `${remaining} more conversation${remaining === 1 ? "" : "s"} to hit your goal.`
+          ? t("{count} more conversation(s) to hit your goal.", { count: remaining })
           : zone === "in-zone"
-            ? "Right amount of challenge — keep it up."
-            : "You're well past your goal this week. Rest counts too."}
+            ? t("Right amount of challenge — keep it up.")
+            : t("You're well past your goal this week. Rest counts too.")}
       </p>
     </Card>
   );

@@ -38,7 +38,6 @@ interface StudyCardProps {
   grading: boolean;
   sessionResults: SessionResult[];
   tomorrow: TomorrowPreview | null;
-  streakDays: number;
   reviews: ReviewRecord[];
   onFlip: () => void;
   onGrade: (grade: Grade, scaffold: ScaffoldTelemetry) => void;
@@ -53,7 +52,6 @@ export function StudyCard({
   grading,
   sessionResults,
   tomorrow,
-  streakDays,
   reviews,
   onFlip,
   onGrade,
@@ -109,7 +107,7 @@ export function StudyCard({
   // When a queue finishes after real work, the honest session summary replaces the
   // bare "all caught up" note — it carries its own card chrome.
   if (totalCards > 0 && !current && sessionResults.length > 0) {
-    return <SessionSummary results={sessionResults} streakDays={streakDays} tomorrow={tomorrow} />;
+    return <SessionSummary results={sessionResults} tomorrow={tomorrow} />;
   }
 
   return (

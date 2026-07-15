@@ -328,7 +328,7 @@ export function useStudySession() {
             provider: defaultProvider?.label ?? t("The selected AI"),
           }),
         );
-        return;
+        return false;
       }
       setGenError(null);
       setGeneratingKey(key);
@@ -339,7 +339,7 @@ export function useStudySession() {
         });
         if (candidates.length === 0 && errors.length === 0) {
           setGenError(t('No saved material left for "{label}" to generate from.', { label: w.label }));
-          return;
+          return false;
         }
         const res = await fetch("/api/cards/reinforce", {
           method: "POST",
@@ -356,14 +356,16 @@ export function useStudySession() {
           | null;
         if (!res.ok || !data?.cards?.length) {
           setGenError(data?.error ?? t("Couldn't create new practice phrases."));
-          return;
+          return false;
         }
         await saveCards(data.cards);
         await refresh();
         // Drill everything for this concept now — the new variants included.
         await startReinforcement(w);
+        return true;
       } catch {
         setGenError(t("Couldn't reach IA. Try again."));
+        return false;
       } finally {
         setGeneratingKey(null);
       }

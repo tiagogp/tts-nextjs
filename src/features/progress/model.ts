@@ -2,6 +2,8 @@ import type { EnglishLevel } from "@/features/discover/types";
 import type { ErrorEvent, ErrorType } from "@/lib/cards/schema";
 import type { PronunciationAttempt } from "@/lib/pronunciation/types";
 import type { Conversation, ReviewRecord } from "@/lib/store/repository";
+import type { ListeningAttempt, ProductionAttempt, RetryOutcome } from "@/lib/performance/types";
+import { transferMetrics } from "@/features/study/transfer";
 import { Rating } from "@/lib/srs/fsrs";
 
 const DAY_MS = 86_400_000;
@@ -12,6 +14,7 @@ export type SkillKey =
   | "recall"
   | "grammar"
   | "naturalness"
+  | "comprehension"
   | "pronunciation"
   | "fluency"
   | "consistency";
@@ -43,6 +46,38 @@ export interface ProgressSnapshot {
   milestones: ProgressMilestone[];
   nextCheckpointAt: number;
   checkpointDue: boolean;
+  confidenceIndicators: ConfidenceIndicators;
+}
+
+export interface ConfidenceIndicators {
+  spokenAttempts: number;
+  averageRecordingSeconds: number;
+  recordingGrowthPercent: number;
+  resolvedRetryRate: number;
+  unresolvedRetries: number;
+  readingWritingAttempts: number;
+  transferAttempts: number;
+  uniqueTransferSources: number;
+  skippedAttempts?: number;
+  scaffoldedAttempts?: number;
+  listeningAttempts?: number;
+  listeningAccuracy?: number;
+  averagePreparationSeconds?: number;
+  preparationSamples?: number;
+  independentAttempts?: number;
+  scaffoldRate?: number;
+  retryImprovementRate?: number;
+  transferSuccessRate?: number;
+  cardRecallAttempts?: number;
+  openProductionAttempts?: number;
+  crossContextReuse?: number;
+  retellAttempts?: number;
+  correctionRecallAttempts?: number;
+  spokenRetrievalAttempts?: number;
+  avoidedErrorCount?: number;
+  listeningRecognitionAttempts?: number;
+  fluencySamples?: number;
+  averageWordsPerMinute?: number;
 }
 
 export interface StoredProgressAssessment extends ProgressSnapshot {
@@ -59,8 +94,37 @@ export interface ProgressInput {
   errorEvents: ErrorEvent[];
   conversations: Conversation[];
   pronunciationAttempts: PronunciationAttempt[];
+  listeningAttempts?: ListeningAttempt[];
+  productionAttempts?: ProductionAttempt[];
+  retryOutcomes?: RetryOutcome[];
   assessments: StoredProgressAssessment[];
   now?: number;
+}
+
+function scoreComprehension(attempts: ListeningAttempt[], now: number): SkillSignal {
+  const recent = since(attempts, now, 30, (attempt) => attempt.completedAt);
+  const older = attempts.filter(
+    (attempt) => attempt.completedAt < now - 30 * DAY_MS && attempt.completedAt >= now - 60 * DAY_MS,
+  );
+  const scoreFor = (attempt: ListeningAttempt) => {
+    if (attempt.questionCount <= 0) return 0;
+    // Main idea carries more weight than detail recall: missing a detail is not a failed lesson.
+    const mainIdea = attempt.mainIdeaCorrect ? 60 : 0;
+    const detail = attempt.detailTotal > 0 ? (attempt.detailCorrect / attempt.detailTotal) * 40 : 40;
+    return mainIdea + detail;
+  };
+  const recentScore = avg(recent.map(scoreFor));
+  const olderScore = older.length ? avg(older.map(scoreFor)) : recentScore;
+  return {
+    key: "comprehension",
+    label: "Listening comprehension",
+    score: clampScore(recentScore),
+    samples: recent.length,
+    delta: Math.round(recentScore - olderScore),
+    detail: recent.length
+      ? `${recent.length} listening attempt${recent.length === 1 ? "" : "s"}; main idea and details measured separately`
+      : "Complete a listening check to measure comprehension",
+  };
 }
 
 function clampScore(n: number): number {
@@ -169,21 +233,42 @@ function scorePronunciation(attempts: PronunciationAttempt[], now: number): Skil
   };
 }
 
-function scoreFluency(conversations: Conversation[], now: number): SkillSignal {
+function scoreFluency(
+  conversations: Conversation[],
+  productionAttempts: ProductionAttempt[],
+  retryOutcomes: RetryOutcome[],
+  now: number,
+): SkillSignal {
   const recent = since(conversations, now, 30, (conversation) => conversation.startedAt);
   const userTurns = recent.reduce(
     (sum, conversation) => sum + conversation.turns.filter((turn) => turn.role === "user").length,
     0,
   );
+  const recentProduction = since(productionAttempts, now, 30, (attempt) => attempt.createdAt)
+    .filter((attempt) => attempt.stage !== "repeat" && attempt.evaluated !== false);
+  const resolvedRetries = new Set(
+    since(retryOutcomes, now, 30, (outcome) => outcome.createdAt)
+      .filter((outcome) => outcome.resolved)
+      .map((outcome) => outcome.retryOf),
+  );
+  const outputCount = userTurns + recentProduction.length;
   const averageTurns = recent.length ? userTurns / recent.length : 0;
+  const fluencySamples = recentProduction.filter((attempt) => attempt.fluency || attempt.durationMs).length;
+  const averageWordsPerMinute = avg(
+    recentProduction
+      .map((attempt) => attempt.fluency?.wordsPerMinute ?? (attempt.durationMs && attempt.durationMs > 0 ? attempt.wordCount / (attempt.durationMs / 60000) : 0))
+      .filter((value) => value > 0),
+  );
+  const stamina = Math.min(35, outputCount * 2 + fluencySamples * 2 + resolvedRetries.size * 2);
+  const speedSignal = Math.min(20, averageWordsPerMinute / 8);
   return {
     key: "fluency",
     label: "Fluency",
-    score: clampScore(Math.min(100, averageTurns * 12 + Math.min(25, recent.length * 4))),
-    samples: userTurns,
+    score: clampScore(Math.min(100, averageTurns * 10 + Math.min(20, recent.length * 3) + stamina + speedSignal)),
+    samples: outputCount,
     delta: 0,
     detail: recent.length
-      ? `${Math.round(averageTurns)} learner turn${Math.round(averageTurns) === 1 ? "" : "s"} per conversation`
+      ? `${outputCount} original production attempt${outputCount === 1 ? "" : "s"}; ${fluencySamples} fluency sample${fluencySamples === 1 ? "" : "s"} tracked separately`
       : "Start conversations to measure output stamina",
   };
 }
@@ -193,6 +278,9 @@ function scoreConsistency(input: {
   errorEvents: ErrorEvent[];
   conversations: Conversation[];
   pronunciationAttempts: PronunciationAttempt[];
+  listeningAttempts: ListeningAttempt[];
+  productionAttempts: ProductionAttempt[];
+  retryOutcomes: RetryOutcome[];
   now: number;
 }): SkillSignal {
   const timestamps = [
@@ -200,6 +288,8 @@ function scoreConsistency(input: {
     ...input.errorEvents.map((event) => event.createdAt),
     ...input.conversations.map((conversation) => conversation.startedAt),
     ...input.pronunciationAttempts.map((attempt) => attempt.createdAt),
+    ...input.listeningAttempts.map((attempt) => attempt.completedAt),
+    ...input.productionAttempts.map((attempt) => attempt.createdAt),
   ];
   const activeDays = activeDayCount(timestamps, input.now, 14);
   return {
@@ -209,6 +299,83 @@ function scoreConsistency(input: {
     samples: activeDays,
     delta: 0,
     detail: `${activeDays}/14 active day${activeDays === 1 ? "" : "s"}`,
+  };
+}
+
+function confidenceIndicators(input: ProgressInput, now: number): ConfidenceIndicators {
+  const recentProduction = since(input.productionAttempts ?? [], now, 30, (attempt) => attempt.createdAt)
+    .filter((attempt) => attempt.stage !== "repeat");
+  const spoken = recentProduction.filter((attempt) => attempt.spoken);
+  const durations = spoken
+    .map((attempt) => attempt.durationMs)
+    .filter((duration): duration is number => duration !== undefined && Number.isFinite(duration) && duration > 0);
+  const olderSpoken = (input.productionAttempts ?? [])
+    .filter((attempt) => attempt.stage !== "repeat" && attempt.spoken)
+    .filter((attempt) => attempt.createdAt < now - 30 * DAY_MS && attempt.createdAt >= now - 60 * DAY_MS)
+    .map((attempt) => attempt.durationMs)
+    .filter((duration): duration is number => duration !== undefined && Number.isFinite(duration) && duration > 0);
+  const average = durations.length ? avg(durations) / 1000 : 0;
+  const olderAverage = olderSpoken.length ? avg(olderSpoken) : 0;
+  const recordingGrowthPercent = olderAverage > 0 ? Math.round(((avg(durations) - olderAverage) / olderAverage) * 100) : 0;
+  const retries = since(input.retryOutcomes ?? [], now, 30, (outcome) => outcome.createdAt);
+  const resolved = retries.filter((outcome) => outcome.resolved).length;
+  const readingWriting = recentProduction.filter((attempt) => !attempt.spoken);
+  const transfers = recentProduction.filter((attempt) => Boolean(attempt.transferKind));
+  const uniqueTransferSources = new Set(transfers.map((attempt) => attempt.transferSourceId).filter(Boolean)).size;
+  const listening = since(input.listeningAttempts ?? [], now, 30, (attempt) => attempt.completedAt);
+  const listeningAccuracy = listening.length
+    ? avg(listening.map((attempt) => {
+      if (attempt.questionCount <= 0) return 0;
+      const mainIdea = attempt.mainIdeaCorrect ? 60 : 0;
+      const detail = attempt.detailTotal > 0 ? (attempt.detailCorrect / attempt.detailTotal) * 40 : 40;
+      return mainIdea + detail;
+    }))
+    : 0;
+  const allEvidence = [...recentProduction, ...listening];
+  const preparation = recentProduction
+    .map((attempt) => attempt.preparationMs)
+    .filter((value): value is number => value !== undefined && value > 0);
+  const fluencyValues = recentProduction
+    .filter((attempt) => attempt.evaluated !== false)
+    .map((attempt) => attempt.fluency?.wordsPerMinute ?? (attempt.durationMs && attempt.durationMs > 0 ? attempt.wordCount / (attempt.durationMs / 60000) : 0))
+    .filter((value) => value > 0);
+  const independentAttempts = recentProduction.filter((attempt) => !attempt.scaffoldUsed).length;
+  const transferEvaluated = transfers.filter((attempt) => attempt.transferOutcome);
+  const successfulTransfers = transferEvaluated.filter((attempt) => attempt.transferOutcome === "clear").length;
+  const transfer = transferMetrics(transfers);
+  const avoidedErrorCount = recentProduction.reduce((sum, attempt) => sum + (attempt.avoidedErrorIds?.length ?? 0), 0);
+  const retryImprovementRate = retries.length
+    ? Math.round((retries.filter((retry) => retry.resolved && retry.issueCount === 0).length / retries.length) * 100)
+    : 0;
+  return {
+    spokenAttempts: spoken.length,
+    averageRecordingSeconds: Math.round(average),
+    recordingGrowthPercent,
+    resolvedRetryRate: retries.length ? Math.round((resolved / retries.length) * 100) : 0,
+    unresolvedRetries: retries.filter((outcome) => !outcome.resolved && outcome.resolution !== "dismissed").length,
+    readingWritingAttempts: readingWriting.length,
+    transferAttempts: transfers.length,
+    uniqueTransferSources,
+    skippedAttempts: allEvidence.filter((attempt) => attempt.skipped).length,
+    scaffoldedAttempts: allEvidence.filter((attempt) => attempt.scaffoldUsed).length,
+    listeningAttempts: listening.length,
+    listeningAccuracy: Math.round(listeningAccuracy),
+    averagePreparationSeconds: preparation.length ? Math.round(avg(preparation) / 100) / 10 : 0,
+    preparationSamples: preparation.length,
+    independentAttempts,
+    scaffoldRate: allEvidence.length ? Math.round((allEvidence.filter((attempt) => attempt.scaffoldUsed).length / allEvidence.length) * 100) : 0,
+    retryImprovementRate,
+    transferSuccessRate: transferEvaluated.length ? Math.round((successfulTransfers / transferEvaluated.length) * 100) : 0,
+    cardRecallAttempts: transfer.cardRecall,
+    openProductionAttempts: transfer.openProduction,
+    crossContextReuse: transfer.crossContext,
+    retellAttempts: transfer.retells,
+    correctionRecallAttempts: transfer.correctionRecalls,
+    spokenRetrievalAttempts: transfer.spokenRetrieval,
+    avoidedErrorCount: Math.max(avoidedErrorCount, transfer.avoidedErrors),
+    listeningRecognitionAttempts: transfer.cardRecall,
+    fluencySamples: fluencyValues.length,
+    averageWordsPerMinute: fluencyValues.length ? Math.round(avg(fluencyValues)) : 0,
   };
 }
 
@@ -309,9 +476,16 @@ export function computeProgressSnapshot(input: ProgressInput): ProgressSnapshot 
     scoreRecall(input.reviews, now),
     scoreGrammar(input.errorEvents, now),
     scoreNaturalness(input.errorEvents, now),
+    scoreComprehension(input.listeningAttempts ?? [], now),
     scorePronunciation(input.pronunciationAttempts, now),
-    scoreFluency(input.conversations, now),
-    scoreConsistency({ ...input, now }),
+    scoreFluency(input.conversations, input.productionAttempts ?? [], input.retryOutcomes ?? [], now),
+    scoreConsistency({
+      ...input,
+      listeningAttempts: input.listeningAttempts ?? [],
+      productionAttempts: input.productionAttempts ?? [],
+      retryOutcomes: input.retryOutcomes ?? [],
+      now,
+    }),
   ];
   const weighted = skills.filter((skill) => skill.samples > 0);
   const averageScore = clampScore(avg((weighted.length ? weighted : skills).map((skill) => skill.score)));
@@ -334,5 +508,6 @@ export function computeProgressSnapshot(input: ProgressInput): ProgressSnapshot 
     milestones: buildMilestones(skills, averageScore),
     nextCheckpointAt: checkpoint.at,
     checkpointDue: checkpoint.due,
+    confidenceIndicators: confidenceIndicators(input, now),
   };
 }
