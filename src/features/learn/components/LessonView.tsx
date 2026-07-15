@@ -18,11 +18,23 @@ import {
 import {
   buildListeningChallenge,
   learningPhrases,
-  passedListeningChallenge,
+  scoreListeningChallenge,
+  type ListeningChallengeResult,
 } from "@/features/learn/lessonFlow";
 import { MistakeStep } from "@/features/learn/components/MistakeStep";
+import { PronunciationCoach } from "@/features/pronunciation/components/PronunciationCoach";
+import { buildSpeakingDrill } from "@/features/pronunciation/speakingDrill";
 import { useStageTimer } from "@/features/method/useStageTimer";
-import { saveGeneratedDeck } from "@/lib/store/repository";
+import { deriveProgressionState, supportForProgression, type MethodProgressionState } from "@/features/method/progression";
+import {
+  getListeningAttempts,
+  getMethodProgression,
+  getProductionAttempts,
+  getRetryOutcomes,
+  saveGeneratedDeck,
+  saveListeningAttempt,
+} from "@/lib/store/repository";
+import type { ListeningAttempt } from "@/lib/performance/types";
 import { emitActivity } from "@/lib/store/activityLog";
 import { cn } from "@/lib/cn";
 import { useT } from "@/i18n/I18nProvider";
@@ -101,17 +113,46 @@ function LessonViewContent({
     listeningChallenge.questions.map(() => null),
   );
   const [listeningChecked, setListeningChecked] = useState(false);
-  const [listeningPassed, setListeningPassed] = useState(false);
+  const [listeningResult, setListeningResult] = useState<ListeningChallengeResult | null>(null);
   const [transcriptRevealed, setTranscriptRevealed] = useState(false);
+  const [transcriptNotice, setTranscriptNotice] = useState<string | null>(null);
+  const listeningAttemptRef = useRef<ListeningAttempt | null>(null);
+  const listeningStartedAtRef = useRef<number | null>(null);
   const [playing, setPlaying] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [exercisePhrase, setExercisePhrase] = useState<LessonPhrase | null>(null);
+  const [repeatPhrases, setRepeatPhrases] = useState<LessonPhrase[]>([]);
+  const [repeatedPhraseIds, setRepeatedPhraseIds] = useState<Set<string>>(() => new Set());
   const [savedPhraseCount, setSavedPhraseCount] = useState(0);
   const [mistakeSaved, setMistakeSaved] = useState<{ hadMistake: boolean } | null>(null);
+  const [progression, setProgression] = useState<MethodProgressionState>();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const playRequestRef = useRef(0);
+  const repeatSteps = useMemo(
+    () => buildSpeakingDrill({ lesson, savedPhrases: repeatPhrases }).filter((step) => step.kind === "repeat"),
+    [lesson, repeatPhrases],
+  );
+  const support = useMemo(() => supportForProgression(progression), [progression]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void Promise.all([
+      getListeningAttempts(),
+      getProductionAttempts(),
+      getRetryOutcomes(),
+      getMethodProgression(),
+    ]).then(([listeningAttempts, productionAttempts, retryOutcomes, previous]) => {
+      if (cancelled) return;
+      setProgression(deriveProgressionState({ listeningAttempts, productionAttempts, retryOutcomes, previous }));
+    }).catch(() => {
+      // The lesson remains usable without IndexedDB; default support is safest.
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // The lesson opens on the learn step and the notice step runs until the learner saves,
   // so both are measured from mount.
@@ -123,11 +164,10 @@ function LessonViewContent({
   // clip as several minutes of listening.
   const listenTimer = useStageTimer("listen", 1, { autoStart: false });
   const listenedRef = useRef(false);
-  const listenEmittedRef = useRef(false);
 
   const commitListen = useCallback(() => {
-    if (listenEmittedRef.current || !listenedRef.current) return;
-    listenEmittedRef.current = true;
+    if (!listenedRef.current) return;
+    listenedRef.current = false;
     void emitActivity("method_stage", {
       stage: "listen",
       area: "listening",
@@ -147,13 +187,22 @@ function LessonViewContent({
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
+    audio.playbackRate = support.listening.playbackRate;
+    const onPause = () => {
+      listenTimer.pause();
+      setPlaying(null);
+    };
     const onEnded = () => {
       listenTimer.pause();
       setPlaying(null);
     };
+    audio.addEventListener("pause", onPause);
     audio.addEventListener("ended", onEnded);
-    return () => audio.removeEventListener("ended", onEnded);
-  }, [result, listenTimer]);
+    return () => {
+      audio.removeEventListener("pause", onPause);
+      audio.removeEventListener("ended", onEnded);
+    };
+  }, [result, listenTimer, support.listening.playbackRate]);
 
   const playClip = useCallback(
     async (index: number, segment: TranscriptSegment, challengeIndex?: number) => {
@@ -178,12 +227,14 @@ function LessonViewContent({
         await waitForAudioEvent(audio, "loadedmetadata");
         if (playRequestRef.current !== requestId) return;
       }
+      audio.playbackRate = support.listening.playbackRate;
       audio.currentTime = 0;
       try {
         await audio.play();
         if (playRequestRef.current === requestId) {
           setPlaying(index);
           listenedRef.current = true;
+          if (listeningStartedAtRef.current === null) listeningStartedAtRef.current = Date.now();
           listenTimer.start();
           if (!transcriptRevealed && challengeIndex !== undefined) {
             setChallengePlays((counts) =>
@@ -197,7 +248,7 @@ function LessonViewContent({
         if (playRequestRef.current === requestId) setPlaying(null);
       }
     },
-    [playing, transcriptRevealed, listenTimer],
+    [playing, transcriptRevealed, listenTimer, support.listening.playbackRate],
   );
 
   const completeLearn = () => {
@@ -216,10 +267,81 @@ function LessonViewContent({
       challengePlays.some((count) => count === 0) ||
       comprehensionAnswers.some((answer) => !answer)
     ) return;
-    const passed = passedListeningChallenge(listeningChallenge, comprehensionAnswers);
+    const result = scoreListeningChallenge(listeningChallenge, comprehensionAnswers);
+    const attempt: ListeningAttempt = {
+      id: crypto.randomUUID(),
+      lessonId: lesson.id,
+      sourceId: `lesson-${lesson.id}`,
+      questions: listeningChallenge.questions.map(({ kind, prompt }) => ({ kind, prompt })),
+      answers: [...comprehensionAnswers],
+      questionCount: result.total,
+      answeredCount: result.answered,
+      correctCount: result.correct,
+      mainIdeaCorrect: result.mainIdeaCorrect,
+      detailCorrect: result.detailCorrect,
+      detailTotal: result.detailTotal,
+      playCounts: [...challengePlays],
+      transcriptVisible: false,
+      playbackRate: audioRef.current?.playbackRate ?? 1,
+      speakerIds: listeningChallenge.audio
+        .map((clip) => clip.speaker)
+        .filter((speaker): speaker is string => Boolean(speaker)),
+      durationMs: listeningStartedAtRef.current ? Date.now() - listeningStartedAtRef.current : undefined,
+      finished: true,
+      playbackRates: [audioRef.current?.playbackRate ?? 1],
+      speakerFamiliarity: support.listening.speakerFamiliarity,
+      subtitleUsed: false,
+      scaffoldUsed: support.listening.stage !== "natural_comprehension",
+      startedAt: listeningStartedAtRef.current ?? Date.now(),
+      completedAt: Date.now(),
+    };
+    listeningAttemptRef.current = attempt;
     setListeningChecked(true);
-    setListeningPassed(passed);
+    setListeningResult(result);
     commitListen();
+    void saveListeningAttempt(attempt).catch(() => {});
+    void emitActivity("listening_attempt", {
+      attemptId: attempt.id,
+      lessonId: lesson.id,
+      sourceId: `lesson-${lesson.id}`,
+      questions: listeningChallenge.questions.map(({ kind, prompt }) => ({ kind, prompt })),
+      answers: [...comprehensionAnswers],
+      questionCount: result.total,
+      answeredCount: result.answered,
+      correctCount: result.correct,
+      mainIdeaCorrect: result.mainIdeaCorrect,
+      detailCorrect: result.detailCorrect,
+      detailTotal: result.detailTotal,
+      playCounts: [...challengePlays],
+      transcriptVisible: false,
+      playbackRate: audioRef.current?.playbackRate ?? 1,
+      startedAt: attempt.startedAt,
+      speakerIds: listeningChallenge.audio.map((clip) => clip.speaker).filter((speaker): speaker is string => Boolean(speaker)),
+      durationMs: attempt.durationMs,
+      finished: attempt.finished,
+      playbackRates: attempt.playbackRates,
+      speakerFamiliarity: attempt.speakerFamiliarity,
+      subtitleUsed: attempt.subtitleUsed,
+      scaffoldUsed: attempt.scaffoldUsed,
+      completedAt: Date.now(),
+    }).catch(() => {});
+  };
+
+  const revealTranscript = () => {
+    if (
+      support.listening.transcriptCondition === "after_replay" &&
+      challengePlays.some((count) => count < 2)
+    ) {
+      setTranscriptNotice(t("Replay each clip once more before revealing the transcript."));
+      return;
+    }
+    setTranscriptNotice(null);
+    setTranscriptRevealed(true);
+    const attempt = listeningAttemptRef.current;
+    if (!attempt || attempt.transcriptVisible) return;
+    const updated = { ...attempt, transcriptVisible: true };
+    listeningAttemptRef.current = updated;
+    void saveListeningAttempt(updated).catch(() => {});
   };
 
   const chooseComprehensionAnswer = (questionIndex: number, answer: string) => {
@@ -227,7 +349,11 @@ function LessonViewContent({
       answers.map((current, index) => (index === questionIndex ? answer : current)),
     );
     setListeningChecked(false);
-    setListeningPassed(false);
+    setListeningResult(null);
+    setTranscriptRevealed(false);
+    setTranscriptNotice(null);
+    listeningAttemptRef.current = null;
+    listeningStartedAtRef.current = null;
   };
 
   const toggleKeep = (index: number) => {
@@ -270,6 +396,8 @@ function LessonViewContent({
       setSavedPhraseCount(deck.cards.length);
       const firstKept = Math.min(...[...kept]);
       setExercisePhrase(lesson.phrases[firstKept] ?? lesson.phrases[0]);
+      setRepeatPhrases(lesson.phrases.filter((_, index) => kept.has(index)).slice(0, 2));
+      setRepeatedPhraseIds(new Set());
       window.dispatchEvent(new CustomEvent("phraseloop:lesson-saved", { detail: { lessonId: lesson.id } }));
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : t("Could not save this lesson."));
@@ -362,6 +490,20 @@ function LessonViewContent({
             <p className="mt-1 text-sm text-ink-soft">
               {t("First catch the situation and two phrases. You do not need to understand every word.")}
             </p>
+            <p className="mt-2 text-xs text-ink-muted">
+              {t("Support: {stage} · {guidance}", {
+                stage: support.listening.stage.replaceAll("_", " "),
+                guidance: support.listening.guidance,
+              })}{" "}
+              {t("Playback {rate}%", { rate: Math.round(support.listening.playbackRate * 100) })}
+            </p>
+            <p className="mt-1 text-xs text-ink-muted">
+              {t("Input profile: {speaker} speakers · transcript {transcript} · connected speech {connected}", {
+                speaker: support.listening.speakerFamiliarity,
+                transcript: support.listening.subtitles,
+                connected: support.listening.connectedSpeech ? t("on") : t("off"),
+              })}
+            </p>
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2">
@@ -447,17 +589,22 @@ function LessonViewContent({
             >
               {t("Check what I heard")}
             </Button>
-            {listeningChecked && !listeningPassed && (
-              <Notice tone="warning">
-                {t("Not yet. Replay the clip and focus on the familiar words; there is no penalty for another try.")}
-              </Notice>
-            )}
-            {listeningChecked && listeningPassed && (
-              <Notice tone="success" className="space-y-3">
-                <p>{t("You caught the main idea and the important details.")}</p>
-                <Button variant="secondary" onClick={() => setTranscriptRevealed(true)}>
-                  {t("Reveal transcript and choose phrases")}
+            {listeningChecked && listeningResult && (
+              <Notice tone={listeningResult.mainIdeaCorrect ? "success" : "warning"} className="space-y-3">
+                <p>
+                  {listeningResult.mainIdeaCorrect
+                    ? t("You caught the main idea. You got {correct} of {total} questions; details can improve with the transcript.", {
+                        correct: listeningResult.correct,
+                        total: listeningResult.total,
+                      })
+                    : t("You completed the check. The transcript will help you find the main idea and useful details.")}
+                </p>
+                <Button variant="secondary" onClick={revealTranscript}>
+                  {support.listening.transcriptCondition === "after_replay"
+                    ? t("Replay and reveal transcript")
+                    : t("Reveal transcript and choose phrases")}
                 </Button>
+                {transcriptNotice && <Notice tone="default">{transcriptNotice}</Notice>}
               </Notice>
             )}
           </div>
@@ -513,16 +660,63 @@ function LessonViewContent({
       )}
 
       {done && exercisePhrase && !mistakeSaved && (
-        <MistakeStep
-          // The method's Rule #1: speaking is present from the very first lesson. The mic
-          // leads and typing stays available, so a denied mic never blocks the loop.
-          voiceFirst
-          lessonId={lesson.id}
-          phrase={exercisePhrase}
-          productionPrompt={lesson.productionPrompt}
-          retryHint={lesson.retryHint}
-          onSaved={(hadMistake) => setMistakeSaved({ hadMistake })}
-        />
+        <>
+          <PanelCard className="space-y-4 p-5">
+            <div>
+              <p className="text-xs uppercase tracking-[0.7px] text-accent">{t("4 · Repeat")}</p>
+              <h3 className="mt-1 text-lg font-semibold tracking-[-0.01em] text-ink">
+                {t("Repeat the phrases you kept")}
+              </h3>
+              <p className="mt-1 text-sm text-ink-soft">
+                {t("Listen and say each one back before creating a sentence of your own. A microphone denial leaves typing available in the next step.")}
+              </p>
+            </div>
+            <div className="space-y-3">
+              {repeatSteps.map(({ phrase }, index) => {
+                const phraseId = phrase.id ?? phrase.en;
+                return (
+                  <div key={phraseId} className="rounded border border-line bg-surface p-3">
+                    <p className="mb-2 text-xs uppercase tracking-[0.5px] text-ink-muted">
+                      {t("Repeat {current} of {total}", { current: index + 1, total: repeatSteps.length })}
+                    </p>
+                    <PronunciationCoach
+                      source="lesson"
+                      stage="repeat"
+                      lessonId={lesson.id}
+                      noticedPhraseId={phraseId}
+                      targetText={phrase.en}
+                      referenceAudioUrl={phrase.clip}
+                      allowTypedFallback
+                      compact
+                      onAttemptComplete={() =>
+                        setRepeatedPhraseIds((current) => new Set(current).add(phraseId))
+                      }
+                    />
+                  </div>
+                );
+              })}
+            </div>
+            {!repeatSteps.every(({ phrase }) => repeatedPhraseIds.has(phrase.id ?? phrase.en)) && (
+              <Notice tone="default">{t("Complete one recording for each kept phrase to unlock your own sentence.")}</Notice>
+            )}
+          </PanelCard>
+          {repeatSteps.every(({ phrase }) => repeatedPhraseIds.has(phrase.id ?? phrase.en)) && (
+            <MistakeStep
+              // The method's Rule #1: speaking is present from the very first lesson. The mic
+              // leads and typing stays available, so a denied mic never blocks the loop.
+              voiceFirst
+              lessonId={lesson.id}
+              phrase={exercisePhrase}
+              noticedPhraseId={exercisePhrase.id ?? exercisePhrase.en}
+              productionPrompt={lesson.productionPrompt}
+              retryHint={lesson.retryHint}
+              productionInstruction={support.speaking.prompt}
+              speakingStage={support.speaking.stage}
+              targetDurationSeconds={support.speaking.targetSeconds}
+              onSaved={(hadMistake) => setMistakeSaved({ hadMistake })}
+            />
+          )}
+        </>
       )}
 
       {/* The saved retry is not the end state: review is the only forward action
@@ -531,7 +725,7 @@ function LessonViewContent({
       {mistakeSaved && (
         <PanelCard className="space-y-3 border-accent/30 p-5">
           <div>
-            <p className="text-xs uppercase tracking-[0.7px] text-accent">{t("One step left")}</p>
+            <p className="text-xs uppercase tracking-[0.7px] text-accent">{t("8 · Review")}</p>
             <p className="mt-1 text-lg font-semibold tracking-[-0.01em] text-ink">
               {t("Review a saved phrase to finish this lesson")}
             </p>

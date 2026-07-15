@@ -367,9 +367,14 @@ export async function validateAudio(lessons, { publicDir, nativeDir, manifestEnt
     }
     if (seenManifestClips.has(entry.clip)) errors.push(`${owner} duplicates ${entry.clip}.`);
     seenManifestClips.add(entry.clip);
-    for (const field of ["speaker", "license", "recordedAt", "normalizationStatus"]) {
+    for (const field of ["recordingKind", "speaker", "speakerId", "accent", "delivery", "provenance", "license", "recordedAt", "normalizationStatus"]) {
       if (!nonEmptyString(entry?.[field])) errors.push(`${owner} for ${entry.clip} is missing ${field}.`);
     }
+    if (entry?.recordingKind !== "native") errors.push(`${owner} for ${entry.clip} must use recordingKind native.`);
+    if (!["supported", "natural", "connected"].includes(entry?.delivery)) errors.push(`${owner} for ${entry.clip} has invalid delivery.`);
+    if (!Number.isFinite(entry?.speedWpm) || entry.speedWpm <= 0) errors.push(`${owner} for ${entry.clip} needs a positive speedWpm.`);
+    if (!Array.isArray(entry?.connectedSpeechFeatures)) errors.push(`${owner} for ${entry.clip} needs connectedSpeechFeatures (use [] when none apply).`);
+    if (entry?.delivery === "connected" && entry.connectedSpeechFeatures.length === 0) errors.push(`${owner} for ${entry.clip} needs connected-speech evidence.`);
     if (!declaredClips.has(entry.clip)) errors.push(`${owner} references undeclared clip ${entry.clip}.`);
     const nativeSource = path.join(nativeDir, entry.clip.slice(1));
     if (!(await exists(nativeSource))) {
@@ -465,7 +470,7 @@ async function main() {
   const args = new Set(process.argv.slice(2));
   const [lessons, roadmapMarkdown, manifestEntries, messagesSource] = await Promise.all([
     readFile(path.join(rootDir, "src/features/learn/lessons.json"), "utf8").then(JSON.parse),
-    readFile(path.join(rootDir, "docs/100-lesson-roadmap.md"), "utf8"),
+    readFile(path.join(rootDir, "docs/product.md"), "utf8"),
     readFile(path.join(rootDir, "native-audio/manifest.json"), "utf8").then(JSON.parse),
     readFile(path.join(rootDir, "src/i18n/messages.ts"), "utf8"),
   ]);

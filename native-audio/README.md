@@ -23,14 +23,20 @@ and licensing, but the guided first-run loop does not require them.
    ```json
    {
      "clip": "/learn/audio/a2-food/01.wav",
+     "recordingKind": "native",
      "speaker": "Jane D. (US English, native)",
+     "speakerId": "jane-d",
+     "accent": "US",
+     "delivery": "natural",
+     "speedWpm": 142,
+     "provenance": "Own recording; speaker consent archived",
      "license": "own recording — released for PhraseLoop bundling",
      "recordedAt": "2026-07-10",
      "normalizationStatus": "peak normalized to -1 dBFS; silence trimmed"
    }
    ```
 
-   `speaker`, `license`, `recordedAt`, and `normalizationStatus` are mandatory. The license
+   `speaker`, `speakerId`, `accent`, `delivery`, `speedWpm`, `connectedSpeechFeatures`, `provenance`, `license`, `recordedAt`, and `normalizationStatus` are mandatory. Use an empty `connectedSpeechFeatures` array for carefully articulated material. The license
    must cover the speaker's consent or the applicable third-party terms. `source` is optional.
    For licensed third-party audio, put the exact license and origin in
    `license`/`source` (e.g. `"CC-BY 4.0"` + a URL).
@@ -38,7 +44,10 @@ and licensing, but the guided first-run loop does not require them.
 
    ```sh
    yarn learn:audio          # copies native clips into public/, synthesizes only the rest
-   yarn learn:audio:verify   # reports coverage; fails only when a declared clip is missing
+   yarn learn:audio:verify   # verifies declared clips and metadata
+   yarn learn:audio:ci       # CI gate: verifies every CEFR five-lesson batch has real-audio coverage
    ```
 
-The coverage report distinguishes recorded and synthetic clips for maintenance visibility only.
+The CI coverage gate counts only licensed native recordings: synthetic Kokoro clips are an
+honest fallback but cannot satisfy speaker, accent, natural-delivery, connected-speech, or
+speed coverage targets. It also rejects dialogue roles that resolve to the same voice.

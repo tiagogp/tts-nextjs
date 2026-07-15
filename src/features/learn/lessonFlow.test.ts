@@ -4,6 +4,7 @@ import {
   buildListeningChallenge,
   learningPhrases,
   passedListeningChallenge,
+  scoreListeningChallenge,
 } from "./lessonFlow";
 
 describe("lessonFlow", () => {
@@ -79,7 +80,7 @@ describe("lessonFlow", () => {
     });
   });
 
-  it("passes only when both comprehension answers are correct", () => {
+  it("allows a complete partial-comprehension attempt to continue", () => {
     const challenge = buildListeningChallenge(LESSONS[0], LESSONS);
     expect(passedListeningChallenge(challenge, challenge.questions.map(() => null))).toBe(false);
     expect(
@@ -88,5 +89,60 @@ describe("lessonFlow", () => {
         challenge.questions.map((question) => question.answer),
       ),
     ).toBe(true);
+  });
+
+  it("keeps main-idea and detail evidence separate and allows partial comprehension to continue", () => {
+    const challenge = buildListeningChallenge(LESSONS[0], LESSONS);
+    const answers = challenge.questions.map((question, index) =>
+      index === 0 ? question.answer : "not this one",
+    );
+
+    expect(scoreListeningChallenge(challenge, answers)).toMatchObject({
+      total: 3,
+      answered: 3,
+      correct: 1,
+      mainIdeaCorrect: true,
+      detailCorrect: 0,
+      detailTotal: 2,
+      complete: true,
+      canRevealTranscript: true,
+      recommendation: "replay-details",
+    });
+    expect(passedListeningChallenge(challenge, answers)).toBe(true);
+  });
+
+  it("does not call an incomplete answer set a listening result", () => {
+    const challenge = buildListeningChallenge(LESSONS[0], LESSONS);
+    const result = scoreListeningChallenge(challenge, challenge.questions.map(() => null));
+
+    expect(result).toMatchObject({ answered: 0, correct: 0, complete: false, canRevealTranscript: false });
+  });
+
+  it("records zero comprehension without making it a failed lesson", () => {
+    const challenge = buildListeningChallenge(LESSONS[0], LESSONS);
+    const result = scoreListeningChallenge(
+      challenge,
+      challenge.questions.map(() => "not an answer"),
+    );
+
+    expect(result).toMatchObject({
+      answered: challenge.questions.length,
+      correct: 0,
+      mainIdeaCorrect: false,
+      detailCorrect: 0,
+      complete: true,
+      canRevealTranscript: true,
+      recommendation: "review-main-idea",
+    });
+  });
+
+  it("does not change listening semantics when the learner replays", () => {
+    const challenge = buildListeningChallenge(LESSONS[0], LESSONS);
+    const answers = challenge.questions.map((question) => question.answer);
+    const first = scoreListeningChallenge(challenge, answers);
+    const replayed = scoreListeningChallenge(challenge, answers);
+
+    expect(replayed).toEqual(first);
+    expect(replayed.canRevealTranscript).toBe(true);
   });
 });

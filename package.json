@@ -14,6 +14,7 @@
     "build": "next build",
     "learn:audio": "node scripts/generate-learn-audio.mjs",
     "learn:audio:verify": "node scripts/generate-learn-audio.mjs --verify",
+    "learn:audio:ci": "node scripts/generate-learn-audio.mjs --verify --strict-coverage",
     "learn:content:validate": "node scripts/validate-lesson-content.mjs",
     "learn:content:report": "node scripts/validate-lesson-content.mjs --json",
     "start": "next start",

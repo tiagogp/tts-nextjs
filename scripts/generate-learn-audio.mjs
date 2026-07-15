@@ -38,8 +38,157 @@ const VOICE_IDS = {
   bf_emma: 21,
   bm_george: 26,
 };
+const SYNTHETIC_VOICES = Object.keys(VOICE_IDS);
+
+/** CEFR targets apply to every consecutive five-lesson batch within a level. */
+export const CEFR_AUDIO_COVERAGE_RULES = {
+  A1: { batchSize: 5, minNativeClips: 1, minDistinctNativeSpeakers: 1, minDistinctNativeAccents: 1, minNaturalOrConnectedNative: 1, minConnectedNative: 0, minSpeedWpm: 80, maxSpeedWpm: 135 },
+  A2: { batchSize: 5, minNativeClips: 2, minDistinctNativeSpeakers: 2, minDistinctNativeAccents: 1, minNaturalOrConnectedNative: 2, minConnectedNative: 0, minSpeedWpm: 95, maxSpeedWpm: 150 },
+  B1: { batchSize: 5, minNativeClips: 3, minDistinctNativeSpeakers: 2, minDistinctNativeAccents: 2, minNaturalOrConnectedNative: 3, minConnectedNative: 1, minSpeedWpm: 110, maxSpeedWpm: 165 },
+  B2: { batchSize: 5, minNativeClips: 4, minDistinctNativeSpeakers: 2, minDistinctNativeAccents: 2, minNaturalOrConnectedNative: 4, minConnectedNative: 1, minSpeedWpm: 120, maxSpeedWpm: 180 },
+  C1: { batchSize: 5, minNativeClips: 4, minDistinctNativeSpeakers: 3, minDistinctNativeAccents: 2, minNaturalOrConnectedNative: 4, minConnectedNative: 2, minSpeedWpm: 130, maxSpeedWpm: 195 },
+  C2: { batchSize: 5, minNativeClips: 5, minDistinctNativeSpeakers: 3, minDistinctNativeAccents: 2, minNaturalOrConnectedNative: 5, minConnectedNative: 2, minSpeedWpm: 140, maxSpeedWpm: 210 },
+};
 
 const NATIVE_LIBRARY_IGNORED = new Set(["manifest.json", "README.md", ".DS_Store", ".gitkeep"]);
+
+export const AUDIO_DELIVERIES = ["supported", "natural", "connected"];
+export const AUDIO_KINDS = ["native", "synthetic"];
+
+/** Metadata is evidence, not a UI label: synthetic fallback clips are never native. */
+export function validateAudioMetadata(entries, declaredClips = new Set()) {
+  const errors = [];
+  for (const entry of Array.isArray(entries) ? entries : []) {
+    const clip = entry?.clip;
+    if (!clip) continue;
+    if (!AUDIO_KINDS.includes(entry.recordingKind)) errors.push(`${clip} needs recordingKind native or synthetic.`);
+    if (typeof entry.speakerId !== "string" || !entry.speakerId.trim()) errors.push(`${clip} needs speakerId.`);
+    if (typeof entry.accent !== "string" || !entry.accent.trim()) errors.push(`${clip} needs accent/region.`);
+    if (!AUDIO_DELIVERIES.includes(entry.delivery)) errors.push(`${clip} needs delivery supported, natural, or connected.`);
+    if (!Number.isFinite(entry.speedWpm) || entry.speedWpm <= 0) errors.push(`${clip} needs a positive speedWpm.`);
+    if (!Array.isArray(entry.connectedSpeechFeatures)) errors.push(`${clip} needs connectedSpeechFeatures (use [] when none apply).`);
+    if (entry.delivery === "connected" && !entry.connectedSpeechFeatures?.length) errors.push(`${clip} marks connected delivery but has no connected-speech evidence.`);
+    if (typeof entry.provenance !== "string" || !entry.provenance.trim()) errors.push(`${clip} needs provenance.`);
+    if (entry.recordingKind === "native" && typeof entry.license !== "string") errors.push(`${clip} needs a license for native audio.`);
+    if (entry.recordingKind === "synthetic" && entry.license) errors.push(`${clip} must not use a native license for synthetic audio.`);
+    if (declaredClips.size > 0 && !declaredClips.has(clip)) errors.push(`${clip} is not declared in lessons.json.`);
+  }
+  return errors;
+}
+
+export function audioMetadataForClip(clip, nativeEntry, text = "", item = {}) {
+  if (nativeEntry) return { ...nativeEntry, clip, recordingKind: nativeEntry.recordingKind ?? "native" };
+  void text; // Metadata is authored evidence; TTS duration is not a reliable WPM measurement.
+  const voice = item.syntheticVoice ?? "af_heart";
+  return {
+    clip,
+    recordingKind: "synthetic",
+    speakerId: `kokoro:${voice}`,
+    accent: "synthetic fallback",
+    delivery: "supported",
+    speedWpm: { A1: 100, A2: 115, B1: 130, B2: 145, C1: 160, C2: 175 }[item.level] ?? 115,
+    connectedSpeechFeatures: [],
+    provenance: `Kokoro local synthesis (${voice}); not native input`,
+  };
+}
+
+/** Build the evidence view used by --verify, including synthetic fallbacks. */
+export function lessonAudioMetadata(items, manifestEntries = []) {
+  const manifestByClip = new Map(
+    (Array.isArray(manifestEntries) ? manifestEntries : [])
+      .filter((entry) => typeof entry?.clip === "string")
+      .map((entry) => [entry.clip, entry]),
+  );
+  return items.map((item) => audioMetadataForClip(item.clip, manifestByClip.get(item.clip), item.text, item));
+}
+
+function stableNumber(value) {
+  let total = 0;
+  for (let index = 0; index < value.length; index++) total = (total * 31 + value.charCodeAt(index)) >>> 0;
+  return total;
+}
+
+/**
+ * Synthetic audio remains clearly synthetic, but dialogue roles must still be
+ * distinguishable. The assignment is deterministic so regenerated clips keep their
+ * role voice unless the authored dialogue changes.
+ */
+function syntheticVoiceForLine(lesson, line, dialogueRoleIndex) {
+  if (Number.isInteger(dialogueRoleIndex)) return SYNTHETIC_VOICES[dialogueRoleIndex % SYNTHETIC_VOICES.length];
+  return SYNTHETIC_VOICES[stableNumber(`${lesson.id}:${line.clip}`) % SYNTHETIC_VOICES.length];
+}
+
+/** Return strict coverage evidence; only licensed native clips count toward this gate. */
+export function curriculumCoverage(lessons, metadata) {
+  const metadataByClip = new Map(metadata.map((item) => [item.clip, item]));
+  const rows = [];
+  for (const [level, rule] of Object.entries(CEFR_AUDIO_COVERAGE_RULES)) {
+    const atLevel = lessons.filter((lesson) => lesson.level === level);
+    for (let index = 0; index < atLevel.length; index += rule.batchSize) {
+      const lessonsInBatch = atLevel.slice(index, index + rule.batchSize);
+      const clips = lessonsInBatch.flatMap((lesson) => lessonSpokenLines(lesson).map((line) => line.clip));
+      const items = clips.map((clip) => metadataByClip.get(clip)).filter(Boolean);
+      const native = items.filter((item) => item.recordingKind === "native");
+      const naturalOrConnectedNative = native.filter((item) => item.delivery !== "supported");
+      const connectedNative = native.filter((item) => item.delivery === "connected");
+      const speeds = native.map((item) => item.speedWpm);
+      const minSpeedWpm = speeds.length ? Math.min(...speeds) : 0;
+      const maxSpeedWpm = speeds.length ? Math.max(...speeds) : 0;
+      rows.push({
+        level,
+        lessonIds: lessonsInBatch.map((lesson) => lesson.id),
+        ...rule,
+        clips: items.length,
+        nativeClips: native.length,
+        distinctNativeSpeakers: new Set(native.map((item) => item.speakerId)).size,
+        distinctNativeAccents: new Set(native.map((item) => item.accent)).size,
+        naturalOrConnectedNative: naturalOrConnectedNative.length,
+        connectedNative: connectedNative.length,
+        minSpeedWpm,
+        maxSpeedWpm,
+        passes: items.length === clips.length &&
+          native.length >= rule.minNativeClips &&
+          new Set(native.map((item) => item.speakerId)).size >= rule.minDistinctNativeSpeakers &&
+          new Set(native.map((item) => item.accent)).size >= rule.minDistinctNativeAccents &&
+          naturalOrConnectedNative.length >= rule.minNaturalOrConnectedNative &&
+          connectedNative.length >= rule.minConnectedNative &&
+          minSpeedWpm >= rule.minSpeedWpm && maxSpeedWpm <= rule.maxSpeedWpm,
+      });
+    }
+  }
+  return rows;
+}
+
+/** Dialogue labels are a promise about audible roles, not merely transcript decoration. */
+export function validateDialogueVoices(lessons, metadata) {
+  const metadataByClip = new Map(metadata.map((item) => [item.clip, item]));
+  const errors = [];
+  for (const lesson of lessons) {
+    if (!Array.isArray(lesson.dialogue) || lesson.dialogue.length < 2) continue;
+    const voicesByRole = new Map();
+    for (const line of lesson.dialogue) {
+      const speakerId = metadataByClip.get(line.clip)?.speakerId;
+      if (!speakerId) continue;
+      const voices = voicesByRole.get(line.speaker) ?? new Set();
+      voices.add(speakerId);
+      voicesByRole.set(line.speaker, voices);
+    }
+    for (const [role, voices] of voicesByRole) {
+      if (voices.size !== 1) errors.push(`${lesson.id} dialogue role ${role} has inconsistent speaker IDs.`);
+    }
+    const roleEntries = [...voicesByRole.entries()];
+    for (let left = 0; left < roleEntries.length; left++) {
+      for (let right = left + 1; right < roleEntries.length; right++) {
+        const [leftRole, leftVoices] = roleEntries[left];
+        const [rightRole, rightVoices] = roleEntries[right];
+        if ([...leftVoices].some((voice) => rightVoices.has(voice))) {
+          errors.push(`${lesson.id} dialogue roles ${leftRole} and ${rightRole} use the same voice.`);
+        }
+      }
+    }
+  }
+  return errors;
+}
 
 function usage() {
   console.log(`Usage: node scripts/generate-learn-audio.mjs [--force] [--dry-run] [--verify]
@@ -52,6 +201,7 @@ Native recordings are never overwritten by synthesis, --force included.
 Modes:
   --verify   Report native/synthetic coverage per lesson and fail (exit 1) only
              when a declared clip is missing. Read-only; downloads nothing.
+  --strict-coverage  With --verify, enforce CEFR five-lesson native-audio coverage.
   --dry-run  Report what would be installed/generated, then exit.
   --force    Regenerate synthetic clips even if present (native clips are kept).
 
@@ -70,6 +220,7 @@ if (args.has("--help") || args.has("-h")) {
 const force = args.has("--force");
 const dryRun = args.has("--dry-run");
 const verify = args.has("--verify");
+const strictCoverage = args.has("--strict-coverage");
 
 function dataDir() {
   if (process.env.PHRASELOOP_DATA_DIR) return process.env.PHRASELOOP_DATA_DIR;
@@ -229,8 +380,8 @@ function isDeclarableClip(phrase) {
  */
 function lessonSpokenLines(lesson) {
   return [
-    ...(Array.isArray(lesson?.phrases) ? lesson.phrases : []),
-    ...(Array.isArray(lesson?.dialogue) ? lesson.dialogue : []),
+    ...(Array.isArray(lesson?.phrases) ? lesson.phrases.map((line) => ({ ...line, audioKind: "phrase" })) : []),
+    ...(Array.isArray(lesson?.dialogue) ? lesson.dialogue.map((line) => ({ ...line, audioKind: "dialogue" })) : []),
   ];
 }
 
@@ -238,6 +389,10 @@ export function lessonAudioItems(lessons, publicDir = defaultPublicDir) {
   const items = [];
   const byClip = new Map();
   for (const lesson of Array.isArray(lessons) ? lessons : []) {
+    const dialogueRoleIndexes = new Map();
+    for (const line of lesson.dialogue ?? []) {
+      if (!dialogueRoleIndexes.has(line.speaker)) dialogueRoleIndexes.set(line.speaker, dialogueRoleIndexes.size);
+    }
     for (const line of lessonSpokenLines(lesson)) {
       if (!isDeclarableClip(line)) continue;
       const text = line.en.trim();
@@ -251,7 +406,17 @@ export function lessonAudioItems(lessons, publicDir = defaultPublicDir) {
       if (!target.startsWith(`${publicDir}${path.sep}`)) {
         throw new Error(`Invalid lesson audio path: ${line.clip}`);
       }
-      const item = { text, clip: line.clip, target, lessonIds: [lesson.id] };
+      const dialogueRoleIndex = line.audioKind === "dialogue" ? dialogueRoleIndexes.get(line.speaker) : undefined;
+      const item = {
+        text,
+        clip: line.clip,
+        target,
+        lessonIds: [lesson.id],
+        level: lesson.level,
+        speaker: line.speaker,
+        audioKind: line.audioKind,
+        syntheticVoice: syntheticVoiceForLine(lesson, line, dialogueRoleIndex),
+      };
       byClip.set(line.clip, item);
       items.push(item);
     }
@@ -353,6 +518,11 @@ export function validateNativeLibrary({ recordings, strayFiles, manifestEntries,
     if (typeof entry.license !== "string" || !entry.license.trim()) {
       errors.push(`manifest entry for ${clip} is missing "license" (e.g. "own recording", "CC-BY 4.0 <source>").`);
     }
+    for (const field of ["speakerId", "accent", "delivery", "provenance"]) {
+      if (typeof entry[field] !== "string" || !entry[field].trim()) errors.push(`manifest entry for ${clip} is missing "${field}".`);
+    }
+    if (!Number.isFinite(entry.speedWpm) || entry.speedWpm <= 0) errors.push(`manifest entry for ${clip} needs a positive speedWpm.`);
+    if (!Array.isArray(entry.connectedSpeechFeatures)) errors.push(`manifest entry for ${clip} needs connectedSpeechFeatures (use [] when none apply).`);
     if (!declaredClips.has(clip)) {
       errors.push(`manifest entry for ${clip} does not match any clip declared in lessons.json.`);
     }
@@ -434,13 +604,15 @@ async function loadNativeLibrary(items) {
   const errors = [
     ...manifest.errors,
     ...validateNativeLibrary({ recordings, strayFiles, manifestEntries: manifest.entries, declaredClips }),
+    ...validateAudioMetadata(lessonAudioMetadata(items, manifest.entries), declaredClips),
+    ...validateDialogueVoices(JSON.parse(await readFile(lessonsFile, "utf8")), lessonAudioMetadata(items, manifest.entries)),
   ];
   for (const [clip, file] of recordings) {
     if (!(await isRiffWave(file))) {
       errors.push(`native-audio${clip} is not a valid RIFF/WAVE file. Re-export it as 16-bit PCM WAV.`);
     }
   }
-  return { recordings, errors };
+  return { recordings, errors, metadata: lessonAudioMetadata(items, manifest.entries) };
 }
 
 function printCoverage(coverage, pendingInstall) {
@@ -460,6 +632,27 @@ function printCoverage(coverage, pendingInstall) {
   }
 }
 
+function printMetadataSummary(metadata) {
+  const native = metadata.filter((item) => item.recordingKind === "native").length;
+  const synthetic = metadata.length - native;
+  const natural = metadata.filter((item) => item.delivery !== "supported").length;
+  const speakers = new Set(metadata.map((item) => item.speakerId)).size;
+  const speeds = metadata.map((item) => item.speedWpm).filter(Number.isFinite);
+  const minSpeed = speeds.length ? Math.round(Math.min(...speeds)) : 0;
+  const maxSpeed = speeds.length ? Math.round(Math.max(...speeds)) : 0;
+  console.log(
+    `Audio evidence: ${native} native, ${synthetic} synthetic; ` +
+      `${speakers} speaker ID(s), ${natural} natural/connected clip(s), ${minSpeed}-${maxSpeed} WPM.`,
+  );
+}
+
+function printCurriculumCoverage(rows) {
+  console.log("CEFR native-audio coverage:");
+  for (const row of rows) {
+    console.log(`  ${row.level} ${row.lessonIds[0]}–${row.lessonIds.at(-1)}  native ${row.nativeClips}/${row.minNativeClips}  speakers ${row.distinctNativeSpeakers}/${row.minDistinctNativeSpeakers}  accents ${row.distinctNativeAccents}/${row.minDistinctNativeAccents}  ${row.passes ? "PASS" : "FAIL"}`);
+  }
+}
+
 async function main() {
   if (process.env.SKIP_LEARN_AUDIO === "1") {
     console.log("Skipping learn audio generation because SKIP_LEARN_AUDIO=1.");
@@ -470,7 +663,7 @@ async function main() {
   const items = lessonAudioItems(lessons);
   const itemsByClip = new Map(items.map((item) => [item.clip, item]));
 
-  const { recordings, errors } = await loadNativeLibrary(items);
+  const { recordings, errors, metadata } = await loadNativeLibrary(items);
   if (errors.length > 0) {
     console.error("The native-audio library has problems (see native-audio/README.md):");
     for (const error of errors) console.error(`  - ${error}`);
@@ -485,14 +678,20 @@ async function main() {
     }
     const coverage = buildCoverage(lessons, installed, presentClips);
     printCoverage(coverage, pending);
-    if (coverage.missingClips.length === 0) {
+    printMetadataSummary(metadata);
+    const curriculum = strictCoverage ? curriculumCoverage(lessons, metadata) : [];
+    if (strictCoverage) printCurriculumCoverage(curriculum);
+    if (coverage.missingClips.length === 0 && curriculum.every((row) => row.passes)) {
       console.log("\nAudio verification: PASS — every declared lesson clip is present.");
       return;
     }
-    console.log(
-      `\nAudio verification: FAIL — ${coverage.missingClips.length} declared clip(s) are missing:`,
-    );
-    for (const clip of coverage.missingClips) console.log(`  ${clip}`);
+    if (coverage.missingClips.length) {
+      console.log(`\nAudio verification: FAIL — ${coverage.missingClips.length} declared clip(s) are missing:`);
+      for (const clip of coverage.missingClips) console.log(`  ${clip}`);
+    }
+    if (strictCoverage && curriculum.some((row) => !row.passes)) {
+      console.log("\nAudio verification: FAIL — CEFR native-audio coverage is incomplete.");
+    }
     process.exit(1);
   }
 
@@ -533,7 +732,7 @@ async function main() {
   for (let i = 0; i < missing.length; i++) {
     const item = missing[i];
     await mkdir(path.dirname(item.target), { recursive: true });
-    const buffer = await synthesize(item.text);
+    const buffer = await synthesize(item.text, item.syntheticVoice);
     const temp = `${item.target}.partial`;
     await writeFile(temp, buffer);
     await rename(temp, item.target);
@@ -564,12 +763,12 @@ async function createTts(root) {
   const rawSpeed = Number(process.env.LEARN_AUDIO_SPEED ?? DEFAULT_SPEED);
   const speed = Number.isFinite(rawSpeed) ? Math.min(2, Math.max(0.5, rawSpeed)) : DEFAULT_SPEED;
 
-  return async (text) => {
+  return async (text, voiceId = voice) => {
     const audio = await tts.generateAsync({
       text,
       enableExternalBuffer: false,
       generationConfig: new sherpa.GenerationConfig({
-        sid: VOICE_IDS[voice] ?? VOICE_IDS[DEFAULT_VOICE],
+        sid: VOICE_IDS[voiceId] ?? VOICE_IDS[DEFAULT_VOICE],
         speed,
         silenceScale: 0.2,
       }),

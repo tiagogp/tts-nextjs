@@ -64,7 +64,7 @@ function pcmWav({ sampleRate = 16_000, seconds = 1, amplitude = 4_000 } = {}) {
 
 describe("lesson roadmap parsing", () => {
   it("derives all targets and backlog ids from the roadmap itself", async () => {
-    const markdown = await readFile(path.join(rootDir, "docs/100-lesson-roadmap.md"), "utf8");
+    const markdown = await readFile(path.join(rootDir, "docs/product.md"), "utf8");
     const roadmap = parseRoadmap(markdown);
 
     expect(roadmap.targets).toEqual({ A1: 15, A2: 22, B1: 25, B2: 18, C1: 12, C2: 8 });

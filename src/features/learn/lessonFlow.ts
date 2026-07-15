@@ -28,6 +28,19 @@ export interface ListeningChallenge {
   questions: ListeningQuestion[];
 }
 
+export interface ListeningChallengeResult {
+  total: number;
+  answered: number;
+  correct: number;
+  mainIdeaCorrect: boolean;
+  detailCorrect: number;
+  detailTotal: number;
+  complete: boolean;
+  /** A complete answer set is enough to reveal the transcript; perfection is not required. */
+  canRevealTranscript: boolean;
+  recommendation: "replay-details" | "review-main-idea" | "ready-to-notice" | "complete-attempt";
+}
+
 function stableNumber(value: string): number {
   let total = 0;
   for (let index = 0; index < value.length; index++) {
@@ -135,11 +148,60 @@ export function buildListeningChallenge(
   };
 }
 
+/**
+ * Backward-compatible name for callers that used to gate the lesson on a perfect
+ * score. A listening check is ready once it is complete; partial comprehension
+ * should lead to transcript review and replay, not a failed lesson.
+ */
 export function passedListeningChallenge(
   challenge: ListeningChallenge,
   answers: readonly (string | null)[],
 ): boolean {
-  return challenge.questions.every(
-    (question, index) => answers[index] === question.answer,
+  return scoreListeningChallenge(challenge, answers).canRevealTranscript;
+}
+
+/**
+ * Score comprehension without turning detail recall into a progression gate.
+ * The learner must complete the check before seeing the transcript, but a partial
+ * result is useful evidence and should lead to noticing/replay rather than failure.
+ */
+export function scoreListeningChallenge(
+  challenge: ListeningChallenge,
+  answers: readonly (string | null)[],
+): ListeningChallengeResult {
+  const answered = challenge.questions.reduce(
+    (total, _question, index) => total + (answers[index] ? 1 : 0),
+    0,
   );
+  const correct = challenge.questions.reduce(
+    (total, question, index) => total + (answers[index] === question.answer ? 1 : 0),
+    0,
+  );
+  const mainIdeaIndex = challenge.questions.findIndex((question) => question.kind === "mainIdea");
+  const detailQuestions = challenge.questions.filter((question) => question.kind === "detail");
+  const detailCorrect = detailQuestions.reduce((total, question) => {
+    const index = challenge.questions.indexOf(question);
+    return total + (answers[index] === question.answer ? 1 : 0);
+  }, 0);
+  const complete = answered === challenge.questions.length;
+  const mainIdeaCorrect = mainIdeaIndex >= 0 && answers[mainIdeaIndex] === challenge.questions[mainIdeaIndex].answer;
+  const recommendation = !complete
+    ? "complete-attempt"
+    : mainIdeaCorrect && detailCorrect === detailQuestions.length
+      ? "ready-to-notice"
+      : mainIdeaCorrect
+        ? "replay-details"
+        : "review-main-idea";
+
+  return {
+    total: challenge.questions.length,
+    answered,
+    correct,
+    mainIdeaCorrect,
+    detailCorrect,
+    detailTotal: detailQuestions.length,
+    complete,
+    canRevealTranscript: complete,
+    recommendation,
+  };
 }

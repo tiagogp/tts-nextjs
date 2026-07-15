@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card as PanelCard } from "@/components/ui/Card";
 import { Notice } from "@/components/ui/Notice";
@@ -14,17 +14,20 @@ import { evaluateCorrectionText } from "@/features/correct/api";
 import { useCorrectionAudio } from "@/features/correct/hooks/useCorrectionAudio";
 import { useProviderSelection } from "@/features/cards/hooks/useProviderSelection";
 import { useStageTimer } from "@/features/method/useStageTimer";
+import type { SpeakingStage } from "@/features/method/progression";
+import { countPolishFeedback, focusFeedback, prioritizeLocalFeedback } from "@/features/correct/feedbackContract";
 import { OWN_SENTENCE_CARD_PREFIX, type LessonPhrase } from "@/features/learn/lessonDeck";
 import type { Card, ErrorEvent, ErrorType, PhraseCandidate } from "@/lib/cards/schema";
-import { saveCorrectionDeck, saveGeneratedDeck } from "@/lib/store/repository";
+import {
+  saveAudioRecording,
+  saveCorrectionDeck,
+  saveGeneratedDeck,
+  saveProductionAttempt,
+  saveRetryOutcome,
+} from "@/lib/store/repository";
+import type { ProductionAttempt, RetryOutcome } from "@/lib/performance/types";
 import { emitActivity } from "@/lib/store/activityLog";
 import { useT } from "@/i18n/I18nProvider";
-
-const CATEGORY_LABEL: Record<LocalCorrectionIssue["category"], string> = {
-  messageClarity: "Message clarity",
-  lessonLanguage: "Lesson language",
-  mechanics: "Writing mechanics",
-};
 
 /**
  * The production → feedback → retry half of the guided loop. It always has a
@@ -39,15 +42,23 @@ const CATEGORY_LABEL: Record<LocalCorrectionIssue["category"], string> = {
 export function MistakeStep({
   lessonId,
   phrase,
+  noticedPhraseId,
   productionPrompt,
+  productionInstruction,
   retryHint,
+  speakingStage = "fixed_phrases",
+  targetDurationSeconds = 15,
   voiceFirst = false,
   onSaved,
 }: {
   lessonId: string;
   phrase: LessonPhrase;
+  noticedPhraseId?: string;
   productionPrompt?: string;
+  productionInstruction?: string;
   retryHint?: string;
+  speakingStage?: SpeakingStage;
+  targetDurationSeconds?: number;
   /** Lead with the mic. Typing stays available either way. */
   voiceFirst?: boolean;
   onSaved: (hadMistake: boolean) => void;
@@ -69,14 +80,24 @@ export function MistakeStep({
   const submittedRef = useRef(false);
   const retryLoggedRef = useRef(false);
   const firstAttemptAtRef = useRef(0);
+  const firstAttemptIdRef = useRef("");
+  const retryAttemptIdRef = useRef("");
+  const retryStartedAtRef = useRef(0);
+  const productionPromptStartedAtRef = useRef(0);
   /** Whether the attempt being checked came from the mic. Decides which stage it credits. */
   const spokenRef = useRef(false);
   const retrySpokenRef = useRef(false);
+  const productionBlobRef = useRef<Blob | null>(null);
+  const retryBlobRef = useRef<Blob | null>(null);
 
   // One window per attempt. The production stage is only known on submit (spoken → speak,
   // typed → feedback), so the stage is passed at commit rather than at creation.
   const productionTimer = useStageTimer("feedback", 3);
   const retryTimer = useStageTimer("retry", 2);
+
+  useEffect(() => {
+    productionPromptStartedAtRef.current = Date.now();
+  }, []);
 
   const note = (message: string | null) => setError(message ? t(message) : null);
 
@@ -86,6 +107,10 @@ export function MistakeStep({
       spokenRef.current = true;
       setSentence(updater);
     },
+    onBlob: (blob) => {
+      productionBlobRef.current = blob;
+    },
+    maxDurationMs: targetDurationSeconds * 1000,
   });
 
   const retryAudio = useCorrectionAudio({
@@ -94,7 +119,24 @@ export function MistakeStep({
       retrySpokenRef.current = true;
       setRetrySentence(updater);
     },
+    onBlob: (blob) => {
+      retryBlobRef.current = blob;
+    },
+    maxDurationMs: targetDurationSeconds * 1000,
   });
+
+  const saveRecording = async (blob: Blob | null, createdAt: number): Promise<string | undefined> => {
+    if (!blob || blob.size === 0) return undefined;
+    const recordingId = crypto.randomUUID();
+    await saveAudioRecording({
+      id: recordingId,
+      blob,
+      mimeType: blob.type || "audio/webm",
+      sizeBytes: blob.size,
+      createdAt,
+    });
+    return recordingId;
+  };
 
   const evaluateAttempt = async (text: string): Promise<LocalCorrectionResult> => {
     const local = correctSentenceLocally(text, phrase.en, phrase.concept);
@@ -125,6 +167,7 @@ export function MistakeStep({
     setCheckedRetry("");
     retryLoggedRef.current = false;
     firstAttemptAtRef.current = Date.now();
+    firstAttemptIdRef.current = crypto.randomUUID();
     if (!submittedRef.current) {
       submittedRef.current = true;
       const spoken = spokenRef.current;
@@ -141,7 +184,46 @@ export function MistakeStep({
       });
     }
     try {
-      setResult(await evaluateAttempt(trimmed));
+      const evaluated = await evaluateAttempt(trimmed);
+      setResult(evaluated);
+      const createdAt = Date.now();
+      const recordingId = await saveRecording(productionBlobRef.current, createdAt).catch(() => undefined);
+      const productionAttempt: ProductionAttempt = {
+        lessonId,
+        source: "lesson",
+        stage: "production",
+        noticedPhraseId: noticedPhraseId ?? phrase.id ?? phrase.en,
+        prompt: productionPrompt ?? productionInstruction ?? `Use ${phrase.en} in a sentence of your own.`,
+        durationMs: Math.max(0, Date.now() - firstAttemptAtRef.current),
+        preparationMs: Math.max(0, createdAt - productionPromptStartedAtRef.current),
+        text: trimmed,
+        spoken: spokenRef.current,
+        wordCount: trimmed.split(/\s+/).length,
+        finished: true,
+        issueCount: evaluated.issues.length,
+        scaffoldUsed: speakingStage !== "real_world_production",
+        recordingId,
+        createdAt,
+        id: firstAttemptIdRef.current,
+      };
+      void saveProductionAttempt(productionAttempt).catch(() => {});
+      void emitActivity("production_attempt", {
+        attemptId: productionAttempt.id,
+        lessonId: productionAttempt.lessonId,
+        source: productionAttempt.source,
+        prompt: productionAttempt.prompt,
+        stage: productionAttempt.stage,
+        noticedPhraseId: productionAttempt.noticedPhraseId,
+        durationMs: productionAttempt.durationMs,
+        text: productionAttempt.text,
+        spoken: productionAttempt.spoken,
+        wordCount: productionAttempt.wordCount,
+        finished: productionAttempt.finished,
+        issueCount: productionAttempt.issueCount,
+        recordingId: productionAttempt.recordingId,
+        preparationMs: productionAttempt.preparationMs,
+        createdAt: productionAttempt.createdAt,
+      }).catch(() => {});
     } finally {
       setChecking(false);
     }
@@ -153,9 +235,82 @@ export function MistakeStep({
     setCheckingRetry(true);
     setError(null);
     setCheckedRetry(trimmed);
+    retryAttemptIdRef.current = crypto.randomUUID();
+    retryStartedAtRef.current = Date.now();
     try {
       const next = await evaluateAttempt(trimmed);
+      const createdAt = Date.now();
+      const recordingId = await saveRecording(retryBlobRef.current, createdAt).catch(() => undefined);
+      const retryProduction: ProductionAttempt = {
+        id: retryAttemptIdRef.current,
+        lessonId,
+        source: "lesson",
+        stage: "retry",
+        noticedPhraseId: noticedPhraseId ?? phrase.id ?? phrase.en,
+        retryOf: firstAttemptIdRef.current,
+        prompt: productionPrompt ?? productionInstruction ?? `Use ${phrase.en} in a sentence of your own.`,
+        text: trimmed,
+        spoken: retrySpokenRef.current,
+        wordCount: trimmed.split(/\s+/).length,
+        finished: true,
+        issueCount: next.issues.length,
+        recordingId,
+        durationMs: Math.max(0, Date.now() - retryStartedAtRef.current),
+        createdAt,
+      };
+      void saveProductionAttempt(retryProduction).catch(() => {});
+      void emitActivity("production_attempt", {
+        attemptId: retryProduction.id,
+        lessonId: retryProduction.lessonId,
+        source: retryProduction.source,
+        stage: retryProduction.stage,
+        retryOf: retryProduction.retryOf,
+        noticedPhraseId: retryProduction.noticedPhraseId,
+        prompt: retryProduction.prompt,
+        recordingId: retryProduction.recordingId,
+        durationMs: retryProduction.durationMs,
+        text: retryProduction.text,
+        spoken: retryProduction.spoken,
+        wordCount: retryProduction.wordCount,
+        finished: retryProduction.finished,
+        issueCount: retryProduction.issueCount,
+        scaffoldUsed: retryProduction.scaffoldUsed,
+        createdAt: retryProduction.createdAt,
+      }).catch(() => {});
       setRetryResult(next);
+      const retryOutcome: RetryOutcome = {
+        id: retryAttemptIdRef.current,
+        retryOf: firstAttemptIdRef.current,
+        source: "lesson",
+        recordingId,
+        feedbackIds: result?.issues.map((_, index) => `${firstAttemptIdRef.current}:issue:${index}`),
+        text: trimmed,
+        spoken: retrySpokenRef.current,
+        wordCount: trimmed.split(/\s+/).length,
+        durationMs: Math.max(0, Date.now() - retryStartedAtRef.current),
+        resolved: next.issues.length === 0,
+        resolution: next.issues.length === 0 ? "completed" : undefined,
+        issueCount: next.issues.length,
+        scaffoldUsed: speakingStage !== "real_world_production",
+        createdAt,
+      };
+      void saveRetryOutcome(retryOutcome).catch(() => {});
+      void emitActivity("retry_outcome", {
+        attemptId: retryOutcome.id,
+        retryOf: retryOutcome.retryOf,
+        source: retryOutcome.source,
+        text: retryOutcome.text,
+        spoken: retryOutcome.spoken,
+        wordCount: retryOutcome.wordCount,
+        durationMs: retryOutcome.durationMs,
+        resolved: retryOutcome.resolved,
+        resolution: retryOutcome.resolution,
+        issueCount: retryOutcome.issueCount,
+        recordingId: retryOutcome.recordingId,
+        feedbackIds: retryOutcome.feedbackIds,
+        scaffoldUsed: retryOutcome.scaffoldUsed,
+        createdAt: retryOutcome.createdAt,
+      }).catch(() => {});
       if (next.issues.length === 0 && !retryLoggedRef.current) {
         retryLoggedRef.current = true;
         void emitActivity("method_stage", {
@@ -234,10 +389,17 @@ export function MistakeStep({
   return (
     <PanelCard className="space-y-4 p-5">
       <div>
-        <p className="text-xs uppercase tracking-[0.7px] text-accent">{t("Your turn")}</p>
+        <p className="text-xs uppercase tracking-[0.7px] text-accent">{t("5 · Speak")}</p>
         <h3 className="mt-1 text-lg font-semibold tracking-[-0.01em] text-ink">
           {voiceFirst ? t("Say one sentence in English") : t("Write one sentence in English")}
         </h3>
+        <p className="mt-1 text-sm text-ink-soft">{t(productionPrompt ?? productionInstruction ?? "Use the lesson language in your own idea.")}</p>
+        <p className="mt-1 text-xs text-ink-muted">
+          {t("Speaking stage: {stage} · aim for {seconds} seconds", {
+            stage: speakingStage.replaceAll("_", " "),
+            seconds: targetDurationSeconds,
+          })}
+        </p>
         <p className="mt-1 text-sm text-ink-soft">
           {productionPrompt
             ? t(productionPrompt)
@@ -252,6 +414,7 @@ export function MistakeStep({
           value={sentence}
           onChange={(event) => {
             spokenRef.current = false;
+            productionBlobRef.current = null;
             setSentence(event.target.value);
           }}
           onKeyDown={(event) => {
@@ -294,7 +457,7 @@ export function MistakeStep({
           <div className="space-y-3 rounded border border-accent/30 bg-accent/5 p-4">
             <div>
               <p className="text-xs font-medium uppercase tracking-[0.5px] text-accent">
-                {t("Apply the feedback")}
+                {t("7 · Retry")}
               </p>
               <p className="mt-1 text-sm font-semibold text-ink">{t("Write the sentence again")}</p>
               <p className="mt-1 text-xs text-ink-muted">
@@ -309,6 +472,7 @@ export function MistakeStep({
               value={retrySentence}
               onChange={(event) => {
                 retrySpokenRef.current = false;
+                retryBlobRef.current = null;
                 setRetrySentence(event.target.value);
               }}
               onKeyDown={(event) => {
@@ -383,7 +547,9 @@ function VoiceButton({
   variant?: "primary" | "secondary";
 }) {
   const { t } = useT();
-  const { recording, transcribing, startRecording, stopRecording } = audio;
+  const { recording, transcribing, startRecording, stopRecording, recordingElapsedMs, maxDurationMs } = audio;
+  const elapsedSeconds = Math.floor(recordingElapsedMs / 1000);
+  const limitSeconds = maxDurationMs ? Math.ceil(maxDurationMs / 1000) : undefined;
 
   return (
     <Button
@@ -392,7 +558,11 @@ function VoiceButton({
       disabled={disabled || transcribing}
       aria-pressed={recording}
     >
-      {transcribing ? t("Transcribing…") : recording ? t("Stop recording") : label}
+      {transcribing
+        ? t("Transcribing…")
+        : recording
+          ? t("Stop recording · {elapsed}/{limit}s", { elapsed: elapsedSeconds, limit: limitSeconds ?? elapsedSeconds })
+          : label}
     </Button>
   );
 }
@@ -412,6 +582,7 @@ function FeedbackPanel({
   return (
     <div className="space-y-3 rounded border border-line bg-surface p-3">
       <div>
+        <p className="text-xs uppercase tracking-[0.7px] text-accent">{t("6 · Feedback")}</p>
         <p className="text-[11px] uppercase tracking-[0.5px] text-ink-muted">{t("You wrote")}</p>
         <p className="mt-0.5 text-sm text-ink-soft">{original}</p>
       </div>
@@ -428,21 +599,30 @@ function FeedbackPanel({
 
 function FeedbackIssues({ issues }: { issues: LocalCorrectionIssue[] }) {
   const { t } = useT();
+  const prioritized = prioritizeLocalFeedback(issues);
+  const focused = focusFeedback(prioritized);
+  const polishCount = countPolishFeedback(prioritized);
   return (
     <div className="space-y-2">
       <p className="text-xs font-medium text-ink">
-        {t("Focus first: {category}", { category: t(CATEGORY_LABEL[issues[0].category]) })}
+        {t("Focus first: {category}", { category: t(focused[0].category) })}
       </p>
       <ul className="space-y-2">
-        {issues.map((issue) => (
-          <li key={`${issue.category}-${issue.note}`} className="flex items-start gap-2 text-xs text-ink-muted">
+        {focused.map((issue) => (
+          <li key={issue.id} className="flex items-start gap-2 text-xs text-ink-muted">
             <span className="mt-0.5 rounded border border-line px-1.5 py-0.5 text-[10px] uppercase tracking-[0.4px] text-ink-soft">
-              {t(CATEGORY_LABEL[issue.category])}
+              {t(issue.category)}
             </span>
-            <span className="pt-0.5">{t(issue.note)}</span>
+            <span className="pt-0.5">{t(issue.evidence)}</span>
+            <span className="pt-0.5 text-ink-muted">· {t(issue.suggestedRetrySupport)}</span>
           </li>
         ))}
       </ul>
+      {polishCount > 0 && polishCount > focused.filter((issue) => issue.priority === "polish").length && (
+        <p className="text-[11px] text-ink-muted">
+          {t("{count} minor polish issue(s) are available, but do not block your retry.", { count: polishCount })}
+        </p>
+      )}
     </div>
   );
 }
