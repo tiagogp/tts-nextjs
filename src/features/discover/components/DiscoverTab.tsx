@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Select from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { WorkflowSteps } from "@/components/ui/WorkflowSteps";
 import { Field, Input } from "@/components/ui/Field";
 import { Notice } from "@/components/ui/Notice";
 import { Spinner } from "@/components/ui/Spinner";
@@ -133,7 +135,6 @@ export default function DiscoverTab({
   const listenTimer = useStageTimer("listen", 1, { autoStart: false });
   const noticeTimer = useStageTimer("notice", 3);
   const listenedRef = useRef(false);
-  const listenEmittedRef = useRef(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const playRequestRef = useRef(0);
   const sourceInputRef = useRef<HTMLInputElement | null>(null);
@@ -164,8 +165,8 @@ export default function DiscoverTab({
 
   const commitListen = useCallback(
     (subjectId?: string) => {
-      if (listenEmittedRef.current || !listenedRef.current) return;
-      listenEmittedRef.current = true;
+      if (!listenedRef.current) return;
+      listenedRef.current = false;
       void emitActivity("method_stage", {
         stage: "listen",
         area: "listening",
@@ -196,6 +197,11 @@ export default function DiscoverTab({
       // learner who is listening rather than clicking.
       listenTimer.touch();
     };
+    const onPause = () => {
+      listenTimer.pause();
+      stopAtRef.current = null;
+      setPlaying(null);
+    };
     // Bundled clips (demo) play to their natural end rather than to a timestamp.
     const onEnded = () => {
       listenTimer.pause();
@@ -203,9 +209,11 @@ export default function DiscoverTab({
       setPlaying(null);
     };
     audio.addEventListener("timeupdate", onTimeUpdate);
+    audio.addEventListener("pause", onPause);
     audio.addEventListener("ended", onEnded);
     return () => {
       audio.removeEventListener("timeupdate", onTimeUpdate);
+      audio.removeEventListener("pause", onPause);
       audio.removeEventListener("ended", onEnded);
     };
   }, [result, listenTimer]);
@@ -219,6 +227,7 @@ export default function DiscoverTab({
 
       if (playing === index) {
         audio.pause();
+        listenTimer.pause();
         stopAtRef.current = null;
         setPlaying(null);
         return;
@@ -227,6 +236,7 @@ export default function DiscoverTab({
       // Bundled per-segment clip (demo): swap the source and play it whole.
       if (seg.clipUrl) {
         audio.pause();
+        listenTimer.pause();
         stopAtRef.current = null;
         setPlaying(null);
         if (audio.src !== new URL(seg.clipUrl, window.location.href).href) {
@@ -253,6 +263,7 @@ export default function DiscoverTab({
       const end = Math.max(start + 0.25, seg.endMs / 1000);
 
       audio.pause();
+      listenTimer.pause();
       stopAtRef.current = null;
       setPlaying(null);
 
@@ -496,9 +507,21 @@ export default function DiscoverTab({
 
   return (
     <div className="space-y-5">
-      <Card className="space-y-4 p-5">
+      <PageHeader
+        eyebrow={t("Build your phrase library")}
+        title={t("Phrases")}
+        description={t("Bring in useful English, choose what matters, and turn it into focused daily practice.")}
+      />
+
+      <WorkflowSteps
+        label={t("Phrase workflow")}
+        steps={[t("Choose source"), t("Pick phrases"), t("Use one now")]}
+        current={productionPrompt ? 3 : result ? 2 : 1}
+      />
+
+      {(!result || loading) && <Card className="space-y-4 p-5 sm:p-6">
         <div className="space-y-1">
-          <p className="text-sm font-semibold tracking-[-0.01em] text-ink">{t("Turn useful phrases into daily practice")}</p>
+          <h2 className="text-lg font-semibold tracking-[-0.015em] text-ink">{t("Choose a source")}</h2>
           <p className="text-xs text-ink-muted">
             {t("Bring one video, article, or PDF when you want practice from your own material.")}
           </p>
@@ -597,9 +620,9 @@ export default function DiscoverTab({
               )}
 
               <Button
-                variant="secondary"
+                variant="primary"
                 size="lg"
-                className="flex min-h-10 items-center justify-center gap-2"
+                className="flex min-h-11 items-center justify-center gap-2 sm:w-auto"
                 onClick={extract}
                 disabled={loading || !canRun}
               >
@@ -649,7 +672,7 @@ export default function DiscoverTab({
           </Notice>
         )}
 
-      </Card>
+      </Card>}
 
       {result && (
         <TranscriptReview

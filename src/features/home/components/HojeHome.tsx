@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { isStoreAvailable } from "@/lib/store/db";
 import {
   getCards,
@@ -17,6 +18,8 @@ import { deriveMethodPlan, type MethodPlan, type MethodRoute } from "@/features/
 import { useT } from "@/i18n/I18nProvider";
 import { completedLessonIdsFromCardIds, firstLesson, nextLessonFor, type Lesson } from "@/features/learn/lessonDeck";
 import { getLearningProfile } from "@/features/settings/learningProfile";
+import { TodayPlanCard } from "@/features/plan/components/TodayPlanCard";
+import type { TaskItem } from "@/features/plan/schema";
 
 interface HojeHomeProps {
   onStudy: () => void;
@@ -25,6 +28,9 @@ interface HojeHomeProps {
   onFirstLesson: () => void;
   onLesson: (lessonId?: string) => void;
   onSpeak: () => void;
+  onOpenPlanTask: (task: TaskItem) => void;
+  onCreatePlan: () => void;
+  onInstallDefaultPlan: () => void;
 }
 
 interface NextAction {
@@ -41,7 +47,7 @@ interface NextAction {
  * due phrases → Study, mistakes → Correct, practice → next phrase, or a
  * brand-new user with no saved phrases → bundled first lesson. One CTA, never a dashboard.
  */
-export function HojeHome({ onStudy, onDiscover, onCorrect, onFirstLesson, onLesson, onSpeak }: HojeHomeProps) {
+export function HojeHome({ onStudy, onDiscover, onCorrect, onFirstLesson, onLesson, onSpeak, onOpenPlanTask, onCreatePlan, onInstallDefaultPlan }: HojeHomeProps) {
   const { t } = useT();
   const [counts, setCounts] = useState({ cards: 0, reviews: 0, due: 0, errors: 0 });
   const [nextLesson, setNextLesson] = useState<Lesson>(() => nextLessonFor(getLearningProfile(), []) ?? firstLesson());
@@ -128,34 +134,48 @@ export function HojeHome({ onStudy, onDiscover, onCorrect, onFirstLesson, onLess
 
   return (
     <div className="space-y-5">
-      <Card className="surface-grid-glow space-y-4 p-5">
-        {loading ? (
-          <div className="flex items-center gap-2 py-2 text-sm text-ink-muted">
-            <Spinner className="h-4 w-4" />
-            {t("Loading your day…")}
+      <PageHeader
+        eyebrow={t("Your day")}
+        title={t("Today")}
+        description={t("Start with the next useful action. Your plan and saved work stay within reach.")}
+        aside={!loading && hasProgress ? (
+          <div className="grid grid-cols-2 gap-2" aria-live="polite">
+            <Stat value={`${counts.due}`} label={t("to review")} />
+            <Stat value={`${counts.cards}`} label={t("Saved")} />
           </div>
-        ) : (
-          <>
-            <div className="space-y-1.5">
-              <p className="text-xs uppercase tracking-[0.7px] text-accent">{action.eyebrow}</p>
-              <p className="text-lg font-semibold tracking-[-0.01em] text-ink">{action.title}</p>
-              <p className="text-sm text-ink-soft">{action.detail}</p>
+        ) : undefined}
+      />
+
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.85fr)]">
+        <Card className="surface-grid-glow space-y-4 p-5 sm:p-6">
+          {loading ? (
+            <div className="flex items-center gap-2 py-2 text-sm text-ink-muted">
+              <Spinner className="h-4 w-4" />
+              {t("Loading your day…")}
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Button variant="primary" size="lg" className="min-h-10" onClick={action.onClick}>
+          ) : (
+            <>
+              <div className="space-y-1.5">
+                <p className="text-xs font-medium uppercase tracking-[0.7px] text-accent">{action.eyebrow}</p>
+                <h2 className="text-xl font-semibold tracking-[-0.02em] text-ink">{action.title}</h2>
+                <p className="max-w-xl text-sm leading-relaxed text-ink-soft">{action.detail}</p>
+              </div>
+              <Button variant="primary" size="lg" className="min-h-11 sm:w-auto" onClick={action.onClick}>
                 {action.cta}
               </Button>
-            </div>
-          </>
-        )}
-      </Card>
+            </>
+          )}
+        </Card>
 
-      {!loading && hasProgress && (
-        <div className="grid grid-cols-2 gap-3">
-          <Stat value={`${counts.due}`} label={t("to review")} />
-          <Stat value={`${counts.cards}`} label={t("practice phrases")} />
-        </div>
-      )}
+        {!loading && (
+          <TodayPlanCard
+            onOpenTask={onOpenPlanTask}
+            onCreatePlan={onCreatePlan}
+            onInstallDefault={onInstallDefaultPlan}
+            nextRoute={methodPlan?.action.route}
+          />
+        )}
+      </div>
     </div>
   );
 }
@@ -192,14 +212,14 @@ function resolveNextAction({
     const { due, mistakeCards, fromYesterday } = returnMoment;
     const title = fromYesterday
       ? mistakeCards === 1
-        ? t("{count} cards for today — 1 came from your mistake yesterday", { count: due })
-        : t("{count} cards for today — {mistakes} came from your mistakes yesterday", {
+        ? t("{count} phrases for today — 1 came from your mistake yesterday", { count: due })
+        : t("{count} phrases for today — {mistakes} came from your mistakes yesterday", {
             count: due,
             mistakes: mistakeCards,
           })
       : mistakeCards === 1
-        ? t("{count} cards for today — 1 came from your mistake", { count: due })
-        : t("{count} cards for today — {mistakes} came from your mistakes", {
+        ? t("{count} phrases for today — 1 came from your mistake", { count: due })
+        : t("{count} phrases for today — {mistakes} came from your mistakes", {
             count: due,
             mistakes: mistakeCards,
           });
@@ -297,8 +317,8 @@ function routeHandler(
 
 function Stat({ value, label }: { value: string; label: string }) {
   return (
-    <Card className="px-3 py-3 text-center">
-      <p className="text-xl font-semibold tabular-nums text-ink">{value}</p>
+    <Card variant="flat" className="min-w-20 px-3 py-2 text-center">
+      <p className="text-lg font-semibold tabular-nums text-ink">{value}</p>
       <p className="mt-0.5 text-[11px] uppercase tracking-[0.5px] text-ink-muted">{label}</p>
     </Card>
   );

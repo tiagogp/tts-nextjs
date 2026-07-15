@@ -16,7 +16,7 @@ import Disclosure from "@/components/ui/Disclosure";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, Input } from "@/components/ui/Field";
-import { IconButton } from "@/components/ui/IconButton";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { Notice } from "@/components/ui/Notice";
 import { StatusPill, type StatusPillProps } from "@/components/ui/StatusPill";
 import {
@@ -357,18 +357,17 @@ export default function SettingsScreen({
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-6 sm:py-8">
-      <div className="mb-6 flex items-center gap-3">
-        <IconButton onClick={onBack} aria-label={t("Back to PhraseLoop")}>
-          ←
-        </IconButton>
-        <div>
-          <h2 className="text-xl font-semibold text-ink">{t("Settings")}</h2>
-          <p className="text-sm text-ink-muted">
-            {showAdvancedAi
-              ? t("Manage local data, advanced AI, and export tools.")
-              : t("Manage your local PhraseLoop data.")}
-          </p>
-        </div>
+      <div className="mb-6 space-y-4 border-b border-line pb-5">
+        <Button variant="ghost" size="sm" onClick={onBack} className="-ml-2 min-h-9">
+          <span aria-hidden="true">←</span>
+          {t("Back to PhraseLoop")}
+        </Button>
+        <PageHeader
+          title={t("Settings")}
+          description={showAdvancedAi
+            ? t("Manage local data, advanced AI, and export tools.")
+            : t("Manage your local PhraseLoop data.")}
+        />
       </div>
 
       {notice && (
@@ -387,7 +386,21 @@ export default function SettingsScreen({
         </Notice>
       )}
 
-      <Card className="mb-4 p-5">
+      <nav aria-label={t("Settings sections")} className="mb-5 flex flex-wrap gap-2">
+        <a href="#settings-data" className="inline-flex min-h-10 items-center rounded-md border border-line bg-card px-3 text-sm font-medium text-ink-soft transition-colors hover:border-line-strong hover:text-ink">
+          {t("Data and privacy")}
+        </a>
+        {(showAdvancedAi || onOpenTools || onOpenC1) && (
+          <a href="#settings-advanced" className="inline-flex min-h-10 items-center rounded-md border border-line bg-card px-3 text-sm font-medium text-ink-soft transition-colors hover:border-line-strong hover:text-ink">
+            {t("AI and tools")}
+          </a>
+        )}
+        <a href="#settings-profile" className="inline-flex min-h-10 items-center rounded-md border border-line bg-card px-3 text-sm font-medium text-ink-soft transition-colors hover:border-line-strong hover:text-ink">
+          {t("Learner profile")}
+        </a>
+      </nav>
+
+      <Card id="settings-data" className="mb-4 scroll-mt-4 p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="font-medium text-ink">{t("Local data")}</h3>
@@ -496,6 +509,7 @@ export default function SettingsScreen({
         </div>
       </Card>
 
+      <section id="settings-advanced" className="scroll-mt-4">
       {showAdvancedAi && (
         <Disclosure
           title={t("Advanced AI for custom content")}
@@ -636,8 +650,9 @@ export default function SettingsScreen({
           </div>
         </Card>
       )}
+      </section>
 
-      <Card className="mt-4 p-5">
+      <Card id="settings-profile" className="mt-4 scroll-mt-4 p-5">
         <div>
           <h3 className="font-medium text-ink">{t("Learner profile")}</h3>
           <p className="mt-1 text-sm text-ink-muted">

@@ -91,9 +91,10 @@ export default function OnboardingDialog({ onOpenSettings: _onOpenSettings }: Re
           <p className="mt-2 text-sm text-ink-soft">
             {t("Listen, save one useful phrase, and use it in a sentence of your own.")}
           </p>
-          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
             <MethodTile title={t("Listen")} text={t("Hear a phrase in context.")} />
             <MethodTile title={t("Save")} text={t("Keep a phrase you want to review.")} />
+            <MethodTile title={t("Speak")} text={t("Say the phrase in your own voice.")} />
             <MethodTile title={t("Write")} text={t("Use the phrase in an English sentence.")} />
           </div>
         </div>

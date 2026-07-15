@@ -665,16 +665,16 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "Find new phrases": { pt: "Buscar novas frases" },
   "{count} cards to review": { pt: "{count} cartões para revisar" },
   "{count} practice phrases due": { pt: "{count} frases para praticar esperando revisão" },
-  "{count} cards for today — 1 came from your mistake yesterday": {
+  "{count} phrases for today — 1 came from your mistake yesterday": {
     pt: "{count} frases para hoje — 1 veio do seu erro de ontem",
   },
-  "{count} cards for today — {mistakes} came from your mistakes yesterday": {
+  "{count} phrases for today — {mistakes} came from your mistakes yesterday": {
     pt: "{count} frases para hoje — {mistakes} vieram dos seus erros de ontem",
   },
-  "{count} cards for today — 1 came from your mistake": {
+  "{count} phrases for today — 1 came from your mistake": {
     pt: "{count} frases para hoje — 1 veio do seu erro",
   },
-  "{count} cards for today — {mistakes} came from your mistakes": {
+  "{count} phrases for today — {mistakes} came from your mistakes": {
     pt: "{count} frases para hoje — {mistakes} vieram dos seus erros",
   },
   "Review while yesterday is still fresh.": {
@@ -689,6 +689,27 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   },
   "Study now": { pt: "Estudar agora" },
   "Review now": { pt: "Revisar agora" },
+  "Next step": { pt: "Próximo passo" },
+  Next: { pt: "Próximo" },
+  "A simple daily plan for your goal.": { pt: "Um plano diário simples para o seu objetivo." },
+  "Do an activity and it is checked off for you.": {
+    pt: "Faça uma atividade e ela é marcada como feita para você.",
+  },
+  "Start with due phrases. Progress and your library are here when you need them.": {
+    pt: "Comece pelas frases do dia. O progresso e a sua biblioteca ficam aqui quando você precisar.",
+  },
+  "Nice work — {count} phrases reviewed so far. This is a good place to stop, or take one light session.": {
+    pt: "Bom trabalho — {count} frases revisadas até agora. Este é um bom ponto para parar, ou faça uma sessão leve.",
+  },
+  "Start with your weak spots. Detailed numbers are one tap away.": {
+    pt: "Comece pelos seus pontos fracos. Os números detalhados estão a um toque.",
+  },
+  "{cards} phrases saved · {due} due now": {
+    pt: "{cards} frases salvas · {due} para revisar agora",
+  },
+  "Show detailed stats": { pt: "Mostrar estatísticas detalhadas" },
+  "Hide detailed stats": { pt: "Ocultar estatísticas detalhadas" },
+  "Say the phrase in your own voice.": { pt: "Diga a frase com a sua própria voz." },
   "You're caught up": { pt: "Você está em dia" },
   "Nothing to review right now": { pt: "Nada para revisar agora" },
   "Add a new source to find more phrases, or come back when cards are due.": {
@@ -3354,6 +3375,96 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
 
   // Study/Review tab (StudyTab, StudyCard, GradeButtons, PerformanceStats,
   // SavedCardsBrowser, SessionSummary) and PronunciationCoach.
+  Progress: { pt: "Progresso" },
+  Library: { pt: "Biblioteca" },
+  "Review sections": { pt: "Seções da revisão" },
+  "Your review workspace": { pt: "Sua área de revisão" },
+  "Start with due phrases. Open practice, progress, or your library only when you need them.": {
+    pt: "Comece pelas frases pendentes. Abra a prática, o progresso ou a biblioteca só quando precisar.",
+  },
+  "Due now": { pt: "Para agora" },
+  "Review queue": { pt: "Fila de revisão" },
+  "{count} phrases need your attention": { pt: "{count} frases precisam da sua atenção" },
+  "Your review queue is clear": { pt: "Sua fila de revisão está em dia" },
+  "Recall each phrase before revealing the answer. Support is available when you need it.": {
+    pt: "Tente lembrar cada frase antes de revelar a resposta. Use a ajuda quando precisar.",
+  },
+  "You can stop here, choose a light session, or add a small batch of new phrases.": {
+    pt: "Você pode parar por aqui, escolher uma sessão leve ou adicionar um pequeno lote de frases novas.",
+  },
+  "Review recommendation": { pt: "Recomendação de revisão" },
+  "Other ways to practice": { pt: "Outras formas de praticar" },
+  "Practice plan": { pt: "Plano de prática" },
+  "Turn recall into usable language": { pt: "Transforme lembrança em inglês que você consegue usar" },
+  "Follow the recommended mix, resume today's learning loop, or reuse a saved phrase in a new context.": {
+    pt: "Siga a combinação recomendada, retome o ciclo de hoje ou reutilize uma frase salva em outro contexto.",
+  },
+  "Progress and focus": { pt: "Progresso e foco" },
+  "See what needs attention next": { pt: "Veja o que precisa de atenção agora" },
+  "Start with recurring weak spots, then use the detailed signals to adjust your practice.": {
+    pt: "Comece pelos pontos fracos recorrentes e use os sinais detalhados para ajustar sua prática.",
+  },
+  "Phrase library": { pt: "Biblioteca de frases" },
+  "Find a saved practice phrase": { pt: "Encontre uma frase salva" },
+  "Search the phrases, corrections, and contexts you have collected without interrupting your review queue.": {
+    pt: "Busque as frases, correções e contextos que você reuniu sem interromper sua fila de revisão.",
+  },
+  "Today's practice plan": { pt: "Plano de prática de hoje" },
+  "Resume your input-to-output loop": { pt: "Retome seu ciclo de entrada para saída" },
+  "Completed stages are tracked from your activity, so you can leave and return without losing your place.": {
+    pt: "As etapas concluídas são registradas pela sua atividade, então você pode sair e voltar sem perder o ponto.",
+  },
+  "Session length": { pt: "Duração da sessão" },
+  "Session complete": { pt: "Sessão concluída" },
+  "Next · Step {step} of {total}": { pt: "Agora · Etapa {step} de {total}" },
+  "Start a new loop when you want to work on another area.": {
+    pt: "Comece outro ciclo quando quiser trabalhar uma área diferente.",
+  },
+  "{done}/{total} complete": { pt: "{done}/{total} concluídas" },
+  "Weekly focus · {focus}": { pt: "Foco da semana · {focus}" },
+  "{days}/7 active days": { pt: "{days}/7 dias ativos" },
+  "Weekly rhythm details": { pt: "Detalhes do ritmo semanal" },
+  "Next rhythm focus · {focus}. {guidance}": { pt: "Próximo foco · {focus}. {guidance}" },
+  "Seven-day practice rhythm": { pt: "Ritmo de prática de sete dias" },
+  "Step {step}": { pt: "Etapa {step}" },
+  "Needs attention": { pt: "Precisa de atenção" },
+  "Recurring patterns from your reviews, ordered by how often they cause difficulty.": {
+    pt: "Padrões recorrentes das suas revisões, ordenados pela frequência com que causam dificuldade.",
+  },
+  "{count} patterns": { pt: "{count} padrões" },
+  "Create variants": { pt: "Criar variações" },
+  "Search saved phrases": { pt: "Buscar frases salvas" },
+  "This week": { pt: "Esta semana" },
+  "Building up": { pt: "Ganhando ritmo" },
+  "In the zone": { pt: "No ritmo certo" },
+  "Big week": { pt: "Semana intensa" },
+  Conversations: { pt: "Conversas" },
+  "Output turns": { pt: "Turnos produzidos" },
+  "Weekly goal": { pt: "Meta semanal" },
+  "Decrease goal": { pt: "Diminuir meta" },
+  "Increase goal": { pt: "Aumentar meta" },
+  "{count} more conversation(s) to hit your goal.": { pt: "Mais {count} conversa(s) para alcançar sua meta." },
+  "Right amount of challenge — keep it up.": { pt: "Um bom nível de desafio — continue assim." },
+  "You're well past your goal this week. Rest counts too.": {
+    pt: "Você já passou bastante da meta desta semana. Descansar também conta.",
+  },
+  "Use a saved idea in a new context": { pt: "Use uma ideia salva em outro contexto" },
+  "Write or speak a short response, then decide whether the meaning was clear.": {
+    pt: "Escreva ou fale uma resposta curta e depois avalie se o sentido ficou claro.",
+  },
+  "Support · {stage}": { pt: "Apoio · {stage}" },
+  "Guidance · {guidance}": { pt: "Orientação · {guidance}" },
+  "Recurring pattern": { pt: "Padrão recorrente" },
+  "Play prompt": { pt: "Ouvir enunciado" },
+  "Your response": { pt: "Sua resposta" },
+  "Record response": { pt: "Gravar resposta" },
+  "You can also type your response.": { pt: "Você também pode digitar a resposta." },
+  "Continue to self-check": { pt: "Continuar para autoavaliação" },
+  "Response saved": { pt: "Resposta salva" },
+  "Was the meaning clear?": { pt: "O sentido ficou claro?" },
+  "Your answer records transfer evidence and helps adjust future support.": {
+    pt: "Sua resposta registra evidência de transferência e ajuda a ajustar o apoio futuro.",
+  },
   "Again": { pt: "De novo" },
   "Hard": { pt: "Difícil" },
   "Good": { pt: "Bom" },
@@ -3593,7 +3704,7 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   Hide: { pt: "Ocultar" },
   "Practice speaking": { pt: "Praticar a fala" },
 
-  "cards reviewed": { pt: "cartões revisados" },
+  "phrases reviewed": { pt: "frases revisadas" },
   accuracy: { pt: "precisão" },
 
   /* ── level advancement: readiness coach + level test ────── */
@@ -3848,4 +3959,48 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   },
   "~{count} min": { pt: "~{count} min" },
   // The four area labels ("Study" / "Listen" / "Speak" / "Write") are already translated.
+
+  // Shared app hierarchy and workflow orientation.
+  "Your day": { pt: "Seu dia" },
+  "Start with the next useful action. Your plan and saved work stay within reach.": {
+    pt: "Comece pela próxima ação útil. Seu plano e o que você salvou continuam ao alcance.",
+  },
+  "Build your phrase library": { pt: "Construa sua biblioteca de frases" },
+  "Bring in useful English, choose what matters, and turn it into focused daily practice.": {
+    pt: "Traga inglês útil, escolha o que importa e transforme em prática diária focada.",
+  },
+  "Phrase workflow": { pt: "Fluxo de frases" },
+  "Choose source": { pt: "Escolha a fonte" },
+  "Pick phrases": { pt: "Escolha frases" },
+  "Use one now": { pt: "Use uma agora" },
+  "Choose a source": { pt: "Escolha uma fonte" },
+  "Learn from your output": { pt: "Aprenda com o que você produz" },
+  "Get focused feedback, try the important correction again, and save only what is worth reviewing.": {
+    pt: "Receba feedback focado, refaça a correção importante e salve só o que vale revisar.",
+  },
+  "Correction workflow": { pt: "Fluxo de correção" },
+  "Add your output": { pt: "Adicione sua produção" },
+  "Review and retry": { pt: "Revise e tente de novo" },
+  "Save for review": { pt: "Salve para revisar" },
+  "Add something to correct": { pt: "Adicione algo para corrigir" },
+  "Paste or speak freely, or enter a correction you already know.": {
+    pt: "Cole ou fale livremente, ou insira uma correção que você já conhece.",
+  },
+  "Context and advanced options": { pt: "Contexto e opções avançadas" },
+  "Add a situation, import correction JSON, or temporarily change the AI.": {
+    pt: "Adicione uma situação, importe um JSON de correções ou troque a IA temporariamente.",
+  },
+  "{label}, {count} due": { pt: "{label}, {count} pendentes" },
+  "Review register, naturalness, and collocation at an advanced level.": {
+    pt: "Revise registro, naturalidade e colocações em nível avançado.",
+  },
+  "Repeat a useful phrase, then use it in a sentence of your own.": {
+    pt: "Repita uma frase útil e depois use-a em uma frase sua.",
+  },
+  "Practice a real conversation and retry the most important correction.": {
+    pt: "Pratique uma conversa real e refaça a correção mais importante.",
+  },
+  "Settings sections": { pt: "Seções das configurações" },
+  "Data and privacy": { pt: "Dados e privacidade" },
+  "AI and tools": { pt: "IA e ferramentas" },
 };

@@ -171,5 +171,6 @@ export const landingNavItems: ReadonlyArray<{
   { id: "waitlist", label: "Lista de espera" },
 ];
 
-// The landing preview has no "Hoje" home surface; it opens straight on Discover.
-export const LANDING_TABS = HOME_TABS.filter((item) => item.id !== "hoje");
+// The landing preview has no "Hoje" home surface and no microphone, so the
+// speaking tab is also left out; it opens straight on Discover.
+export const LANDING_TABS = HOME_TABS.filter((item) => item.id !== "hoje" && item.id !== "speak");

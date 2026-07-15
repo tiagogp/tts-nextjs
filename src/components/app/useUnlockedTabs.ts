@@ -31,6 +31,9 @@ export function computeUnlockedTabTier(signals: UnlockSignals, storedTier = 0): 
 
 export function tabsForUnlockTier(tier: number): HomeTab[] {
   const visible = new Set<HomeTab>(["hoje", "discover", "study"]);
+  // Speaking is the method's Rule #1: it gets a persistent home as soon as the
+  // learner has anything to say a phrase from, not only when a coach routes there.
+  if (tier >= 1) visible.add("speak");
   if (tier >= 3) visible.add("correct");
   return HOME_TABS.map((tab) => tab.id).filter((id) => visible.has(id));
 }
@@ -38,16 +41,23 @@ export function tabsForUnlockTier(tier: number): HomeTab[] {
 function highestNewTab(previousTier: number, nextTier: number): HomeTab | null {
   if (nextTier <= previousTier) return null;
   if (nextTier >= 3 && previousTier < 3) return "correct";
+  if (nextTier >= 1 && previousTier < 1) return "speak";
   return null;
 }
 
 export function useUnlockedTabs(): {
   tabs: ReadonlyArray<(typeof HOME_TABS)[number]>;
   tier: number;
+  dueCount: number;
   announcement: HomeTab | null;
   clearAnnouncement: () => void;
 } {
-  const [tier, setTier] = useState(() => getLearningProfile().unlockedTabTier);
+  // Seed 0 on server and client alike: the stored tier lives in localStorage, so
+  // reading it during the first client render hydrates a different tab list than
+  // the server sent (same mismatch HojeHome documents). The mount effect below
+  // raises the tier immediately after hydration.
+  const [tier, setTier] = useState(0);
+  const [dueCount, setDueCount] = useState(0);
   const [announcement, setAnnouncement] = useState<HomeTab | null>(null);
 
   useEffect(() => {
@@ -57,6 +67,7 @@ export function useUnlockedTabs(): {
       const profile = getLearningProfile();
       if (!isStoreAvailable()) {
         setTier(profile.unlockedTabTier);
+        setDueCount(0);
         return;
       }
 
@@ -64,6 +75,7 @@ export function useUnlockedTabs(): {
       if (cancelled) return;
 
       const ownSentences = cards.filter((card) => card.id.startsWith(OWN_SENTENCE_CARD_PREFIX)).length;
+      setDueCount(counts.due);
       const nextTier = computeUnlockedTabTier(
         { cards: counts.cards, reviews: counts.reviews, errorEvents: errors.length, ownSentences },
         profile.unlockedTabTier,
@@ -80,11 +92,13 @@ export function useUnlockedTabs(): {
     handleRefresh();
     window.addEventListener("phraseloop:activity", handleRefresh);
     window.addEventListener("phraseloop:lesson-saved", handleRefresh);
+    window.addEventListener("phraseloop:backup-restored", handleRefresh);
     window.addEventListener("phraseloop:profile-updated", handleRefresh);
     return () => {
       cancelled = true;
       window.removeEventListener("phraseloop:activity", handleRefresh);
       window.removeEventListener("phraseloop:lesson-saved", handleRefresh);
+      window.removeEventListener("phraseloop:backup-restored", handleRefresh);
       window.removeEventListener("phraseloop:profile-updated", handleRefresh);
     };
   }, []);
@@ -96,6 +110,7 @@ export function useUnlockedTabs(): {
   return {
     tabs,
     tier,
+    dueCount,
     announcement,
     clearAnnouncement,
   };
