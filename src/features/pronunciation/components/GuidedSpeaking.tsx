@@ -7,7 +7,7 @@ import { Notice } from "@/components/ui/Notice";
 import { Button } from "@/components/ui/Button";
 import { PronunciationCoach } from "@/features/pronunciation/components/PronunciationCoach";
 import { MistakeStep } from "@/features/learn/components/MistakeStep";
-import { buildSpeakingDrill, type SpeakingDrillStep } from "@/features/pronunciation/speakingDrill";
+import { buildSpeakingDrill, selectRecurringError, type SpeakingDrillStep } from "@/features/pronunciation/speakingDrill";
 import {
   completedLessonIdsFromCardIds,
   firstLesson,
@@ -16,7 +16,10 @@ import {
   type LessonPhrase,
 } from "@/features/learn/lessonDeck";
 import { getLearningProfile } from "@/features/settings/learningProfile";
-import { getCards } from "@/lib/store/repository";
+import { getCards, getErrorEvents } from "@/lib/store/repository";
+import { getMethodProgression } from "@/lib/store/repository";
+import { supportForProgression, type MethodProgressionState } from "@/features/method/progression";
+import { TimedMonologue } from "@/features/pronunciation/components/TimedMonologue";
 import { useT } from "@/i18n/I18nProvider";
 
 /**
@@ -34,14 +37,19 @@ export function GuidedSpeaking({ onDone }: { onDone?: () => void }) {
   const [steps, setSteps] = useState<SpeakingDrillStep[]>([]);
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
+  const [progression, setProgression] = useState<MethodProgressionState | undefined>();
+  const support = supportForProgression(progression);
 
   const load = useCallback(async () => {
     // The store can be unavailable (private-mode browsers) or fail to read. Speaking has
     // to work on day 1 regardless, so the drill is built in `finally`: an empty card set
     // simply falls through to the first lesson rather than leaving the learner stranded.
     const cardIds = new Set<string>();
+    let nextError: Awaited<ReturnType<typeof getErrorEvents>>[number] | undefined;
     try {
-      for (const card of await getCards()) cardIds.add(card.id);
+      const [cards, errors] = await Promise.all([getCards(), getErrorEvents()]);
+      for (const card of cards) cardIds.add(card.id);
+      nextError = selectRecurringError(errors);
     } finally {
       const next: Lesson =
         nextLessonFor(getLearningProfile(), completedLessonIdsFromCardIds(cardIds)) ??
@@ -50,7 +58,7 @@ export function GuidedSpeaking({ onDone }: { onDone?: () => void }) {
         cardIds.has(`lesson-${next.id}-card-${phrase.id ?? index}`),
       );
       setLesson(next);
-      setSteps(buildSpeakingDrill({ lesson: next, savedPhrases }));
+      setSteps(buildSpeakingDrill({ lesson: next, savedPhrases, recurringError: nextError }));
       setLoading(false);
     }
   }, []);
@@ -58,6 +66,10 @@ export function GuidedSpeaking({ onDone }: { onDone?: () => void }) {
   useEffect(() => {
     void load().catch(() => undefined);
   }, [load]);
+
+  useEffect(() => {
+    void getMethodProgression().then(setProgression).catch(() => undefined);
+  }, []);
 
   if (loading) {
     return (
@@ -84,6 +96,12 @@ export function GuidedSpeaking({ onDone }: { onDone?: () => void }) {
         <p className="mt-1 text-sm text-ink-soft">
           {t("Imitate the model line first. You do not need to sound perfect — you need to be understood.")}
         </p>
+        <p className="mt-2 text-xs text-ink-muted">
+          {t("Current speaking support: {stage}. {guidance}", {
+            stage: support.speaking.stage.replaceAll("_", " "),
+            guidance: support.speaking.guidance,
+          })}
+        </p>
       </Card>
 
       {repeatSteps.map((step, index) => (
@@ -106,14 +124,26 @@ export function GuidedSpeaking({ onDone }: { onDone?: () => void }) {
         </Card>
       ))}
 
-      {speakStep && !saved && (
+      {speakStep && !saved && !["timed_monologue", "simulated_conversation", "real_world_production"].includes(support.speaking.stage) && (
         <MistakeStep
           voiceFirst
           lessonId={lesson.id}
           phrase={speakStep.phrase}
           productionPrompt={speakStep.prompt}
           retryHint={lesson.retryHint}
+          speakingStage={support.speaking.stage}
+          targetDurationSeconds={support.speaking.targetSeconds}
           onSaved={() => setSaved(true)}
+        />
+      )}
+
+      {!saved && ["timed_monologue", "simulated_conversation", "real_world_production"].includes(support.speaking.stage) && (
+        <TimedMonologue
+          lessonId={lesson.id}
+          prompt={support.speaking.prompt}
+          targetSeconds={support.speaking.targetSeconds}
+          scaffoldUsed={support.speaking.stage !== "real_world_production"}
+          onComplete={() => setSaved(true)}
         />
       )}
 

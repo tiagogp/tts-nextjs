@@ -8,22 +8,32 @@ import { Chip } from "@/components/ui/Chip";
 import { Field, Input } from "@/components/ui/Field";
 import { Segmented } from "@/components/ui/Segmented";
 import { Spinner } from "@/components/ui/Spinner";
+import { Notice } from "@/components/ui/Notice";
 import Disclosure from "@/components/ui/Disclosure";
 import ProviderBadge from "@/components/ui/ProviderBadge";
 import { cn } from "@/lib/cn";
 import { listItem, staggerContainer } from "@/lib/motion";
 import { normalizeContext } from "@/lib/cards/context";
 import type { ConversationTurn } from "@/lib/cards/provider";
-import type { ErrorEvent } from "@/lib/cards/schema";
+import type { AdvancedReview } from "@/lib/cards/schema";
 import {
   deleteConversation,
   getConversations,
   saveConversation,
   saveCorrectionDeck,
+  saveAudioRecording,
+  saveProductionAttempt,
+  saveRetryOutcome,
+  getMethodProgression,
+  getErrorEvents,
   type Conversation,
 } from "@/lib/store/repository";
+import type { ProductionAttempt, RetryOutcome } from "@/lib/performance/types";
+import { selectFamiliarTopic, supportForProgression, type MethodProgressionState } from "@/features/method/progression";
+import { selectRecurringError } from "@/features/pronunciation/speakingDrill";
 import { emitActivity } from "@/lib/store/activityLog";
 import { useStageTimer } from "@/features/method/useStageTimer";
+import { useCorrectionAudio } from "@/features/correct/hooks/useCorrectionAudio";
 import { useProviderSelection } from "@/features/cards/hooks/useProviderSelection";
 import { ProviderPicker } from "@/features/cards/components/ProviderPicker";
 import { exportAndSaveDeck } from "@/features/cards/exportDeck";
@@ -33,6 +43,7 @@ import {
   transcribeAudio,
 } from "@/features/correct/api";
 import { NaturalnessReview } from "@/features/correct/components/NaturalnessReview";
+import { countPolishFeedback, focusFeedback, prioritizeFeedback, type FeedbackIssue } from "@/features/correct/feedbackContract";
 import { sendConversationTurn, synthesizeSpeech } from "@/features/converse/api";
 import { getLearnerLangs } from "@/features/settings/learningProfile";
 import {
@@ -69,6 +80,9 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
   // Free talk = hands-free: after each AI reply the mic auto-opens and silence detection
   // (a "debounce" on quiet) decides when you've finished and sends your turn automatically.
   const [freeTalk, setFreeTalk] = useState(false);
+  const [progression, setProgression] = useState<MethodProgressionState | undefined>();
+  const [recurringError, setRecurringError] = useState<Awaited<ReturnType<typeof getErrorEvents>>[number] | undefined>();
+  const progressionSupport = supportForProgression(progression);
 
   // Phase 2 — post-session review (find mistakes → cards). `review` is the conversation being
   // reviewed; null while in setup or an active chat.
@@ -77,6 +91,10 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
   const [generating, setGenerating] = useState(false);
   const [reviewNote, setReviewNote] = useState<string | null>(null);
   const [reviewCarded, setReviewCarded] = useState(false);
+  const [retryText, setRetryText] = useState("");
+  const [retryChecking, setRetryChecking] = useState(false);
+  const [retryReview, setRetryReview] = useState<AdvancedReview | null>(null);
+  const [retryResolution, setRetryResolution] = useState<"pending" | "completed" | "deferred" | "dismissed">("pending");
 
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -90,8 +108,29 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
   // Refs bridge the start↔listen↔send cycle so the callbacks below don't need to
   // depend on each other (which would create a definition-order knot).
   const freeTalkRef = useRef(freeTalk);
-  const sendTurnRef = useRef<(text: string) => void>(() => {});
+  const sendTurnRef = useRef<(text: string, spoken?: boolean) => void>(() => {});
+  const typedInputWasSpokenRef = useRef(false);
+  const retrySpokenRef = useRef(false);
+  const retryBlobRef = useRef<Blob | null>(null);
   const listenRef = useRef<() => void>(() => {});
+
+  const retryAudio = useCorrectionAudio({
+    onNote: setReviewNote,
+    onText: (updater) => {
+      retrySpokenRef.current = true;
+      setRetryText(updater);
+      setRetryReview(null);
+    },
+    onBlob: (blob) => {
+      retryBlobRef.current = blob;
+    },
+  });
+  const {
+    recording: retryRecording,
+    transcribing: retryTranscribing,
+    startRecording: startRetryRecording,
+    stopRecording: stopRetryRecording,
+  } = retryAudio;
   useEffect(() => {
     freeTalkRef.current = freeTalk;
   }, [freeTalk]);
@@ -110,6 +149,24 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
     const loadProfileLevel = () => setLevel(getLearnerLangs().level);
     window.addEventListener("phraseloop:profile-updated", loadProfileLevel);
     return () => window.removeEventListener("phraseloop:profile-updated", loadProfileLevel);
+  }, []);
+
+  useEffect(() => {
+    const loadProgression = () => {
+      void Promise.all([getMethodProgression(), getErrorEvents()])
+        .then(([nextProgression, errors]) => {
+          setProgression(nextProgression);
+          setRecurringError(selectRecurringError(errors));
+        })
+        .catch(() => undefined);
+    };
+    loadProgression();
+    window.addEventListener("phraseloop:progress-updated", loadProgression);
+    window.addEventListener("phraseloop:activity", loadProgression);
+    return () => {
+      window.removeEventListener("phraseloop:progress-updated", loadProgression);
+      window.removeEventListener("phraseloop:activity", loadProgression);
+    };
   }, []);
 
   useEffect(() => {
@@ -201,7 +258,18 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
 
   const start = useCallback(async () => {
     if (busy || !canStart) return;
-    const scenarioPrompt = usingCustom ? customTrimmed : activeScenario?.prompt;
+    const familiarTopic = !usingCustom && activeScenario?.id === "personal-update"
+      ? selectFamiliarTopic(
+          past.map((item) => ({ topicId: item.topicId, context: item.context, createdAt: item.startedAt })),
+          Date.now(),
+          progressionSupport.conversation.familiarTopicCadenceDays,
+        )
+      : undefined;
+    const scenarioPrompt = usingCustom
+      ? customTrimmed
+      : activeScenario?.prompt && familiarTopic
+        ? `${activeScenario.prompt} Revisit the familiar topic “${familiarTopic.label}” today. ${familiarTopic.prompt}`
+        : activeScenario?.prompt;
     if (!scenarioPrompt) return;
     const fallbackContext = usingCustom
       ? normalizeContext(customTrimmed) ?? "conversation"
@@ -216,6 +284,13 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
         level,
         challenge,
         history: [],
+        conversationStage: progressionSupport.speaking.stage,
+        maxTurns: progressionSupport.conversation.maxTurns,
+        followUpDepth: progressionSupport.conversation.followUpDepth,
+        promptStyle: recurringError
+          ? `${progressionSupport.conversation.promptStyle} Revisit this recurring correction naturally: ${recurringError.corrected}`
+          : progressionSupport.conversation.promptStyle,
+        speakerFamiliarity: progressionSupport.listening.speakerFamiliarity,
       });
       // Hold the "Starting…" state through TTS so the greeting bubble and its voice appear together.
       const audio = reply ? await synthReply(reply) : null;
@@ -229,6 +304,8 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
         sourceLang: getLearnerLangs().nativeLang,
         level,
         challenge,
+        progressionStage: progressionSupport.speaking.stage,
+        topicId: familiarTopic?.id,
         turns: reply ? [{ role: "assistant", text: reply }] : [],
         startedAt: Date.now(),
       };
@@ -239,17 +316,22 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
     } finally {
       setBusy(false);
     }
-  }, [busy, canStart, usingCustom, customTrimmed, activeScenario, provider, selectedModel, level, challenge, persist, synthReply, speak]);
+  }, [busy, canStart, usingCustom, customTrimmed, activeScenario, past, provider, selectedModel, level, challenge, persist, synthReply, speak, progressionSupport, recurringError]);
 
   const sendTurn = useCallback(
-    async (text: string) => {
+    async (text: string, spoken = false) => {
       const trimmed = text.trim();
       if (!trimmed || busy || !conversation) return;
+      const learnerTurns = conversation.turns.filter((turn) => turn.role === "user").length;
+      if (learnerTurns >= progressionSupport.conversation.maxTurns) {
+        setNote(`This ${progressionSupport.speaking.stage.replaceAll("_", " ")} practice is complete. Finish it to review your output.`);
+        return;
+      }
       setBusy(true);
       setNote(null);
       const withUser: Conversation = {
         ...conversation,
-        turns: [...conversation.turns, { role: "user", text: trimmed }],
+        turns: [...conversation.turns, { role: "user", text: trimmed, spoken }],
       };
       persist(withUser);
       void emitActivity("conversation_turn", {
@@ -269,6 +351,7 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
         subjectId: conversation.id,
       });
       setTyped("");
+      typedInputWasSpokenRef.current = false;
       try {
         const { reply } = await sendConversationTurn({
           provider,
@@ -278,6 +361,13 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
           level: conversation.level,
           challenge: conversation.challenge,
           history: withUser.turns,
+          conversationStage: progressionSupport.speaking.stage,
+          maxTurns: progressionSupport.conversation.maxTurns,
+          followUpDepth: progressionSupport.conversation.followUpDepth,
+          promptStyle: recurringError
+            ? `${progressionSupport.conversation.promptStyle} Revisit this recurring correction naturally: ${recurringError.corrected}`
+            : progressionSupport.conversation.promptStyle,
+          speakerFamiliarity: progressionSupport.listening.speakerFamiliarity,
         });
         if (reply) {
           // Stage the audio first, then reveal the bubble + play together (kept in sync).
@@ -295,7 +385,7 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
         setBusy(false);
       }
     },
-    [busy, conversation, provider, selectedModel, persist, synthReply, speak, speakTimer],
+    [busy, conversation, provider, selectedModel, persist, synthReply, speak, speakTimer, progressionSupport, recurringError],
   );
   useEffect(() => {
     sendTurnRef.current = sendTurn;
@@ -314,8 +404,9 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
         return;
       }
       if (opts?.autoSend) {
-        sendTurnRef.current(text);
+        sendTurnRef.current(text, true);
       } else {
+        typedInputWasSpokenRef.current = true;
         setTyped((prev) => (prev.trim() ? `${prev.trim()} ${text}` : text));
       }
     } catch (err: unknown) {
@@ -455,13 +546,29 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
         .trim();
       // Nothing the learner said → nothing to correct. Mark reviewed (empty) and move on.
       if (!userText) {
+        const correctedAt = Date.now();
         const reviewed: Conversation = {
           ...conv,
           errors: [],
           advancedReview: { errors: [], refinements: [] },
-          correctedAt: Date.now(),
+          correctedAt,
         };
+        const productionAttempt: ProductionAttempt = {
+          id: conv.id,
+          source: "conversation",
+          stage: "production",
+          context: conv.context,
+          prompt: conv.scenario,
+          text: userText,
+          spoken: conv.turns.some((turn) => turn.role === "user" && turn.spoken),
+          wordCount: userText.split(/\s+/).filter(Boolean).length,
+          finished: true,
+          issueCount: 0,
+          createdAt: correctedAt,
+        };
+        void saveProductionAttempt(productionAttempt).catch(() => {});
         setReview(reviewed);
+        setRetryResolution("completed");
         void saveConversation(reviewed);
         void refreshPast();
         return;
@@ -486,7 +593,34 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
           advancedReview: advanced,
           correctedAt: Date.now(),
         };
+        const productionAttempt: ProductionAttempt = {
+          id: conv.id,
+          source: "conversation",
+          stage: "production",
+          context: conv.context,
+          prompt: conv.scenario,
+          text: userText,
+          spoken: conv.turns.some((turn) => turn.role === "user" && turn.spoken),
+          wordCount: userText.split(/\s+/).filter(Boolean).length,
+          finished: true,
+          issueCount: advanced.errors.length,
+          createdAt: reviewed.correctedAt ?? Date.now(),
+        };
+        void saveProductionAttempt(productionAttempt).catch(() => {});
+        void emitActivity("production_attempt", {
+          attemptId: productionAttempt.id,
+          source: productionAttempt.source,
+          context: productionAttempt.context,
+          prompt: productionAttempt.prompt,
+          text: productionAttempt.text,
+          spoken: productionAttempt.spoken,
+          wordCount: productionAttempt.wordCount,
+          finished: productionAttempt.finished,
+          issueCount: productionAttempt.issueCount,
+          createdAt: productionAttempt.createdAt,
+        }).catch(() => {});
         setReview(reviewed);
+        setRetryResolution(advanced.errors.length > 0 ? "pending" : "completed");
         void saveConversation(reviewed);
         void refreshPast();
       } catch (err: unknown) {
@@ -508,6 +642,12 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
       setNote(null);
       setReviewNote(null);
       setReviewCarded(false);
+      setRetryText("");
+      setRetryReview(null);
+      setRetryResolution("pending");
+      retrySpokenRef.current = false;
+      retryBlobRef.current = null;
+      stopRetryRecording();
       const ended: Conversation = conv.endedAt ? conv : { ...conv, endedAt: Date.now() };
       setReview(ended);
       if (conv.correctedAt) {
@@ -517,7 +657,7 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
         void correctReview(ended);
       }
     },
-    [correctReview, refreshPast, stopRecording],
+    [correctReview, refreshPast, stopRecording, stopRetryRecording],
   );
 
   const finish = useCallback(() => {
@@ -553,12 +693,175 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
   const closeReview = useCallback(() => {
     setReview(null);
     setReviewNote(null);
+    setRetryText("");
+    setRetryReview(null);
+    setRetryResolution("pending");
+    retrySpokenRef.current = false;
+    retryBlobRef.current = null;
+    stopRetryRecording();
     void refreshPast();
-  }, [refreshPast]);
+  }, [refreshPast, stopRetryRecording]);
+
+  const checkConversationRetry = useCallback(async () => {
+    const text = retryText.trim();
+    if (!text || retryChecking || !hasEvaluator || !review) return;
+    setRetryChecking(true);
+    setReviewNote(null);
+    try {
+      const next = await reviewAdvancedText({
+        provider,
+        selectedModel,
+        text,
+        context: review.context,
+        level: review.level,
+      });
+      setRetryReview(next);
+      setRetryResolution(next.errors.length === 0 ? "completed" : "pending");
+      const attemptId = crypto.randomUUID();
+      const createdAt = Date.now();
+      const wordCount = text.split(/\s+/).length;
+      const spoken = retrySpokenRef.current;
+      const recordingId = spoken && retryBlobRef.current ? crypto.randomUUID() : undefined;
+      if (recordingId && retryBlobRef.current) {
+        await saveAudioRecording({
+          id: recordingId,
+          blob: retryBlobRef.current,
+          mimeType: retryBlobRef.current.type || "audio/webm",
+          sizeBytes: retryBlobRef.current.size,
+          createdAt,
+        }).catch(() => undefined);
+      }
+      const productionAttempt: ProductionAttempt = {
+        id: attemptId,
+        source: "conversation",
+        context: review.context,
+        prompt: review.scenario,
+        text,
+        spoken,
+        wordCount,
+        finished: true,
+        issueCount: next.errors.length,
+        recordingId,
+        createdAt,
+      };
+      const retryOutcome: RetryOutcome = {
+        id: crypto.randomUUID(),
+        retryOf: review.id,
+        feedbackIds: focusFeedback(prioritizeFeedback(review.errors ?? [])).map((issue) => issue.event.id),
+        source: "conversation",
+        text,
+        spoken,
+        wordCount,
+        resolved: next.errors.length === 0,
+        resolution: next.errors.length === 0 ? "completed" : undefined,
+        issueCount: next.errors.length,
+        createdAt,
+      };
+      void saveProductionAttempt(productionAttempt).catch(() => {});
+      void saveRetryOutcome(retryOutcome).catch(() => {});
+      void emitActivity("production_attempt", {
+        attemptId: productionAttempt.id,
+        source: "conversation",
+        context: review.context,
+        prompt: review.scenario,
+        text,
+        spoken,
+        recordingId,
+        wordCount: productionAttempt.wordCount,
+        finished: true,
+        issueCount: productionAttempt.issueCount,
+        createdAt: productionAttempt.createdAt,
+      }).catch(() => {});
+      void emitActivity("retry_outcome", {
+        attemptId: retryOutcome.id,
+        retryOf: retryOutcome.retryOf,
+        feedbackIds: retryOutcome.feedbackIds,
+        source: "conversation",
+        text,
+        spoken,
+        wordCount: retryOutcome.wordCount,
+        resolved: retryOutcome.resolved,
+        resolution: retryOutcome.resolved ? "completed" : undefined,
+        issueCount: retryOutcome.issueCount,
+        createdAt: retryOutcome.createdAt,
+      }).catch(() => {});
+    } catch (err: unknown) {
+      setReviewNote(err instanceof Error ? err.message : "Couldn't check the retry.");
+    } finally {
+      setRetryChecking(false);
+    }
+  }, [hasEvaluator, provider, retryChecking, retryText, review, selectedModel]);
+
+  const deferConversationRetry = useCallback(() => {
+    if (!review || !review.errors?.length) return;
+    const outcome: RetryOutcome = {
+      id: crypto.randomUUID(),
+      retryOf: review.id,
+      feedbackIds: focusFeedback(prioritizeFeedback(review.errors)).map((issue) => issue.event.id),
+      source: "conversation",
+      text: "",
+      spoken: false,
+      wordCount: 0,
+      resolved: false,
+      resolution: "deferred",
+      issueCount: review.errors.length,
+      createdAt: Date.now(),
+    };
+    void saveRetryOutcome(outcome).catch(() => {});
+    void emitActivity("retry_outcome", {
+      attemptId: outcome.id,
+      retryOf: outcome.retryOf,
+      feedbackIds: outcome.feedbackIds,
+      source: outcome.source,
+      text: outcome.text,
+      spoken: outcome.spoken,
+      wordCount: outcome.wordCount,
+      resolved: false,
+      resolution: "deferred",
+      issueCount: outcome.issueCount,
+      createdAt: outcome.createdAt,
+    }).catch(() => {});
+    setRetryResolution("deferred");
+  }, [review]);
+
+  const dismissConversationRetry = useCallback(() => {
+    if (!review || !review.errors?.length) return;
+    const outcome: RetryOutcome = {
+      id: crypto.randomUUID(),
+      retryOf: review.id,
+      feedbackIds: focusFeedback(prioritizeFeedback(review.errors)).map((issue) => issue.event.id),
+      source: "conversation",
+      text: "",
+      spoken: false,
+      wordCount: 0,
+      resolved: false,
+      resolution: "dismissed",
+      issueCount: review.errors.length,
+      createdAt: Date.now(),
+    };
+    void saveRetryOutcome(outcome).catch(() => {});
+    void emitActivity("retry_outcome", {
+      attemptId: outcome.id,
+      retryOf: outcome.retryOf,
+      feedbackIds: outcome.feedbackIds,
+      source: outcome.source,
+      text: outcome.text,
+      spoken: outcome.spoken,
+      wordCount: outcome.wordCount,
+      resolved: false,
+      resolution: "dismissed",
+      issueCount: outcome.issueCount,
+      createdAt: outcome.createdAt,
+    }).catch(() => {});
+    setRetryResolution("dismissed");
+  }, [review]);
 
   // ───────────────────────── review (Phase 2) ─────────────────────────
   if (review) {
     const errors = review.errors;
+    const allPrioritizedErrors = prioritizeFeedback(errors ?? []);
+    const prioritizedErrors = focusFeedback(allPrioritizedErrors);
+    const polishCount = countPolishFeedback(allPrioritizedErrors);
     const advanced = review.advancedReview;
     const refinements = advanced?.refinements ?? [];
     const userTurns = review.turns.filter((t) => t.role === "user").length;
@@ -574,7 +877,7 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
                 {userTurns} {userTurns === 1 ? "turn" : "turns"} you spoke
               </p>
             </div>
-            <Button variant="secondary" onClick={closeReview} className="h-9 shrink-0">
+                <Button variant="secondary" onClick={closeReview} disabled={Boolean(errors?.length) && retryResolution === "pending"} className="h-9 shrink-0">
               Done
             </Button>
           </div>
@@ -595,11 +898,85 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
           ) : errors && errors.length > 0 ? (
             <>
               <ul className="space-y-2">
-                {errors.map((e) => (
-                  <ErrorRow key={e.id} error={e} />
+                {prioritizedErrors.map((issue) => (
+                  <ErrorRow key={issue.event.id} issue={issue} />
                 ))}
               </ul>
+              {polishCount > 0 && (
+                <details className="rounded border border-line px-3 py-2 text-xs text-ink-muted">
+                  <summary className="cursor-pointer">Show {polishCount} minor polish issue{polishCount === 1 ? "" : "s"}</summary>
+                  <ul className="mt-2 space-y-2">
+                    {allPrioritizedErrors.filter((issue) => issue.priority === "polish").map((issue) => (
+                      <ErrorRow key={issue.event.id} issue={issue} />
+                    ))}
+                  </ul>
+                </details>
+              )}
               <NaturalnessReview refinements={refinements} overall={advanced?.overall} />
+              <div className="space-y-3 rounded-lg border border-accent/30 bg-accent/5 p-4">
+                <div>
+                  <p className="text-sm font-medium text-ink">Try the important correction again</p>
+                  <p className="mt-1 text-xs text-ink-soft">
+                    Rewrite one or two ideas in the same {review.context} situation. Minor polish does not block completion.
+                  </p>
+                </div>
+                <textarea
+                  value={retryText}
+                  onChange={(event) => {
+                    retrySpokenRef.current = false;
+                    retryBlobRef.current = null;
+                    setRetryText(event.target.value);
+                    setRetryReview(null);
+                  }}
+                  rows={3}
+                  placeholder="Write your improved response here…"
+                  className="w-full resize-y rounded border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-accent/40"
+                  disabled={retryChecking}
+                />
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant={retryRecording ? "primary" : "secondary"}
+                    onClick={() => (retryRecording ? stopRetryRecording() : void startRetryRecording())}
+                    disabled={retryChecking || retryTranscribing}
+                    aria-pressed={retryRecording}
+                  >
+                    {retryTranscribing ? "Transcribing…" : retryRecording ? "Stop recording" : "Speak retry"}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => void checkConversationRetry()}
+                    disabled={!retryText.trim() || retryChecking || retryTranscribing || !hasEvaluator}
+                  >
+                    {retryChecking ? "Checking retry…" : "Check my retry"}
+                  </Button>
+                </div>
+                {retryReview && (
+                  <Notice tone={retryReview.errors.length === 0 ? "success" : "warning"}>
+                    {retryReview.errors.length === 0
+                      ? "Your retry applies the important feedback in this situation."
+                      : `${retryReview.errors.length} issue${retryReview.errors.length === 1 ? "" : "s"} remain. Compare with the corrections above and try again if useful.`}
+                  </Notice>
+                )}
+                {retryResolution === "deferred" ? (
+                  <Notice tone="default">This retry is deferred for a later review.</Notice>
+                ) : retryResolution === "dismissed" ? (
+                  <Notice tone="default">This retry was explicitly dismissed.</Notice>
+                ) : retryResolution === "pending" ? (
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="button" variant="ghost" onClick={deferConversationRetry} disabled={retryChecking}>
+                      Defer retry for later
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={dismissConversationRetry}
+                      disabled={retryChecking}
+                    >
+                      Dismiss retry
+                    </Button>
+                  </div>
+                ) : null}
+              </div>
               <Button
                 variant="primary"
                 onClick={() => void generateReviewCards()}
@@ -660,6 +1037,16 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
             Speak with an AI partner in a role-play. Keep going naturally; your mistakes become cards afterward.
           </p>
         </div>
+
+        <Notice tone="default" className="space-y-1">
+          <p className="text-sm font-medium text-ink">
+            Speaking stage: {progressionSupport.speaking.stage.replaceAll("_", " ")}
+          </p>
+          <p className="text-xs text-ink-soft">{progressionSupport.speaking.guidance}</p>
+          <p className="text-xs text-ink-muted">
+            This practice uses up to {progressionSupport.conversation.maxTurns} learner turns with {progressionSupport.conversation.followUpDepth} follow-ups.
+          </p>
+        </Notice>
 
         <Field label="Scenario">
           <div className="flex flex-wrap gap-1.5">
@@ -801,6 +1188,7 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
             {conversation.level && <span>Level {conversation.level}</span>}
             <span>{activeProvider?.label ?? "AI partner"}</span>
             {conversation.challenge && <span className="text-accent">Challenging</span>}
+            {conversation.progressionStage && <span>{conversation.progressionStage.replaceAll("_", " ")}</span>}
             {freeTalk && <span className="text-accent">Free talk</span>}
           </div>
         </div>
@@ -829,6 +1217,9 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
 
       <div className="space-y-2 border-t border-line bg-surface p-3 sm:p-4">
         {note && <p className="text-xs text-danger">{note}</p>}
+        <p className="text-[11px] text-ink-muted">
+          {conversation.turns.filter((turn) => turn.role === "user").length}/{progressionSupport.conversation.maxTurns} speaking turns · {progressionSupport.conversation.promptStyle}
+        </p>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <Button
             variant="secondary"
@@ -856,11 +1247,14 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
           <Input
             type="text"
             value={typed}
-            onChange={(e) => setTyped(e.target.value)}
+            onChange={(e) => {
+              typedInputWasSpokenRef.current = false;
+              setTyped(e.target.value);
+            }}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
-                void sendTurn(typed);
+                void sendTurn(typed, typedInputWasSpokenRef.current);
               }
             }}
             placeholder="Type your reply, or tap Speak…"
@@ -869,7 +1263,7 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
           />
           <Button
             variant="primary"
-            onClick={() => void sendTurn(typed)}
+            onClick={() => void sendTurn(typed, typedInputWasSpokenRef.current)}
             disabled={!typed.trim() || busy}
             className="h-11 shrink-0 sm:min-w-24"
           >
@@ -892,12 +1286,19 @@ function formatWhen(ts: number): string {
   return new Date(ts).toLocaleDateString();
 }
 
-function ErrorRow({ error }: { error: ErrorEvent }) {
+function ErrorRow({ issue }: { issue: FeedbackIssue }) {
+  const { event: error } = issue;
   return (
     <li className="rounded-lg border border-line p-3">
       <p className="text-sm text-ink-muted line-through">{error.original}</p>
       <p className="text-sm text-ink">{error.corrected}</p>
       <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+        <span className="rounded border border-accent/30 px-1.5 py-0.5 text-[0.65rem] font-medium text-accent">
+          {issue.priority}
+        </span>
+        <span className="rounded border border-line px-1.5 py-0.5 text-[0.65rem] font-medium text-ink-muted">
+          {issue.category}
+        </span>
         {error.errorTypes.map((t) => (
           <span
             key={t}

@@ -67,6 +67,15 @@ export async function POST(req: NextRequest) {
     const sourceLang = safeStr(obj.sourceLang, "pt", 16);
     const level = safeStr(obj.level, "", 8) || undefined;
     const challenge = obj.challenge === true;
+    const conversationStage = safeStr(obj.conversationStage, "", 40) || undefined;
+    const maxTurns = typeof obj.maxTurns === "number" ? Math.max(2, Math.min(20, Math.round(obj.maxTurns))) : undefined;
+    const followUpDepth = obj.followUpDepth === "single" || obj.followUpDepth === "layered" || obj.followUpDepth === "counterpoint"
+      ? obj.followUpDepth
+      : undefined;
+    const promptStyle = safeStr(obj.promptStyle, "", 240) || undefined;
+    const speakerFamiliarity = obj.speakerFamiliarity === "familiar" || obj.speakerFamiliarity === "mixed" || obj.speakerFamiliarity === "unfamiliar"
+      ? obj.speakerFamiliarity
+      : undefined;
     const history = parseTurns(obj.history);
     const model = safeStr(obj.ollamaModel, "", 100) || undefined;
 
@@ -85,7 +94,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const reply = await provider.converse(history, { scenario, targetLang, sourceLang, level, challenge });
+    const reply = await provider.converse(history, {
+      scenario,
+      targetLang,
+      sourceLang,
+      level,
+      challenge,
+      conversationStage,
+      maxTurns,
+      followUpDepth,
+      promptStyle,
+      speakerFamiliarity,
+    });
     return NextResponse.json({ reply });
   } catch (err: unknown) {
     if (isHttpError(err)) {

@@ -13,6 +13,12 @@ export interface ConversationScenario {
 /** Starter scenarios. The user can also type a custom one. */
 export const CONVERSATION_SCENARIOS: ConversationScenario[] = [
   {
+    id: "personal-update",
+    context: "personal update",
+    label: "My week",
+    prompt: "You are a friendly conversation partner asking about the learner's week, plans, and everyday experiences. Ask one follow-up about a detail they share.",
+  },
+  {
     id: "small-talk",
     context: "small talk",
     label: "Small talk",

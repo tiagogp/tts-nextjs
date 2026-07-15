@@ -13,6 +13,11 @@ export async function sendConversationTurn(input: {
   targetLang?: string;
   level?: string;
   challenge?: boolean;
+  conversationStage?: string;
+  maxTurns?: number;
+  followUpDepth?: "single" | "layered" | "counterpoint";
+  promptStyle?: string;
+  speakerFamiliarity?: "familiar" | "mixed" | "unfamiliar";
   history: ConversationTurn[];
   signal?: AbortSignal;
 }): Promise<{ reply: string }> {
@@ -28,6 +33,11 @@ export async function sendConversationTurn(input: {
       sourceLang: nativeLang,
       level: input.level || undefined,
       challenge: input.challenge || undefined,
+      conversationStage: input.conversationStage,
+      maxTurns: input.maxTurns,
+      followUpDepth: input.followUpDepth,
+      promptStyle: input.promptStyle,
+      speakerFamiliarity: input.speakerFamiliarity,
       history: input.history,
     }),
     signal: input.signal,

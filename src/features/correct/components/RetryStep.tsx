@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/Card";
 import { Textarea } from "@/components/ui/Field";
 import { Spinner } from "@/components/ui/Spinner";
 import type { ErrorEvent } from "@/lib/cards/schema";
+import { focusFeedback, prioritizeFeedback } from "@/features/correct/feedbackContract";
 import { useT } from "@/i18n/I18nProvider";
 
 interface RetryStepProps {
@@ -17,6 +18,9 @@ interface RetryStepProps {
   clear: boolean;
   note: string | null;
   onCheck: () => void;
+  checkDisabled?: boolean;
+  onDefer?: () => void;
+  onDismiss?: () => void;
 }
 
 /**
@@ -32,8 +36,12 @@ export function RetryStep({
   clear,
   note,
   onCheck,
+  checkDisabled = false,
+  onDefer,
+  onDismiss,
 }: RetryStepProps) {
   const { t } = useT();
+  const focused = focusFeedback(prioritizeFeedback(corrections));
 
   return (
     <Card className="space-y-4 p-5">
@@ -48,7 +56,7 @@ export function RetryStep({
       </div>
 
       <ul className="space-y-1.5">
-        {corrections.map((correction) => (
+        {focused.map(({ event: correction }) => (
           <li key={correction.id} className="text-sm">
             <span className="text-ink-muted line-through">{correction.original}</span>
             <span className="mx-2 text-ink-muted">→</span>
@@ -56,6 +64,11 @@ export function RetryStep({
           </li>
         ))}
       </ul>
+      {corrections.length > focused.length && (
+        <p className="text-xs text-ink-muted">
+          {t("{count} minor issue(s) are not blocking this retry.", { count: corrections.length - focused.length })}
+        </p>
+      )}
 
       {clear ? (
         <p className="text-sm font-medium text-accent">
@@ -71,14 +84,26 @@ export function RetryStep({
             disabled={checking}
           />
           {note ? <p className="text-sm text-ink-soft">{note}</p> : null}
-          <Button
-            variant="primary"
-            onClick={onCheck}
-            disabled={checking || value.trim().length === 0}
-          >
-            {checking ? <Spinner /> : null}
-            {checking ? t("Checking…") : t("Check my second attempt")}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="primary"
+              onClick={onCheck}
+              disabled={checking || checkDisabled || value.trim().length === 0}
+            >
+              {checking ? <Spinner /> : null}
+              {checking ? t("Checking…") : t("Check my second attempt")}
+            </Button>
+            {onDefer && (
+              <Button type="button" variant="ghost" onClick={onDefer} disabled={checking}>
+                {t("Defer for review")}
+              </Button>
+            )}
+            {onDismiss && (
+              <Button type="button" variant="ghost" onClick={onDismiss} disabled={checking}>
+                {t("Dismiss this retry")}
+              </Button>
+            )}
+          </div>
         </div>
       )}
     </Card>

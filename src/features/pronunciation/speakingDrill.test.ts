@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { LESSONS, firstLesson, lessonById, type LessonPhrase } from "@/features/learn/lessonDeck";
-import { buildSpeakingDrill } from "./speakingDrill";
+import type { ErrorEvent } from "@/lib/cards/schema";
+import { buildSpeakingDrill, selectRecurringError } from "./speakingDrill";
 
 function phrase(en: string): LessonPhrase {
   return { en, pt: `pt:${en}`, concept: "greeting", note: "", clip: `${en}.wav` };
@@ -56,5 +57,27 @@ describe("buildSpeakingDrill", () => {
       expect(steps.length).toBeGreaterThanOrEqual(2);
       expect(steps.every((step) => step.phrase?.en)).toBe(true);
     }
+  });
+
+  it("brings a recurring correction back into independent speaking", () => {
+    const recurring: ErrorEvent = {
+      id: "error-1",
+      original: "I has time",
+      corrected: "I have time",
+      errorTypes: ["tense"],
+      sourceLang: "pt",
+      targetLang: "en",
+      createdAt: 1,
+    };
+    const selected = selectRecurringError([
+      recurring,
+      { ...recurring, id: "error-2", createdAt: 2 },
+      { ...recurring, id: "other", errorTypes: ["article"], createdAt: 3 },
+    ]);
+    const steps = buildSpeakingDrill({ lesson, recurringError: selected });
+
+    expect(selected?.id).toBe("error-2");
+    expect(steps.at(-1)?.phrase.en).toBe("I have time");
+    expect(steps.at(-1)?.prompt).toContain("I have time");
   });
 });

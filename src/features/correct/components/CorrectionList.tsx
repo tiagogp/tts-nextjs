@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
+import { useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
@@ -11,6 +12,7 @@ import { errorTypeLabel } from "@/lib/cards/errorTypeLabels";
 import KokoroModelNotice from "@/features/speech/components/KokoroModelNotice";
 import type { useKokoroModel } from "@/features/speech/hooks/useKokoroModel";
 import type { ErrorEvent } from "@/lib/cards/schema";
+import { countPolishFeedback, prioritizeFeedback } from "@/features/correct/feedbackContract";
 
 interface CorrectionListProps {
   events: ErrorEvent[];
@@ -44,6 +46,10 @@ export function CorrectionList({
   const { t } = useT();
   const timeoutMessage = t("Taking longer than expected. Try fewer corrections or a faster AI.");
   const showSettingsLink = Boolean(genError === timeoutMessage && onOpenSettings);
+  const prioritized = prioritizeFeedback(events);
+  const [showPolish, setShowPolish] = useState(false);
+  const polishCount = countPolishFeedback(prioritized);
+  const visible = showPolish ? prioritized : prioritized.filter((issue) => issue.priority !== "polish");
 
   return (
     <Card className="overflow-hidden">
@@ -117,9 +123,9 @@ export function CorrectionList({
 
       <ul className="max-h-[28rem] overflow-y-auto">
         <AnimatePresence initial={false}>
-          {events.map((event) => (
+          {visible.map((issue) => (
             <motion.li
-              key={event.id}
+              key={issue.event.id}
               layout
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto", transition: springSoft }}
@@ -127,22 +133,25 @@ export function CorrectionList({
               className="flex items-start gap-3 overflow-hidden border-b border-line px-5 py-3 transition-colors hover:bg-accent/3"
             >
               <div className="min-w-0 flex-1 space-y-1">
-                <p className="text-sm leading-relaxed text-ink-muted line-through">{event.original}</p>
-                <p className="text-sm font-medium leading-relaxed text-ink">{event.corrected}</p>
+                <p className="text-sm leading-relaxed text-ink-muted line-through">{issue.event.original}</p>
+                <p className="text-sm font-medium leading-relaxed text-ink">{issue.event.corrected}</p>
                 <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                  {event.errorTypes.map((type) => (
+                  <span className="rounded border border-accent/30 px-1.5 py-0.5 text-xs text-accent">{issue.priority}</span>
+                  <span className="rounded border border-line px-1.5 py-0.5 text-xs text-ink-muted">{issue.category}</span>
+                  {issue.event.errorTypes.map((type) => (
                     <span key={type} className="rounded border border-line px-1.5 py-0.5 text-xs text-ink-muted">
                       {t(errorTypeLabel(type))}
                     </span>
                   ))}
-                  {event.rationale && <span className="text-xs text-ink-muted">{event.rationale}</span>}
+                  {issue.evidence && <span className="text-xs text-ink-muted">{issue.evidence}</span>}
                 </div>
+                <p className="text-[11px] text-ink-muted">{issue.suggestedRetrySupport}</p>
               </div>
               <Chip
                 className="mt-0.5 shrink-0"
                 disabled={generating}
                 aria-label={t("Remove correction")}
-                onClick={() => onRemove(event.id)}
+                onClick={() => onRemove(issue.event.id)}
               >
                 {t("Remove")}
               </Chip>
@@ -150,6 +159,17 @@ export function CorrectionList({
           ))}
         </AnimatePresence>
       </ul>
+      {polishCount > 0 && (
+        <div className="border-t border-line px-5 py-2.5">
+          <button
+            type="button"
+            className="text-xs text-ink-muted underline hover:no-underline"
+            onClick={() => setShowPolish((value) => !value)}
+          >
+            {showPolish ? t("Hide {count} minor polish issue(s)") : t("Show {count} minor polish issue(s)")}
+          </button>
+        </div>
+      )}
     </Card>
   );
 }
