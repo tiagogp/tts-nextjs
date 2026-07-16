@@ -401,11 +401,9 @@ export function MistakeStep({
           })}
         </p>
         <p className="mt-1 text-sm text-ink-soft">
-          {productionPrompt
-            ? t(productionPrompt)
-            : t('Use "{phrase}" or its reusable pattern, and add one detail of your own.', {
-                phrase: phrase.en,
-              })}
+          {t('Use "{phrase}" or its reusable pattern, and add one detail of your own.', {
+            phrase: phrase.en,
+          })}
         </p>
       </div>
 
