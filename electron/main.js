@@ -326,6 +326,7 @@ async function waitFor(url, label, timeoutMs = 120000) {
 
 function createWindow() {
   const isMac = process.platform === "darwin";
+  const isWindows = process.platform === "win32";
 
   mainWindow = new BrowserWindow({
     width: 1200,
@@ -335,8 +336,11 @@ function createWindow() {
     title: "PhraseLoop",
     icon: APP_ICON_PNG,
     backgroundColor: "#0a0a0a",
-    titleBarStyle: isMac ? "hiddenInset" : "default",
+    titleBarStyle: isMac ? "hiddenInset" : isWindows ? "hidden" : "default",
     trafficLightPosition: isMac ? { x: 18, y: 18 } : undefined,
+    titleBarOverlay: isWindows
+      ? { color: "#0a0a0a", symbolColor: "#e5e5e5", height: 40 }
+      : undefined,
     webPreferences: { contextIsolation: true, preload: PRELOAD_JS },
   });
 
