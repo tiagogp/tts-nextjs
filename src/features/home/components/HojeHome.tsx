@@ -13,10 +13,22 @@ import {
   getErrorEvents,
 } from "@/lib/store/repository";
 import { getActivityLog } from "@/lib/store/activityLog";
-import { returnMomentFor, type ReturnMoment } from "@/features/home/returnMoment";
-import { deriveMethodPlan, type MethodPlan, type MethodRoute } from "@/features/method/learningLoop";
+import {
+  returnMomentFor,
+  type ReturnMoment,
+} from "@/features/home/returnMoment";
+import {
+  deriveMethodPlan,
+  type MethodPlan,
+  type MethodRoute,
+} from "@/features/method/learningLoop";
 import { useT } from "@/i18n/I18nProvider";
-import { completedLessonIdsFromCardIds, firstLesson, nextLessonFor, type Lesson } from "@/features/learn/lessonDeck";
+import {
+  completedLessonIdsFromCardIds,
+  firstLesson,
+  nextLessonFor,
+  type Lesson,
+} from "@/features/learn/lessonDeck";
 import { getLearningProfile } from "@/features/settings/learningProfile";
 import { TodayPlanCard } from "@/features/plan/components/TodayPlanCard";
 import type { TaskItem } from "@/features/plan/schema";
@@ -47,10 +59,27 @@ interface NextAction {
  * due phrases → Study, mistakes → Correct, practice → next phrase, or a
  * brand-new user with no saved phrases → bundled first lesson. One CTA, never a dashboard.
  */
-export function HojeHome({ onStudy, onDiscover, onCorrect, onFirstLesson, onLesson, onSpeak, onOpenPlanTask, onCreatePlan, onInstallDefaultPlan }: HojeHomeProps) {
+export function HojeHome({
+  onStudy,
+  onDiscover,
+  onCorrect,
+  onFirstLesson,
+  onLesson,
+  onSpeak,
+  onOpenPlanTask,
+  onCreatePlan,
+  onInstallDefaultPlan,
+}: HojeHomeProps) {
   const { t } = useT();
-  const [counts, setCounts] = useState({ cards: 0, reviews: 0, due: 0, errors: 0 });
-  const [nextLesson, setNextLesson] = useState<Lesson>(() => nextLessonFor(getLearningProfile(), []) ?? firstLesson());
+  const [counts, setCounts] = useState({
+    cards: 0,
+    reviews: 0,
+    due: 0,
+    errors: 0,
+  });
+  const [nextLesson, setNextLesson] = useState<Lesson>(
+    () => nextLessonFor(getLearningProfile(), []) ?? firstLesson(),
+  );
   const [returnMoment, setReturnMoment] = useState<ReturnMoment | null>(null);
   const [methodPlan, setMethodPlan] = useState<MethodPlan | null>(null);
   // Start "loading" on both server and client so the first render matches during
@@ -62,16 +91,22 @@ export function HojeHome({ onStudy, onDiscover, onCorrect, onFirstLesson, onLess
 
   const load = useCallback(async () => {
     try {
-      const [nextCounts, cards, errors, activity, dueCards] = await Promise.all([
-        getCounts(),
-        getCards(),
-        getErrorEvents(),
-        getActivityLog(),
-        getDueCards(),
-      ]);
+      const [nextCounts, cards, errors, activity, dueCards] = await Promise.all(
+        [
+          getCounts(),
+          getCards(),
+          getErrorEvents(),
+          getActivityLog(),
+          getDueCards(),
+        ],
+      );
       setCounts({ ...nextCounts, errors: errors.length });
       setReturnMoment(
-        returnMomentFor({ dueCards: dueCards.map((item) => item.card), activity, errors }),
+        returnMomentFor({
+          dueCards: dueCards.map((item) => item.card),
+          activity,
+          errors,
+        }),
       );
       setMethodPlan(
         deriveMethodPlan({
@@ -137,16 +172,20 @@ export function HojeHome({ onStudy, onDiscover, onCorrect, onFirstLesson, onLess
       <PageHeader
         eyebrow={t("Your day")}
         title={t("Today")}
-        description={t("Start with the next useful action. Your plan and saved work stay within reach.")}
-        aside={!loading && hasProgress ? (
-          <div className="grid grid-cols-2 gap-2" aria-live="polite">
-            <Stat value={`${counts.due}`} label={t("to review")} />
-            <Stat value={`${counts.cards}`} label={t("Saved")} />
-          </div>
-        ) : undefined}
+        description={t(
+          "Start with the next useful action. Your plan and saved work stay within reach.",
+        )}
+        aside={
+          !loading && hasProgress ? (
+            <div className="grid grid-cols-2 gap-2" aria-live="polite">
+              <Stat value={`${counts.due}`} label={t("to review")} />
+              <Stat value={`${counts.cards}`} label={t("Saved")} />
+            </div>
+          ) : undefined
+        }
       />
 
-      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.85fr)]">
+      <div className="flex flex-col gap-4">
         <Card className="surface-grid-glow space-y-4 p-5 sm:p-6">
           {loading ? (
             <div className="flex items-center gap-2 py-2 text-sm text-ink-muted">
@@ -156,11 +195,22 @@ export function HojeHome({ onStudy, onDiscover, onCorrect, onFirstLesson, onLess
           ) : (
             <>
               <div className="space-y-1.5">
-                <p className="text-xs font-medium uppercase tracking-[0.7px] text-accent">{action.eyebrow}</p>
-                <h2 className="text-xl font-semibold tracking-[-0.02em] text-ink">{action.title}</h2>
-                <p className="max-w-xl text-sm leading-relaxed text-ink-soft">{action.detail}</p>
+                <p className="text-xs font-medium uppercase tracking-[0.7px] text-accent">
+                  {action.eyebrow}
+                </p>
+                <h2 className="text-xl font-semibold tracking-[-0.02em] text-ink">
+                  {action.title}
+                </h2>
+                <p className="max-w-xl text-sm leading-relaxed text-ink-soft">
+                  {action.detail}
+                </p>
               </div>
-              <Button variant="primary" size="lg" className="min-h-11 sm:w-auto" onClick={action.onClick}>
+              <Button
+                variant="primary"
+                size="lg"
+                className="min-h-11 sm:w-auto"
+                onClick={action.onClick}
+              >
                 {action.cta}
               </Button>
             </>
@@ -212,13 +262,20 @@ function resolveNextAction({
     const { due, mistakeCards, fromYesterday } = returnMoment;
     const title = fromYesterday
       ? mistakeCards === 1
-        ? t("{count} phrases for today — 1 came from your mistake yesterday", { count: due })
-        : t("{count} phrases for today — {mistakes} came from your mistakes yesterday", {
+        ? t("{count} phrases for today — 1 came from your mistake yesterday", {
             count: due,
-            mistakes: mistakeCards,
           })
+        : t(
+            "{count} phrases for today — {mistakes} came from your mistakes yesterday",
+            {
+              count: due,
+              mistakes: mistakeCards,
+            },
+          )
       : mistakeCards === 1
-        ? t("{count} phrases for today — 1 came from your mistake", { count: due })
+        ? t("{count} phrases for today — 1 came from your mistake", {
+            count: due,
+          })
         : t("{count} phrases for today — {mistakes} came from your mistakes", {
             count: due,
             mistakes: mistakeCards,
@@ -268,7 +325,9 @@ function resolveNextAction({
     return {
       eyebrow: t("Correct mistakes"),
       title: t("Save your mistakes for study"),
-      detail: t("Turn recent corrections into phrases you can review tomorrow."),
+      detail: t(
+        "Turn recent corrections into phrases you can review tomorrow.",
+      ),
       cta: t("Save to study"),
       onClick: onCorrect,
     };
@@ -278,8 +337,13 @@ function resolveNextAction({
   if (counts.cards > 0) {
     return {
       eyebrow: t("You're caught up"),
-      title: t("{lesson} ({level})", { lesson: t(nextLesson.title), level: nextLesson.level }),
-      detail: t("Tomorrow you review these phrases. Today you can practice one more."),
+      title: t("{lesson} ({level})", {
+        lesson: t(nextLesson.title),
+        level: nextLesson.level,
+      }),
+      detail: t(
+        "Tomorrow you review these phrases. Today you can practice one more.",
+      ),
       cta: t("Practice a phrase"),
       onClick: () => onLesson(nextLesson.id),
     };
@@ -289,7 +353,9 @@ function resolveNextAction({
   return {
     eyebrow: t("Start here"),
     title: t("Start with one short lesson"),
-    detail: t("Listen, save one useful phrase, and use it in a sentence of your own."),
+    detail: t(
+      "Listen, save one useful phrase, and use it in a sentence of your own.",
+    ),
     cta: t("Start first lesson"),
     onClick: onFirstLesson,
   };
@@ -319,7 +385,9 @@ function Stat({ value, label }: { value: string; label: string }) {
   return (
     <Card variant="flat" className="min-w-20 px-3 py-2 text-center">
       <p className="text-lg font-semibold tabular-nums text-ink">{value}</p>
-      <p className="mt-0.5 text-[11px] uppercase tracking-[0.5px] text-ink-muted">{label}</p>
+      <p className="mt-0.5 text-[11px] uppercase tracking-[0.5px] text-ink-muted">
+        {label}
+      </p>
     </Card>
   );
 }
