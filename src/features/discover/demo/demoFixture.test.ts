@@ -14,26 +14,31 @@ describe("demoFixture", () => {
   it("builds a deck from kept indexes without any provider", () => {
     const { candidates, cards } = demoDeckFor([2, 0]);
 
-    expect(cards).toHaveLength(2);
+    // One candidate per kept phrase; two cards each (produce it, recognize it).
+    expect(cards).toHaveLength(4);
     expect(candidates).toHaveLength(2);
     // Sorted ascending so output order is deterministic.
     expect(candidates.map((c) => c.segmentIndex)).toEqual([0, 2]);
 
-    const [first] = cards;
-    expect(first.front).toBe(DEMO_PHRASES[0].en);
-    expect(first.back).toBe(DEMO_PHRASES[0].pt);
-    expect(first.source).toEqual({ kind: "phrase", id: `${DEMO_SOURCE_ID}-0` });
-    expect(first.audioClipPath).toBe(DEMO_PHRASES[0].clip);
+    const [production, recognition] = cards;
+    expect(production.direction).toBe("production");
+    expect(production.front).toBe(DEMO_PHRASES[0].pt);
+    expect(production.back).toBe(DEMO_PHRASES[0].en);
+    expect(recognition.direction).toBe("recognition");
+    expect(recognition.front).toBe(DEMO_PHRASES[0].en);
+    expect(recognition.back).toBe(DEMO_PHRASES[0].pt);
+    expect(recognition.source).toEqual({ kind: "phrase", id: `${DEMO_SOURCE_ID}-0` });
+    expect(recognition.audioClipPath).toBe(DEMO_PHRASES[0].clip);
 
     // Candidates are accepted so they persist as the source of truth.
     expect(candidates.every((c) => c.status === "accepted")).toBe(true);
-    // Each card points back to its candidate.
-    expect(cards.map((c) => c.source.id)).toEqual(candidates.map((c) => c.id));
+    // Both halves of a pair point back to the same candidate.
+    expect(new Set(cards.map((c) => c.source.id))).toEqual(new Set(candidates.map((c) => c.id)));
   });
 
   it("ignores out-of-range indexes", () => {
     const { cards } = demoDeckFor([0, 999, -1]);
-    expect(cards).toHaveLength(1);
+    expect(cards).toHaveLength(2);
   });
 
   it("returns empty deck for no kept phrases", () => {

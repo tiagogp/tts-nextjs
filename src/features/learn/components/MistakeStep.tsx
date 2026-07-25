@@ -22,6 +22,7 @@ const CATEGORY_LABEL: Record<LocalCorrectionIssue["category"], string> = {
   messageClarity: "Message clarity",
   lessonLanguage: "Lesson language",
   mechanics: "Writing mechanics",
+  grammar: "Grammar",
 };
 
 /**

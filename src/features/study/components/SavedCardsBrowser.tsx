@@ -47,6 +47,13 @@ export function SavedCardsBrowser({ cards }: { cards: Card[] }) {
               <p className="text-sm text-ink">{card.front}</p>
               <p className="mt-1 text-sm text-ink-soft">{card.back}</p>
               <p className="mt-1 text-xs text-ink-muted">
+                {/* A phrase pair shows up twice; the direction says which half this is. */}
+                {card.direction === "production"
+                  ? t("PT → EN")
+                  : card.direction === "recognition"
+                    ? t("EN → PT")
+                    : null}
+                {card.direction && card.concept ? " · " : ""}
                 {card.concept}
                 {card.errorType ? ` · ${card.errorType}` : ""}
                 {card.context ? ` · ${card.context}` : ""}

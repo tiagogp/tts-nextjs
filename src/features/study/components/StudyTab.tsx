@@ -23,7 +23,6 @@ import { SavedCardsBrowser } from "./SavedCardsBrowser";
 import { MethodCoach } from "./MethodCoach";
 import { BandGateNote } from "./BandGateNote";
 import { CyclePicker } from "./CyclePicker";
-import { MethodBalance } from "./MethodBalance";
 
 export default function StudyTab({
   onDiscover,
@@ -58,7 +57,6 @@ export default function StudyTab({
     weeklyGoal,
     showAdaptiveDepth,
     cyclePlan,
-    methodPlan,
     flip,
     grade,
     startReinforcement,
@@ -136,8 +134,6 @@ export default function StudyTab({
         onDiscover={onDiscover}
         onConversation={onConversation}
       />
-
-      <MethodBalance plan={methodPlan} />
 
       {/* P2 #5 — three honest paths (challenge / review / light) with a pre-selected default. */}
       {showAdaptiveDepth && counts.cards > 0 && mode === "standard" && !reinforcing && !cooldown && (

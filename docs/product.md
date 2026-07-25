@@ -12,6 +12,10 @@ Use:
 - [docs/design-system.md](design-system.md) para regras visuais.
 - [docs/100-lesson-roadmap.md](100-lesson-roadmap.md) para a expansao de conteudo de 36 para 100
   licoes, sempre subordinada ao gate W5.
+- [docs/adversarial-audit.md](adversarial-audit.md) para a critica hostil do metodo e da posicao
+  comercial (2026-07-25), escrita antes de qualquer evidencia de usuario.
+- [docs/adversarial-audit-response.md](adversarial-audit-response.md) para o que foi implementado
+  em resposta a essa critica, o que ficou aberto e o que nao e problema de codigo.
 - [docs/w5-validation-protocol.md](w5-validation-protocol.md) para o gate de validacao que decide
   identidade, plataforma, monetizacao e escopo antes do launch. O plano sequenciado vive nas secoes
   "Prioridade Ativa", "Roadmap Imediato" e "Riscos" deste arquivo.

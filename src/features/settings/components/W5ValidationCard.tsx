@@ -9,7 +9,12 @@ import {
   formatActivationDuration,
   type W5Metrics,
 } from "@/features/activation/metrics";
+import {
+  computeUnaidedProduction,
+  type UnaidedProductionStats,
+} from "@/features/activation/outcomeMetrics";
 import { getActivityLog } from "@/lib/store/activityLog";
+import { getReviews } from "@/lib/store/repository";
 import { isStoreAvailable } from "@/lib/store/db";
 
 type Tone = NonNullable<StatusPillProps["tone"]>;
@@ -51,12 +56,15 @@ export default function W5ValidationCard() {
   const { t } = useT();
   const moderator = useW5ModeratorFlag();
   const [metrics, setMetrics] = useState<W5Metrics | null>(null);
+  const [production, setProduction] = useState<UnaidedProductionStats | null>(null);
   const [available, setAvailable] = useState(true);
 
   const load = useCallback(async () => {
     if (!isStoreAvailable()) return;
     try {
-      setMetrics(computeW5Metrics(await getActivityLog()));
+      const [activity, reviews] = await Promise.all([getActivityLog(), getReviews()]);
+      setMetrics(computeW5Metrics(activity));
+      setProduction(computeUnaidedProduction(reviews));
     } catch {
       // The readout is diagnostic only; never surface store errors here.
     }
@@ -160,6 +168,27 @@ export default function W5ValidationCard() {
             }}
           />
           <MetricRow
+            // The learning-outcome gate. Read it next to nothing else: FSRS predicted
+            // retention and "Good" rate are both encouraging by construction.
+            label={t("D+30 unaided production")}
+            value={
+              production?.rate == null
+                ? t("Not measured yet")
+                : t("{percent}% of {count}", {
+                    percent: Math.round(production.rate * 100),
+                    count: production.attempts,
+                  })
+            }
+            pill={
+              production?.rate == null
+                ? { tone: "default", label: t("No qualifying attempt") }
+                : {
+                    tone: production.rate >= 0.4 ? "success" : "danger",
+                    label: production.rate >= 0.4 ? t("At or above 40%") : t("Under 40%"),
+                  }
+            }
+          />
+          <MetricRow
             label={t("D+1 return")}
             value={returnLabel(metrics?.returnedDay1 ?? false)}
             pill={{ tone: returnTone(metrics?.returnedDay1 ?? false), label: metrics?.returnedDay1 ? t("Yes") : t("No") }}
@@ -170,6 +199,15 @@ export default function W5ValidationCard() {
             pill={{ tone: returnTone(metrics?.returnedDay7 ?? false), label: metrics?.returnedDay7 ? t("Yes") : t("No") }}
           />
         </dl>
+      )}
+
+      {available && production && production.attempts > 0 && (
+        <p className="mt-3 text-xs text-ink-muted">
+          {t(
+            "Unaided production counts PT→EN cards answered with no hint, no replay and no reveal, at least {rest} days after the learner last saw them ({cards} cards).",
+            { rest: production.minRestDays, cards: production.cards },
+          )}
+        </p>
       )}
 
       {available && metrics && metrics.activeDayOffsets.length > 0 && (

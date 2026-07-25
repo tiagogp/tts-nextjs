@@ -19,6 +19,8 @@ function row(overrides = {}) {
     paidPain: "managed-cloud",
     day1Return: true,
     day7Return: true,
+    ownSourceStarted: null,
+    ownSourceCompleted: null,
     ...overrides,
   };
 }
@@ -45,8 +47,37 @@ describe("score-w5-decision-gate", () => {
         paidPain: "review-anywhere",
         day1Return: true,
         day7Return: false,
+        // Absent columns parse as null, not false: "not recorded" is not "did not happen".
+        ownSourceStarted: null,
+        ownSourceCompleted: null,
       },
     ]);
+  });
+
+  it("reports own-source completion as the wedge metric, never as a gate", () => {
+    const rows = Array.from({ length: 10 }, (_, index) =>
+      row({
+        id: `W5-${index}`,
+        ownSourceStarted: index < 6,
+        ownSourceCompleted: index < 2,
+      }),
+    );
+
+    const score = scoreDecisionRound(rows);
+
+    expect(score.ownSource).toEqual({ started: 6, completed: 2, rate: 2 / 6 });
+    // A weak wedge must not move the routing on its own; the seven gates still decide.
+    expect(Object.keys(score.gates)).not.toContain("ownSource");
+    expect(renderDecisionMarkdown(score, new Date("2026-07-25T00:00:00.000Z"))).toContain(
+      "2/6 started imports reached saved cards (33%)",
+    );
+  });
+
+  it("says the wedge is untested when nobody imported their own material", () => {
+    const score = scoreDecisionRound(Array.from({ length: 10 }, (_, i) => row({ id: `W5-${i}` })));
+
+    expect(score.ownSource).toEqual({ started: 0, completed: 0, rate: null });
+    expect(renderDecisionMarkdown(score)).toContain("the differentiator is untested");
   });
 
   it("parses stopwatch-style durations", () => {

@@ -72,7 +72,6 @@ function TabContent({
     return (
       <HojeHome
         onStudy={onOpenPractice}
-        onDiscover={onOpenDiscover}
         onCorrect={onOpenCorrect}
         onFirstLesson={onFirstLesson}
         onLesson={onOpenLesson}

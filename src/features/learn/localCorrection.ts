@@ -1,15 +1,22 @@
 import type { ErrorEvent, ErrorType } from "@/lib/cards/schema";
+import { applyTransferRules } from "./transferErrors";
 
 /**
  * Deterministic, on-device correction for the guided first lesson's "write one
- * sentence" step. It only fixes what can be verified without a model — spelling
- * of the lesson phrase, capitalization of "I", sentence casing and terminal
- * punctuation — so the first loop never depends on an AI provider.
+ * sentence" step. It fixes what can be verified without a model — spelling of
+ * the lesson phrase, capitalization of "I", sentence casing, terminal
+ * punctuation, and the high-frequency PT→EN transfer errors in
+ * `transferErrors.ts` — so the first loop never depends on an AI provider.
+ *
+ * It is not a grammar checker and does not pretend to be one. What it guarantees
+ * is narrower and more important: a sentence carrying one of the predictable
+ * Portuguese-transfer errors is not declared correct and then saved as a review
+ * card, because a scheduled error is an error being learned.
  */
 
 export interface LocalCorrectionIssue {
   type: ErrorType;
-  category: "messageClarity" | "lessonLanguage" | "mechanics";
+  category: "messageClarity" | "lessonLanguage" | "mechanics" | "grammar";
   priority: "blocking" | "important" | "polish";
   /** English source string for the learner-facing note; render through t(). */
   note: string;
@@ -242,6 +249,16 @@ export function correctSentenceLocally(
   if (fixedCapitalI) issues.push(feedbackIssue("other", "mechanics", "polish", CAPITAL_I_NOTE));
 
   let corrected = tokens.join(" ");
+
+  // PT→EN transfer errors, before the casing/punctuation passes so their rewrites are
+  // capitalized and punctuated like the rest of the sentence. Blocking priority: unlike
+  // mechanics, these change what the sentence says, and the retry step should not accept a
+  // sentence that still carries one.
+  const transfer = applyTransferRules(corrected);
+  corrected = transfer.corrected;
+  for (const hit of transfer.hits) {
+    issues.push(feedbackIssue(hit.type, "grammar", "blocking", hit.note));
+  }
 
   // Sentence starts with a capital letter.
   const firstLetter = /\p{L}/u.exec(corrected);

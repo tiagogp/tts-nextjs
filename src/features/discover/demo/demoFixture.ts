@@ -52,5 +52,11 @@ export function demoDeckFor(keptIndexes: Iterable<number>): {
   return buildDeckFromPhrases(DEMO_SOURCE_ID, DEMO_PHRASES, keptIndexes);
 }
 
-/** Stable card ids for the full demo deck — used to clear the sample from the store. */
-export const DEMO_CARD_IDS = DEMO_PHRASES.map((_, i) => `${DEMO_SOURCE_ID}-card-${i}`);
+/**
+ * Stable card ids for the full demo deck — used to clear the sample from the store. Derived
+ * from the builder so both halves of every phrase pair are always covered; a hand-written
+ * list would leave the PT→EN cards behind on clear.
+ */
+export const DEMO_CARD_IDS = demoDeckFor(DEMO_PHRASES.map((_, i) => i)).cards.map(
+  (card) => card.id,
+);

@@ -2,8 +2,12 @@
 
 Phase 4 trust artifact (see [validation-action-plan.md](../validation-action-plan.md)).
 One recording serves both the landing page and community posts. Everything on screen must
-be real: real loop, real native audio, real own-source import — no mockups, no sped-up
-fakes beyond honest jump cuts.
+be real: real loop, real own-source import — no mockups, no sped-up fakes beyond honest jump
+cuts.
+
+**Read the Honesty Gate at the bottom before recording.** As of 2026-07-25 every bundled
+lesson clip is Kokoro TTS (`native-audio/manifest.json` is empty), so no shot may present
+bundled audio as native-source audio.
 
 ## Rules
 
@@ -20,7 +24,7 @@ fakes beyond honest jump cuts.
 | # | Time | Screen | What happens | Line (PT-BR, VO or caption) |
 | --- | --- | --- | --- | --- |
 | 1 | 0-8s | Hoje (first launch) | Pitch visible on the first screen | "Cole um vídeo do YouTube. As melhores frases viram cards com o áudio original — e seus erros viram o treino de amanhã." |
-| 2 | 8-22s | Lição guiada | Play one native clip; audio audible | "Você ouve inglês de verdade — não voz de robô." |
+| 2 | 8-22s | Lição guiada | Play one lesson clip; audio audible | "Você ouve a frase em áudio claro, no ritmo real." — **only** claim native audio here once real clips ship (see Honesty Gate) |
 | 3 | 22-32s | Lição guiada | Save one phrase; immediate review with the same audio | "Salvou? Já revisa com o mesmo áudio." |
 | 4 | 32-45s | Escrever + corrigir | Type a sentence with a real mistake; correction appears; save it | "Você escreve, o app corrige — e o erro vira um card." |
 | 5 | 45-65s | Descobrir | Paste a real YouTube URL (short, public, <10 min); import runs (jump cut allowed); phrases appear with original audio | "Agora com um vídeo SEU. O áudio original é cortado direto da fonte." |
@@ -32,8 +36,8 @@ fakes beyond honest jump cuts.
 - [ ] Clean install (localStorage **and** IndexedDB wiped; models pre-downloaded so shot 5 has no model wall).
 - [ ] Shot 6 needs a day-2 state: prepare a machine/profile that ran the loop yesterday, or system-clock the state honestly and disclose nothing false on screen.
 - [ ] 1080p minimum, app window only, cursor visible.
-- [ ] Audio levels: native clip clearly audible over any VO.
-- [ ] Export with burned-in PT-BR captions (most viewers watch muted first — but the audio is the proof, so the captions must invite sound-on: "🔊 áudio original").
+- [ ] Audio levels: the clip clearly audible over any VO.
+- [ ] Export with burned-in PT-BR captions (most viewers watch muted first — but the audio is the proof, so the captions must invite sound-on: "🔊 com áudio"; "🔊 áudio original" only over shot 5, where the audio really is from the learner's source).
 
 ## Publishing (the _Done when_)
 
@@ -43,7 +47,11 @@ fakes beyond honest jump cuts.
 
 ## Honesty Gate
 
-Do not record shot 2 with Kokoro audio while claiming "não voz de robô" — this shot is
-**blocked** until the Phase 1 "real native clips" item ships. If real clips are not in the
-bundled lesson yet, either record shot 2 with an own-source import (real audio by
-construction) or hold the video.
+Do not record shot 2 with Kokoro audio while claiming "não voz de robô" or "áudio original"
+— that claim is **blocked** until the Phase 1 "real native clips" item ships. If real clips
+are not in the bundled lesson yet, either record shot 2 with an own-source import (real audio
+by construction) or use the smaller, true line in the shot list.
+
+The in-app copy now states this boundary directly (the lesson listening step says bundled
+audio is generated on your Mac), so a viewer who installs after watching finds the same
+story they were told. A shot that contradicts that line is a shot that gets caught.

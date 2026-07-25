@@ -6,6 +6,7 @@
 import type {
   AdvancedReview,
   Card,
+  CardDirection,
   CardSource,
   ErrorEvent,
   ErrorType,
@@ -49,6 +50,12 @@ export interface ReviewRecord {
   errorType?: ErrorType;
   /** Denormalized situational context (see `Card.context`) for context-grouped weakness. */
   context?: string;
+  /**
+   * Denormalized recall direction (see `Card.direction`), so the unaided-production rate
+   * survives card deletion. Absent on reviews recorded before directions existed — those
+   * are all receptive and must not be counted as production attempts.
+   */
+  direction?: CardDirection;
   /** ms from card-shown (flip) to grade. Overload/fatigue signal. */
   latencyMs?: number;
   /** true if any scaffold (hint/slow audio/modality) was used this review. */
@@ -242,6 +249,7 @@ export async function recordReview(
     concept: card.concept,
     errorType: card.errorType,
     context: card.context,
+    direction: card.direction,
     latencyMs: telemetry?.latencyMs,
     hintUsed: telemetry?.hintUsed,
     scaffoldLevel: telemetry?.scaffoldLevel,

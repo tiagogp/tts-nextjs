@@ -91,6 +91,8 @@ export function parseCaptureTable(markdown) {
       paidPain: normalizePaidPain(raw.paidPain),
       day1Return: parseYes(raw.day1Return),
       day7Return: parseYes(raw.day7Return),
+      ownSourceStarted: parseYes(raw.ownSourceStarted),
+      ownSourceCompleted: parseYes(raw.ownSourceCompleted),
     });
   }
 
@@ -272,6 +274,8 @@ export function scoreDecisionRound(rows, waitlistMix = null) {
   const differentiation = rows.filter(isUnpromptedDifferentiator).length;
   const replacement = countTrue(rows, "replacement7Day");
   const roundMedian = median(rows.map((row) => row.ttFirstLoopMs ?? Number.POSITIVE_INFINITY));
+  const ownSourceStarted = countTrue(rows, "ownSourceStarted");
+  const ownSourceCompleted = countTrue(rows, "ownSourceCompleted");
   const paid = topPaidPain(rows);
   const paidWinnerIsConcrete =
     Boolean(paid.label) &&
@@ -346,6 +350,13 @@ export function scoreDecisionRound(rows, waitlistMix = null) {
     routeText: ROUTE_COPY[primaryRoute],
     billingFrozen: !gates.paidPain.passed,
     paidPainCounts: paid.counts,
+    // The wedge: only a learner's own material tests the differentiator. Reported so a
+    // "pass" on bundled-lesson sessions alone cannot read as the wedge being validated.
+    ownSource: {
+      started: ownSourceStarted,
+      completed: ownSourceCompleted,
+      rate: ownSourceStarted === 0 ? null : ownSourceCompleted / ownSourceStarted,
+    },
     launchSegment: pickLaunchSegment(rows),
     waitlistMix,
   };
@@ -390,6 +401,13 @@ function renderWaitlistMix(mix) {
   return `${visitors === null ? "Visitors not recorded" : `${visitors} visitors`}; ${signups} signups; ${platformText}.`;
 }
 
+function renderOwnSource(ownSource) {
+  if (!ownSource || ownSource.started === 0) {
+    return "no own-source import attempted — the differentiator is untested.";
+  }
+  return `${ownSource.completed}/${ownSource.started} started imports reached saved cards (${formatPercent(ownSource.completed, ownSource.started)}).`;
+}
+
 export function renderDecisionMarkdown(score, generatedAt = new Date()) {
   const date = generatedAt.toISOString().slice(0, 10);
   const gateRows = GATE_DEFS.map(([key, label, threshold]) => {
@@ -427,6 +445,8 @@ Waitlist platform mix: ${renderWaitlistMix(score.waitlistMix)}
 ${gateRows}
 
 Paid-pain counts: ${paidCounts}.
+
+Own-source completion (wedge): ${renderOwnSource(score.ownSource)}
 
 | Segment | Rows | Signal points | Median TT first loop | Unaided | Explain-back | Replacement |
 | --- | --- | --- | --- | --- | --- | --- |

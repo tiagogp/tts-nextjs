@@ -291,7 +291,7 @@ batches.
 | Signal | Why it matters | Initial gate |
 | --- | --- | --- |
 | Lesson completion | Detects length, clarity, and technical friction | >= 80% of starts |
-| First-attempt listening accuracy | Detects clips that are trivial or inaccessible | 35-85% |
+| First-attempt listening accuracy | Detects clips that are trivial or inaccessible | 35-85%, **authored dialogue only** |
 | Retry completion | Confirms feedback is actually applied | >= 70% after feedback |
 | Phrase saved rate | Shows whether the content feels useful | >= 2 phrases per completed lesson |
 | Next-review return | Connects lesson consumption to the real habit | Measured at D+1 and D+7 |
@@ -300,6 +300,18 @@ batches.
 
 Do not use lesson completion alone as evidence of learning. Review outcomes, corrected mistakes,
 reuse in original production, and later listening recognition remain the meaningful signals.
+
+**Listening accuracy is only a real signal for lessons that ship `dialogue` + `comprehension`.**
+When a lesson has neither, `buildListeningChallenge()` synthesizes a check from the five phrases
+just taught and marks it `synthesized: true`. That task is short-term discrimination among primed
+items — it lands comfortably inside the 35-85% band while measuring nothing about parsing connected
+speech. Score it as recall, exclude it from any listening metric, and treat the band as unmeasured
+until the lesson has authored material. As of 2026-07-25 that applies to **36 of 36** bundled
+lessons.
+
+The learning-outcome number to watch instead is **D+30 unaided production**
+(`src/features/activation/outcomeMetrics.ts`): PT→EN cards answered with no hint, no replay and no
+reveal, at least 7 days after the learner last saw them.
 
 ## Automation backlog
 

@@ -9,6 +9,7 @@ import {
   PUNCTUATION_NOTE,
   SENTENCE_START_NOTE,
 } from "./localCorrection";
+import { ARTICLE_NOTE, EXISTENTIAL_NOTE } from "./transferErrors";
 
 describe("correctSentenceLocally", () => {
   it("leaves a correct sentence untouched", () => {
@@ -67,6 +68,27 @@ describe("correctSentenceLocally", () => {
       category: "lessonLanguage",
       priority: "blocking",
     });
+  });
+
+  it("corrects a PT→EN transfer error instead of declaring the sentence clear", () => {
+    // Before the transfer rules this sentence came back "corrected" and was saved as a review
+    // card verbatim — spaced repetition of the learner's own article omission.
+    const result = correctSentenceLocally("Hello, i am student", "Hello.");
+
+    expect(result.corrected).toBe("Hello, I am a student.");
+    expect(result.issues.map((issue) => issue.note)).toContain(ARTICLE_NOTE);
+    expect(result.issues[0]).toMatchObject({
+      category: "grammar",
+      priority: "blocking",
+      type: "article",
+    });
+  });
+
+  it("reports a transfer error it cannot rewrite, so saving still blocks", () => {
+    const result = correctSentenceLocally("Good morning. In my city has many parks.", "Good morning.");
+
+    expect(result.corrected).toBe("Good morning. In my city has many parks.");
+    expect(result.issues.map((issue) => issue.note)).toContain(EXISTENTIAL_NOTE);
   });
 
   it("does not match a completely different word as the phrase", () => {
