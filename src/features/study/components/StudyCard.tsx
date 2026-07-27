@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { GradeButtons } from "./GradeButtons";
 import type { Grade, SrsRecord } from "@/lib/srs/fsrs";
 import type { Card as CardModel } from "@/lib/cards/schema";
+import { targetTextOfCard } from "@/lib/cards/orientation";
 import type { ReviewRecord } from "@/lib/store/repository";
 import { PronunciationCoach } from "@/features/pronunciation/components/PronunciationCoach";
 import { SessionSummary, type SessionResult, type TomorrowPreview } from "./SessionSummary";
@@ -72,6 +73,10 @@ export function StudyCard({
 
   const nativeClip =
     current?.card.audioClipPath?.startsWith("/") ? current.card.audioClipPath : undefined;
+  // On a production card the clip *is* the answer. Playing it pre-flip would turn "produce
+  // the English" into "repeat what you just heard", so audio waits for the reveal and the
+  // pre-flip scaffold controls that replay it are withheld.
+  const producing = current?.card.direction === "production";
   const failures = useMemo(
     () => (cardId ? recentFailureCount(cardId, reviews) : 0),
     [cardId, reviews],
@@ -81,9 +86,12 @@ export function StudyCard({
 
   const markScaffold = (level: number) => setScaffoldLevel((prev) => Math.max(prev, level));
 
+  // Autoplay side: the prompt for a recognition card, the reveal for a production one.
+  const autoplayNow = !!nativeClip && (producing ? flipped : !flipped);
+
   useEffect(() => {
     const el = audioRef.current;
-    if (!el || !nativeClip || flipped) return;
+    if (!el || !autoplayNow) return;
 
     el.pause();
     el.playbackRate = 1;
@@ -93,7 +101,7 @@ export function StudyCard({
     return () => {
       el.pause();
     };
-  }, [cardId, nativeClip, flipped]);
+  }, [cardId, autoplayNow]);
 
   const playClip = (rate: number, level: number) => {
     const el = audioRef.current;
@@ -145,6 +153,9 @@ export function StudyCard({
 
           <div className="flex min-h-24 flex-col items-center justify-center gap-3 text-center">
             <p className="text-lg leading-relaxed text-ink">{current.card.front}</p>
+            {producing && !flipped && (
+              <p className="text-xs text-ink-muted">{t("Say it in English, then check.")}</p>
+            )}
 
             {!flipped && scaffoldLevel >= SCAFFOLD.partial && (
               <p className="font-mono text-sm tracking-wide text-ink-soft transition-opacity">
@@ -163,7 +174,7 @@ export function StudyCard({
                   <PronunciationCoach
                     source="study"
                     cardId={current.card.id}
-                    targetText={current.card.front}
+                    targetText={targetTextOfCard(current.card)}
                     referenceAudioUrl={nativeClip}
                     compact
                   />
@@ -176,7 +187,11 @@ export function StudyCard({
             <ScaffoldControls
               stable={stable}
               hasHint={scaffoldLevel < SCAFFOLD.partial}
-              nativeClip={nativeClip}
+              // Replaying the clip before the reveal is only a nudge when the clip is the
+              // prompt. On a production card it hands over the answer, so the light control
+              // is withheld and only the post-failure fallback (recorded at its true
+              // scaffold level) can reach the audio.
+              nativeClip={producing ? undefined : nativeClip}
               offerModality={offerModality}
               onHint={() => markScaffold(SCAFFOLD.partial)}
               onSlowAudio={() => playClip(0.75, SCAFFOLD.hint)}

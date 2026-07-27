@@ -26,6 +26,22 @@ export interface ListeningQuestion {
 export interface ListeningChallenge {
   audio: ListeningAudio[];
   questions: ListeningQuestion[];
+  /**
+   * True when the lesson shipped no `dialogue`/`comprehension` and the check was synthesized
+   * from the phrases just taught. Such a check measures short-term discrimination among
+   * primed items, not listening comprehension: it must be labelled as a recall check in the
+   * UI and must never be counted as listening accuracy in any metric.
+   */
+  synthesized: boolean;
+}
+
+export interface ListeningChallengeOptions {
+  /**
+   * Varies option order between attempts. Pass a value that changes per attempt (the default
+   * is the clock); a fixed seed keeps an attempt reproducible for tests. A position derived
+   * from the lesson id alone would let a learner memorize where the answer sits.
+   */
+  seed?: number;
 }
 
 export interface ListeningChallengeResult {
@@ -53,10 +69,9 @@ function distinct(values: Iterable<string>, excluded: string): string[] {
   return [...new Set(values)].filter((value) => value !== excluded);
 }
 
-function placeAnswer(answer: string, distractors: string[], seed: string): string[] {
+function placeAnswer(answer: string, distractors: string[], seed: number): string[] {
   const choices = distinct(distractors, answer).slice(0, OPTION_COUNT - 1);
-  const answerIndex = stableNumber(seed) % (choices.length + 1);
-  choices.splice(answerIndex, 0, answer);
+  choices.splice(seed % (choices.length + 1), 0, answer);
   return choices;
 }
 
@@ -66,15 +81,18 @@ export function learningPhrases(lesson: Lesson): LessonPhrase[] {
 }
 
 /**
- * Build a provider-free comprehension check from the bundled lesson metadata.
- * The checked clip always comes from the language introduced during Learn.
+ * Build the comprehension check for a lesson. Authored `dialogue` + `comprehension` is the
+ * real thing and is used verbatim. Without it the check is synthesized from the phrases just
+ * taught, which is honestly a recall check — see `ListeningChallenge.synthesized`.
  */
 export function buildListeningChallenge(
   lesson: Lesson,
   lessons: readonly Lesson[],
+  options: ListeningChallengeOptions = {},
 ): ListeningChallenge {
   if (lesson.dialogue?.length && lesson.comprehension?.length) {
     return {
+      synthesized: false,
       audio: lesson.dialogue.map((line, index) => ({
         id: `${lesson.id}-dialogue-${index + 1}`,
         en: line.en,
@@ -89,19 +107,13 @@ export function buildListeningChallenge(
     };
   }
 
+  const seed = options.seed ?? Date.now();
   const learned = learningPhrases(lesson);
   const firstPhraseIndex = stableNumber(lesson.id) % Math.max(1, learned.length);
   const roundIndexes = Array.from(
     { length: Math.min(LISTENING_ROUND_COUNT, learned.length) },
     (_, offset) => (firstPhraseIndex + offset) % learned.length,
   );
-
-  const sameLevelTopics = lessons
-    .filter((candidate) => candidate.id !== lesson.id && candidate.level === lesson.level)
-    .map((candidate) => candidate.topic);
-  const otherTopics = lessons
-    .filter((candidate) => candidate.id !== lesson.id)
-    .map((candidate) => candidate.topic);
 
   const audio = roundIndexes.map((phraseIndex, roundIndex) => {
     const phrase = lesson.phrases[phraseIndex] ?? lesson.phrases[0];
@@ -115,24 +127,26 @@ export function buildListeningChallenge(
     };
   });
 
+  // Fill for short lessons only: same-lesson meanings are the closest competitors and stay
+  // first. Note this does not make the task listening comprehension — every option is still
+  // a meaning the learner can discriminate from the phrase they read a minute ago. Only
+  // authored dialogue fixes that.
+  const unprimedMeanings = lessons
+    .filter((candidate) => candidate.id !== lesson.id && candidate.level === lesson.level)
+    .flatMap((candidate) => candidate.phrases.map((phrase) => phrase.pt));
+
   return {
+    synthesized: true,
     audio,
-    questions: [
-      {
-        kind: "mainIdea",
-        prompt: "What is the main situation?",
-        answer: lesson.topic,
-        options: placeAnswer(
-          lesson.topic,
-          [...sameLevelTopics, ...otherTopics],
-          `${lesson.id}:topic`,
-        ),
-      },
-      ...audio.map(({ phraseIndex, roundIndex }, audioIndex) => {
+    // The old "What is the main situation?" question is gone on purpose: its answer was
+    // `lesson.topic`, which the learner can read off the lesson title without playing a
+    // single clip. It inflated the pass rate and measured nothing.
+    questions: audio.map(({ phraseIndex, roundIndex }, audioIndex) => {
       const phrase = lesson.phrases[phraseIndex] ?? lesson.phrases[0];
-      const meaningDistractors = lesson.phrases
-        .filter((_, index) => index !== phraseIndex)
-        .map((candidate) => candidate.pt);
+      const meaningDistractors = [
+        ...lesson.phrases.filter((_, index) => index !== phraseIndex).map((c) => c.pt),
+        ...unprimedMeanings,
+      ];
       return {
         kind: "detail" as const,
         prompt: `Which meaning matches clip ${audioIndex + 1}?`,
@@ -140,11 +154,10 @@ export function buildListeningChallenge(
         options: placeAnswer(
           phrase.pt,
           meaningDistractors,
-          `${lesson.id}:meaning:${roundIndex}`,
+          stableNumber(`${lesson.id}:meaning:${roundIndex}`) + seed,
         ),
       };
-      }),
-    ],
+    }),
   };
 }
 

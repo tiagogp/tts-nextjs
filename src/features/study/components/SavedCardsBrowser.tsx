@@ -52,8 +52,15 @@ export function SavedCardsBrowser({ cards }: { cards: Card[] }) {
             <li key={card.id} className="grid gap-1 py-3 sm:grid-cols-2 sm:gap-x-6">
               <p className="text-sm leading-relaxed text-ink">{card.front}</p>
               <p className="text-sm leading-relaxed text-ink-soft">{card.back}</p>
-              {(card.concept || card.errorType || card.context) && (
+              {(card.direction || card.concept || card.errorType || card.context) && (
                 <p className="text-xs text-ink-muted sm:col-span-2">
+                  {/* A phrase pair shows up twice; the direction says which half this is. */}
+                  {card.direction === "production"
+                    ? t("PT → EN")
+                    : card.direction === "recognition"
+                      ? t("EN → PT")
+                      : null}
+                  {card.direction && (card.concept || card.errorType || card.context) ? " · " : ""}
                   {[card.concept, card.errorType, card.context].filter(Boolean).join(" · ")}
                 </p>
               )}

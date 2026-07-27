@@ -145,7 +145,7 @@ export function feedbackIssue(
 export function localFeedbackIssue(
   issue: {
     type: ErrorType;
-    category: "messageClarity" | "lessonLanguage" | "mechanics";
+    category: "messageClarity" | "lessonLanguage" | "mechanics" | "grammar";
     priority: FeedbackPriority;
     note: string;
   },
@@ -153,7 +153,11 @@ export function localFeedbackIssue(
   options: FeedbackPriorityOptions = {},
 ): LocalFeedbackIssue {
   const category: FeedbackCategory =
-    issue.category === "lessonLanguage" ? "vocabulary" : issue.category === "mechanics" ? "grammar" : "messageClarity";
+    issue.category === "lessonLanguage"
+      ? "vocabulary"
+      : issue.category === "mechanics" || issue.category === "grammar"
+        ? "grammar"
+        : "messageClarity";
   const recurrenceCount = options.recurrenceCounts?.get(`${issue.type}|${normalize(issue.note)}`) ?? 0;
   const inferred = inferredPriority(category, recurrenceCount, issue.category === "lessonLanguage" ? 1 : 0);
   const priority: FeedbackPriority = PRIORITY_RANK[issue.priority] > PRIORITY_RANK[inferred]
@@ -176,7 +180,7 @@ export function localFeedbackIssue(
 export function prioritizeLocalFeedback(
   issues: Array<{
     type: ErrorType;
-    category: "messageClarity" | "lessonLanguage" | "mechanics";
+    category: "messageClarity" | "lessonLanguage" | "mechanics" | "grammar";
     priority: FeedbackPriority;
     note: string;
   }>,

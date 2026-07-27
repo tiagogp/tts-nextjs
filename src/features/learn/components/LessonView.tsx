@@ -100,9 +100,12 @@ function LessonViewContent({
   const { t } = useT();
   const result = useMemo(() => resultForLesson(lesson), [lesson]);
   const learnSet = useMemo(() => learningPhrases(lesson), [lesson]);
+  // Bumped on every failed attempt so the options are re-placed: a fixed answer position is
+  // memorizable and a second attempt would then test nothing.
+  const [listeningAttempt, setListeningAttempt] = useState(0);
   const listeningChallenge = useMemo(
-    () => buildListeningChallenge(lesson, LESSONS),
-    [lesson],
+    () => buildListeningChallenge(lesson, LESSONS, { seed: listeningAttempt }),
+    [lesson, listeningAttempt],
   );
   const [kept, setKept] = useState<Set<number>>(() => new Set(lesson.phrases.map((_, i) => i)));
   const [learnComplete, setLearnComplete] = useState(false);
@@ -388,12 +391,17 @@ function LessonViewContent({
         minutes: noticeTimer.commit(),
         subjectId: lesson.id,
       });
+      // Each kept phrase becomes two cards (produce it, recognize it). Learner-facing counts
+      // stay in phrases — reporting cards would double the number for no added meaning.
       setDone(
         result.added === 0
           ? t("Lesson already saved. Now write one sentence of your own below.")
-          : t("{count} practice phrases saved. Now write one sentence of your own below.", { count: result.added }),
+          : t(
+              "{count} practice phrases saved, each practiced in both directions. Now write one sentence of your own below.",
+              { count: kept.size },
+            ),
       );
-      setSavedPhraseCount(deck.cards.length);
+      setSavedPhraseCount(kept.size);
       const firstKept = Math.min(...[...kept]);
       setExercisePhrase(lesson.phrases[firstKept] ?? lesson.phrases[0]);
       setRepeatPhrases(lesson.phrases.filter((_, index) => kept.has(index)).slice(0, 2));
@@ -485,10 +493,14 @@ function LessonViewContent({
           <div>
             <p className="text-xs uppercase tracking-[0.7px] text-accent">{t("2 · Listen")}</p>
             <h3 className="mt-1 text-lg font-semibold tracking-[-0.01em] text-ink">
-              {t("Listen before reading")}
+              {listeningChallenge.synthesized ? t("Check what you just learned") : t("Listen before reading")}
             </h3>
             <p className="mt-1 text-sm text-ink-soft">
-              {t("First catch the situation and two phrases. You do not need to understand every word.")}
+              {listeningChallenge.synthesized
+                ? t(
+                    "This lesson has no recorded dialogue yet, so this is a recall check on the phrases you just studied — not a test of understanding new speech.",
+                  )
+                : t("First catch the situation and two phrases. You do not need to understand every word.")}
             </p>
             <p className="mt-2 text-xs text-ink-muted">
               {t("Support: {stage} · {guidance}", {
@@ -548,6 +560,14 @@ function LessonViewContent({
             })}
           </div>
 
+          {/* Provenance, stated where the audio actually plays: every bundled clip is
+              synthesized on this Mac. Original audio is what a learner's own source brings. */}
+          <p className="text-xs text-ink-muted">
+            {t(
+              "Audio in the bundled lessons is generated on your Mac. When you bring your own video or podcast, the cards keep that source's original audio.",
+            )}
+          </p>
+
           <div className="grid gap-4 lg:grid-cols-2">
             {listeningChallenge.questions.map((question, questionIndex) => (
               <fieldset
@@ -590,13 +610,15 @@ function LessonViewContent({
               {t("Check what I heard")}
             </Button>
             {listeningChecked && listeningResult && (
-              <Notice tone={listeningResult.mainIdeaCorrect ? "success" : "warning"} className="space-y-3">
+              <Notice
+                tone={listeningResult.correct === listeningResult.total ? "success" : "warning"}
+                className="space-y-3"
+              >
                 <p>
-                  {listeningResult.mainIdeaCorrect
-                    ? t("You caught the main idea. You got {correct} of {total} questions; details can improve with the transcript.", {
-                        correct: listeningResult.correct,
-                        total: listeningResult.total,
-                      })
+                  {listeningResult.correct === listeningResult.total
+                    ? listeningChallenge.synthesized
+                      ? t("You matched both clips to their meaning.")
+                      : t("You caught the main idea and the important details.")
                     : t("You completed the check. The transcript will help you find the main idea and useful details.")}
                 </p>
                 <Button variant="secondary" onClick={revealTranscript}>

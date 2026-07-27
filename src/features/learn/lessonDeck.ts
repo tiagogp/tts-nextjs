@@ -53,6 +53,12 @@ export interface Lesson extends LessonMaterial {
 
 export const LESSONS = lessonsData as Lesson[];
 
+/**
+ * Card-id suffix of the PT→EN half of a phrase pair. The receptive half keeps the bare id
+ * so lesson-completion detection and pre-split SRS state stay valid.
+ */
+export const PRODUCTION_CARD_SUFFIX = "production";
+
 export function buildDeckFromPhrases(
   sourceId: string,
   phrases: LessonPhrase[],
@@ -79,18 +85,36 @@ export function buildDeckFromPhrases(
     };
   });
 
-  const cards: Card[] = sorted.map((i) => {
+  // Both directions, one card each, scheduled independently by FSRS. Production comes first
+  // because it is the direction the product promises: a learner who can only recognize the
+  // phrase has not learned to use it, and a recognition-only deck clears from acoustic
+  // familiarity while FSRS records the non-event as a successful review.
+  const cards: Card[] = sorted.flatMap((i) => {
     const phrase = phrases[i];
     const phraseId = phrase.id ?? String(i);
-    return {
-      id: `${sourceId}-card-${phraseId}`,
-      front: phrase.en,
-      back: phrase.pt,
+    const shared = {
       concept: phrase.concept,
-      source: { kind: "phrase", id: `${sourceId}-${phraseId}` },
+      source: { kind: "phrase", id: `${sourceId}-${phraseId}` } as const,
       audioClipPath: phrase.clip,
       createdAt: now,
     };
+    return [
+      {
+        ...shared,
+        id: `${sourceId}-card-${phraseId}-${PRODUCTION_CARD_SUFFIX}`,
+        front: phrase.pt,
+        back: phrase.en,
+        direction: "production" as const,
+      },
+      // Keeps the original id so decks saved before the split retain their SRS state.
+      {
+        ...shared,
+        id: `${sourceId}-card-${phraseId}`,
+        front: phrase.en,
+        back: phrase.pt,
+        direction: "recognition" as const,
+      },
+    ];
   });
 
   return { candidates, cards };
@@ -108,7 +132,10 @@ export function lessonById(id: string): Lesson | undefined {
 export const OWN_SENTENCE_CARD_PREFIX = "own-sentence-";
 
 export function lessonCardIds(lesson: Lesson): string[] {
-  return lesson.phrases.map((phrase, i) => `lesson-${lesson.id}-card-${phrase.id ?? i}`);
+  return lesson.phrases.flatMap((phrase, i) => {
+    const base = `lesson-${lesson.id}-card-${phrase.id ?? i}`;
+    return [`${base}-${PRODUCTION_CARD_SUFFIX}`, base];
+  });
 }
 
 export function completedLessonIdsFromCardIds(cardIds: Iterable<string>): Set<string> {

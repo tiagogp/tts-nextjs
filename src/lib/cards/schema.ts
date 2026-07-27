@@ -175,6 +175,22 @@ export type CardSource =
   | { kind: "error"; event: ErrorEvent }
   | { kind: "phrase"; candidate: PhraseCandidate };
 
+/**
+ * Which way round the card is retrieved. The distinction is not cosmetic: recall direction
+ * decides what the card actually trains.
+ *
+ *   "production"  — front is the L1 (pt) prompt, back is the English. The learner has to
+ *                   produce the target language from meaning. Audio is withheld until after
+ *                   the answer, so the clip confirms production instead of cueing it.
+ *   "recognition" — front is the English (with its clip), back is the L1 meaning. Cheaper,
+ *                   transfers to production only weakly, and clears from acoustic
+ *                   familiarity alone; kept as the receptive half of a pair, never alone.
+ *
+ * Undefined on cards generated before the field existed, where `orientation.ts` infers the
+ * side languages heuristically instead.
+ */
+export type CardDirection = "production" | "recognition";
+
 /** A generated flashcard, ready to be serialized to CSV/JSON for apkg_from_csv.py. */
 export interface Card {
   id: string;
@@ -182,6 +198,11 @@ export interface Card {
   front: string;
   /** The native-correct answer. Audio (TTS, or a native clip for discovery) is added downstream. */
   back: string;
+  /**
+   * Recall direction. When set it is authoritative — read-time orientation leaves the card
+   * alone, and Study uses it to decide audio placement and what the pronunciation target is.
+   */
+  direction?: CardDirection;
   /** The single concept this card isolates, e.g. "preposition after a motion verb". */
   concept: string;
   /** Set for correction-path cards; undefined for discovery-path cards. */

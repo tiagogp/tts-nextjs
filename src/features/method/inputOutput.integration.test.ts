@@ -12,6 +12,7 @@ import type { ProductionAttempt } from "@/lib/performance/types";
 import type { PronunciationAttempt } from "@/lib/pronunciation/types";
 
 const challenge: ListeningChallenge = {
+  synthesized: false,
   audio: [
     { id: "clip-1", en: "The meeting starts at nine.", pt: "A reunião começa às nove.", clip: "/clip-1.wav", speaker: "speaker-a" },
     { id: "clip-2", en: "Bring the budget notes.", pt: "Traga as notas do orçamento.", clip: "/clip-2.wav", speaker: "speaker-b" },

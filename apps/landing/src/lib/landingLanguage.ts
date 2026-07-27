@@ -36,8 +36,8 @@ const ENGLISH_COPY: Record<string, string> = {
   "Obrigado. Nesta rodada, os primeiros convites vão para quem usa Mac com Apple Silicon.":
     "Thanks. This round prioritizes people using Apple Silicon Macs.",
   "Navegação da página": "Page navigation",
-  "Inglês real. Áudio original. Pronto para revisar.":
-    "Real English. Original audio. Ready to review.",
+  "Inglês real. O áudio da sua fonte. Pronto para revisar.":
+    "Real English. Your source's own audio. Ready to review.",
   "Cole um vídeo do YouTube. Em 2 minutos, as melhores frases viram cards de revisão com o áudio original — e os seus próprios erros viram o treino de amanhã.":
     "Paste a YouTube video. In 2 minutes, the best phrases become review cards with the original audio — and your own mistakes become tomorrow's practice.",
   "Ver como funciona": "See how it works",
@@ -83,8 +83,8 @@ const ENGLISH_COPY: Record<string, string> = {
   "O que continua ligado à frase": "What stays connected to the phrase",
   "As partes importantes ficam juntas.": "The important pieces stay together.",
   "Áudio original do conteúdo": "Original audio from real content",
-  "Quando a fonte tem áudio, cada card mantém o trecho exato em que a frase foi dita.":
-    "When a source has audio, each card keeps the exact clip where the phrase was spoken.",
+  "Quando a fonte tem áudio, cada card mantém o trecho exato em que a frase foi dita. As lições que já vêm no app usam áudio gerado no seu Mac.":
+    "When a source has audio, each card keeps the exact clip where the phrase was spoken. The lessons bundled with the app use audio generated on your Mac.",
   "Dados locais por padrão": "Local data by default",
   "Transcrição, áudio gerado, revisões e cards ficam no seu computador. Serviços externos só entram quando você escolhe.":
     "Transcription, generated audio, reviews, and cards stay on your computer. External services are used only when you choose them.",

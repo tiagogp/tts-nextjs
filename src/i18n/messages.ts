@@ -735,19 +735,24 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "Hear real phrases, save the useful ones, then review them — no setup needed.": {
     pt: "Ouça frases reais, salve as úteis e revise — sem configurar nada.",
   },
-  "Hear native audio, save a few phrases, and review right away — no setup needed.": {
-    pt: "Ouça áudio nativo, salve algumas frases e revise na hora — sem configurar nada.",
+  // Bundled clips are synthesized on-device, so this copy says "clear audio", never "native".
+  // Original-source audio arrives with the learner's own video or podcast, not with a lesson.
+  "Hear clear audio, save a few phrases, and review right away — no setup needed.": {
+    pt: "Ouça áudio claro, salve algumas frases e revise na hora — sem configurar nada.",
   },
-  "Practice phrases from a native clip and your own mistake — no setup needed.": {
-    pt: "Pratique frases de um clipe nativo e de um erro seu — sem configurar nada.",
+  "Practice phrases from a lesson clip and your own mistake — no setup needed.": {
+    pt: "Pratique frases de um clipe da lição e de um erro seu — sem configurar nada.",
+  },
+  "Audio in the bundled lessons is generated on your Mac. When you bring your own video or podcast, the cards keep that source's original audio.": {
+    pt: "O áudio das lições que já vêm no app é gerado no seu Mac. Quando você traz seu próprio vídeo ou podcast, os cards mantêm o áudio original da fonte.",
   },
   "See real phrases, keep the useful ones, and study them — no setup needed.": {
     pt: "Veja frases reais, guarde as úteis e estude — sem configurar nada.",
   },
   "Import your own": { pt: "Importar o seu conteúdo" },
   "{lesson} ({level})": { pt: "{lesson} ({level})" },
-  "Start with graded phrases, native audio, and Study cards — no setup needed.": {
-    pt: "Comece com frases graduadas, áudio nativo e cartões no Estudar — sem configurar nada.",
+  "Start with graded phrases, clear audio, and Study cards — no setup needed.": {
+    pt: "Comece com frases graduadas, áudio claro e cartões no Estudar — sem configurar nada.",
   },
   "Continue the guided path, or come back when cards are due.": {
     pt: "Continue a trilha guiada ou volte quando houver cartões para revisar.",
@@ -835,6 +840,9 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "{count} practice phrases saved. Now write one sentence of your own below.": {
     pt: "{count} frases para praticar salvas. Agora escreva uma frase sua aqui embaixo.",
   },
+  "{count} practice phrases saved, each practiced in both directions. Now write one sentence of your own below.": {
+    pt: "{count} frases para praticar salvas, cada uma nos dois sentidos. Agora escreva uma frase sua aqui embaixo.",
+  },
   "You saved {count} phrases to review: {phrases} from real English and 1 from your own mistake.": {
     pt: "Você salvou {count} frases para revisar: {phrases} de inglês real e 1 do seu próprio erro.",
   },
@@ -899,6 +907,13 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   },
   "You caught the main idea and both phrase meanings.": {
     pt: "Você identificou a ideia principal e o significado das duas frases.",
+  },
+  "Check what you just learned": { pt: "Confira o que você acabou de aprender" },
+  "This lesson has no recorded dialogue yet, so this is a recall check on the phrases you just studied — not a test of understanding new speech.": {
+    pt: "Esta lição ainda não tem diálogo gravado, então esta é uma checagem das frases que você acabou de estudar — não um teste de entender fala nova.",
+  },
+  "You matched both clips to their meaning.": {
+    pt: "Você ligou os dois áudios ao significado certo.",
   },
   "You caught the main idea and the important details.": {
     pt: "Você identificou a ideia principal e os detalhes importantes.",
@@ -970,6 +985,56 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "Message clarity": { pt: "Clareza da mensagem" },
   "Lesson language": { pt: "Linguagem da lição" },
   "Writing mechanics": { pt: "Mecânica da escrita" },
+
+  /* ── PT→EN transfer-error notes (src/features/learn/transferErrors.ts) ── */
+  "Age uses “to be” in English: I am 30 years old, not I have 30 years.": {
+    pt: "Idade em inglês usa “to be”: I am 30 years old, não I have 30 years.",
+  },
+  "A singular job or role needs “a” or “an”: I am a student.": {
+    pt: "Profissão ou papel no singular pede “a” ou “an”: I am a student.",
+  },
+  "“Depend” takes “on”, not “of”.": { pt: "“Depend” pede “on”, não “of”." },
+  "“Arrive” takes “at” or “in”, never “to”.": {
+    pt: "“Arrive” pede “at” ou “in”, nunca “to”.",
+  },
+  "“People” is plural in English: people are, people have.": {
+    pt: "“People” é plural em inglês: people are, people have.",
+  },
+  "“Married” takes “to”, not “with”.": { pt: "“Married” pede “to”, não “with”." },
+  "“Explain” needs “to” before the person: explain it to me.": {
+    pt: "“Explain” precisa de “to” antes da pessoa: explain it to me.",
+  },
+  "Use “tell someone”, not “say someone”.": {
+    pt: "Use “tell someone”, não “say someone”.",
+  },
+  "“Agree” is the verb by itself: I agree, not I am agree.": {
+    pt: "“Agree” já é o verbo: I agree, não I am agree.",
+  },
+  "Days of the week take “on”: on Monday.": {
+    pt: "Dias da semana pedem “on”: on Monday.",
+  },
+  "Use “good at” for skills, not “good in”.": {
+    pt: "Use “good at” para habilidades, não “good in”.",
+  },
+  "“Listen” needs “to” before what you hear.": {
+    pt: "“Listen” precisa de “to” antes do que você ouve.",
+  },
+  "In English you “ask” a question, you do not “make” one.": {
+    pt: "Em inglês você “ask” a question — não “make”.",
+  },
+  "This word has no plural in English.": { pt: "Esta palavra não tem plural em inglês." },
+  "Short adjectives form the comparative with “-er”, not “more”.": {
+    pt: "Adjetivos curtos formam o comparativo com “-er”, não com “more”.",
+  },
+  "With “since”, English uses the present perfect: I have lived here since 2020.": {
+    pt: "Com “since”, o inglês usa o present perfect: I have lived here since 2020.",
+  },
+  "Use “there is” / “there are” to say that something exists.": {
+    pt: "Use “there is” / “there are” para dizer que algo existe.",
+  },
+  "Use “to” + verb for purpose: I came to study.": {
+    pt: "Use “to” + verbo para finalidade: I came to study.",
+  },
   "Lesson 1 — Greetings": { pt: "Lição 1 — Cumprimentos" },
   "Lesson 2 — Names": { pt: "Lição 2 — Nomes" },
   "Lesson 3 — Countries and Cities": { pt: "Lição 3 — Países e cidades" },
@@ -3481,6 +3546,18 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "Practice phrase": { pt: "Frase para praticar" },
   "{count} in today's queue": { pt: "{count} na fila de hoje" },
   "Show answer": { pt: "Mostrar resposta" },
+  "Say it in English, then check.": { pt: "Diga em inglês e depois confira." },
+  "D+30 unaided production": { pt: "Produção sem ajuda em D+30" },
+  "Not measured yet": { pt: "Ainda não medido" },
+  "{percent}% of {count}": { pt: "{percent}% de {count}" },
+  "No qualifying attempt": { pt: "Nenhuma tentativa válida" },
+  "At or above 40%": { pt: "40% ou mais" },
+  "Under 40%": { pt: "Abaixo de 40%" },
+  "Unaided production counts PT→EN cards answered with no hint, no replay and no reveal, at least {rest} days after the learner last saw them ({cards} cards).": {
+    pt: "Produção sem ajuda conta cards PT→EN respondidos sem dica, sem repetir o áudio e sem revelar a resposta, pelo menos {rest} dias depois da última vez que a pessoa viu o card ({cards} cards).",
+  },
+  "PT → EN": { pt: "PT → EN" },
+  "EN → PT": { pt: "EN → PT" },
   "Listen & repeat": { pt: "Ouvir e repetir" },
   "You've struggled with this one — hear it first, then say it back.": {
     pt: "Você tem tido dificuldade com esta — ouça primeiro, depois repita em voz alta.",

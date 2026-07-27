@@ -94,7 +94,7 @@ export const flowSteps = [
 export const features = [
   {
     title: "Áudio original do conteúdo",
-    body: "Quando a fonte tem áudio, cada card mantém o trecho exato em que a frase foi dita.",
+    body: "Quando a fonte tem áudio, cada card mantém o trecho exato em que a frase foi dita. As lições que já vêm no app usam áudio gerado no seu Mac.",
   },
   {
     title: "Dados locais por padrão",

@@ -33,25 +33,47 @@ describe("lessonDeck", () => {
 
     expect(first.candidates.map((candidate) => candidate.segmentIndex)).toEqual([0, 2]);
     expect(first.cards.map((card) => card.id)).toEqual(second.cards.map((card) => card.id));
-    expect(first.cards[0]).toMatchObject({
-      id: `lesson-${lesson.id}-card-0`,
-      front: lesson.phrases[0].en,
-      back: lesson.phrases[0].pt,
-      source: { kind: "phrase", id: `lesson-${lesson.id}-0` },
-      audioClipPath: lesson.phrases[0].clip,
-    });
     expect(first.candidates.every((candidate) => candidate.status === "accepted")).toBe(true);
-    expect(first.cards.map((card) => card.source.id)).toEqual(first.candidates.map((candidate) => candidate.id));
+    expect(new Set(first.cards.map((card) => card.source.id))).toEqual(
+      new Set(first.candidates.map((candidate) => candidate.id)),
+    );
 
     const authored = buildDeckFromPhrases(
       `lesson-${lesson.id}`,
       lesson.phrases.map((phrase, index) => ({ ...phrase, id: `target-${index + 1}` })),
       [0],
     );
-    expect(authored.cards[0]).toMatchObject({
-      id: `lesson-${lesson.id}-card-target-1`,
-      source: { kind: "phrase", id: `lesson-${lesson.id}-target-1` },
+    expect(authored.cards.map((card) => card.id)).toEqual([
+      `lesson-${lesson.id}-card-target-1-production`,
+      `lesson-${lesson.id}-card-target-1`,
+    ]);
+    expect(authored.cards.every((card) => card.source.id === `lesson-${lesson.id}-target-1`)).toBe(
+      true,
+    );
+  });
+
+  it("gives every kept phrase both recall directions, scheduled as separate cards", () => {
+    const lesson = LESSONS[0];
+    const { cards } = buildDeckFromPhrases(`lesson-${lesson.id}`, lesson.phrases, [0]);
+    const [production, recognition] = cards;
+
+    expect(cards).toHaveLength(2);
+    // PT → EN comes first: producing the phrase is the direction the product promises.
+    expect(production).toMatchObject({
+      id: `lesson-${lesson.id}-card-0-production`,
+      direction: "production",
+      front: lesson.phrases[0].pt,
+      back: lesson.phrases[0].en,
+      audioClipPath: lesson.phrases[0].clip,
     });
+    // The receptive half keeps the pre-split id so existing SRS state survives.
+    expect(recognition).toMatchObject({
+      id: `lesson-${lesson.id}-card-0`,
+      direction: "recognition",
+      front: lesson.phrases[0].en,
+      back: lesson.phrases[0].pt,
+    });
+    expect(new Set(cards.map((card) => card.id)).size).toBe(cards.length);
   });
 
   it("detects completed lessons from stable card ids", () => {
