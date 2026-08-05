@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
       : "conversation";
 
     const kind = planProviderKind(obj.provider);
-    if (!isProviderAvailable(kind)) {
+    if (!(await isProviderAvailable(kind))) {
       return failureResponse(providerFailure("provider_not_configured"));
     }
 

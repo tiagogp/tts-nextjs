@@ -13,11 +13,12 @@ export const runtime = "nodejs";
 
 export async function GET() {
   const ollamaReachable = await isOllamaReachable();
-  const providers = (Object.keys(providerRegistry) as ProviderKind[]).map((kind) => {
-    const available =
-      kind === "ollama" ? ollamaReachable : isProviderAvailable(kind);
-    const label = available ? providerRegistry[kind]().label : PROVIDER_FALLBACK_LABELS[kind];
-    return { kind, label, available };
-  });
+  const providers = await Promise.all(
+    (Object.keys(providerRegistry) as ProviderKind[]).map(async (kind) => {
+      const available = kind === "ollama" ? ollamaReachable : await isProviderAvailable(kind);
+      const label = available ? providerRegistry[kind]().label : PROVIDER_FALLBACK_LABELS[kind];
+      return { kind, label, available };
+    }),
+  );
   return NextResponse.json({ providers });
 }

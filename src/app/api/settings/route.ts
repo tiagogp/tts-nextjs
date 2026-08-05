@@ -30,31 +30,33 @@ export async function GET() {
   const { models, online: ollamaOnline } = await getOllamaStatus({ baseUrl: root });
 
   const order: ProviderKind[] = ["ollama", "openrouter", "claude", "openai"];
-  const providers: ProviderStatus[] = order.map((kind) => {
-    const configured = kind === "ollama" ? true : isProviderAvailable(kind);
-    const available = kind === "ollama" ? ollamaOnline && models.length > 0 : configured;
-    return {
-      kind,
-      label: LABELS[kind] || providerRegistry[kind]().label,
-      isLocal: kind === "ollama",
-      configured,
-      available,
-      state:
-        kind === "ollama"
-          ? ollamaOnline
-            ? models.length > 0
+  const providers: ProviderStatus[] = await Promise.all(
+    order.map(async (kind) => {
+      const configured = kind === "ollama" ? true : await isProviderAvailable(kind);
+      const available = kind === "ollama" ? ollamaOnline && models.length > 0 : configured;
+      return {
+        kind,
+        label: LABELS[kind] || providerRegistry[kind]().label,
+        isLocal: kind === "ollama",
+        configured,
+        available,
+        state:
+          kind === "ollama"
+            ? ollamaOnline
+              ? models.length > 0
+                ? "connected"
+                : "not_configured"
+              : "offline"
+            : configured
               ? "connected"
-              : "not_configured"
-            : "offline"
-          : configured
-            ? "connected"
-            : "not_configured",
-      detail:
-        kind === "ollama" && ollamaOnline && models.length === 0
-          ? "Ollama is running, but no models are installed."
-          : undefined,
-    };
-  });
+              : "not_configured",
+        detail:
+          kind === "ollama" && ollamaOnline && models.length === 0
+            ? "Ollama is running, but no models are installed."
+            : undefined,
+      };
+    }),
+  );
 
   const settings: PublicAiSettings = {
     defaultProvider: getDefaultProvider(),

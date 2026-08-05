@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
 
   const count = parseThemePhraseCount(obj.count);
   const kind: ProviderKind = isProviderKind(obj.provider) ? obj.provider : getDefaultProvider();
-  if (!isProviderAvailable(kind)) {
+  if (!(await isProviderAvailable(kind))) {
     return failureResponse(providerFailure("provider_not_configured"));
   }
 

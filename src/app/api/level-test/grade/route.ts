@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     const model = safeStr(obj.ollamaModel, "", 100) || undefined;
 
     const kind = cardProviderKind(obj.provider);
-    if (!isProviderAvailable(kind)) {
+    if (!(await isProviderAvailable(kind))) {
       return failureResponse(providerFailure("provider_not_configured"));
     }
 

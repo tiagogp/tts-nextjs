@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     }
 
     const kind = cardProviderKind(obj.provider);
-    if (!isProviderAvailable(kind)) {
+    if (!(await isProviderAvailable(kind))) {
       return failureResponse(providerFailure("provider_not_configured"));
     }
 

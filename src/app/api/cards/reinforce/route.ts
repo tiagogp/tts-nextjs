@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
     // Respect the explicit/global choice. Never send content to a different provider.
     const requested = isProviderKind(obj.provider) ? obj.provider : null;
     const kind: ProviderKind = requested ?? getDefaultProvider();
-    if (!isProviderAvailable(kind)) {
+    if (!(await isProviderAvailable(kind))) {
       return failureResponse(providerFailure("provider_not_configured"));
     }
 
