@@ -90,6 +90,8 @@ export function buildListeningChallenge(
   lessons: readonly Lesson[],
   options: ListeningChallengeOptions = {},
 ): ListeningChallenge {
+  const seed = options.seed ?? Date.now();
+
   if (lesson.dialogue?.length && lesson.comprehension?.length) {
     return {
       synthesized: false,
@@ -100,14 +102,21 @@ export function buildListeningChallenge(
         clip: line.clip,
         speaker: line.speaker,
       })),
-      questions: lesson.comprehension.map((question) => ({
+      // Authored lessons list the answer first so the JSON stays readable, so the order they
+      // ship in cannot be the order the learner sees — otherwise "always pick the top option"
+      // passes every authored check without playing a clip. Same per-attempt placement the
+      // synthesized branch uses.
+      questions: lesson.comprehension.map((question, index) => ({
         ...question,
-        options: [...question.options],
+        options: placeAnswer(
+          question.answer,
+          question.options,
+          seed + stableNumber(`${lesson.id}-${index}`),
+        ),
       })),
     };
   }
 
-  const seed = options.seed ?? Date.now();
   const learned = learningPhrases(lesson);
   const firstPhraseIndex = stableNumber(lesson.id) % Math.max(1, learned.length);
   const roundIndexes = Array.from(

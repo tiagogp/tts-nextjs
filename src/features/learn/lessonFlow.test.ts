@@ -101,14 +101,38 @@ describe("lessonFlow", () => {
       ],
     };
 
-    expect(buildListeningChallenge(lesson, LESSONS)).toEqual({
-      synthesized: false,
-      audio: [
-        { id: `${lesson.id}-dialogue-1`, speaker: "A", en: "Are you free?", pt: "Você está livre?", clip: "/learn/audio/test/01.wav" },
-        { id: `${lesson.id}-dialogue-2`, speaker: "B", en: "After six.", pt: "Depois das seis.", clip: "/learn/audio/test/02.wav" },
-      ],
-      questions: lesson.comprehension,
-    });
+    const challenge = buildListeningChallenge(lesson, LESSONS, { seed: 0 });
+    expect(challenge.synthesized).toBe(false);
+    expect(challenge.audio).toEqual([
+      { id: `${lesson.id}-dialogue-1`, speaker: "A", en: "Are you free?", pt: "Você está livre?", clip: "/learn/audio/test/01.wav" },
+      { id: `${lesson.id}-dialogue-2`, speaker: "B", en: "After six.", pt: "Depois das seis.", clip: "/learn/audio/test/02.wav" },
+    ]);
+    // Prompt, kind, and the option set are authored verbatim; only their order is placed.
+    expect(
+      challenge.questions.map((question) => ({ ...question, options: [...question.options].sort() })),
+    ).toEqual(
+      lesson.comprehension.map((question) => ({ ...question, options: [...question.options].sort() })),
+    );
+  });
+
+  it("does not leave the authored answer parked in the first slot", () => {
+    // Authored comprehension lists the answer first for readable JSON. If that order reached
+    // the learner, "always pick the top option" would pass every authored lesson unheard.
+    const authored = LESSONS.filter((lesson) => lesson.dialogue?.length && lesson.comprehension?.length);
+    expect(authored.length).toBeGreaterThan(0);
+    for (const lesson of authored) {
+      expect(lesson.comprehension?.every((question) => question.options[0] === question.answer)).toBe(true);
+    }
+
+    const firstSlotShare = (seed: number) => {
+      const questions = authored.flatMap((lesson) => buildListeningChallenge(lesson, LESSONS, { seed }).questions);
+      const first = questions.filter((question) => question.options[0] === question.answer).length;
+      return first / questions.length;
+    };
+
+    for (const seed of [0, 1, 2, 7, 41]) {
+      expect(firstSlotShare(seed)).toBeLessThan(0.6);
+    }
   });
 
   it("allows a complete partial-comprehension attempt to continue", () => {

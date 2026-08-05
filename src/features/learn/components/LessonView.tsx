@@ -301,6 +301,9 @@ function LessonViewContent({
     listeningAttemptRef.current = attempt;
     setListeningChecked(true);
     setListeningResult(result);
+    if (result.correct < result.total) {
+      setListeningAttempt((n) => n + 1);
+    }
     commitListen();
     void saveListeningAttempt(attempt).catch(() => {});
     void emitActivity("listening_attempt", {
