@@ -99,7 +99,10 @@ export function Modal({
             exit={{ opacity: 0, scale: 0.97, y: 8, filter: "blur(8px)" }}
             transition={springSoft}
             className={cn(
-              "w-[min(100%,30rem)] rounded-xl border border-line bg-card p-6 shadow-[0_20px_60px_rgb(0_0_0/0.25)] outline-none",
+              // The panel scrolls itself: a centred grid item taller than the viewport would
+              // otherwise overflow a fixed overlay that has nowhere to scroll, silently cutting
+              // off the end of long dialogs (the placement check's later items and its buttons).
+              "max-h-[calc(100dvh-2rem)] w-[min(100%,30rem)] overflow-y-auto overscroll-contain rounded-xl border border-line bg-card p-6 shadow-[0_20px_60px_rgb(0_0_0/0.25)] outline-none",
               className,
             )}
           >

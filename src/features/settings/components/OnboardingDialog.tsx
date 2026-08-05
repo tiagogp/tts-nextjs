@@ -15,6 +15,10 @@ import {
   isOnboardingComplete,
   type MethodObjective,
 } from "@/features/settings/learningProfile";
+import { useAiSettings } from "@/features/settings/context/AiSettingsContext";
+import { nextLevelOf } from "@/features/levelup/model";
+import { LevelTestFlow } from "@/features/levelup/components/LevelTestFlow";
+import { LocalPlacementCheck } from "@/features/levelup/components/LocalPlacementCheck";
 import { resolveInterfaceLang } from "@/i18n/config";
 import { translate } from "@/i18n/translate";
 
@@ -36,10 +40,14 @@ export default function OnboardingDialog({ onOpenSettings: _onOpenSettings }: Re
   void _onOpenSettings;
   const [dismissed, setDismissed] = useState(false);
   const [step, setStep] = useState<Step>("welcome");
+  const [levelCheckOpen, setLevelCheckOpen] = useState<"local" | "ai" | null>(null);
   const [profile] = useState(getLearningProfile);
   const [level, setLevel] = useState<EnglishLevel>(profile.level);
   const [nativeLang, setNativeLang] = useState(profile.nativeLang);
   const [objective, setObjective] = useState<MethodObjective>(profile.objective);
+  const { settings } = useAiSettings();
+  const defaultProvider = settings.providers.find((provider) => provider.kind === settings.defaultProvider);
+  const levelCheckTarget = nextLevelOf(level);
   const firstVisit = useSyncExternalStore(
     subscribe,
     () => !isOnboardingComplete(),
@@ -70,6 +78,39 @@ export default function OnboardingDialog({ onOpenSettings: _onOpenSettings }: Re
   const currentIndex = STEPS.indexOf(step);
   const canGoBack = currentIndex > 0;
   const canContinue = currentIndex < STEPS.length - 1;
+
+  if (levelCheckOpen === "local") {
+    return (
+      <Modal open={open} onClose={() => void finish()} labelledBy="welcome-title" className="w-[min(100%,34rem)]">
+        <LocalPlacementCheck
+          translate={t}
+          onAccept={(suggested) => {
+            setLevel(suggested);
+            setLevelCheckOpen(null);
+          }}
+          onClose={() => setLevelCheckOpen(null)}
+        />
+      </Modal>
+    );
+  }
+
+  if (levelCheckOpen === "ai" && levelCheckTarget) {
+    return (
+      <Modal open={open} onClose={() => void finish()} labelledBy="welcome-title" className="w-[min(100%,34rem)]">
+        <LevelTestFlow
+          currentLevel={level}
+          targetLevel={levelCheckTarget}
+          focusGaps={[]}
+          onClose={() => {
+            // The test may have advanced the profile level (on a pass) — re-sync the
+            // onboarding form so "Start first lesson" saves the level the test confirmed.
+            setLevel(getLearningProfile().level);
+            setLevelCheckOpen(null);
+          }}
+        />
+      </Modal>
+    );
+  }
 
   return (
     <Modal open={open} onClose={() => void finish()} labelledBy="welcome-title" className="w-[min(100%,34rem)]">
@@ -131,6 +172,25 @@ export default function OnboardingDialog({ onOpenSettings: _onOpenSettings }: Re
               onChange={(value) => setLevel(value as EnglishLevel)}
               options={ENGLISH_LEVELS}
             />
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+              {/* The local check needs no provider, so "not sure" is never a dead end. */}
+              <button
+                type="button"
+                onClick={() => setLevelCheckOpen("local")}
+                className="cursor-pointer text-xs font-medium text-accent hover:opacity-80"
+              >
+                {t("Not sure? Take a 5-minute check")}
+              </button>
+              {levelCheckTarget && defaultProvider?.available === true && (
+                <button
+                  type="button"
+                  onClick={() => setLevelCheckOpen("ai")}
+                  className="cursor-pointer text-xs font-medium text-ink-muted hover:opacity-80"
+                >
+                  {t("Or take the full {level} test with AI", { level: levelCheckTarget })}
+                </button>
+              )}
+            </div>
           </Field>
           <Field label={t("Main goal")}>
             <Segmented

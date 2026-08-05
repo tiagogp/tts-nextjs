@@ -3815,6 +3815,8 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   pending: { pt: "pendente" },
   "What's in the way": { pt: "O que está no caminho" },
   "Take the level test": { pt: "Fazer o teste de nível" },
+  "Not sure? Take a 5-minute check": { pt: "Não tem certeza? Faça um teste de 5 minutos" },
+  "Play": { pt: "Tocar" },
   "Available again in {count} day(s).": { pt: "Disponível de novo em {count} dia(s)." },
   "Next step: {criterion}.": { pt: "Próximo passo: {criterion}." },
   "Level test: {from} → {to}": { pt: "Teste de nível: {from} → {to}" },
