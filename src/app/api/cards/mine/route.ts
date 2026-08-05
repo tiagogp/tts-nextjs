@@ -14,7 +14,7 @@ import type { ContentSource, TranscriptSegment } from "@/lib/cards/schema";
 import { getDefaultProvider } from "@/server/aiSettings";
 import { isHttpError, isProviderKind, readJsonObject, safeString } from "@/server/http/validation";
 import { classifyProviderFailure, failureResponse, providerFailure } from "@/server/http/providerFailure";
-import { MAX_CARD_JSON_BYTES } from "@/lib/constants";
+import { MAX_CARD_JSON_BYTES, PROVIDER_SINGLE_CALL_TIMEOUT_MS } from "@/lib/constants";
 import { logger } from "@/lib/logger";
 
 export const runtime = "nodejs";
@@ -84,12 +84,16 @@ export async function POST(req: NextRequest) {
 
     const model = safeString(obj.ollamaModel, "", 100) || undefined;
     const provider = resolveProvider(kind, { learnerLang: sourceLang, targetLang, model });
-    const candidates = await provider.mine(segments, {
-      source,
-      focus: safeString(obj.focus, "", 500) || undefined,
-      targetLevel: safeLevel(obj.targetLevel),
-      targetLang,
-    });
+    const candidates = await provider.mine(
+      segments,
+      {
+        source,
+        focus: safeString(obj.focus, "", 500) || undefined,
+        targetLevel: safeLevel(obj.targetLevel),
+        targetLang,
+      },
+      { signal: req.signal, timeoutMs: PROVIDER_SINGLE_CALL_TIMEOUT_MS },
+    );
 
     const selectedIndexes = Array.from(
       new Set(

@@ -34,5 +34,8 @@ export const CARD_GENERATION_TIMEOUT_MS = 390_000;
 /** Per-provider call timeout while generating cards. */
 export const PROVIDER_CALL_TIMEOUT_MS = 90_000;
 
+/** Timeout for routes that make a single LLM call (mine, correct, review, complete, converse). */
+export const PROVIDER_SINGLE_CALL_TIMEOUT_MS = 60_000;
+
 /** APKG export timeout after cards are already generated. */
 export const APKG_EXPORT_TIMEOUT_MS = 300_000;

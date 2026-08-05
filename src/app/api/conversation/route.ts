@@ -19,7 +19,7 @@ import {
   failureResponse,
   providerFailure,
 } from "@/server/http/providerFailure";
-import { MAX_CORRECTION_JSON_BYTES } from "@/lib/constants";
+import { MAX_CORRECTION_JSON_BYTES, PROVIDER_SINGLE_CALL_TIMEOUT_MS } from "@/lib/constants";
 import { logger } from "@/lib/logger";
 
 export const runtime = "nodejs";
@@ -94,18 +94,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const reply = await provider.converse(history, {
-      scenario,
-      targetLang,
-      sourceLang,
-      level,
-      challenge,
-      conversationStage,
-      maxTurns,
-      followUpDepth,
-      promptStyle,
-      speakerFamiliarity,
-    });
+    const reply = await provider.converse(
+      history,
+      {
+        scenario,
+        targetLang,
+        sourceLang,
+        level,
+        challenge,
+        conversationStage,
+        maxTurns,
+        followUpDepth,
+        promptStyle,
+        speakerFamiliarity,
+      },
+      { signal: req.signal, timeoutMs: PROVIDER_SINGLE_CALL_TIMEOUT_MS },
+    );
     return NextResponse.json({ reply });
   } catch (err: unknown) {
     if (isHttpError(err)) {

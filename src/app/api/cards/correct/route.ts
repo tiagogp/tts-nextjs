@@ -18,7 +18,7 @@ import {
   failureResponse,
   providerFailure,
 } from "@/server/http/providerFailure";
-import { MAX_CORRECTION_JSON_BYTES } from "@/lib/constants";
+import { MAX_CORRECTION_JSON_BYTES, PROVIDER_SINGLE_CALL_TIMEOUT_MS } from "@/lib/constants";
 import { logger } from "@/lib/logger";
 import { MAX_CORRECTION_TEXT_CHARS } from "@/app/api/cards/_lib/constants";
 import { cardProviderKind } from "@/app/api/cards/_lib/utils";
@@ -61,7 +61,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const events = await provider.correct(text, { sourceLang, targetLang, level, context });
+    const events = await provider.correct(
+      text,
+      { sourceLang, targetLang, level, context },
+      { signal: req.signal, timeoutMs: PROVIDER_SINGLE_CALL_TIMEOUT_MS },
+    );
     // No errors found is a success — the learner's text was already native-correct.
     return NextResponse.json({ events, count: events.length });
   } catch (err: unknown) {

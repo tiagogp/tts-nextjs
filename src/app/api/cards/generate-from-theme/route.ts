@@ -7,7 +7,7 @@ import { getDefaultProvider } from "@/server/aiSettings";
 import { isHttpError, isProviderKind, readJsonObject, safeString } from "@/server/http/validation";
 import { classifyProviderFailure, failureResponse, providerFailure } from "@/server/http/providerFailure";
 import { languageLabel } from "@/features/settings/languages";
-import { MAX_CORRECTION_JSON_BYTES } from "@/lib/constants";
+import { MAX_CORRECTION_JSON_BYTES, PROVIDER_SINGLE_CALL_TIMEOUT_MS } from "@/lib/constants";
 import { logger } from "@/lib/logger";
 import { MAX_THEME_CHARS } from "@/app/api/cards/_lib/constants";
 import {
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
       targetLang,
       sourceLang,
       level: safeString(obj.level, "A1", 8),
-    }, { signal: req.signal, timeoutMs: 60_000 });
+    }, { signal: req.signal, timeoutMs: PROVIDER_SINGLE_CALL_TIMEOUT_MS });
     phrases = uniquePhrases(linesFromText(text), count);
   } catch (error) {
     // Fail loudly: surface a real provider error instead of silently returning

@@ -24,6 +24,7 @@ import type { EnglishLevel } from "@/features/discover/types";
 import { buildWritingGradePrompt } from "@/features/levelup/prompts";
 import { validateWritingGrade } from "@/features/levelup/testModel";
 import { cardProviderKind } from "@/app/api/cards/_lib/utils";
+import { PROVIDER_SINGLE_CALL_TIMEOUT_MS } from "@/lib/constants";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -70,7 +71,10 @@ export async function POST(req: NextRequest) {
     }
 
     const prompt = buildWritingGradePrompt({ targetLevel, targetLang, nativeLang, writingPrompt, text });
-    const raw = await provider.complete(prompt);
+    const raw = await provider.complete(prompt, {
+      signal: req.signal,
+      timeoutMs: PROVIDER_SINGLE_CALL_TIMEOUT_MS,
+    });
 
     let parsed: unknown;
     try {

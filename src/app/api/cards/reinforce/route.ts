@@ -28,11 +28,15 @@ import {
   failureResponse,
   providerFailure,
 } from "@/server/http/providerFailure";
-import { MAX_CARD_JSON_BYTES } from "@/lib/constants";
+import { MAX_CARD_JSON_BYTES, PROVIDER_CALL_TIMEOUT_MS } from "@/lib/constants";
 import { logger } from "@/lib/logger";
+import { combinedSignal } from "@/app/api/cards/_lib/utils";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
+
+// Below maxDuration so a self-imposed deadline fires before the platform kills the request.
+const REINFORCE_GENERATION_TIMEOUT_MS = 240_000;
 
 const MAX_SOURCES = 50;
 
@@ -81,23 +85,31 @@ export async function POST(req: NextRequest) {
       ...candidates.map((candidate): CardSource => ({ kind: "phrase", candidate })),
       ...errors.map((event): CardSource => ({ kind: "error", event })),
     ];
-    const { cards, failures } = await generateDeck(provider, sources);
+    const scope = combinedSignal(req.signal, REINFORCE_GENERATION_TIMEOUT_MS);
+    try {
+      const { cards, failures } = await generateDeck(provider, sources, {
+        signal: scope.signal,
+        timeoutMs: PROVIDER_CALL_TIMEOUT_MS,
+      });
 
-    if (cards.length === 0) {
-      return failureResponse(
-        failures > 0
-          ? providerFailure(
-              "provider_failed",
-              "A IA não conseguiu gerar cards de reforço desta vez — pode ser instabilidade na conexão. Tente de novo em instantes.",
-            )
-          : providerFailure(
-              "empty_result",
-              "Nenhuma variação nova desta vez. Continue estudando e tente de novo mais tarde.",
-            ),
-      );
+      if (cards.length === 0) {
+        return failureResponse(
+          failures > 0
+            ? providerFailure(
+                "provider_failed",
+                "A IA não conseguiu gerar cards de reforço desta vez — pode ser instabilidade na conexão. Tente de novo em instantes.",
+              )
+            : providerFailure(
+                "empty_result",
+                "Nenhuma variação nova desta vez. Continue estudando e tente de novo mais tarde.",
+              ),
+        );
+      }
+
+      return NextResponse.json({ cards, count: cards.length, failed: failures });
+    } finally {
+      scope.dispose();
     }
-
-    return NextResponse.json({ cards, count: cards.length, failed: failures });
   } catch (err: unknown) {
     if (isHttpError(err)) {
       return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });

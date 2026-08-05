@@ -13,7 +13,7 @@ import {
   failureResponse,
   providerFailure,
 } from "@/server/http/providerFailure";
-import { MAX_CORRECTION_JSON_BYTES } from "@/lib/constants";
+import { MAX_CORRECTION_JSON_BYTES, PROVIDER_SINGLE_CALL_TIMEOUT_MS } from "@/lib/constants";
 import { logger } from "@/lib/logger";
 import { MAX_CORRECTION_TEXT_CHARS } from "@/app/api/cards/_lib/constants";
 import { cardProviderKind } from "@/app/api/cards/_lib/utils";
@@ -56,7 +56,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const review = await provider.review(text, { sourceLang, targetLang, level, context });
+    const review = await provider.review(
+      text,
+      { sourceLang, targetLang, level, context },
+      { signal: req.signal, timeoutMs: PROVIDER_SINGLE_CALL_TIMEOUT_MS },
+    );
     return NextResponse.json({
       ...review,
       count: review.errors.length + review.refinements.length,

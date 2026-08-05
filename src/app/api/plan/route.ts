@@ -22,6 +22,7 @@ import { logger } from "@/lib/logger";
 import { extractJsonObject, validatePlanResult } from "@/features/plan/contract";
 import { buildPlanPrompt } from "@/features/plan/prompts";
 import { METHOD_OBJECTIVES, type MethodObjective } from "@/features/settings/learningProfile";
+import { PROVIDER_SINGLE_CALL_TIMEOUT_MS } from "@/lib/constants";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -73,7 +74,10 @@ export async function POST(req: NextRequest) {
     }
 
     const prompt = buildPlanPrompt({ goal, currentLevel, targetLevel, availabilityMinutes, planDays, language, objective });
-    const raw = await provider.complete(prompt);
+    const raw = await provider.complete(prompt, {
+      signal: req.signal,
+      timeoutMs: PROVIDER_SINGLE_CALL_TIMEOUT_MS,
+    });
 
     let parsed: unknown;
     try {
