@@ -500,6 +500,9 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "Saved locally — enter a new key to replace it": { pt: "Salva localmente — digite uma nova chave para substituir" },
   "Paste your API key": { pt: "Cole sua chave de API" },
   "Save key": { pt: "Salvar chave" },
+  "Connecting a cloud AI sends your practice content — phrases, mistakes, conversations — to {provider}. Continue?": {
+    pt: "Conectar uma IA na nuvem envia seu conteúdo de prática — frases, erros, conversas — para {provider}. Continuar?",
+  },
   "Test connection": { pt: "Testar conexão" },
   "Remove the saved {provider} credential?": { pt: "Remover a credencial salva de {provider}?" },
   "Remove key": { pt: "Remover chave" },

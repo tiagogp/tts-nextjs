@@ -56,6 +56,26 @@ function statusTone(provider: ProviderStatus): StatusTone {
   return "default";
 }
 
+// A single confirmation the first time any cloud key is saved, not a per-call modal —
+// once acknowledged (or once any cloud provider is already configured), never ask again.
+const CLOUD_CONSENT_KEY = "phraseloop:cloud-consent-ack";
+
+function hasCloudConsent(): boolean {
+  try {
+    return typeof localStorage !== "undefined" && localStorage.getItem(CLOUD_CONSENT_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function recordCloudConsent(): void {
+  try {
+    if (typeof localStorage !== "undefined") localStorage.setItem(CLOUD_CONSENT_KEY, "1");
+  } catch {
+    // best-effort only; worst case the confirmation is shown again next time
+  }
+}
+
 function subscribeToProfile(onChange: () => void): () => void {
   if (typeof window === "undefined") return () => {};
   window.addEventListener("phraseloop:profile-updated", onChange);
@@ -303,15 +323,31 @@ export default function SettingsScreen({
           <Button
             variant="secondary"
             disabled={!settings.writable || !key.trim() || busy !== null}
-            onClick={() =>
-              run(`save-${kind}`, async () => {
+            onClick={() => {
+              const anyCloudConfigured = settings.providers.some(
+                (item) => item.kind !== "ollama" && item.configured,
+              );
+              if (!anyCloudConfigured && !hasCloudConsent()) {
+                if (
+                  !window.confirm(
+                    t(
+                      "Connecting a cloud AI sends your practice content — phrases, mistakes, conversations — to {provider}. Continue?",
+                      { provider: provider?.label ?? kind },
+                    ),
+                  )
+                ) {
+                  return;
+                }
+                recordCloudConsent();
+              }
+              void run(`save-${kind}`, async () => {
                 const result = await save({
                   [keyField]: key,
                 } as AiSettingsPatch);
                 if (result.ok) setKey("");
                 return result;
-              })
-            }
+              });
+            }}
           >
             {t("Save key")}
           </Button>
