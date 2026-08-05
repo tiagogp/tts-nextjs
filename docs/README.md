@@ -349,7 +349,7 @@ Ordered by priority for the older build-out. For the active product sequence, us
 
 - [ ] Browser extension for clipboard/selection mining
 - [ ] Mobile card review sync
-- [x] Multi-language UI — interface localized to 11 languages via `src/i18n/messages.ts` (learning content is English-teaching by design)
+- [x] Multi-language UI — interface localized to Portuguese via `src/i18n/messages.ts` (reduced from an earlier 11-language scope; learning content is English-teaching by design)
 - [x] Sentence-level audio playback in Discover transcript review
 - [ ] AnkiWeb sync (for users not on AnkiConnect)
 - [x] Structured logging (replace scattered `console.error()` with pino)

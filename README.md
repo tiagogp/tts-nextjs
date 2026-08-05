@@ -1,8 +1,10 @@
 # PhraseLoop
 
-PhraseLoop helps Brazilian A2-B1 self-study learners who already use real English and find Anki/card creation too manual turn that material and their mistakes into audio review cards on Mac — carrying the source's own audio when the source has any.
+PhraseLoop is a local-first app for Brazilian A2-B1 self-study learners who want to turn real English and their own mistakes into daily production practice: listen, save one useful phrase, produce English without help, get feedback, retry, and review at the right time.
 
 PhraseLoop starts with one Home-led loop: hear a curated clip, save one useful phrase, review it immediately, correct your own sentence, and turn that correction into tomorrow's practice. Speech generation, Anki export, Speak, custom plans, and AI provider setup are still built in, but they stay behind the core loop rather than defining the first experience.
+
+It is research-aligned, not a substitute for a class, teacher, or immersion, and not yet a proven learning-effectiveness claim. Launch validation is tracking retention, transfer, retry resolution, and unaided production rather than streaks or volume.
 
 ## Why PhraseLoop (vs. Anki or a chatbot)
 
@@ -171,7 +173,8 @@ on first use and audio decoding uses in-process WebAssembly. YouTube import requ
 
 > Product direction, active priorities, and research-backed roadmap live in
 > [docs/product.md](docs/product.md). Architecture and shipped feature history live in
-> [docs/README.md](docs/README.md).
+> [docs/README.md](docs/README.md). Validation materials live in
+> [docs/validation-log.md](docs/validation-log.md) and [docs/learning-rubrics.md](docs/learning-rubrics.md).
 
 ## Advanced AI Providers
 
