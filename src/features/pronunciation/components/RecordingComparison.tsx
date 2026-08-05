@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useT } from "@/i18n/I18nProvider";
 import { getAudioRecording } from "@/lib/store/repository";
 import type { PronunciationAttempt } from "@/lib/pronunciation/types";
 
@@ -48,6 +49,7 @@ function seconds(durationMs?: number): string {
  * without claiming that the later sample caused the score change.
  */
 export function RecordingComparison({ attempts }: { attempts: PronunciationAttempt[] }) {
+  const { t } = useT();
   const pair = comparableAttemptPair(attempts);
   const earlier = pair?.earlier;
   const later = pair?.later;
@@ -106,6 +108,9 @@ export function RecordingComparison({ attempts }: { attempts: PronunciationAttem
       </div>
       <p className="text-ink-muted">
         Change: overall {signedDelta(later.scores.overall - earlier.scores.overall)} · completeness {signedDelta(later.scores.completeness - earlier.scores.completeness)} · rhythm {signedDelta(later.scores.fluency - earlier.scores.fluency)} · duration {seconds(earlier.durationMs)} → {seconds(later.durationMs)}
+      </p>
+      <p className="text-ink-muted">
+        {t("This comparison uses transcript alignment and recording length only; it is a longitudinal practice signal, not a phonemic pronunciation diagnosis.")}
       </p>
     </div>
   );

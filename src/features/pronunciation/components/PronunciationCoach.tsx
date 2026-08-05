@@ -280,6 +280,11 @@ export function PronunciationCoach({
           {!compact && (
             <p className="mt-0.5 text-sm text-ink-soft">{t("Listen, repeat, then check what was heard.")}</p>
           )}
+          {!compact && (
+            <p className="mt-0.5 text-xs text-ink-muted">
+              {t("This is a transcript-alignment signal, not phonemic pronunciation scoring.")}
+            </p>
+          )}
         </div>
         {assessment && (
           <span className={cn("text-sm font-semibold tabular-nums", scoreTone(assessment.scores.overall))}>
@@ -365,6 +370,9 @@ export function PronunciationCoach({
           {assessment.transcript && (
             <p className="text-xs text-ink-muted">{t("Heard: {transcript}", { transcript: assessment.transcript })}</p>
           )}
+          <p className="text-xs text-ink-muted">
+            {t("Use the score to compare your own attempts over time; it does not judge individual sounds or accent.")}
+          </p>
           <ul className="space-y-1 text-xs text-ink-soft">
             {assessment.tips.map((tip) => (
               <li key={tip}>{tip}</li>

@@ -223,13 +223,13 @@ function scorePronunciation(attempts: PronunciationAttempt[], now: number): Skil
   const olderScore = older.length ? avg(older.map((attempt) => attempt.scores.overall)) : recentScore;
   return {
     key: "pronunciation",
-    label: "Pronunciation",
+    label: "Pronunciation signal",
     score: clampScore(recentScore),
     samples: recent.length,
     delta: Math.round(recentScore - olderScore),
     detail: recent.length
-      ? `${recent.length} pronunciation attempt${recent.length === 1 ? "" : "s"} in 30 days`
-      : "Record in lessons or Study to add pronunciation evidence",
+      ? `${recent.length} transcript-alignment attempt${recent.length === 1 ? "" : "s"} in 30 days; not phonemic scoring`
+      : "Record in lessons or Study to add a coarse pronunciation signal",
   };
 }
 
@@ -456,7 +456,7 @@ function nextFocus(skills: SkillSignal[]): string {
   if (weakest.key === "recall") return "Review due cards until recent recall is above 80%.";
   if (weakest.key === "grammar") return "Correct one short answer and turn recurring mistakes into drills.";
   if (weakest.key === "naturalness") return "Ask for native-sounding rewrites and save useful phrasing.";
-  if (weakest.key === "pronunciation") return "Record three short repetitions and work from word-level feedback.";
+  if (weakest.key === "pronunciation") return "Record three short repetitions and compare the transcript-alignment signal over time.";
   if (weakest.key === "fluency") return "Hold one longer conversation and aim for six learner turns.";
   return "Keep the habit alive with one small session today.";
 }

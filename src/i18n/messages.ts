@@ -3677,6 +3677,9 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "Recommended": { pt: "Recomendado" },
   "Pronunciation": { pt: "Pronúncia" },
   "Listen, repeat, then check what was heard.": { pt: "Ouça, repita e depois veja o que foi reconhecido." },
+  "This is a transcript-alignment signal, not phonemic pronunciation scoring.": {
+    pt: "Isto é um sinal de alinhamento com a transcrição, não uma avaliação fonêmica de pronúncia.",
+  },
   "Playing...": { pt: "Tocando..." },
   "Checking...": { pt: "Verificando..." },
   "Try again": { pt: "Tentar de novo" },
@@ -3696,6 +3699,12 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "Completeness": { pt: "Completude" },
   "Rhythm": { pt: "Ritmo" },
   "Heard: {transcript}": { pt: "Reconhecido: {transcript}" },
+  "Use the score to compare your own attempts over time; it does not judge individual sounds or accent.": {
+    pt: "Use a pontuação para comparar suas próprias tentativas ao longo do tempo; ela não julga sons individuais nem sotaque.",
+  },
+  "This comparison uses transcript alignment and recording length only; it is a longitudinal practice signal, not a phonemic pronunciation diagnosis.": {
+    pt: "Esta comparação usa apenas alinhamento com a transcrição e duração da gravação; é um sinal longitudinal de prática, não um diagnóstico fonêmico de pronúncia.",
+  },
   "Couldn't play the reference audio.": { pt: "Não foi possível tocar o áudio de referência." },
   "Couldn't make out any speech in that clip.": { pt: "Não foi possível reconhecer fala nesse áudio." },
   "Pronunciation assessment failed.": { pt: "A avaliação de pronúncia falhou." },
