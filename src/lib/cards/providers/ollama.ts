@@ -16,7 +16,7 @@
 import OpenAI from "openai";
 import { getOllamaBaseUrl, getOllamaModel } from "@/server/aiSettings";
 import { ollamaRoot } from "@/server/integrations/ollama";
-import { extractJson, requestOptions } from "./util";
+import { extractJson, logUsage, requestOptions } from "./util";
 import type {
   CardGenerationProvider,
   ConversationTurn,
@@ -130,6 +130,7 @@ export class OllamaProvider implements CardGenerationProvider {
       },
       requestOptions(options),
     );
+    logUsage(this.kind, "json", res.usage);
     const choice = res.choices[0];
     if (choice?.finish_reason === "length") {
       throw new Error(
@@ -236,6 +237,7 @@ export class OllamaProvider implements CardGenerationProvider {
       },
       requestOptions(options),
     );
+    logUsage(this.kind, "converse", res.usage);
     const choice = res.choices[0];
     const text = choice?.message?.content;
     if (!text)
@@ -256,6 +258,7 @@ export class OllamaProvider implements CardGenerationProvider {
       },
       requestOptions(options),
     );
+    logUsage(this.kind, "complete", res.usage);
     const choice = res.choices[0];
     if (choice?.finish_reason === "length") {
       throw new Error(

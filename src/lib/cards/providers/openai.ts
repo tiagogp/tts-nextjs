@@ -43,7 +43,7 @@ import {
   normalizeMined,
   type JsonRequest,
 } from "../shared";
-import { requestOptions } from "./util";
+import { logUsage, requestOptions } from "./util";
 
 export interface OpenAIProviderOptions {
   apiKey?: string;
@@ -101,6 +101,7 @@ export class OpenAIProvider implements CardGenerationProvider {
       },
       requestOptions(options),
     );
+    logUsage(this.kind, "json", res.usage);
     const choice = res.choices[0];
     // A length finish means the JSON was cut off; a refusal means no usable content. Both
     // surface as a clean per-card drop upstream rather than a malformed-parse crash.
@@ -205,6 +206,7 @@ export class OpenAIProvider implements CardGenerationProvider {
       },
       requestOptions(options),
     );
+    logUsage(this.kind, "converse", res.usage);
     const choice = res.choices[0];
     if (choice?.message?.refusal) {
       throw new Error(
@@ -230,6 +232,7 @@ export class OpenAIProvider implements CardGenerationProvider {
       },
       requestOptions(options),
     );
+    logUsage(this.kind, "complete", res.usage);
     const choice = res.choices[0];
     if (choice?.message?.refusal) {
       throw new Error(`OpenAI declined the request: ${choice.message.refusal}`);
@@ -257,6 +260,7 @@ export class OpenAIProvider implements CardGenerationProvider {
       },
       requestOptions(options),
     );
+    logUsage(this.kind, "embed", res.usage);
     return res.data.map((d) => d.embedding);
   }
 }

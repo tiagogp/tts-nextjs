@@ -47,7 +47,7 @@ import {
   normalizeMined,
   type JsonRequest,
 } from "../shared";
-import { requestOptions } from "./util";
+import { logUsage, requestOptions } from "./util";
 
 export interface ClaudeProviderOptions {
   apiKey?: string;
@@ -105,6 +105,7 @@ export class ClaudeProvider implements CardGenerationProvider {
       requestOptions(options),
     );
     const res = await stream.finalMessage();
+    logUsage(this.kind, "json", res.usage);
     // Handle the API's terminal states before touching content, so a refusal or a truncated
     // response becomes a clean per-card drop upstream instead of an unhandled crash.
     if (res.stop_reason === "refusal") {
@@ -210,6 +211,7 @@ export class ClaudeProvider implements CardGenerationProvider {
       requestOptions(options),
     );
     const res = await stream.finalMessage();
+    logUsage(this.kind, "converse", res.usage);
     if (res.stop_reason === "refusal") {
       throw new Error(
         "Claude declined to continue the conversation (safety refusal).",
@@ -238,6 +240,7 @@ export class ClaudeProvider implements CardGenerationProvider {
       requestOptions(options),
     );
     const res = await stream.finalMessage();
+    logUsage(this.kind, "complete", res.usage);
     if (res.stop_reason === "refusal") {
       throw new Error("Claude declined the request (safety refusal).");
     }

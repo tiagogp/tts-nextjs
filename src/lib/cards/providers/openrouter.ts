@@ -48,7 +48,7 @@ import {
   normalizeMined,
   type JsonRequest,
 } from "../shared";
-import { extractJson, requestOptions } from "./util";
+import { extractJson, logUsage, requestOptions } from "./util";
 
 export interface OpenRouterProviderOptions {
   apiKey?: string;
@@ -115,6 +115,7 @@ export class OpenRouterProvider implements CardGenerationProvider {
       },
       requestOptions(options),
     );
+    logUsage(this.kind, "json", res.usage);
     const choice = res.choices[0];
     if (choice?.finish_reason === "length") {
       throw new Error(
@@ -217,6 +218,7 @@ export class OpenRouterProvider implements CardGenerationProvider {
       },
       requestOptions(options),
     );
+    logUsage(this.kind, "converse", res.usage);
     const choice = res.choices[0];
     const text = choice?.message?.content;
     if (!text)
@@ -238,6 +240,7 @@ export class OpenRouterProvider implements CardGenerationProvider {
       },
       requestOptions(options),
     );
+    logUsage(this.kind, "complete", res.usage);
     const choice = res.choices[0];
     if (choice?.finish_reason === "length") {
       throw new Error(
