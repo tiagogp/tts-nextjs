@@ -8,11 +8,12 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { isStoreAvailable } from "@/lib/store/db";
 import {
   getCards,
+  getConversations,
   getCounts,
   getDueCards,
   getErrorEvents,
 } from "@/lib/store/repository";
-import { getActivityLog } from "@/lib/store/activityLog";
+import { getActivityLog, type ActivityEvent } from "@/lib/store/activityLog";
 import {
   returnMomentFor,
   type ReturnMoment,
@@ -32,6 +33,10 @@ import {
 import { getLearningProfile } from "@/features/settings/learningProfile";
 import { TodayPlanCard } from "@/features/plan/components/TodayPlanCard";
 import type { TaskItem } from "@/features/plan/schema";
+import {
+  buildTransferActivities,
+  type TransferActivity,
+} from "@/features/study/transfer";
 
 interface HojeHomeProps {
   onStudy: () => void;
@@ -51,6 +56,18 @@ interface NextAction {
   detail: string;
   cta: string;
   onClick: () => void;
+}
+
+interface WeeklyTransferSuggestion {
+  prompt: string;
+}
+
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
+function isProductionAttemptEvent(
+  event: ActivityEvent,
+): event is ActivityEvent<"production_attempt"> {
+  return event.type === "production_attempt";
 }
 
 /**
@@ -82,6 +99,8 @@ export function HojeHome({
   );
   const [returnMoment, setReturnMoment] = useState<ReturnMoment | null>(null);
   const [methodPlan, setMethodPlan] = useState<MethodPlan | null>(null);
+  const [weeklyTransfer, setWeeklyTransfer] =
+    useState<WeeklyTransferSuggestion | null>(null);
   // Start "loading" on both server and client so the first render matches during
   // hydration. isStoreAvailable() is false during SSR and true in the browser, so
   // seeding this from it directly rendered the loaded state on the server and the
@@ -91,15 +110,21 @@ export function HojeHome({
 
   const load = useCallback(async () => {
     try {
-      const [nextCounts, cards, errors, activity, dueCards] = await Promise.all(
-        [
-          getCounts(),
-          getCards(),
-          getErrorEvents(),
-          getActivityLog(),
-          getDueCards(),
-        ],
-      );
+      const [
+        nextCounts,
+        cards,
+        errors,
+        conversations,
+        activity,
+        dueCards,
+      ] = await Promise.all([
+        getCounts(),
+        getCards(),
+        getErrorEvents(),
+        getConversations(),
+        getActivityLog(),
+        getDueCards(),
+      ]);
       setCounts({ ...nextCounts, errors: errors.length });
       setReturnMoment(
         returnMomentFor({
@@ -124,6 +149,12 @@ export function HojeHome({
           getLearningProfile(),
           completedLessonIdsFromCardIds(cards.map((card) => card.id)),
         ) ?? firstLesson(),
+      );
+      setWeeklyTransfer(
+        weeklyTransferSuggestion(
+          buildTransferActivities(cards, errors, conversations, 1)[0],
+          activity,
+        ),
       );
     } finally {
       setCountsLoaded(true);
@@ -225,8 +256,55 @@ export function HojeHome({
             nextRoute={methodPlan?.action.route}
           />
         )}
+        {!loading && weeklyTransfer && (
+          <WeeklyTransferCard suggestion={weeklyTransfer} onStart={onStudy} />
+        )}
       </div>
     </div>
+  );
+}
+
+function weeklyTransferSuggestion(
+  activity: TransferActivity | undefined,
+  events: Awaited<ReturnType<typeof getActivityLog>>,
+): WeeklyTransferSuggestion | null {
+  if (!activity) return null;
+  const cutoff = Date.now() - WEEK_MS;
+  const hasRecentTransfer = events.some((event) => {
+    if (event.ts < cutoff || !isProductionAttemptEvent(event)) return false;
+    return Boolean(event.payload.transferKind);
+  });
+  if (hasRecentTransfer) return null;
+  return { prompt: activity.prompt };
+}
+
+function WeeklyTransferCard({
+  suggestion,
+  onStart,
+}: {
+  suggestion: WeeklyTransferSuggestion;
+  onStart: () => void;
+}) {
+  const { t } = useT();
+  return (
+    <Card className="border-accent/25 bg-accent/5 p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs font-medium uppercase tracking-[0.7px] text-accent">
+            {t("Weekly transfer")}
+          </p>
+          <p className="mt-1 text-sm font-semibold text-ink">
+            {t("Use one saved phrase somewhere new")}
+          </p>
+          <p className="mt-1 max-w-xl text-sm leading-relaxed text-ink-soft">
+            {t(suggestion.prompt)}
+          </p>
+        </div>
+        <Button variant="secondary" size="sm" onClick={onStart}>
+          {t("Practice transfer")}
+        </Button>
+      </div>
+    </Card>
   );
 }
 
