@@ -252,6 +252,8 @@ export default function StudyTab({
           }}
         />
 
+        {showAdaptiveDepth && <ProgressOverview compact />}
+
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
           <p className="text-xs text-ink-muted">
             {t("{cards} phrases saved · {due} due now", { cards: counts.cards, due: counts.due })}

@@ -9,16 +9,24 @@ import { computeProgressSnapshot, type StoredProgressAssessment } from "./model"
 const NOW = Date.UTC(2026, 5, 28);
 const DAY = 86_400_000;
 
-function review(daysAgo: number, grade: Grade = Rating.Good): ReviewRecord {
+function review(daysAgo: number, grade: Grade = Rating.Good, overrides: Partial<ReviewRecord> = {}): ReviewRecord {
   return {
-    id: `r-${daysAgo}-${grade}`,
+    id: `r-${daysAgo}-${grade}-${overrides.cardId ?? ""}`,
     cardId: `c-${daysAgo}`,
     grade,
     reviewedAt: NOW - daysAgo * DAY,
     previousState: State.Review,
     scheduledDays: 2,
     concept: "articles",
+    ...overrides,
   };
+}
+
+function unaidedProductionPair(cardId: string, daysAgo: number, grade: Grade = Rating.Good): ReviewRecord[] {
+  return [
+    review(daysAgo + 8, Rating.Good, { cardId, direction: "production" }),
+    review(daysAgo, grade, { cardId, direction: "production", scaffoldLevel: 0, hintUsed: false }),
+  ];
 }
 
 function error(daysAgo: number, id = `e-${daysAgo}`): ErrorEvent {
@@ -87,7 +95,12 @@ describe("computeProgressSnapshot", () => {
   it("turns local learning signals into achieved milestones", () => {
     const snapshot = computeProgressSnapshot({
       profileLevel: "A2",
-      reviews: Array.from({ length: 15 }, (_, index) => review(index, Rating.Good)),
+      reviews: [
+        ...Array.from({ length: 15 }, (_, index) => review(index, Rating.Good)),
+        ...unaidedProductionPair("p1", 1),
+        ...unaidedProductionPair("p2", 2),
+        ...unaidedProductionPair("p3", 3),
+      ],
       errorEvents: [error(24), error(20), error(3, "recent")],
       conversations: [conversation(2, 14), conversation(4, 12)],
       pronunciationAttempts: [attempt(1, 86), attempt(3, 82), attempt(6, 84)],
@@ -99,6 +112,47 @@ describe("computeProgressSnapshot", () => {
     expect(snapshot.estimatedBand).not.toBe("A2 baseline");
     expect(snapshot.milestones.find((item) => item.id === "recall-control")?.achieved).toBe(true);
     expect(snapshot.milestones.find((item) => item.id === "clear-pronunciation")?.achieved).toBe(true);
+  });
+
+  it("labels pronunciation as a coarse transcript-alignment signal", () => {
+    const snapshot = computeProgressSnapshot({
+      profileLevel: "B1",
+      reviews: [],
+      errorEvents: [],
+      conversations: [],
+      pronunciationAttempts: [attempt(1, 74)],
+      assessments: [],
+      now: NOW,
+    });
+
+    expect(snapshot.skills.find((skill) => skill.key === "pronunciation")).toMatchObject({
+      label: "Pronunciation signal",
+      detail: "1 transcript-alignment attempt in 30 days; not phonemic scoring",
+    });
+  });
+
+  it("keeps D+30 unaided production separate from ordinary review activity", () => {
+    const snapshot = computeProgressSnapshot({
+      profileLevel: "B1",
+      reviews: [
+        review(1, Rating.Good),
+        review(2, Rating.Good),
+        ...unaidedProductionPair("p1", 1, Rating.Easy),
+        ...unaidedProductionPair("p2", 2, Rating.Again),
+      ],
+      errorEvents: [],
+      conversations: [],
+      pronunciationAttempts: [],
+      assessments: [],
+      now: NOW,
+    });
+
+    expect(snapshot.unaidedProduction).toMatchObject({
+      attempts: 2,
+      correct: 1,
+      cards: 2,
+      rate: 0.5,
+    });
   });
 
   it("schedules the next check-in from the latest saved check-in", () => {

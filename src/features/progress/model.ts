@@ -4,6 +4,7 @@ import type { PronunciationAttempt } from "@/lib/pronunciation/types";
 import type { Conversation, ReviewRecord } from "@/lib/store/repository";
 import type { ListeningAttempt, ProductionAttempt, RetryOutcome } from "@/lib/performance/types";
 import { transferMetrics } from "@/features/study/transfer";
+import { computeUnaidedProduction, type UnaidedProductionStats } from "@/features/activation/outcomeMetrics";
 import { Rating } from "@/lib/srs/fsrs";
 
 const DAY_MS = 86_400_000;
@@ -41,6 +42,7 @@ export interface ProgressSnapshot {
   averageScore: number;
   confidence: "low" | "medium" | "high";
   skills: SkillSignal[];
+  unaidedProduction: UnaidedProductionStats;
   strengths: string[];
   nextFocus: string;
   milestones: ProgressMilestone[];
@@ -399,11 +401,14 @@ function estimatedBand(profileLevel: EnglishLevel, averageScore: number, confide
   return profileLevel;
 }
 
-function buildMilestones(skills: SkillSignal[], averageScore: number): ProgressMilestone[] {
+function buildMilestones(
+  skills: SkillSignal[],
+  averageScore: number,
+  unaidedProduction: UnaidedProductionStats,
+): ProgressMilestone[] {
   const byKey = new Map(skills.map((skill) => [skill.key, skill]));
   const fluency = byKey.get("fluency");
   const pronunciation = byKey.get("pronunciation");
-  const recall = byKey.get("recall");
   const consistency = byKey.get("consistency");
   const grammar = byKey.get("grammar");
   return [
@@ -422,8 +427,11 @@ function buildMilestones(skills: SkillSignal[], averageScore: number): ProgressM
     {
       id: "recall-control",
       label: "Recall control",
-      detail: "Pass at least 80% of recent card reviews.",
-      achieved: (recall?.samples ?? 0) >= 10 && (recall?.score ?? 0) >= 80,
+      detail: "Pass at least 80% of D+30 unaided production attempts.",
+      achieved:
+        unaidedProduction.attempts >= 3 &&
+        unaidedProduction.rate !== null &&
+        unaidedProduction.rate >= 0.8,
     },
     {
       id: "speaking-stamina",
@@ -433,8 +441,8 @@ function buildMilestones(skills: SkillSignal[], averageScore: number): ProgressM
     },
     {
       id: "clear-pronunciation",
-      label: "Clear pronunciation",
-      detail: "Reach 80% average on recent pronunciation attempts.",
+      label: "Clearer pronunciation signal",
+      detail: "Reach 80% average on transcript-alignment attempts.",
       achieved: (pronunciation?.samples ?? 0) >= 3 && (pronunciation?.score ?? 0) >= 80,
     },
     {
@@ -472,6 +480,7 @@ function nextCheckpoint(assessments: StoredProgressAssessment[], now: number): {
 
 export function computeProgressSnapshot(input: ProgressInput): ProgressSnapshot {
   const now = input.now ?? Date.now();
+  const unaidedProduction = computeUnaidedProduction(input.reviews, now);
   const skills = [
     scoreRecall(input.reviews, now),
     scoreGrammar(input.errorEvents, now),
@@ -503,9 +512,10 @@ export function computeProgressSnapshot(input: ProgressInput): ProgressSnapshot 
     averageScore,
     confidence,
     skills,
+    unaidedProduction,
     strengths,
     nextFocus: nextFocus(skills),
-    milestones: buildMilestones(skills, averageScore),
+    milestones: buildMilestones(skills, averageScore, unaidedProduction),
     nextCheckpointAt: checkpoint.at,
     checkpointDue: checkpoint.due,
     confidenceIndicators: confidenceIndicators(input, now),

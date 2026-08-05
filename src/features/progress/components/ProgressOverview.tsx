@@ -235,6 +235,10 @@ function ProgressSnapshotCard({
       </div>
 
       {!compact && (
+        <UnaidedProductionCard snapshot={snapshot} />
+      )}
+
+      {!compact && (
         <div className="mt-4 rounded-lg border border-line bg-surface px-3 py-2.5">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
@@ -289,6 +293,41 @@ function ProgressSnapshotCard({
         </div>
       )}
     </Card>
+  );
+}
+
+function UnaidedProductionCard({ snapshot }: { snapshot: ProgressSnapshot }) {
+  const stats = snapshot.unaidedProduction;
+  const measured = stats.rate !== null;
+  const rate = measured ? Math.round((stats.rate ?? 0) * 100) : null;
+  const status = !measured ? "not enough data" : (stats.rate ?? 0) >= 0.8 ? "on track" : "needs work";
+  const statusClass = !measured
+    ? "border-line text-ink-muted"
+    : (stats.rate ?? 0) >= 0.8
+      ? "border-emerald-500/30 text-emerald-700 dark:text-emerald-300"
+      : "border-amber-500/40 text-amber-700 dark:text-amber-300";
+  return (
+    <div className="mt-4 rounded-lg border border-accent/25 bg-accent/5 px-3 py-2.5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs uppercase tracking-[0.7px] text-accent">D+30 unaided production</p>
+          <p className="mt-1 text-sm text-ink-soft">
+            {measured
+              ? `${stats.correct}/${stats.attempts} production reviews passed after at least ${stats.minRestDays} days away.`
+              : `Not enough evidence yet: PhraseLoop needs production cards reviewed unaided after at least ${stats.minRestDays} days away.`}
+          </p>
+        </div>
+        <div className="space-y-1 text-right">
+          <p className="text-2xl font-semibold tabular-nums text-ink">{rate === null ? "—" : `${rate}%`}</p>
+          <p className={cn("inline-flex rounded border px-1.5 py-0.5 text-[11px] uppercase tracking-[0.5px]", statusClass)}>
+            {status}
+          </p>
+          <p className="text-xs uppercase tracking-[0.7px] text-ink-muted">
+            {stats.cards} card{stats.cards === 1 ? "" : "s"}
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }
 
