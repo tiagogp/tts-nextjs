@@ -8,8 +8,10 @@ import {
 } from "./lessonFlow";
 
 describe("lessonFlow", () => {
+  const legacyFallbackLesson = LESSONS.find((lesson) => !lesson.dialogue?.length && !lesson.comprehension?.length) ?? LESSONS[0];
+
   it("keeps Learn small and uses only learned language for the listening check", () => {
-    const lesson = LESSONS[0];
+    const lesson = legacyFallbackLesson;
     const learned = learningPhrases(lesson);
     const challenge = buildListeningChallenge(lesson, LESSONS);
 
@@ -25,8 +27,8 @@ describe("lessonFlow", () => {
       expect(learningPhrases(lesson)).toHaveLength(5);
       const challenge = buildListeningChallenge(lesson, LESSONS, { seed: 0 });
 
-      // Roadmap lessons carry an authored dialogue and comprehension set; the
-      // original curriculum still generates its check from the learned phrases.
+      // Authored lessons carry dialogue and comprehension; remaining legacy
+      // fallback lessons still generate their check from the learned phrases.
       // Both must produce a solvable challenge with one unambiguous answer.
       const authored = Boolean(lesson.dialogue?.length && lesson.comprehension?.length);
       const clips = challenge.audio.map((audio) => audio.clip);
@@ -59,12 +61,11 @@ describe("lessonFlow", () => {
   });
 
   it("flags a synthesized check so it is never reported as listening comprehension", () => {
-    // Every bundled lesson currently lacks authored dialogue, so every check is synthesized.
-    expect(buildListeningChallenge(LESSONS[0], LESSONS, { seed: 0 }).synthesized).toBe(true);
+    expect(buildListeningChallenge(legacyFallbackLesson, LESSONS, { seed: 0 }).synthesized).toBe(true);
   });
 
   it("moves the answer position between attempts", () => {
-    const lesson = LESSONS[0];
+    const lesson = legacyFallbackLesson;
     const positionsFor = (seed: number) =>
       buildListeningChallenge(lesson, LESSONS, { seed }).questions.map((question) =>
         question.options.indexOf(question.answer),

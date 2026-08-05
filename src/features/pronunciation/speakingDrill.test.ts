@@ -33,8 +33,6 @@ describe("buildSpeakingDrill", () => {
     expect(steps[0].phrase.clip).toBeTruthy();
   });
 
-  // Only 64 of the 100 lessons author a productionPrompt, and the first lesson a learner
-  // ever sees is not one of them — so the fallback is the common path on day 1, not an edge.
   it("uses the lesson's production prompt when it has one", () => {
     const authored = LESSONS.find((item) => Boolean(item.productionPrompt));
     const steps = buildSpeakingDrill({ lesson: authored! });
@@ -42,11 +40,11 @@ describe("buildSpeakingDrill", () => {
     expect(steps.at(-1)!.prompt).toBe(authored!.productionPrompt);
   });
 
-  it("still gives the first lesson a speaking prompt, which authors none", () => {
-    const greetings = lessonById("a1-greetings") ?? firstLesson();
-    const steps = buildSpeakingDrill({ lesson: greetings });
+  it("still gives a fallback speaking prompt to lessons that author none", () => {
+    const fallbackLesson = LESSONS.find((item) => !item.productionPrompt) ?? lessonById("a2-shopping") ?? firstLesson();
+    const steps = buildSpeakingDrill({ lesson: fallbackLesson });
 
-    expect(greetings.productionPrompt).toBeUndefined();
+    expect(fallbackLesson.productionPrompt).toBeUndefined();
     expect(steps.at(-1)!.kind).toBe("speak");
     expect(steps.at(-1)!.prompt).toBeTruthy();
   });

@@ -61,7 +61,69 @@
         "note": "Use it when you expect to meet again.",
         "clip": "/learn/audio/a1-greetings/08.wav"
       }
-    ]
+    ],
+    "objective": "Greet someone, answer politely, and close a short first meeting.",
+    "pronunciationFocus": "Keep greetings short and clear: HEL-lo, good MOR-ning, see you SOON.",
+    "dialogue": [
+      {
+        "speaker": "Ana",
+        "en": "Good morning.",
+        "pt": "Bom dia.",
+        "clip": "/learn/audio/a1-greetings/d01.wav"
+      },
+      {
+        "speaker": "Ben",
+        "en": "Hello. How are you?",
+        "pt": "Olá. Como você está?",
+        "clip": "/learn/audio/a1-greetings/d02.wav"
+      },
+      {
+        "speaker": "Ana",
+        "en": "I'm fine, thanks. Nice to meet you.",
+        "pt": "Estou bem, obrigado. Prazer em conhecer você.",
+        "clip": "/learn/audio/a1-greetings/d03.wav"
+      },
+      {
+        "speaker": "Ben",
+        "en": "Nice to meet you too. See you soon.",
+        "pt": "Prazer em conhecer você também. Até logo.",
+        "clip": "/learn/audio/a1-greetings/d04.wav"
+      }
+    ],
+    "comprehension": [
+      {
+        "kind": "mainIdea",
+        "prompt": "What is happening in the conversation?",
+        "options": [
+          "Two people greet each other",
+          "Two people order lunch",
+          "Two people ask for directions"
+        ],
+        "answer": "Two people greet each other"
+      },
+      {
+        "kind": "detail",
+        "prompt": "How does Ana say she feels?",
+        "options": [
+          "She is fine",
+          "She is tired",
+          "She is late"
+        ],
+        "answer": "She is fine"
+      },
+      {
+        "kind": "sequence",
+        "prompt": "What do they say at the end?",
+        "options": [
+          "See you soon",
+          "Good afternoon",
+          "I need help"
+        ],
+        "answer": "See you soon"
+      }
+    ],
+    "productionPrompt": "Greet someone for the first time, say how you are, and say goodbye.",
+    "retryHint": "Use one greeting, one answer to How are you?, and one goodbye phrase."
   },
   {
     "id": "a1-introductions",
@@ -125,7 +187,75 @@
         "note": "Use this is to introduce a person.",
         "clip": "/learn/audio/a1-introductions/08.wav"
       }
-    ]
+    ],
+    "objective": "Introduce yourself, ask a name, and say where you are from.",
+    "pronunciationFocus": "Link short introductions smoothly: my NAME is, I'm FROM, I LIVE in.",
+    "dialogue": [
+      {
+        "speaker": "Ana",
+        "en": "Hello. My name is Ana.",
+        "pt": "Olá. Meu nome é Ana.",
+        "clip": "/learn/audio/a1-introductions/d01.wav"
+      },
+      {
+        "speaker": "Pedro",
+        "en": "I'm Pedro. Nice to meet you.",
+        "pt": "Eu sou Pedro. Prazer em conhecer você.",
+        "clip": "/learn/audio/a1-introductions/d02.wav"
+      },
+      {
+        "speaker": "Ana",
+        "en": "Where are you from?",
+        "pt": "De onde você é?",
+        "clip": "/learn/audio/a1-introductions/d03.wav"
+      },
+      {
+        "speaker": "Pedro",
+        "en": "I'm from Brazil. I live in Cuiaba.",
+        "pt": "Eu sou do Brasil. Eu moro em Cuiabá.",
+        "clip": "/learn/audio/a1-introductions/d04.wav"
+      },
+      {
+        "speaker": "Ana",
+        "en": "This is my friend.",
+        "pt": "Este é meu amigo.",
+        "clip": "/learn/audio/a1-introductions/d05.wav"
+      }
+    ],
+    "comprehension": [
+      {
+        "kind": "mainIdea",
+        "prompt": "What are Ana and Pedro doing?",
+        "options": [
+          "Introducing themselves",
+          "Buying tickets",
+          "Talking about dinner"
+        ],
+        "answer": "Introducing themselves"
+      },
+      {
+        "kind": "detail",
+        "prompt": "Where is Pedro from?",
+        "options": [
+          "Brazil",
+          "Canada",
+          "Portugal"
+        ],
+        "answer": "Brazil"
+      },
+      {
+        "kind": "sequence",
+        "prompt": "What does Ana ask after Pedro says his name?",
+        "options": [
+          "Where are you from?",
+          "Can you help me?",
+          "How much is this?"
+        ],
+        "answer": "Where are you from?"
+      }
+    ],
+    "productionPrompt": "Introduce yourself. Say your name, where you are from, and where you live.",
+    "retryHint": "Use My name is or I'm, then add I'm from and I live in."
   },
   {
     "id": "a1-places",
@@ -189,7 +319,75 @@
         "note": "Use not after is.",
         "clip": "/learn/audio/a1-places/08.wav"
       }
-    ]
+    ],
+    "objective": "Describe a simple place and ask if it is near or far.",
+    "pronunciationFocus": "Stress place words clearly: HERE, THERE, NEAR the CEN-ter, not FAR.",
+    "dialogue": [
+      {
+        "speaker": "Lia",
+        "en": "I'm from a small city.",
+        "pt": "Eu sou de uma cidade pequena.",
+        "clip": "/learn/audio/a1-places/d01.wav"
+      },
+      {
+        "speaker": "Tom",
+        "en": "Is it far?",
+        "pt": "É longe?",
+        "clip": "/learn/audio/a1-places/d02.wav"
+      },
+      {
+        "speaker": "Lia",
+        "en": "It is not far. I live near the center.",
+        "pt": "Não é longe. Eu moro perto do centro.",
+        "clip": "/learn/audio/a1-places/d03.wav"
+      },
+      {
+        "speaker": "Tom",
+        "en": "Is the school here?",
+        "pt": "A escola fica aqui?",
+        "clip": "/learn/audio/a1-places/d04.wav"
+      },
+      {
+        "speaker": "Lia",
+        "en": "The school is here, and the hotel is there.",
+        "pt": "A escola fica aqui, e o hotel fica ali.",
+        "clip": "/learn/audio/a1-places/d05.wav"
+      }
+    ],
+    "comprehension": [
+      {
+        "kind": "mainIdea",
+        "prompt": "What are they talking about?",
+        "options": [
+          "Places in a city",
+          "Family names",
+          "Food at a cafe"
+        ],
+        "answer": "Places in a city"
+      },
+      {
+        "kind": "detail",
+        "prompt": "Where does Lia live?",
+        "options": [
+          "Near the center",
+          "Across from the park",
+          "Inside a hotel"
+        ],
+        "answer": "Near the center"
+      },
+      {
+        "kind": "sequence",
+        "prompt": "What does Tom ask first?",
+        "options": [
+          "Is it far?",
+          "What is your name?",
+          "Do you take cards?"
+        ],
+        "answer": "Is it far?"
+      }
+    ],
+    "productionPrompt": "Describe your city or neighborhood. Say one place that is here, there, near, or far.",
+    "retryHint": "Use one full sentence with is and one location word like here, there, near, or far."
   },
   {
     "id": "a1-verb-be",
@@ -253,7 +451,75 @@
         "note": "Put are before you to ask.",
         "clip": "/learn/audio/a1-verb-be/08.wav"
       }
-    ]
+    ],
+    "objective": "Use am, are, and is in simple statements and questions.",
+    "pronunciationFocus": "Do not drop the be verb: I AM ready, you ARE right, it IS easy.",
+    "dialogue": [
+      {
+        "speaker": "Mia",
+        "en": "Are you okay?",
+        "pt": "Você está bem?",
+        "clip": "/learn/audio/a1-verb-be/d01.wav"
+      },
+      {
+        "speaker": "Leo",
+        "en": "Yes, I am ready.",
+        "pt": "Sim, estou pronto.",
+        "clip": "/learn/audio/a1-verb-be/d02.wav"
+      },
+      {
+        "speaker": "Mia",
+        "en": "Good. We are here.",
+        "pt": "Ótimo. Estamos aqui.",
+        "clip": "/learn/audio/a1-verb-be/d03.wav"
+      },
+      {
+        "speaker": "Leo",
+        "en": "The task is easy.",
+        "pt": "A tarefa é fácil.",
+        "clip": "/learn/audio/a1-verb-be/d04.wav"
+      },
+      {
+        "speaker": "Mia",
+        "en": "You are right.",
+        "pt": "Você está certo.",
+        "clip": "/learn/audio/a1-verb-be/d05.wav"
+      }
+    ],
+    "comprehension": [
+      {
+        "kind": "mainIdea",
+        "prompt": "What grammar pattern do you hear?",
+        "options": [
+          "Simple sentences with be",
+          "Past stories with went",
+          "Food requests"
+        ],
+        "answer": "Simple sentences with be"
+      },
+      {
+        "kind": "detail",
+        "prompt": "How does Leo feel?",
+        "options": [
+          "Ready",
+          "Busy",
+          "Lost"
+        ],
+        "answer": "Ready"
+      },
+      {
+        "kind": "sequence",
+        "prompt": "What does Mia say after Leo is ready?",
+        "options": [
+          "We are here",
+          "I don't eat meat",
+          "Turn left"
+        ],
+        "answer": "We are here"
+      }
+    ],
+    "productionPrompt": "Say three short sentences about yourself or people near you using am, are, and is.",
+    "retryHint": "Check that every sentence has a subject and the right be form: I am, you/we/they are, he/she/it is."
   },
   {
     "id": "a1-jobs",
@@ -317,7 +583,75 @@
         "note": "Use for before the reason.",
         "clip": "/learn/audio/a1-jobs/08.wav"
       }
-    ]
+    ],
+    "objective": "Talk about work or study and ask for simple help.",
+    "pronunciationFocus": "Keep request rhythm polite: CAN you HELP me? THANK you for your HELP.",
+    "dialogue": [
+      {
+        "speaker": "Nina",
+        "en": "I work in a store.",
+        "pt": "Eu trabalho em uma loja.",
+        "clip": "/learn/audio/a1-jobs/d01.wav"
+      },
+      {
+        "speaker": "Rafa",
+        "en": "I'm a student. I study English.",
+        "pt": "Eu sou estudante. Eu estudo inglês.",
+        "clip": "/learn/audio/a1-jobs/d02.wav"
+      },
+      {
+        "speaker": "Nina",
+        "en": "My job is simple, but I need help today.",
+        "pt": "Meu trabalho é simples, mas eu preciso de ajuda hoje.",
+        "clip": "/learn/audio/a1-jobs/d03.wav"
+      },
+      {
+        "speaker": "Rafa",
+        "en": "Can you help me too?",
+        "pt": "Você pode me ajudar também?",
+        "clip": "/learn/audio/a1-jobs/d04.wav"
+      },
+      {
+        "speaker": "Nina",
+        "en": "Yes. Thank you for your help.",
+        "pt": "Sim. Obrigado pela sua ajuda.",
+        "clip": "/learn/audio/a1-jobs/d05.wav"
+      }
+    ],
+    "comprehension": [
+      {
+        "kind": "mainIdea",
+        "prompt": "What are they talking about?",
+        "options": [
+          "Work, study, and help",
+          "Family and children",
+          "Directions to a bank"
+        ],
+        "answer": "Work, study, and help"
+      },
+      {
+        "kind": "detail",
+        "prompt": "Where does Nina work?",
+        "options": [
+          "In a store",
+          "In a hospital",
+          "At a hotel"
+        ],
+        "answer": "In a store"
+      },
+      {
+        "kind": "sequence",
+        "prompt": "What does Nina need today?",
+        "options": [
+          "Help",
+          "Two tickets",
+          "A receipt"
+        ],
+        "answer": "Help"
+      }
+    ],
+    "productionPrompt": "Say what you do or study, then ask someone for help politely.",
+    "retryHint": "Use I work in or I study, then ask Can you help me?"
   },
   {
     "id": "a1-family",
@@ -381,7 +715,75 @@
         "note": "Use don't have for the negative.",
         "clip": "/learn/audio/a1-family/08.wav"
       }
-    ]
+    ],
+    "objective": "Introduce family members and say what people have or do not have.",
+    "pronunciationFocus": "Make plural endings audible: sister, brothers, parents, children.",
+    "dialogue": [
+      {
+        "speaker": "Ana",
+        "en": "This is my mother, and this is my father.",
+        "pt": "Esta é minha mãe, e este é meu pai.",
+        "clip": "/learn/audio/a1-family/d01.wav"
+      },
+      {
+        "speaker": "Ben",
+        "en": "Do you have brothers or sisters?",
+        "pt": "Você tem irmãos ou irmãs?",
+        "clip": "/learn/audio/a1-family/d02.wav"
+      },
+      {
+        "speaker": "Ana",
+        "en": "I have one sister and two brothers.",
+        "pt": "Eu tenho uma irmã e dois irmãos.",
+        "clip": "/learn/audio/a1-family/d03.wav"
+      },
+      {
+        "speaker": "Ben",
+        "en": "My family is small.",
+        "pt": "Minha família é pequena.",
+        "clip": "/learn/audio/a1-family/d04.wav"
+      },
+      {
+        "speaker": "Ana",
+        "en": "My parents live here.",
+        "pt": "Meus pais moram aqui.",
+        "clip": "/learn/audio/a1-family/d05.wav"
+      }
+    ],
+    "comprehension": [
+      {
+        "kind": "mainIdea",
+        "prompt": "What is the conversation about?",
+        "options": [
+          "Family",
+          "Daily routine",
+          "Shopping"
+        ],
+        "answer": "Family"
+      },
+      {
+        "kind": "detail",
+        "prompt": "How many brothers does Ana have?",
+        "options": [
+          "Two",
+          "One",
+          "Three"
+        ],
+        "answer": "Two"
+      },
+      {
+        "kind": "sequence",
+        "prompt": "Who does Ana introduce first?",
+        "options": [
+          "Her mother and father",
+          "Her teacher",
+          "Her children"
+        ],
+        "answer": "Her mother and father"
+      }
+    ],
+    "productionPrompt": "Introduce two people in your family or a friend's family, then say one thing about them.",
+    "retryHint": "Use This is my, I have, or My family is. Watch singular and plural words."
   },
   {
     "id": "a1-numbers-age",
@@ -445,7 +847,75 @@
         "note": "A simple time sentence.",
         "clip": "/learn/audio/a1-numbers-age/08.wav"
       }
-    ]
+    ],
+    "objective": "Use numbers for age, prices, time, and simple quantities.",
+    "pronunciationFocus": "Separate number words clearly: TWEN-ty, THREE questions, at NINE.",
+    "dialogue": [
+      {
+        "speaker": "Clara",
+        "en": "How old are you?",
+        "pt": "Quantos anos você tem?",
+        "clip": "/learn/audio/a1-numbers-age/d01.wav"
+      },
+      {
+        "speaker": "Joao",
+        "en": "I am twenty years old.",
+        "pt": "Eu tenho vinte anos.",
+        "clip": "/learn/audio/a1-numbers-age/d02.wav"
+      },
+      {
+        "speaker": "Clara",
+        "en": "The class starts at nine and finishes at five.",
+        "pt": "A aula começa às nove e termina às cinco.",
+        "clip": "/learn/audio/a1-numbers-age/d03.wav"
+      },
+      {
+        "speaker": "Joao",
+        "en": "Great. I need two tickets.",
+        "pt": "Ótimo. Eu preciso de dois ingressos.",
+        "clip": "/learn/audio/a1-numbers-age/d04.wav"
+      },
+      {
+        "speaker": "Clara",
+        "en": "It costs ten dollars.",
+        "pt": "Custa dez dólares.",
+        "clip": "/learn/audio/a1-numbers-age/d05.wav"
+      }
+    ],
+    "comprehension": [
+      {
+        "kind": "mainIdea",
+        "prompt": "What information do they exchange?",
+        "options": [
+          "Age, time, and price",
+          "Family names",
+          "Restaurant orders"
+        ],
+        "answer": "Age, time, and price"
+      },
+      {
+        "kind": "detail",
+        "prompt": "What time does the class start?",
+        "options": [
+          "At nine",
+          "At five",
+          "At ten"
+        ],
+        "answer": "At nine"
+      },
+      {
+        "kind": "sequence",
+        "prompt": "What does Joao need?",
+        "options": [
+          "Two tickets",
+          "Three questions",
+          "A phone number"
+        ],
+        "answer": "Two tickets"
+      }
+    ],
+    "productionPrompt": "Say your age or a simple price, then add one time or quantity.",
+    "retryHint": "For age, use I am ... years old. For time, use at before the number."
   },
   {
     "id": "a1-routine",
@@ -509,7 +979,75 @@
         "note": "Use at for bedtime.",
         "clip": "/learn/audio/a1-routine/08.wav"
       }
-    ]
+    ],
+    "objective": "Describe a simple daily routine with present-tense actions.",
+    "pronunciationFocus": "Keep routine chunks smooth: wake UP, go TO work, AT night.",
+    "dialogue": [
+      {
+        "speaker": "Mara",
+        "en": "I wake up early and drink coffee.",
+        "pt": "Eu acordo cedo e tomo café.",
+        "clip": "/learn/audio/a1-routine/d01.wav"
+      },
+      {
+        "speaker": "Leo",
+        "en": "Do you go to work in the morning?",
+        "pt": "Você vai para o trabalho de manhã?",
+        "clip": "/learn/audio/a1-routine/d02.wav"
+      },
+      {
+        "speaker": "Mara",
+        "en": "Yes. I eat lunch at noon.",
+        "pt": "Sim. Eu almoço ao meio-dia.",
+        "clip": "/learn/audio/a1-routine/d03.wav"
+      },
+      {
+        "speaker": "Leo",
+        "en": "I study at night.",
+        "pt": "Eu estudo à noite.",
+        "clip": "/learn/audio/a1-routine/d04.wav"
+      },
+      {
+        "speaker": "Mara",
+        "en": "I have dinner with my family and sleep at eleven.",
+        "pt": "Eu janto com minha família e durmo às onze.",
+        "clip": "/learn/audio/a1-routine/d05.wav"
+      }
+    ],
+    "comprehension": [
+      {
+        "kind": "mainIdea",
+        "prompt": "What is Mara describing?",
+        "options": [
+          "Her daily routine",
+          "A shopping trip",
+          "A doctor's visit"
+        ],
+        "answer": "Her daily routine"
+      },
+      {
+        "kind": "detail",
+        "prompt": "When does Mara eat lunch?",
+        "options": [
+          "At noon",
+          "At night",
+          "At five"
+        ],
+        "answer": "At noon"
+      },
+      {
+        "kind": "sequence",
+        "prompt": "What does Leo do at night?",
+        "options": [
+          "He studies",
+          "He sleeps",
+          "He drinks coffee"
+        ],
+        "answer": "He studies"
+      }
+    ],
+    "productionPrompt": "Describe three things you do on a normal day.",
+    "retryHint": "Start each sentence with I and use one time phrase like early, at noon, at night, or at eleven."
   },
   {
     "id": "a2-food",
@@ -573,7 +1111,81 @@
         "note": "Was is the past of is.",
         "clip": "/learn/audio/a2-food/08.wav"
       }
-    ]
+    ],
+    "objective": "Order food politely, explain a preference, and ask to pay.",
+    "pronunciationFocus": "Soften polite requests: I'd LIKE a coffee, PLEASE; could we PAY, PLEASE?",
+    "dialogue": [
+      {
+        "speaker": "Server",
+        "en": "Good afternoon. Can I help you?",
+        "pt": "Boa tarde. Posso ajudar?",
+        "clip": "/learn/audio/a2-food/d01.wav"
+      },
+      {
+        "speaker": "Ana",
+        "en": "Can I have the menu? I'd like a coffee, please.",
+        "pt": "Posso ver o cardápio? Eu gostaria de um café, por favor.",
+        "clip": "/learn/audio/a2-food/d02.wav"
+      },
+      {
+        "speaker": "Server",
+        "en": "Of course. The soup is very good, but it is spicy.",
+        "pt": "Claro. A sopa está muito boa, mas é apimentada.",
+        "clip": "/learn/audio/a2-food/d03.wav"
+      },
+      {
+        "speaker": "Ana",
+        "en": "I don't eat meat. Is this spicy too?",
+        "pt": "Eu não como carne. Isso também é apimentado?",
+        "clip": "/learn/audio/a2-food/d04.wav"
+      },
+      {
+        "speaker": "Server",
+        "en": "No, it isn't. Everything is delicious today.",
+        "pt": "Não, não é. Tudo está delicioso hoje.",
+        "clip": "/learn/audio/a2-food/d05.wav"
+      },
+      {
+        "speaker": "Ana",
+        "en": "Great. Could we pay, please?",
+        "pt": "Ótimo. Podemos pagar, por favor?",
+        "clip": "/learn/audio/a2-food/d06.wav"
+      }
+    ],
+    "comprehension": [
+      {
+        "kind": "mainIdea",
+        "prompt": "Where does the conversation happen?",
+        "options": [
+          "In a restaurant",
+          "At a train station",
+          "In a classroom"
+        ],
+        "answer": "In a restaurant"
+      },
+      {
+        "kind": "detail",
+        "prompt": "What does Ana order?",
+        "options": [
+          "A coffee",
+          "Two tickets",
+          "A blue shirt"
+        ],
+        "answer": "A coffee"
+      },
+      {
+        "kind": "detail",
+        "prompt": "What food preference does Ana mention?",
+        "options": [
+          "She doesn't eat meat",
+          "She doesn't drink coffee",
+          "She wants extra salt"
+        ],
+        "answer": "She doesn't eat meat"
+      }
+    ],
+    "productionPrompt": "Order something in a cafe or restaurant. Ask one question about the food and ask to pay.",
+    "retryHint": "Use I'd like or Can I have, then add please. Use don't for one food preference if needed."
   },
   {
     "id": "a2-directions",
@@ -637,7 +1249,81 @@
         "note": "Use about for an approximate time.",
         "clip": "/learn/audio/a2-directions/08.wav"
       }
-    ]
+    ],
+    "objective": "Ask for directions and understand a short route with landmarks.",
+    "pronunciationFocus": "Stress route commands: go STRAIGHT, turn LEFT, turn RIGHT, next TO.",
+    "dialogue": [
+      {
+        "speaker": "Visitor",
+        "en": "Excuse me, where is the bank?",
+        "pt": "Com licença, onde fica o banco?",
+        "clip": "/learn/audio/a2-directions/d01.wav"
+      },
+      {
+        "speaker": "Local",
+        "en": "Go straight ahead, then turn left at the corner.",
+        "pt": "Siga em frente, depois vire à esquerda na esquina.",
+        "clip": "/learn/audio/a2-directions/d02.wav"
+      },
+      {
+        "speaker": "Visitor",
+        "en": "Is it next to the pharmacy?",
+        "pt": "Fica ao lado da farmácia?",
+        "clip": "/learn/audio/a2-directions/d03.wav"
+      },
+      {
+        "speaker": "Local",
+        "en": "Yes. It's across from the park, after the supermarket.",
+        "pt": "Sim. Fica em frente ao parque, depois do supermercado.",
+        "clip": "/learn/audio/a2-directions/d04.wav"
+      },
+      {
+        "speaker": "Visitor",
+        "en": "How long does it take?",
+        "pt": "Quanto tempo leva?",
+        "clip": "/learn/audio/a2-directions/d05.wav"
+      },
+      {
+        "speaker": "Local",
+        "en": "It takes about ten minutes.",
+        "pt": "Leva cerca de dez minutos.",
+        "clip": "/learn/audio/a2-directions/d06.wav"
+      }
+    ],
+    "comprehension": [
+      {
+        "kind": "mainIdea",
+        "prompt": "What does the visitor need?",
+        "options": [
+          "Directions to the bank",
+          "A restaurant bill",
+          "A doctor's appointment"
+        ],
+        "answer": "Directions to the bank"
+      },
+      {
+        "kind": "detail",
+        "prompt": "Where should the visitor turn left?",
+        "options": [
+          "At the corner",
+          "After the park",
+          "Inside the pharmacy"
+        ],
+        "answer": "At the corner"
+      },
+      {
+        "kind": "detail",
+        "prompt": "How long does the walk take?",
+        "options": [
+          "About ten minutes",
+          "About two hours",
+          "About five days"
+        ],
+        "answer": "About ten minutes"
+      }
+    ],
+    "productionPrompt": "Ask where a place is, then give a short route using two landmarks.",
+    "retryHint": "Use Excuse me, where is...? and include two route words like straight, left, right, next to, or across from."
   },
   {
     "id": "a2-shopping",
@@ -701,7 +1387,81 @@
         "note": "Say yes, you will buy it.",
         "clip": "/learn/audio/a2-shopping/08.wav"
       }
-    ]
+    ],
+    "objective": "Ask about price and size in a shop, then buy or say no politely.",
+    "pronunciationFocus": "Stress the question word: HOW much is this? Do you TAKE cards?",
+    "dialogue": [
+      {
+        "speaker": "Clerk",
+        "en": "Hello. Are you looking for something?",
+        "pt": "Olá. Está procurando alguma coisa?",
+        "clip": "/learn/audio/a2-shopping/d01.wav"
+      },
+      {
+        "speaker": "Rafa",
+        "en": "I'm just looking, thanks. How much is this?",
+        "pt": "Só estou olhando, obrigado. Quanto custa isto?",
+        "clip": "/learn/audio/a2-shopping/d02.wav"
+      },
+      {
+        "speaker": "Clerk",
+        "en": "It's ninety reais. We have it in blue too.",
+        "pt": "Custa noventa reais. Temos em azul também.",
+        "clip": "/learn/audio/a2-shopping/d03.wav"
+      },
+      {
+        "speaker": "Rafa",
+        "en": "Can I try it on? It's a bit too expensive.",
+        "pt": "Posso experimentar? Está um pouco caro demais.",
+        "clip": "/learn/audio/a2-shopping/d04.wav"
+      },
+      {
+        "speaker": "Clerk",
+        "en": "Of course. The fitting room is on the left.",
+        "pt": "Claro. O provador fica à esquerda.",
+        "clip": "/learn/audio/a2-shopping/d05.wav"
+      },
+      {
+        "speaker": "Rafa",
+        "en": "I'll take it. Do you take cards?",
+        "pt": "Vou levar. Vocês aceitam cartão?",
+        "clip": "/learn/audio/a2-shopping/d06.wav"
+      }
+    ],
+    "comprehension": [
+      {
+        "kind": "mainIdea",
+        "prompt": "Where is this conversation?",
+        "options": [
+          "In a clothes shop",
+          "In a hospital",
+          "On a train"
+        ],
+        "answer": "In a clothes shop"
+      },
+      {
+        "kind": "detail",
+        "prompt": "What does Rafa say about the price?",
+        "options": [
+          "It's a bit too expensive",
+          "It's very cheap",
+          "It's free"
+        ],
+        "answer": "It's a bit too expensive"
+      },
+      {
+        "kind": "detail",
+        "prompt": "How does Rafa want to pay?",
+        "options": [
+          "With a card",
+          "With a check",
+          "In coins"
+        ],
+        "answer": "With a card"
+      }
+    ],
+    "productionPrompt": "Ask the price of something in a shop, ask for another color, and say if you will buy it.",
+    "retryHint": "Use How much is this? for the price and Do you have this in ...? for the color."
   },
   {
     "id": "a2-past",
@@ -765,7 +1525,81 @@
         "note": "Regular past for everyday actions.",
         "clip": "/learn/audio/a2-past/08.wav"
       }
-    ]
+    ],
+    "objective": "Tell a short story about last weekend using the simple past.",
+    "pronunciationFocus": "Keep -ed endings short: rained sounds like RAIND, stayed like STAYD, relaxed like RELAXT.",
+    "dialogue": [
+      {
+        "speaker": "Carol",
+        "en": "Did you go out last night?",
+        "pt": "Você saiu ontem à noite?",
+        "clip": "/learn/audio/a2-past/d01.wav"
+      },
+      {
+        "speaker": "Leo",
+        "en": "No, I stayed home and relaxed. And you?",
+        "pt": "Não, fiquei em casa e relaxei. E você?",
+        "clip": "/learn/audio/a2-past/d02.wav"
+      },
+      {
+        "speaker": "Carol",
+        "en": "I went to the beach last weekend. We had a great time.",
+        "pt": "Eu fui à praia no fim de semana passado. Nós nos divertimos muito.",
+        "clip": "/learn/audio/a2-past/d03.wav"
+      },
+      {
+        "speaker": "Leo",
+        "en": "Nice. Did it rain there?",
+        "pt": "Legal. Choveu lá?",
+        "clip": "/learn/audio/a2-past/d04.wav"
+      },
+      {
+        "speaker": "Carol",
+        "en": "It rained on Sunday, but we ate at a nice restaurant.",
+        "pt": "Choveu no domingo, mas comemos em um restaurante legal.",
+        "clip": "/learn/audio/a2-past/d05.wav"
+      },
+      {
+        "speaker": "Leo",
+        "en": "I saw an old friend on Saturday, but I didn't do much.",
+        "pt": "Eu vi um amigo antigo no sábado, mas não fiz muita coisa.",
+        "clip": "/learn/audio/a2-past/d06.wav"
+      }
+    ],
+    "comprehension": [
+      {
+        "kind": "mainIdea",
+        "prompt": "What are Carol and Leo talking about?",
+        "options": [
+          "Their last weekend",
+          "Their next holiday",
+          "Their favorite food"
+        ],
+        "answer": "Their last weekend"
+      },
+      {
+        "kind": "detail",
+        "prompt": "Where did Carol go?",
+        "options": [
+          "To the beach",
+          "To the airport",
+          "To the hospital"
+        ],
+        "answer": "To the beach"
+      },
+      {
+        "kind": "detail",
+        "prompt": "What did Leo do last night?",
+        "options": [
+          "He stayed home",
+          "He went dancing",
+          "He worked late"
+        ],
+        "answer": "He stayed home"
+      }
+    ],
+    "productionPrompt": "Tell what you did last weekend in three or four past-tense sentences.",
+    "retryHint": "Use went, had, saw, and ate for irregular verbs, and didn't plus the base verb for what you did not do."
   },
   {
     "id": "a2-plans",
@@ -829,7 +1663,81 @@
         "note": "Close the plan with a day.",
         "clip": "/learn/audio/a2-plans/08.wav"
       }
-    ]
+    ],
+    "objective": "Invite someone, suggest a time, and confirm or refuse a plan politely.",
+    "pronunciationFocus": "Let invitations rise at the end: would you like to grab a COFFEE? How about SATURDAY?",
+    "dialogue": [
+      {
+        "speaker": "Nina",
+        "en": "Would you like to grab a coffee? How about Saturday afternoon?",
+        "pt": "Você gostaria de tomar um café? Que tal sábado à tarde?",
+        "clip": "/learn/audio/a2-plans/d01.wav"
+      },
+      {
+        "speaker": "Paulo",
+        "en": "I'd love to, but I'm busy on Saturday.",
+        "pt": "Eu adoraria, mas estou ocupado no sábado.",
+        "clip": "/learn/audio/a2-plans/d02.wav"
+      },
+      {
+        "speaker": "Nina",
+        "en": "Then how about Friday? Let's meet at seven.",
+        "pt": "Então que tal sexta? Vamos nos encontrar às sete.",
+        "clip": "/learn/audio/a2-plans/d03.wav"
+      },
+      {
+        "speaker": "Paulo",
+        "en": "Can we make it a bit later? I finish work at seven.",
+        "pt": "Podemos deixar um pouco mais tarde? Eu saio do trabalho às sete.",
+        "clip": "/learn/audio/a2-plans/d04.wav"
+      },
+      {
+        "speaker": "Nina",
+        "en": "Eight works too. Do you want to join us? My sister is coming.",
+        "pt": "Oito também funciona. Você quer vir com a gente? Minha irmã vem junto.",
+        "clip": "/learn/audio/a2-plans/d05.wav"
+      },
+      {
+        "speaker": "Paulo",
+        "en": "Sounds good to me. See you on Friday, then.",
+        "pt": "Por mim, parece ótimo. Então, até sexta.",
+        "clip": "/learn/audio/a2-plans/d06.wav"
+      }
+    ],
+    "comprehension": [
+      {
+        "kind": "mainIdea",
+        "prompt": "What are Nina and Paulo doing?",
+        "options": [
+          "Making a plan to meet",
+          "Ordering dinner",
+          "Buying train tickets"
+        ],
+        "answer": "Making a plan to meet"
+      },
+      {
+        "kind": "detail",
+        "prompt": "Why does Paulo say no to Saturday?",
+        "options": [
+          "He is busy",
+          "He doesn't like coffee",
+          "He is traveling"
+        ],
+        "answer": "He is busy"
+      },
+      {
+        "kind": "detail",
+        "prompt": "What time do they finally meet?",
+        "options": [
+          "At eight",
+          "At six",
+          "At noon"
+        ],
+        "answer": "At eight"
+      }
+    ],
+    "productionPrompt": "Invite a friend to do something, suggest a day and a time, and confirm the plan.",
+    "retryHint": "Use Would you like to ...? to invite, How about ...? to suggest, and See you on ... to confirm."
   },
   {
     "id": "a2-travel",
@@ -893,7 +1801,81 @@
         "note": "Ask about duration.",
         "clip": "/learn/audio/a2-travel/08.wav"
       }
-    ]
+    ],
+    "objective": "Buy a ticket, check the right transport, and ask how long a trip takes.",
+    "pronunciationFocus": "Link the question chunks: HOW do I GET to...? WHAT time does the NEXT train leave?",
+    "dialogue": [
+      {
+        "speaker": "Duda",
+        "en": "Excuse me, how do I get to the airport?",
+        "pt": "Com licença, como eu chego ao aeroporto?",
+        "clip": "/learn/audio/a2-travel/d01.wav"
+      },
+      {
+        "speaker": "Agent",
+        "en": "The train is fastest. Do you want a one-way ticket?",
+        "pt": "O trem é o mais rápido. Você quer uma passagem só de ida?",
+        "clip": "/learn/audio/a2-travel/d02.wav"
+      },
+      {
+        "speaker": "Duda",
+        "en": "A one-way ticket, please. What time does the next train leave?",
+        "pt": "Uma passagem só de ida, por favor. Que horas sai o próximo trem?",
+        "clip": "/learn/audio/a2-travel/d03.wav"
+      },
+      {
+        "speaker": "Agent",
+        "en": "At ten past four, from platform three.",
+        "pt": "Às quatro e dez, da plataforma três.",
+        "clip": "/learn/audio/a2-travel/d04.wav"
+      },
+      {
+        "speaker": "Duda",
+        "en": "How long does the trip take?",
+        "pt": "Quanto tempo dura a viagem?",
+        "clip": "/learn/audio/a2-travel/d05.wav"
+      },
+      {
+        "speaker": "Agent",
+        "en": "About forty minutes. Don't worry, the airport is the last stop.",
+        "pt": "Cerca de quarenta minutos. Não se preocupe, o aeroporto é a última parada.",
+        "clip": "/learn/audio/a2-travel/d06.wav"
+      }
+    ],
+    "comprehension": [
+      {
+        "kind": "mainIdea",
+        "prompt": "What does Duda want to do?",
+        "options": [
+          "Get to the airport",
+          "Book a hotel room",
+          "Return a shirt"
+        ],
+        "answer": "Get to the airport"
+      },
+      {
+        "kind": "detail",
+        "prompt": "Which platform does the train leave from?",
+        "options": [
+          "Platform three",
+          "Platform one",
+          "Platform nine"
+        ],
+        "answer": "Platform three"
+      },
+      {
+        "kind": "detail",
+        "prompt": "How long is the trip?",
+        "options": [
+          "About forty minutes",
+          "About four hours",
+          "About ten days"
+        ],
+        "answer": "About forty minutes"
+      }
+    ],
+    "productionPrompt": "Ask how to get to a place, buy one ticket, and ask how long the trip takes.",
+    "retryHint": "Use How do I get to ...?, then What time does the next ... leave? and How long does the trip take?"
   },
   {
     "id": "a2-health",
@@ -957,7 +1939,81 @@
         "note": "Ask if you need a note for medicine.",
         "clip": "/learn/audio/a2-health/08.wav"
       }
-    ]
+    ],
+    "objective": "Describe a symptom, ask for an appointment, and check how to take medicine.",
+    "pronunciationFocus": "Keep have-phrases smooth: I HAVE a headache; I've HAD a fever SINCE yesterday.",
+    "dialogue": [
+      {
+        "speaker": "Igor",
+        "en": "I don't feel well. I'd like to see a doctor.",
+        "pt": "Não estou me sentindo bem. Eu gostaria de ver um médico.",
+        "clip": "/learn/audio/a2-health/d01.wav"
+      },
+      {
+        "speaker": "Nurse",
+        "en": "What is the problem?",
+        "pt": "Qual é o problema?",
+        "clip": "/learn/audio/a2-health/d02.wav"
+      },
+      {
+        "speaker": "Igor",
+        "en": "I have a headache and it hurts here. I've had a fever since yesterday.",
+        "pt": "Estou com dor de cabeça e dói aqui. Estou com febre desde ontem.",
+        "clip": "/learn/audio/a2-health/d03.wav"
+      },
+      {
+        "speaker": "Nurse",
+        "en": "The doctor can see you at three. Are you allergic to anything?",
+        "pt": "O médico pode atender você às três. Você é alérgico a alguma coisa?",
+        "clip": "/learn/audio/a2-health/d04.wav"
+      },
+      {
+        "speaker": "Igor",
+        "en": "I'm allergic to penicillin. Do I need a prescription?",
+        "pt": "Sou alérgico a penicilina. Preciso de uma receita?",
+        "clip": "/learn/audio/a2-health/d05.wav"
+      },
+      {
+        "speaker": "Nurse",
+        "en": "Yes, and the doctor will explain how often to take it.",
+        "pt": "Sim, e o médico vai explicar com que frequência tomar.",
+        "clip": "/learn/audio/a2-health/d06.wav"
+      }
+    ],
+    "comprehension": [
+      {
+        "kind": "mainIdea",
+        "prompt": "Where is Igor?",
+        "options": [
+          "At a clinic",
+          "At a bus stop",
+          "At a bank"
+        ],
+        "answer": "At a clinic"
+      },
+      {
+        "kind": "detail",
+        "prompt": "Since when has Igor had a fever?",
+        "options": [
+          "Since yesterday",
+          "Since last month",
+          "Since this morning"
+        ],
+        "answer": "Since yesterday"
+      },
+      {
+        "kind": "detail",
+        "prompt": "What is Igor allergic to?",
+        "options": [
+          "Penicillin",
+          "Coffee",
+          "Dust"
+        ],
+        "answer": "Penicillin"
+      }
+    ],
+    "productionPrompt": "Say how you feel, describe one symptom, and ask for an appointment.",
+    "retryHint": "Use I don't feel well, then I have a ... for the symptom and I'd like to see a doctor to ask."
   },
   {
     "id": "b1-opinions",
@@ -2009,7 +3065,81 @@
         "note": "Let's makes a suggestion for you and another person.",
         "clip": "/learn/audio/a1-weather/08.wav"
       }
-    ]
+    ],
+    "objective": "Talk about today's weather and choose the right clothes.",
+    "pronunciationFocus": "Blend it is into IT'S: IT'S sunny today; IT'S cold outside.",
+    "dialogue": [
+      {
+        "speaker": "Tom",
+        "en": "Good morning, Bia. Is it cold outside?",
+        "pt": "Bom dia, Bia. Está frio lá fora?",
+        "clip": "/learn/audio/a1-weather/d01.wav"
+      },
+      {
+        "speaker": "Bia",
+        "en": "It's sunny today, but it's cold outside.",
+        "pt": "Hoje está ensolarado, mas está frio lá fora.",
+        "clip": "/learn/audio/a1-weather/d02.wav"
+      },
+      {
+        "speaker": "Tom",
+        "en": "Then I need a jacket.",
+        "pt": "Então eu preciso de uma jaqueta.",
+        "clip": "/learn/audio/a1-weather/d03.wav"
+      },
+      {
+        "speaker": "Bia",
+        "en": "I'm wearing a blue shirt and a jacket too.",
+        "pt": "Estou usando uma camisa azul e uma jaqueta também.",
+        "clip": "/learn/audio/a1-weather/d04.wav"
+      },
+      {
+        "speaker": "Tom",
+        "en": "Do I need an umbrella?",
+        "pt": "Eu preciso de um guarda-chuva?",
+        "clip": "/learn/audio/a1-weather/d05.wav"
+      },
+      {
+        "speaker": "Bia",
+        "en": "No. It isn't raining now, but the weather is changing.",
+        "pt": "Não. Não está chovendo agora, mas o tempo está mudando.",
+        "clip": "/learn/audio/a1-weather/d06.wav"
+      }
+    ],
+    "comprehension": [
+      {
+        "kind": "mainIdea",
+        "prompt": "What are Tom and Bia talking about?",
+        "options": [
+          "The weather and clothes",
+          "A restaurant menu",
+          "A train ticket"
+        ],
+        "answer": "The weather and clothes"
+      },
+      {
+        "kind": "detail",
+        "prompt": "What does Tom need?",
+        "options": [
+          "A jacket",
+          "A new phone",
+          "A cup of tea"
+        ],
+        "answer": "A jacket"
+      },
+      {
+        "kind": "detail",
+        "prompt": "Is it raining now?",
+        "options": [
+          "No, it isn't",
+          "Yes, it is",
+          "It is snowing"
+        ],
+        "answer": "No, it isn't"
+      }
+    ],
+    "productionPrompt": "Say what the weather is like today and what you are wearing.",
+    "retryHint": "Start with It's for the weather, then use I'm wearing for your clothes."
   },
   {
     "id": "a2-neighborhood",
@@ -2073,7 +3203,81 @@
         "note": "Would you like is a polite way to invite someone.",
         "clip": "/learn/audio/a2-neighborhood/08.wav"
       }
-    ]
+    ],
+    "objective": "Describe your home and what is near it, and invite someone over.",
+    "pronunciationFocus": "Blend there-is and it-takes: THERE'S a market near my house; it TAKES ten minutes.",
+    "dialogue": [
+      {
+        "speaker": "Marcos",
+        "en": "Where do you live now?",
+        "pt": "Onde você mora agora?",
+        "clip": "/learn/audio/a2-neighborhood/d01.wav"
+      },
+      {
+        "speaker": "Sofia",
+        "en": "I live in a quiet neighborhood. I moved here last year.",
+        "pt": "Eu moro em um bairro tranquilo. Eu me mudei para cá no ano passado.",
+        "clip": "/learn/audio/a2-neighborhood/d02.wav"
+      },
+      {
+        "speaker": "Marcos",
+        "en": "Is it far from downtown?",
+        "pt": "É longe do centro?",
+        "clip": "/learn/audio/a2-neighborhood/d03.wav"
+      },
+      {
+        "speaker": "Sofia",
+        "en": "No. It takes ten minutes to walk downtown, and the bus stop is across the street.",
+        "pt": "Não. Leva dez minutos para caminhar até o centro, e o ponto de ônibus fica do outro lado da rua.",
+        "clip": "/learn/audio/a2-neighborhood/d04.wav"
+      },
+      {
+        "speaker": "Marcos",
+        "en": "That sounds practical.",
+        "pt": "Isso parece prático.",
+        "clip": "/learn/audio/a2-neighborhood/d05.wav"
+      },
+      {
+        "speaker": "Sofia",
+        "en": "There is a market near my house too. Would you like to visit my place?",
+        "pt": "Há um mercado perto da minha casa também. Você gostaria de visitar minha casa?",
+        "clip": "/learn/audio/a2-neighborhood/d06.wav"
+      }
+    ],
+    "comprehension": [
+      {
+        "kind": "mainIdea",
+        "prompt": "What is Sofia describing?",
+        "options": [
+          "Her home and neighborhood",
+          "Her new job",
+          "A trip to the beach"
+        ],
+        "answer": "Her home and neighborhood"
+      },
+      {
+        "kind": "detail",
+        "prompt": "How long does it take to walk downtown?",
+        "options": [
+          "Ten minutes",
+          "Two hours",
+          "Half a day"
+        ],
+        "answer": "Ten minutes"
+      },
+      {
+        "kind": "detail",
+        "prompt": "Where is the bus stop?",
+        "options": [
+          "Across the street",
+          "Inside the market",
+          "Next to the beach"
+        ],
+        "answer": "Across the street"
+      }
+    ],
+    "productionPrompt": "Describe where you live, one place near it, and invite someone to visit.",
+    "retryHint": "Use I live in ..., There is a ... near ..., and It takes ... minutes to ..."
   },
   {
     "id": "b1-learning-habits",
