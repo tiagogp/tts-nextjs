@@ -90,6 +90,7 @@ export default function DiscoverTab({
   const [curating, setCurating] = useState(false);
   const [downloadingModel, setDownloadingModel] = useState(false);
   const [transcribeProgress, setTranscribeProgress] = useState<{ percent: number; stage: string } | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [curationNote, setCurationNote] = useState<string | null>(initialCurationNote);
   const [result, setResult] = useState<DiscoverResult | null>(null);
@@ -162,6 +163,22 @@ export default function DiscoverTab({
     },
     [],
   );
+
+  // Importing can run for minutes with no percentage to show (download, PDF parse,
+  // curation). A ticking counter is the cheapest proof the app is still working.
+  useEffect(() => {
+    if (!loading) return;
+    const startedAt = Date.now();
+    const timer = window.setInterval(() => {
+      setElapsedSeconds(Math.round((Date.now() - startedAt) / 1000));
+    }, 1000);
+    // Reset on teardown rather than on entry, so the next import starts from 0
+    // without writing state during the effect body.
+    return () => {
+      window.clearInterval(timer);
+      setElapsedSeconds(0);
+    };
+  }, [loading]);
 
   const commitListen = useCallback(
     (subjectId?: string) => {
@@ -296,6 +313,17 @@ export default function DiscoverTab({
     },
     [playing, listenTimer],
   );
+
+  // One label for both the button and the loading panel, so they never disagree.
+  const stageLabel = curating
+    ? t("Selecting…")
+    : transcribeProgress?.stage === "transcribe"
+      ? t("Transcribing… {percent}%", { percent: transcribeProgress.percent })
+      : transcribeProgress?.stage === "download"
+        ? t("Downloading audio…")
+        : sourceKind === "youtube"
+          ? t("Starting…")
+          : t("Extracting…");
 
   const hasSource = sourceKind === "pdf" ? file !== null : url.trim().length > 0;
   // Importing/transcribing a source never needs the AI provider — only curation
@@ -521,11 +549,30 @@ export default function DiscoverTab({
       />
 
       {(!result || loading) && <Card className="space-y-4 p-5 sm:p-6">
-        <div className="space-y-1">
-          <h2 className="text-lg font-semibold tracking-[-0.015em] text-ink">{t("Choose a source")}</h2>
-          <p className="text-xs text-ink-muted">
-            {t("Bring one video, article, or PDF when you want practice from your own material.")}
-          </p>
+        <div className="space-y-1" aria-live="polite">
+          {loading ? (
+            <>
+              <h2 className="flex items-center gap-2 text-lg font-semibold tracking-[-0.015em] text-ink">
+                <Spinner className="h-4 w-4 shrink-0" />
+                {stageLabel}
+              </h2>
+              <p className="text-xs text-ink-muted">
+                {sourceKind === "youtube"
+                  ? t("Downloading and transcribing your video. Longer videos take a few minutes — you can leave this open.")
+                  : t("Reading your source and pulling out the phrases. This usually takes a few seconds.")}
+              </p>
+              <p className="text-xs tabular-nums text-ink-muted opacity-70">
+                {t("{seconds}s elapsed", { seconds: elapsedSeconds })}
+              </p>
+            </>
+          ) : (
+            <>
+              <h2 className="text-lg font-semibold tracking-[-0.015em] text-ink">{t("Choose a source")}</h2>
+              <p className="text-xs text-ink-muted">
+                {t("Bring one video, article, or PDF when you want practice from your own material.")}
+              </p>
+            </>
+          )}
         </div>
 
         {!result && !loading && (
@@ -630,15 +677,7 @@ export default function DiscoverTab({
                 {loading ? (
                   <>
                     <Spinner className="h-3.5 w-3.5" />
-                    {curating
-                      ? t("Selecting…")
-                      : transcribeProgress?.stage === "transcribe"
-                        ? t("Transcribing… {percent}%", { percent: transcribeProgress.percent })
-                        : transcribeProgress?.stage === "download"
-                          ? t("Downloading audio…")
-                          : sourceKind === "youtube"
-                            ? t("Starting…")
-                            : t("Extracting…")}
+                    {stageLabel}
                   </>
                 ) : (
                   t("Find phrases to learn")
@@ -648,12 +687,17 @@ export default function DiscoverTab({
           </Disclosure>
         )}
 
-        {loading && transcribeProgress?.stage === "transcribe" && (
+        {loading && (
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-line">
-            <div
-              className="h-full rounded-full bg-accent transition-all duration-300 ease-linear"
-              style={{ width: `${transcribeProgress.percent}%` }}
-            />
+            {transcribeProgress?.stage === "transcribe" ? (
+              <div
+                className="h-full rounded-full bg-accent transition-all duration-300 ease-linear"
+                style={{ width: `${transcribeProgress.percent}%` }}
+              />
+            ) : (
+              // No percentage available yet — a pulsing track still reads as "running".
+              <div className="h-full w-full rounded-full bg-accent/40 motion-safe:animate-pulse" />
+            )}
           </div>
         )}
 

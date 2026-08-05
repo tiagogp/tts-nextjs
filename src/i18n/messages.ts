@@ -619,6 +619,13 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "Transcribing… {percent}%": { pt: "Transcrevendo… {percent}%" },
   "Downloading audio…": { pt: "Baixando áudio…" },
   "Extracting…": { pt: "Extraindo…" },
+  "Downloading and transcribing your video. Longer videos take a few minutes — you can leave this open.": {
+    pt: "Baixando e transcrevendo seu vídeo. Vídeos longos levam alguns minutos — você pode deixar aberto.",
+  },
+  "Reading your source and pulling out the phrases. This usually takes a few seconds.": {
+    pt: "Lendo sua fonte e separando as frases. Costuma levar alguns segundos.",
+  },
+  "{seconds}s elapsed": { pt: "{seconds}s decorridos" },
   "Find phrases to learn": { pt: "Buscar frases para aprender" },
   "You can import a source and save hand-picked phrases now — no setup needed. To pick phrases automatically and add translations, connect an AI": {
     pt: "Você pode importar uma fonte e salvar frases escolhidas à mão agora — sem configuração. Para escolher frases automaticamente e adicionar traduções, conecte uma IA",
