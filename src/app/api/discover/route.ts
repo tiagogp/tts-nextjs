@@ -6,6 +6,7 @@ import {
   YOUTUBE_IMPORT_MAX_DURATION_MINUTES,
   YOUTUBE_IMPORT_TIMEOUT_MS,
 } from "@/lib/constants";
+import { discoverFailureMessage, discoverFailureReason } from "@/lib/discoverImport";
 import { logger } from "@/lib/logger";
 
 export const runtime = "nodejs";
@@ -23,10 +24,9 @@ function sseChunk(data: object): Uint8Array {
 
 const PUBLIC_YOUTUBE_INPUT_ERROR =
   "Cole um link http(s) válido do YouTube ou continue pela lição inicial e Estudar.";
-const YOUTUBE_IMPORT_ERROR =
-  `Não consegui importar esse vídeo. Tente um vídeo público com menos de ${YOUTUBE_IMPORT_MAX_DURATION_MINUTES} minutos ou volte para a lição inicial.`;
+const YOUTUBE_IMPORT_ERROR = discoverFailureMessage("unknown");
 const YOUTUBE_IMPORT_TIMEOUT_ERROR =
-  `O processamento demorou demais. Tente um vídeo público com menos de ${YOUTUBE_IMPORT_MAX_DURATION_MINUTES} minutos ou volte para a lição inicial.`;
+  `O processamento demorou demais. Tente um vídeo público com menos de ${YOUTUBE_IMPORT_MAX_DURATION_MINUTES} minutos.`;
 
 export async function POST(req: NextRequest) {
   let url: string | null = null;
@@ -76,10 +76,13 @@ export async function POST(req: NextRequest) {
         }
       } catch (err: unknown) {
         logger.error({ err }, "Discover proxy error");
+        const reason = discoverFailureReason(err);
         const message =
           err instanceof Error && err.name === "TimeoutError"
             ? YOUTUBE_IMPORT_TIMEOUT_ERROR
-            : YOUTUBE_IMPORT_ERROR;
+            : reason
+              ? discoverFailureMessage(reason)
+              : YOUTUBE_IMPORT_ERROR;
         try {
           controller.enqueue(sseChunk({ type: "error", message }));
         } catch {}

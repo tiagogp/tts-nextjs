@@ -10,7 +10,7 @@ import { Field, Input } from "@/components/ui/Field";
 import { Notice } from "@/components/ui/Notice";
 import { Spinner } from "@/components/ui/Spinner";
 import Disclosure from "@/components/ui/Disclosure";
-import { YOUTUBE_IMPORT_MAX_DURATION_MINUTES } from "@/lib/constants";
+import { discoverFailureMessage } from "@/lib/discoverImport";
 import { getCounts, saveGeneratedDeck } from "@/lib/store/repository";
 import { useAiSettings } from "@/features/settings/context/AiSettingsContext";
 import type { Card as CardModel, PhraseCandidate } from "@/lib/cards/schema";
@@ -23,7 +23,7 @@ import { SourcePicker } from "@/features/discover/components/SourcePicker";
 import { TranscriptReview } from "@/features/discover/components/TranscriptReview";
 import { ENGLISH_LEVELS, GENERATION_TIMEOUT_MS } from "@/features/discover/constants";
 import type { DiscoverResult, DiscoverSourceKind, EnglishLevel, TranscriptSegment } from "@/features/discover/types";
-import { curateDiscoverSegments, extractDiscoverSource, generateDiscoverDeck } from "@/features/discover/api";
+import { curateDiscoverSegments, extractDiscoverSource, generateDiscoverDeck, isAuthoredSourceError } from "@/features/discover/api";
 import { DEFAULT_LEARNING_PROFILE, getLearningProfile } from "@/features/settings/learningProfile";
 import { markFirstRunPhrasesSaved, startFirstRunActivation } from "@/features/activation/firstRun";
 import { emitActivity } from "@/lib/store/activityLog";
@@ -396,12 +396,13 @@ export default function DiscoverTab({
     } catch (err: unknown) {
       const fallback =
         sourceKind === "youtube"
-          ? `Não consegui importar esse vídeo. Tente um vídeo público com menos de ${YOUTUBE_IMPORT_MAX_DURATION_MINUTES} minutos ou continue pela lição inicial e Estudar.`
+          ? discoverFailureMessage("unknown")
           : sourceKind === "article"
             ? "Não consegui abrir esse artigo. Tente outro link ou continue pela lição inicial e Estudar."
             : "Não consegui ler esse PDF. Tente um arquivo menor ou continue pela lição inicial e Estudar.";
-      const message = err instanceof Error ? err.message : "";
-      setError(message.startsWith("Não ") || message.startsWith("O processamento") ? message : fallback);
+      // Server copy already names the real cause — don't overwrite it with a guess.
+      const message = err instanceof Error && isAuthoredSourceError(err) ? err.message : "";
+      setError(message || fallback);
     } finally {
       if (pollRef.current) clearInterval(pollRef.current);
       setLoading(false);

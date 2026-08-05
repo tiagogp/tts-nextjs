@@ -3,7 +3,7 @@ import "server-only";
 import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
-import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 import { parseHTML } from "linkedom";
@@ -12,6 +12,11 @@ import {
   YOUTUBE_IMPORT_MAX_DURATION_SECONDS,
   YOUTUBE_IMPORT_TIMEOUT_MS,
 } from "@/lib/constants";
+import {
+  DiscoverImportError,
+  classifyYtDlpFailure,
+  isRetriableDiscoverFailure,
+} from "@/lib/discoverImport";
 import { discoverCacheDir } from "./data";
 import { transcribe, transcriptText } from "./speech";
 
@@ -172,7 +177,10 @@ export async function discoverYouTube(
   const canonicalUrl = `https://www.youtube.com/watch?v=${videoId(url)}`;
   const ffmpeg = ffmpegDir();
   const bin = ytDlpBinary();
+  const titleFile = path.join(root, `${id}.title`);
   const run = async (extraArgs: string[]) => {
+    // --print-to-file appends, so a retry would stack two titles in one file.
+    await rm(titleFile, { force: true });
     try {
       await execFileAsync(bin, [
         "--no-playlist", "--no-warnings", "--no-progress", "--quiet", "--no-abort-on-error",
@@ -180,21 +188,43 @@ export async function discoverYouTube(
       ], { maxBuffer: 32 * 1024 * 1024, timeout: YOUTUBE_IMPORT_TIMEOUT_MS });
     } catch (error) {
       if ((error as NodeJS.ErrnoException)?.code === "ENOENT") {
-        throw new Error("yt-dlp is not installed. Install it (e.g. `brew install yt-dlp`) to import YouTube videos.");
+        throw new DiscoverImportError(
+          "yt_dlp_missing",
+          "yt-dlp is not installed. Install it (e.g. `brew install yt-dlp`) to import YouTube videos.",
+        );
       }
-      throw error;
+      const stderr = String((error as { stderr?: unknown })?.stderr ?? (error as Error)?.message ?? "");
+      throw new DiscoverImportError(classifyYtDlpFailure(stderr), stderr.trim() || "yt-dlp failed");
     }
   };
 
-  onProgress?.(0, "download");
-  await run([
+  const downloadArgs = (extractorArgs: string[]) => [
     "--match-filter", `duration <= ${YOUTUBE_IMPORT_MAX_DURATION_SECONDS}`,
     "-f", "bestaudio/best",
+    ...extractorArgs,
     ...(ffmpeg ? ["--extract-audio", "--audio-format", "m4a", "--ffmpeg-location", ffmpeg] : []),
-    "--print-to-file", "%(title)s", path.join(root, `${id}.title`),
-  ]);
+    "--print-to-file", "%(title)s", titleFile,
+  ];
+
+  onProgress?.(0, "download");
+  try {
+    await run(downloadArgs([]));
+  } catch (error) {
+    // YouTube intermittently 403s the format URL the default player client
+    // picked. A second pass through other clients usually gets a servable one.
+    if (!(error instanceof DiscoverImportError) || !isRetriableDiscoverFailure(error.reason)) throw error;
+    await run(downloadArgs(["--extractor-args", "youtube:player_client=web_safari,tv,android_vr"]));
+  }
+
   const audioFile = await downloadedAudio(root, id);
-  if (!audioFile) throw new Error("yt-dlp did not produce an audio file");
+  if (!audioFile) {
+    // yt-dlp exits 0 when --match-filter rejects the video, and --print-to-file
+    // only fires for entries that passed it: no title file means "too long".
+    throw new DiscoverImportError(
+      existsSync(titleFile) ? "unknown" : "too_long",
+      "yt-dlp did not produce an audio file",
+    );
+  }
 
   let title = "Untitled";
   try {

@@ -6,6 +6,7 @@ import {
   YOUTUBE_IMPORT_MAX_DURATION_MINUTES,
   YOUTUBE_IMPORT_TIMEOUT_MS,
 } from "@/lib/constants";
+import { discoverFailureMessage } from "@/lib/discoverImport";
 
 const localJson = vi.fn();
 const localRequest = vi.fn();
@@ -467,7 +468,7 @@ describe("API route integration", () => {
     expect(data.error).toContain("lição inicial");
   });
 
-  it("/api/discover returns 30-minute PT-BR copy for YouTube runtime failures", async () => {
+  it("/api/discover returns PT-BR copy for unclassified YouTube runtime failures", async () => {
     localRequest.mockResolvedValueOnce(localResponse({ detail: "failed" }, 500));
     const { POST } = await import("@/app/api/discover/route");
 
@@ -478,11 +479,29 @@ describe("API route integration", () => {
     const body = await response.text();
 
     expect(response.status).toBe(200);
-    expect(body).toContain(`menos de ${YOUTUBE_IMPORT_MAX_DURATION_MINUTES} minutos`);
-    expect(body).toContain("lição inicial");
+    expect(body).toContain(discoverFailureMessage("unknown"));
+    // An unknown failure must not be blamed on duration — that guess is what
+    // told a learner their 13-minute video was over the 30-minute limit.
+    expect(body).not.toContain(`${YOUTUBE_IMPORT_MAX_DURATION_MINUTES} minutos`);
     expect(localRequest).toHaveBeenCalledWith("/discover", expect.objectContaining({
       timeoutMs: YOUTUBE_IMPORT_TIMEOUT_MS,
     }));
+  });
+
+  it("/api/discover reports the classified cause when the import fails", async () => {
+    localRequest.mockRejectedValueOnce(
+      Object.assign(new Error("HTTP Error 403: Forbidden"), { reason: "blocked" }),
+    );
+    const { POST } = await import("@/app/api/discover/route");
+
+    const response = await POST(jsonRequest("/api/discover", {
+      url: "https://www.youtube.com/watch?v=abc123def45",
+      lang: "en",
+    }) as never);
+    const body = await response.text();
+
+    expect(body).toContain(discoverFailureMessage("blocked"));
+    expect(body).not.toContain(`${YOUTUBE_IMPORT_MAX_DURATION_MINUTES} minutos`);
   });
 
   it("/api/discover/pdf returns recoverable PT-BR copy for oversized files", async () => {
