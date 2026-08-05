@@ -157,6 +157,45 @@ export function buildMineRequest(
   return { system, user, schema };
 }
 
+/** Strip case/accents/punctuation so minor LLM reformatting doesn't fail the grounding check. */
+export function normalizeForGrounding(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * Textual grounding (A6 hardening) — text a model claims came from some material must
+ * actually be traceable to it, not just point at a structurally valid index. Cheap
+ * substring + word-overlap check; no second LLM round-trip.
+ *
+ * `minOverlap` is the share of the candidate's words that must appear in the material.
+ * Callers set it from how much rewriting the step legitimately allows: mining quotes the
+ * transcript (strict), card fronts may rephrase it (looser).
+ */
+export function isTextGrounded(
+  candidateText: string,
+  materialText: string,
+  minOverlap: number,
+): boolean {
+  const candidate = normalizeForGrounding(candidateText);
+  const material = normalizeForGrounding(materialText);
+  if (!candidate || !material) return false;
+  if (material.includes(candidate) || candidate.includes(material)) return true;
+  const candidateWords = candidate.split(" ").filter(Boolean);
+  if (candidateWords.length === 0) return false;
+  const materialWords = new Set(material.split(" ").filter(Boolean));
+  const matched = candidateWords.filter((word) => materialWords.has(word)).length;
+  return matched / candidateWords.length >= minOverlap;
+}
+
+/** A mined phrase quotes its transcript segment, so it has to match it closely. */
+const MINED_PHRASE_MIN_OVERLAP = 0.7;
+
 export function normalizeMined(
   raw: MineResult,
   transcript: TranscriptSegment[],
@@ -171,6 +210,8 @@ export function normalizeMined(
       Number.isInteger(p.segmentIndex) && transcript[p.segmentIndex]
         ? transcript[p.segmentIndex]
         : undefined;
+    // Drop phrases that claim a valid segment but whose text isn't actually grounded in it.
+    if (seg && !isTextGrounded(text, seg.text, MINED_PHRASE_MIN_OVERLAP)) continue;
     out.push({
       id: crypto.randomUUID(),
       sourceId: request.source.id,

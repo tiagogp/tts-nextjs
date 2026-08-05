@@ -17,6 +17,7 @@ import type {
   TranscriptSegment,
 } from "./schema";
 import { dedupeCards, type Embedder } from "./dedupe";
+import { isTextGrounded, normalizeForGrounding, sourceText } from "./shared";
 import { logger } from "@/lib/logger";
 
 export interface GenerationRunOptions {
@@ -176,13 +177,29 @@ function isSourceGrounded(card: Card, source: CardSource): boolean {
 }
 
 /**
- * Run the full generate -> ground -> critique gate for one source (mistake or mined phrase).
- * Provider-agnostic and ingestion-agnostic: identical for local or cloud, error or discovery.
- *
- * `generate()` failing throws (the caller decides whether to drop the whole source); a single
- * card's `critique()` failing only drops *that* card, so one bad round-trip can't waste the
- * other cards we already paid to generate from this source.
+ * A card front may legitimately rephrase its source, so this is looser than the mining
+ * gate — it only has to rule out a front the model invented rather than derived.
  */
+const CARD_FRONT_MIN_OVERLAP = 0.6;
+
+/**
+ * The gate that stands in for `critique()` when a provider opts out of that round-trip.
+ * Catches the failures a slow local model actually produces — an empty side, a front that
+ * merely echoes the back, a front with no basis in the source — without a second call.
+ */
+function deterministicCritique(card: Card, source: CardSource): Critique {
+  const front = card.front.trim();
+  const back = card.back.trim();
+  if (!front || !back) return { verdict: "drop", reason: "empty card side" };
+  if (normalizeForGrounding(front) === normalizeForGrounding(back)) {
+    return { verdict: "drop", reason: "front and back are identical" };
+  }
+  if (!isTextGrounded(front, sourceText(source), CARD_FRONT_MIN_OVERLAP)) {
+    return { verdict: "drop", reason: "front is not supported by the source text" };
+  }
+  return { verdict: "keep", reason: "passed deterministic local critique" };
+}
+
 /**
  * Cap cards kept per source. Bounds both the critique round-trips and the per-card TTS
  * synthesis in the .apkg step, so one verbose source can't blow the request timeout.
@@ -252,6 +269,14 @@ export function throwIfAborted(signal?: AbortSignal): void {
   if (signal?.aborted) throw abortError();
 }
 
+/**
+ * Run the full generate -> ground -> critique gate for one source (mistake or mined phrase).
+ * Provider-agnostic and ingestion-agnostic: identical for local or cloud, error or discovery.
+ *
+ * `generate()` failing throws (the caller decides whether to drop the whole source); a single
+ * card's `critique()` failing only drops *that* card, so one bad round-trip can't waste the
+ * other cards we already paid to generate from this source.
+ */
 export async function generateVettedCards(
   provider: CardGenerationProvider,
   source: CardSource,
@@ -295,6 +320,18 @@ export async function generateVettedCards(
     // Slow local LLMs opt out of the critique round-trip — grounding + the card cap are
     // the only gates that remain (see CardGenerationProvider.skipCritique).
     if (provider.skipCritique) {
+      const critique = deterministicCritique(card, source);
+      if (critique.verdict !== "keep") {
+        debug(options, "cards-candidate-dropped-local-critique", {
+          provider: provider.kind,
+          candidateIndex,
+          cardId: card.id,
+          verdict: critique.verdict,
+          reason: critique.reason,
+          ...sourceInfo,
+        });
+        continue;
+      }
       kept.push(card);
       debug(options, "cards-candidate-kept-skip-critique", {
         provider: provider.kind,
