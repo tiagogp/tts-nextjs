@@ -36,6 +36,7 @@ import {
 } from "@/lib/store/repository";
 import type { ListeningAttempt } from "@/lib/performance/types";
 import { emitActivity } from "@/lib/store/activityLog";
+import { ensure as ensureLocalModel } from "@/features/speech/modelStore";
 import { cn } from "@/lib/cn";
 import { useT } from "@/i18n/I18nProvider";
 
@@ -183,8 +184,12 @@ function LessonViewContent({
   // A learner who closes the lesson mid-listen still listened. Bank it on the way out.
   useEffect(() => commitListen, [commitListen]);
 
+  // Warm up speech recognition while the learner reads: the drills at the end of
+  // the lesson need it. Going through the store (rather than POSTing directly)
+  // is what puts the 488 MB download on the app-wide bar instead of leaving it
+  // invisible until something fails.
   useEffect(() => {
-    void fetch("/api/models/whisper", { method: "POST" }).catch(() => {});
+    void ensureLocalModel("whisper").catch(() => {});
   }, []);
 
   useEffect(() => {

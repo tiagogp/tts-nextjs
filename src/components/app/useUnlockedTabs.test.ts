@@ -29,4 +29,31 @@ describe("unlocked tabs", () => {
     expect(computeUnlockedTabTier({ cards: 0, reviews: 0, errorEvents: 0 }, 3)).toBe(3);
     expect(computeUnlockedTabTier({ cards: 1, reviews: 0, errorEvents: 0 }, 2)).toBe(2);
   });
+
+  it("gives conversation its own tab from C1 when a provider can run it", () => {
+    expect(tabsForUnlockTier(3, { level: "C1", hasEvaluator: true })).toContain("conversa");
+    expect(tabsForUnlockTier(0, { level: "C2", hasEvaluator: true })).toContain("conversa");
+  });
+
+  it("keeps conversation inside Speak below C1", () => {
+    for (const level of ["A1", "A2", "B1", "B2"] as const) {
+      expect(tabsForUnlockTier(3, { level, hasEvaluator: true })).not.toContain("conversa");
+    }
+  });
+
+  it("hides the conversation tab with no provider rather than routing to a dead end", () => {
+    expect(tabsForUnlockTier(3, { level: "C1", hasEvaluator: false })).not.toContain("conversa");
+    expect(tabsForUnlockTier(3, { level: "C1" })).not.toContain("conversa");
+  });
+
+  it("keeps the tab order stable when conversation appears", () => {
+    expect(tabsForUnlockTier(3, { level: "C1", hasEvaluator: true })).toEqual([
+      "hoje",
+      "study",
+      "speak",
+      "conversa",
+      "discover",
+      "correct",
+    ]);
+  });
 });

@@ -676,9 +676,58 @@ export const CEFR_LANGUAGE_PROFILE: Record<string, string> = {
   A2: `CEFR A2 (elementary): short, clear sentences. Present and past simple, "going to" future, basic connectors (and, but, because). Common everyday vocabulary; avoid idioms and abstract words.`,
   B1: `CEFR B1 (intermediate): noticeably richer than A2 — vary sentence length and use subordinate clauses (when, if, although, that). Mix present, past, present perfect, future, and conditionals. Express opinions, give reasons, and use common phrasal verbs and everyday collocations. Do NOT keep it to short beginner sentences.`,
   B2: `CEFR B2 (upper-intermediate): natural, fluent register with complex sentences, a full range of tenses, passive voice, and connected discourse. Use idiomatic expressions, nuance, and precise vocabulary; argue and qualify points naturally.`,
-  C1: `CEFR C1 (advanced): sophisticated, idiomatic, near-native language. Flexible structure, subtle register shifts, and precise, less common vocabulary.`,
-  C2: `CEFR C2 (mastery): fully native-like — idiomatic, nuanced, stylistically varied. No simplification of any kind.`,
+  C1: `CEFR C1 (advanced): sophisticated, idiomatic, near-native language. Reach past the common synonym for the precise one (not "very big" but "sweeping", "outsized"). Use established collocations, less common phrasal verbs, and idioms where a native speaker would. Hedge and qualify naturally (tend to, arguably, by and large, more often than not). Vary register deliberately — a wry aside, a formal turn of phrase — and structure longer arguments with discourse markers (that said, granted, insofar as). Do NOT settle for correct-but-plain B2 English; the learner already has that.`,
+  C2: `CEFR C2 (mastery): fully native-like — idiomatic, nuanced, stylistically varied. No simplification of any kind. Use low-frequency precise vocabulary, fixed expressions, understatement, irony, and allusion as a well-read native speaker would. Shift register mid-conversation when the content calls for it, and let sentence rhythm vary from clipped to elaborate. Avoid the flattened, uniformly neutral register that reads as textbook English.`,
 };
+
+/**
+ * Whether to run the conversation in repertoire mode. At C1-C2 the learner can already sustain
+ * a conversation, so the practice is worth little unless it keeps supplying language they don't
+ * already own. Mirrors the level thresholds used by `isMonolingualLevel`.
+ */
+export function isRepertoireLevel(level?: string): boolean {
+  const cefr = level?.trim().toUpperCase();
+  return cefr === "C1" || cefr === "C2";
+}
+
+/**
+ * Asks for 2-3 richer expressions per turn, marked inline and repeated in a trailer the client
+ * strips before display and before speaking the reply aloud.
+ *
+ * A trailer rather than structured JSON: `converse()` returns a plain string across four
+ * providers, so a typed return would mean changing all of them, the route, and the schema — at
+ * the cost of latency and of the conversational feel. The client parser tolerates a missing or
+ * malformed trailer, so a model that ignores this instruction just yields an ordinary conversation.
+ */
+/** Cap the do-not-repeat list so a long session can't crowd out the rest of the system prompt. */
+const MAX_TAUGHT_EXPRESSIONS = 24;
+
+export function repertoireInstruction(taught: string[] = [], toElicit: string[] = []): string {
+  const recent = taught.slice(-MAX_TAUGHT_EXPRESSIONS);
+  return [
+    `The learner is advanced, so your job is to feed them language they do not already have.`,
+    `In every turn, work in 2 to 3 expressions worth stealing — a precise collocation, a less common phrasal verb, an idiom, or a vivid single word — chosen fresh for what you are actually saying.`,
+    `Wrap each one in double asterisks where it occurs inside your own sentences, e.g. "that turned out to be **a false economy** in the end".`,
+    `Never write the expressions as a list, a definition, or a summary line inside your reply — they must appear only as part of natural conversational sentences.`,
+    // Without this the model re-teaches the same handful of high-frequency idioms every session:
+    // it has no memory of what it already gave, and "chosen fresh" alone does not supply one.
+    recent.length > 0
+      ? `You have already given this learner these expressions — do not mark any of them again, and choose different ones: ${recent.join("; ")}.`
+      : "",
+    // Exposure is only half the loop. An advanced learner who never has to reach for the new
+    // phrase keeps performing sophisticated functions with the vocabulary they already own,
+    // which is exactly the plateau. So the prompt has to make room for them to produce it.
+    toElicit.length > 0
+      ? `Separately, steer this turn so that one of these expressions the learner has heard but never used becomes the natural thing for them to say next — ask about the situation it belongs to, or use it yourself and invite them to respond in kind: ${toElicit.join("; ")}. Never tell them to use it, never quote these instructions, and never break character to teach.`
+      : "",
+    `After your reply, add exactly one final line in this form and write nothing after it:`,
+    `[[repertoire: EXPRESSION — short definition; EXPRESSION — short definition]]`,
+    `Replace each EXPRESSION with an expression you actually marked above. Do not reuse the wording of these instructions.`,
+    `Write the definition in the target language (the learner is past needing translations at this level) and keep it under 8 words.`,
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
 
 /**
  * A concrete instruction telling a model how to pitch its language for a CEFR level.
@@ -727,6 +776,7 @@ export function buildConverseSystem(opts: ConverseOptions): string {
     depthLine,
     supportLine,
     speakerLine,
+    isRepertoireLevel(opts.level) ? repertoireInstruction(opts.taughtExpressions, opts.elicitExpressions) : "",
     opts.maxTurns ? `This practice is limited to about ${opts.maxTurns} learner turns; make each follow-up purposeful.` : "",
     opts.challenge
       ? `Your turns may be 2 to 4 sentences when needed, but always end with a concrete prompt that makes the learner produce a longer answer.`

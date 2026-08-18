@@ -2,8 +2,8 @@
 
 import { useCallback, useId, useRef, useState } from "react";
 import { useTtsSettings } from "@/features/speech/context/TtsSettingsContext";
-import { useKokoroModel } from "@/features/speech/hooks/useKokoroModel";
-import KokoroModelNotice from "@/features/speech/components/KokoroModelNotice";
+import { useKokoroModel, type LocalModelState } from "@/features/speech/hooks/useLocalModel";
+import LocalModelNotice from "@/features/speech/components/LocalModelNotice";
 import { Button } from "@/components/ui/Button";
 import { Field, Input, Textarea } from "@/components/ui/Field";
 import { Notice } from "@/components/ui/Notice";
@@ -62,9 +62,16 @@ function isJsonFile(file: File | null): boolean {
   return name.endsWith(".json") || type.includes("json");
 }
 
-export default function AnkiExporter({ embedded = false }: { embedded?: boolean }) {
+export default function AnkiExporter({
+  embedded = false,
+  kokoroModel,
+}: {
+  embedded?: boolean;
+  kokoroModel?: LocalModelState;
+}) {
   const { voice } = useTtsSettings();
-  const model = useKokoroModel();
+  const localModel = useKokoroModel();
+  const model = kokoroModel ?? localModel;
   const [file, setFile] = useState<File | null>(null);
   const [jsonText, setJsonText] = useState("");
   const [deckName, setDeckName] = useState("English - new method");
@@ -301,7 +308,7 @@ export default function AnkiExporter({ embedded = false }: { embedded?: boolean 
               </div>
             </button>
           </Field>
-          <KokoroModelNotice model={model} />
+          <LocalModelNotice model={model} />
 
           <Button
             variant="primary"

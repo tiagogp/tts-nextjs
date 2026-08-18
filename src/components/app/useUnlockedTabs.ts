@@ -6,6 +6,8 @@ import { getCards, getErrorEvents, getCounts } from "@/lib/store/repository";
 import { isStoreAvailable } from "@/lib/store/db";
 import { getLearningProfile, saveLearningProfile } from "@/features/settings/learningProfile";
 import { OWN_SENTENCE_CARD_PREFIX } from "@/features/learn/lessonDeck";
+import { LEVEL_RANK } from "@/features/discover/levels";
+import type { EnglishLevel } from "@/features/discover/types";
 
 export interface UnlockSignals {
   cards: number;
@@ -29,12 +31,27 @@ export function computeUnlockedTabTier(signals: UnlockSignals, storedTier = 0): 
   return Math.max(0, Math.min(MAX_UNLOCK_TIER, Math.max(storedTier, tier)));
 }
 
-export function tabsForUnlockTier(tier: number): HomeTab[] {
+/**
+ * Gates that are not about progress through the method. Unlike the tier, these can go both ways:
+ * change the declared level or disconnect the provider and the tab goes away again.
+ */
+export interface TabGates {
+  level?: EnglishLevel;
+  /** Whether an LLM provider is actually configured and reachable. */
+  hasEvaluator?: boolean;
+}
+
+export function tabsForUnlockTier(tier: number, gates: TabGates = {}): HomeTab[] {
   const visible = new Set<HomeTab>(["hoje", "discover", "study"]);
   // Speaking is the method's Rule #1: it gets a persistent home as soon as the
   // learner has anything to say a phrase from, not only when a coach routes there.
   if (tier >= 1) visible.add("speak");
   if (tier >= 3) visible.add("correct");
+  // Conversation is its own tab only from C1: below that the bottleneck is still producing
+  // language at all, which the Speak tab's drill serves better. It also needs a provider —
+  // roleplay cannot run locally, and `speakSurface` sets the precedent of never routing a
+  // provider-less learner to a dead end.
+  if (gates.hasEvaluator && gates.level && LEVEL_RANK[gates.level] >= LEVEL_RANK.C1) visible.add("conversa");
   return HOME_TABS.map((tab) => tab.id).filter((id) => visible.has(id));
 }
 
@@ -45,7 +62,7 @@ function highestNewTab(previousTier: number, nextTier: number): HomeTab | null {
   return null;
 }
 
-export function useUnlockedTabs(): {
+export function useUnlockedTabs({ hasEvaluator = false }: { hasEvaluator?: boolean } = {}): {
   tabs: ReadonlyArray<(typeof HOME_TABS)[number]>;
   tier: number;
   dueCount: number;
@@ -59,12 +76,16 @@ export function useUnlockedTabs(): {
   const [tier, setTier] = useState(0);
   const [dueCount, setDueCount] = useState(0);
   const [announcement, setAnnouncement] = useState<HomeTab | null>(null);
+  // Seeded undefined for the same hydration reason as the tier; the mount effect fills it in,
+  // and the `profile-updated` listener keeps it current when the learner changes level.
+  const [level, setLevel] = useState<EnglishLevel | undefined>(undefined);
 
   useEffect(() => {
     let cancelled = false;
 
     const refresh = async () => {
       const profile = getLearningProfile();
+      setLevel(profile.level);
       if (!isStoreAvailable()) {
         setTier(profile.unlockedTabTier);
         setDueCount(0);
@@ -103,7 +124,10 @@ export function useUnlockedTabs(): {
     };
   }, []);
 
-  const unlockedIds = useMemo(() => new Set(tabsForUnlockTier(tier)), [tier]);
+  const unlockedIds = useMemo(
+    () => new Set(tabsForUnlockTier(tier, { level, hasEvaluator })),
+    [tier, level, hasEvaluator],
+  );
   const tabs = useMemo(() => HOME_TABS.filter((tab) => unlockedIds.has(tab.id)), [unlockedIds]);
   const clearAnnouncement = useCallback(() => setAnnouncement(null), []);
 

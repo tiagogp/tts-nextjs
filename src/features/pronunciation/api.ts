@@ -1,4 +1,5 @@
 import type { PronunciationAssessment } from "@/lib/pronunciation/types";
+import { watchModelNotReady } from "@/features/speech/modelStore";
 
 export async function assessPronunciation(input: {
   blob: Blob;
@@ -25,13 +26,19 @@ export async function assessPronunciation(input: {
   const data = (await response.json().catch(() => ({}))) as PronunciationAssessment & {
     error?: string;
     code?: string;
+    model?: string;
     downloading?: boolean;
     progress?: number;
   };
   if (!response.ok) {
     let message = data.error ?? `Não consegui avaliar a pronúncia agora (erro ${response.status}).`;
-    if (data.code === "model_not_ready" && data.downloading && (data.progress ?? 0) > 0) {
-      message += ` ${Math.round((data.progress ?? 0) * 100)}% baixado.`;
+    if (data.code === "model_not_ready") {
+      // The runtime just started the download; put it on the app-wide bar so
+      // the learner can watch it instead of only reading "try again later".
+      watchModelNotReady(data.model);
+      if (data.downloading && (data.progress ?? 0) > 0) {
+        message += ` ${Math.round((data.progress ?? 0) * 100)}% baixado.`;
+      }
     }
     throw new Error(message);
   }

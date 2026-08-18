@@ -98,6 +98,43 @@ export function applyObjectiveDistribution(
   };
 }
 
+/**
+ * Deterministic days for a range the provider failed to author.
+ *
+ * A block that fails twice must not sink the whole plan, so the same
+ * largest-deficit scheduling that shapes the objective distribution fills the
+ * gap offline. The learner gets a usable day instead of a hole in the calendar.
+ */
+export function fallbackDays(options: {
+  startDay: number;
+  endDay: number;
+  estimatedMinutes: number;
+  phaseFor: (dayNumber: number) => number;
+  objective: MethodObjective;
+}): PlanGenerationResult["days"] {
+  const target = targetForProfile({ objective: options.objective });
+  const counts: Record<MethodArea, number> = {
+    structured: 0,
+    listening: 0,
+    speaking: 0,
+    readingWriting: 0,
+  };
+  const days: PlanGenerationResult["days"] = [];
+
+  for (let dayNumber = options.startDay; dayNumber <= options.endDay; dayNumber += 1) {
+    const area = nextArea(target, counts);
+    counts[area] += 1;
+    days.push({
+      dayNumber,
+      phase: options.phaseFor(dayNumber),
+      estimatedMinutes: options.estimatedMinutes,
+      tasks: [task(taskForArea(area, dayNumber), dayNumber)],
+    });
+  }
+
+  return days;
+}
+
 export function taskArea(type: TaskType): MethodArea {
   return TASK_AREA[type];
 }

@@ -84,6 +84,29 @@ describe("method progression", () => {
     expect(support.readingWriting.stage).toBe("guided_reading");
   });
 
+  it("gives a C1 learner a full conversation before any evidence has been recorded", () => {
+    // Without the level floor this lands on `fixed_phrases` — 4 turns, single follow-up —
+    // which is the beginner shape, not the repertoire practice C1/C2 needs.
+    const support = supportForProgression(undefined, { level: "C1" });
+    expect(support.conversation.maxTurns).toBeGreaterThanOrEqual(12);
+    expect(support.conversation.followUpDepth).toBe("counterpoint");
+    // The evidence-based ladder itself must not move.
+    expect(support.speaking.stage).toBe("fixed_phrases");
+  });
+
+  it("leaves the conversation shape untouched below C1", () => {
+    const advanced = supportForProgression(undefined, { level: "B2" });
+    expect(advanced.conversation).toMatchObject({ maxTurns: 4, followUpDepth: "single" });
+    expect(supportForProgression(undefined).conversation).toMatchObject({ maxTurns: 4, followUpDepth: "single" });
+  });
+
+  it("never lowers a conversation the learner has already earned through evidence", () => {
+    const earned = supportForProgression({ listeningStage: "main_idea", speakingStage: "real_world_production" }, { level: "C2" });
+    expect(earned.conversation.maxTurns).toBeGreaterThanOrEqual(12);
+    expect(earned.conversation.followUpDepth).toBe("counterpoint");
+    expect(earned.speaking.stage).toBe("real_world_production");
+  });
+
   it("promotes reading and writing from repeated transfer evidence", () => {
     const attempts: ProductionAttempt[] = [
       { ...production(0, 1), spoken: false, transferKind: "reading_to_meaning" },

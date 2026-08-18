@@ -68,13 +68,10 @@ export function validateGeneratedDays(raw: unknown): GeneratedDay[] | null {
   return days as GeneratedDay[];
 }
 
-export function validatePlanResult(raw: unknown): PlanGenerationResult | null {
-  if (!raw || typeof raw !== "object") return null;
-  const obj = raw as Record<string, unknown>;
+export function validatePhases(raw: unknown): PlanGenerationResult["phases"] | null {
+  if (!Array.isArray(raw) || raw.length === 0) return null;
 
-  if (!Array.isArray(obj.phases)) return null;
-
-  const phases = obj.phases.map((p: unknown) => {
+  const phases = raw.map((p: unknown) => {
     if (!p || typeof p !== "object") return null;
     const phase = p as Record<string, unknown>;
     if (
@@ -95,12 +92,18 @@ export function validatePlanResult(raw: unknown): PlanGenerationResult | null {
     };
   });
   if (phases.some((phase) => phase === null)) return null;
+  return phases as PlanGenerationResult["phases"];
+}
+
+export function validatePlanResult(raw: unknown): PlanGenerationResult | null {
+  if (!raw || typeof raw !== "object") return null;
+  const obj = raw as Record<string, unknown>;
+
+  const phases = validatePhases(obj.phases);
+  if (!phases) return null;
 
   const days = validateGeneratedDays(obj.days);
   if (!days) return null;
 
-  return {
-    phases: phases as PlanGenerationResult["phases"],
-    days,
-  };
+  return { phases, days };
 }

@@ -18,6 +18,7 @@ import type { StoredProgressAssessment } from "@/features/progress/model";
 import type { C1Diagnosis } from "@/features/c1/types";
 import type { StoredLevelTestAttempt } from "@/features/levelup/testModel";
 import type { ConversationTurn } from "@/lib/cards/provider";
+import type { RepertoireItem } from "@/features/converse/repertoire";
 import type {
   AudioRecording,
   ListeningAttempt,
@@ -506,6 +507,12 @@ export interface Conversation {
    */
   errors?: ErrorEvent[];
   advancedReview?: AdvancedReview;
+  /**
+   * Repertoire mode (C1-C2): the expressions the partner introduced, and which ones the learner
+   * said back. Persisted rather than re-derived because the glosses live in a trailer that is
+   * stripped before a turn is stored, and because the review reports uptake after the fact.
+   */
+  repertoire?: RepertoireItem[];
 }
 
 export function saveConversation(conversation: Conversation): Promise<void> {

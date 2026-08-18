@@ -64,6 +64,16 @@ export interface ConverseOptions {
   followUpDepth?: "single" | "layered" | "counterpoint";
   promptStyle?: string;
   speakerFamiliarity?: "familiar" | "mixed" | "unfamiliar";
+  /**
+   * Repertoire mode (C1-C2 only). Expressions already introduced in this conversation, so the
+   * partner stops re-teaching the same handful of idioms every session.
+   */
+  taughtExpressions?: string[];
+  /**
+   * Repertoire mode (C1-C2 only). Expressions the learner has heard but never said back; the
+   * partner steers the turn so producing one becomes natural, without breaking character.
+   */
+  elicitExpressions?: string[];
 }
 
 export type ProviderKind = "openrouter" | "ollama" | "claude" | "openai";

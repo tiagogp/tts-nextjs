@@ -18,6 +18,10 @@ export async function sendConversationTurn(input: {
   followUpDepth?: "single" | "layered" | "counterpoint";
   promptStyle?: string;
   speakerFamiliarity?: "familiar" | "mixed" | "unfamiliar";
+  /** C1-C2 repertoire mode: already introduced, so the partner picks something else. */
+  taughtExpressions?: string[];
+  /** C1-C2 repertoire mode: heard but never said back, so the partner makes room for them. */
+  elicitExpressions?: string[];
   history: ConversationTurn[];
   signal?: AbortSignal;
 }): Promise<{ reply: string }> {
@@ -38,6 +42,8 @@ export async function sendConversationTurn(input: {
       followUpDepth: input.followUpDepth,
       promptStyle: input.promptStyle,
       speakerFamiliarity: input.speakerFamiliarity,
+      taughtExpressions: input.taughtExpressions,
+      elicitExpressions: input.elicitExpressions,
       history: input.history,
     }),
     signal: input.signal,

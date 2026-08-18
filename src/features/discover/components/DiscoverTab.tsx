@@ -26,6 +26,8 @@ import type { DiscoverResult, DiscoverSourceKind, EnglishLevel, TranscriptSegmen
 import { curateDiscoverSegments, extractDiscoverSource, generateDiscoverDeck, isAuthoredSourceError } from "@/features/discover/api";
 import { DEFAULT_LEARNING_PROFILE, getLearningProfile } from "@/features/settings/learningProfile";
 import { markFirstRunPhrasesSaved, startFirstRunActivation } from "@/features/activation/firstRun";
+import LocalModelNotice from "@/features/speech/components/LocalModelNotice";
+import { useWhisperModel } from "@/features/speech/hooks/useLocalModel";
 import { emitActivity } from "@/lib/store/activityLog";
 import { useStageTimer } from "@/features/method/useStageTimer";
 import { useT } from "@/i18n/I18nProvider";
@@ -88,7 +90,10 @@ export default function DiscoverTab({
   const [targetLevel, setTargetLevel] = useState<EnglishLevel>(DEFAULT_LEARNING_PROFILE.level);
   const [loading, setLoading] = useState(false);
   const [curating, setCurating] = useState(false);
-  const [downloadingModel, setDownloadingModel] = useState(false);
+  // Transcribing a video needs Whisper. The shared store owns that install (one
+  // poller, live percentage) — this tab used to run a second poller of its own
+  // that could only say "downloading" with no idea how far along it was.
+  const whisper = useWhisperModel();
   const [transcribeProgress, setTranscribeProgress] = useState<{ percent: number; stage: string } | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -136,7 +141,6 @@ export default function DiscoverTab({
   const listenTimer = useStageTimer("listen", 1, { autoStart: false });
   const noticeTimer = useStageTimer("notice", 3);
   const listenedRef = useRef(false);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const playRequestRef = useRef(0);
   const sourceInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -158,7 +162,6 @@ export default function DiscoverTab({
 
   useEffect(
     () => () => {
-      if (pollRef.current) window.clearInterval(pollRef.current);
       audioRef.current?.pause();
     },
     [],
@@ -363,17 +366,10 @@ export default function DiscoverTab({
       sourceId: (sourceKind === "pdf" ? file?.name : url.trim()) || undefined,
     });
 
-    // Only the YouTube path may download the one-time Whisper model.
-    if (sourceKind === "youtube") {
-      const poll = async () => {
-        try {
-          const res = await fetch("/api/status");
-          const data = await res.json();
-          if (data.downloading_whisper) setDownloadingModel(true);
-        } catch {}
-      };
-      pollRef.current = setInterval(poll, 2000);
-    }
+    // Only the YouTube path may download the one-time Whisper model. Asking for
+    // it here is what puts the install on screen: the runtime would start it
+    // anyway mid-import, and the server hands both requests the same download.
+    if (sourceKind === "youtube" && whisper.ready !== true) void whisper.ensure();
 
     try {
       const data = await extractDiscoverSource({
@@ -432,13 +428,11 @@ export default function DiscoverTab({
       const message = err instanceof Error && isAuthoredSourceError(err) ? err.message : "";
       setError(message || fallback);
     } finally {
-      if (pollRef.current) clearInterval(pollRef.current);
       setLoading(false);
       setCurating(false);
-      setDownloadingModel(false);
       setTranscribeProgress(null);
     }
-  }, [sourceKind, url, file, provider, providerReady, selectedModel, focus, targetLevel, setGenError, setGenDone, t]);
+  }, [sourceKind, url, file, provider, providerReady, selectedModel, focus, targetLevel, setGenError, setGenDone, whisper, t]);
 
   const toggleKeep = (index: number) => {
     setKept((prev) => {
@@ -701,12 +695,7 @@ export default function DiscoverTab({
           </div>
         )}
 
-        {downloadingModel && (
-          <div className="flex items-center gap-2 rounded border border-line bg-surface px-3 py-2.5 text-xs text-ink-soft">
-            <Spinner className="h-3 w-3 shrink-0" />
-            {t("Preparing audio discovery for the first time. This can take a minute.")}
-          </div>
-        )}
+        {sourceKind === "youtube" && <LocalModelNotice model={whisper} />}
 
         {error && (
           <Notice tone="error" className="text-xs">

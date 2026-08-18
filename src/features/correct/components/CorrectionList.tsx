@@ -9,8 +9,8 @@ import { cn } from "@/lib/cn";
 import { BLUR, springSoft, tweenSmooth } from "@/lib/motion";
 import { useT } from "@/i18n/I18nProvider";
 import { errorTypeLabel } from "@/lib/cards/errorTypeLabels";
-import KokoroModelNotice from "@/features/speech/components/KokoroModelNotice";
-import type { useKokoroModel } from "@/features/speech/hooks/useKokoroModel";
+import LocalModelNotice from "@/features/speech/components/LocalModelNotice";
+import type { useKokoroModel } from "@/features/speech/hooks/useLocalModel";
 import type { ErrorEvent } from "@/lib/cards/schema";
 import { countPolishFeedback, prioritizeFeedback } from "@/features/correct/feedbackContract";
 
@@ -117,7 +117,7 @@ export function CorrectionList({
 
       {kokoro.ready === false && (
         <div className="border-b border-line px-5 py-3">
-          <KokoroModelNotice model={kokoro} />
+          <LocalModelNotice model={kokoro} />
         </div>
       )}
 

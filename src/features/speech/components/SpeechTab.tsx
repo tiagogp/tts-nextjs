@@ -4,6 +4,7 @@ import AnkiExporter from "@/features/speech/components/AnkiExporter";
 import AudioPlayer from "@/components/ui/AudioPlayer";
 import ThemePhraseGenerator from "@/features/speech/components/ThemePhraseGenerator";
 import HistoryPanel from "@/features/speech/components/HistoryPanel";
+import LocalModelNotice from "@/features/speech/components/LocalModelNotice";
 import Disclosure from "@/components/ui/Disclosure";
 import Select from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
@@ -21,8 +22,13 @@ import {
   MAX_CHARS,
   useSpeechGenerator,
 } from "@/features/speech/hooks/useSpeechGenerator";
+import { useKokoroModel, type LocalModelState } from "@/features/speech/hooks/useLocalModel";
+import { useT } from "@/i18n/I18nProvider";
 
-export default function SpeechTab() {
+export default function SpeechTab({ kokoroModel }: { kokoroModel?: LocalModelState } = {}) {
+  const { t } = useT();
+  const localKokoro = useKokoroModel();
+  const kokoro = kokoroModel ?? localKokoro;
   const {
     audioUrl,
     clearHistory,
@@ -40,7 +46,7 @@ export default function SpeechTab() {
     voice,
   } = useSpeechGenerator();
 
-  const canGenerate = !loading && text.trim().length > 0;
+  const canGenerate = !loading && kokoro.ready === true && text.trim().length > 0;
 
   return (
     <div>
@@ -114,27 +120,31 @@ export default function SpeechTab() {
               </div>
             </div>
 
-            <Button
-              variant="primary"
-              size="lg"
-              onClick={generate}
-              disabled={!canGenerate}
-              className="flex items-center justify-center gap-2 py-2.5"
-            >
-              {loading ? (
-                <>
-                  <Spinner className="h-3.5 w-3.5" />
-                  Generating…
-                </>
-              ) : (
-                <>
-                  <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217z" />
-                  </svg>
-                  Generate audio
-                </>
-              )}
-            </Button>
+            {kokoro.ready === false ? (
+              <LocalModelNotice model={kokoro} />
+            ) : (
+              <Button
+                variant="primary"
+                size="lg"
+                onClick={generate}
+                disabled={!canGenerate}
+                className="flex items-center justify-center gap-2 py-2.5"
+              >
+                {loading || kokoro.ready === null ? (
+                  <>
+                    <Spinner className="h-3.5 w-3.5" />
+                    {kokoro.ready === null ? t("Checking voice model…") : t("Generating…")}
+                  </>
+                ) : (
+                  <>
+                    <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217z" />
+                    </svg>
+                    {t("Generate audio")}
+                  </>
+                )}
+              </Button>
+            )}
 
             {downloadingModel && (
               <div className="flex items-center gap-2 rounded border border-line bg-surface px-3 py-2.5 text-xs text-ink-soft">
@@ -171,7 +181,7 @@ export default function SpeechTab() {
             <ThemePhraseGenerator embedded />
           </Disclosure>
           <Disclosure title="Import JSON to Anki" description="Build an .apkg deck from an existing JSON file." nested>
-            <AnkiExporter embedded />
+            <AnkiExporter embedded kokoroModel={kokoro} />
           </Disclosure>
         </div>
       </Disclosure>

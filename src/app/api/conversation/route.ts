@@ -29,6 +29,19 @@ export const maxDuration = 120;
 const MAX_TURNS = 60;
 const MAX_TURN_CHARS = 2000;
 const MAX_SCENARIO_CHARS = 300;
+/** Repertoire lists are short phrases; bound both so a crafted body can't pad the system prompt. */
+const MAX_EXPRESSIONS = 30;
+const MAX_EXPRESSION_CHARS = 60;
+
+function parseExpressions(raw: unknown): string[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const out: string[] = [];
+  for (const item of raw.slice(0, MAX_EXPRESSIONS)) {
+    const text = safeStr(item, "", MAX_EXPRESSION_CHARS);
+    if (text) out.push(text);
+  }
+  return out.length > 0 ? out : undefined;
+}
 
 function conversationProviderKind(raw: unknown): ProviderKind {
   return isProviderKind(raw) ? raw : getDefaultProvider();
@@ -76,6 +89,8 @@ export async function POST(req: NextRequest) {
     const speakerFamiliarity = obj.speakerFamiliarity === "familiar" || obj.speakerFamiliarity === "mixed" || obj.speakerFamiliarity === "unfamiliar"
       ? obj.speakerFamiliarity
       : undefined;
+    const taughtExpressions = parseExpressions(obj.taughtExpressions);
+    const elicitExpressions = parseExpressions(obj.elicitExpressions);
     const history = parseTurns(obj.history);
     const model = safeStr(obj.ollamaModel, "", 100) || undefined;
 
@@ -107,6 +122,8 @@ export async function POST(req: NextRequest) {
         followUpDepth,
         promptStyle,
         speakerFamiliarity,
+        taughtExpressions,
+        elicitExpressions,
       },
       { signal: req.signal, timeoutMs: PROVIDER_SINGLE_CALL_TIMEOUT_MS },
     );

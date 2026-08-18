@@ -1,6 +1,7 @@
 import type { AdvancedReview, Card, ErrorEvent } from "@/lib/cards/schema";
 import type { ProviderKind } from "@/lib/cards/provider";
 import { getLearnerLangs } from "@/features/settings/learningProfile";
+import { watchModelNotReady } from "@/features/speech/modelStore";
 
 export interface DeckGenerationResult {
   cards?: Card[];
@@ -137,13 +138,19 @@ export async function transcribeAudio(blob: Blob, filename?: string): Promise<st
     text?: string;
     error?: string;
     code?: string;
+    model?: string;
     downloading?: boolean;
     progress?: number;
   };
   if (!response.ok) {
     let message = data.error ?? `Não consegui transcrever o áudio agora (erro ${response.status}).`;
-    if (data.code === "model_not_ready" && data.downloading && (data.progress ?? 0) > 0) {
-      message += ` ${Math.round((data.progress ?? 0) * 100)}% baixado.`;
+    if (data.code === "model_not_ready") {
+      // The runtime just started the download; put it on the app-wide bar so
+      // the learner can watch it instead of only reading "try again later".
+      watchModelNotReady(data.model);
+      if (data.downloading && (data.progress ?? 0) > 0) {
+        message += ` ${Math.round((data.progress ?? 0) * 100)}% baixado.`;
+      }
     }
     throw new Error(message);
   }

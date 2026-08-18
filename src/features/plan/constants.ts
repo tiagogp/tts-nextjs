@@ -26,6 +26,13 @@ export const PLAN_METRIC_ACTIONS: NonNullable<
   "retry_resolution",
 ];
 
+/**
+ * Days authored per generation call. Two whole weeks, so the weekly quotas in the
+ * prompt (study 5-6x, discover 2-3x) and the 14-day check-in all resolve inside a
+ * single answer instead of straddling two blocks.
+ */
+export const PLAN_CHUNK_DAYS = 14;
+
 export const PLAN_DAYS_OPTIONS = [
   { value: "30", label: "30 days" },
   { value: "60", label: "60 days" },

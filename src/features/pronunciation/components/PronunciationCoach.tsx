@@ -9,6 +9,8 @@ import { synthesizeSpeech } from "@/features/converse/api";
 import { getPronunciationAttempts, saveAudioRecording, savePronunciationAttempt, saveProductionAttempt } from "@/lib/store/repository";
 import type { ProductionAttempt } from "@/lib/performance/types";
 import { RecordingComparison } from "@/features/pronunciation/components/RecordingComparison";
+import LocalModelNotice from "@/features/speech/components/LocalModelNotice";
+import { useWhisperModel } from "@/features/speech/hooks/useLocalModel";
 import { emitActivity } from "@/lib/store/activityLog";
 import { useStageTimer } from "@/features/method/useStageTimer";
 import { useT } from "@/i18n/I18nProvider";
@@ -62,6 +64,10 @@ export function PronunciationCoach({
 }: PronunciationCoachProps) {
   const { t } = useT();
   const repeatTimer = useStageTimer("repeat", 3);
+  // Checking a repeat means transcribing it, so this surface waits on Whisper
+  // exactly the way the audio surfaces wait on Kokoro. Showing the install here
+  // beats letting Record answer with "model not ready".
+  const whisper = useWhisperModel();
   const [recording, setRecording] = useState(false);
   const [assessing, setAssessing] = useState(false);
   const [playingReference, setPlayingReference] = useState(false);
@@ -292,6 +298,8 @@ export function PronunciationCoach({
           </span>
         )}
       </div>
+
+      <LocalModelNotice model={whisper} />
 
       <div className="flex flex-wrap gap-2">
         <Button

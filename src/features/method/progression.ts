@@ -1,4 +1,6 @@
 import type { ListeningAttempt, ProductionAttempt, RetryOutcome } from "@/lib/performance/types";
+import type { EnglishLevel } from "@/features/discover/types";
+import { LEVEL_RANK } from "@/features/discover/levels";
 
 export type ListeningStage =
   | "sound_familiarity"
@@ -361,9 +363,25 @@ export function explainProgressionChange(
   return explanation;
 }
 
+/**
+ * Conversation shaping for an advanced learner, independent of recorded evidence.
+ *
+ * The stages below are deliberately evidence-driven, but a learner who has declared C1/C2 has
+ * no recorded productions on day one and so lands on `fixed_phrases` — a 4-turn, single-follow-up
+ * exchange. For that band the bottleneck is repertoire, not the ability to hold a conversation,
+ * and a beginner-shaped chat cannot supply it. So the declared level sets a floor on the
+ * *conversation* only; the promotion ladder itself stays evidence-based and untouched.
+ */
+const ADVANCED_CONVERSATION_FLOOR = { minTurns: 12, followUpDepth: "counterpoint" } as const;
+
+function isAdvancedLevel(level?: EnglishLevel): boolean {
+  return level ? LEVEL_RANK[level] >= LEVEL_RANK.C1 : false;
+}
+
 /** Convert evidence-based stages into concrete support used by practice surfaces. */
 export function supportForProgression(
   progression?: Pick<MethodProgressionState, "listeningStage" | "speakingStage" | "readingWritingStage">,
+  opts?: { level?: EnglishLevel },
 ): MethodSupport {
   const listeningStage = progression?.listeningStage ?? "sound_familiarity";
   const speakingStage = progression?.speakingStage ?? "fixed_phrases";
@@ -383,6 +401,10 @@ export function supportForProgression(
     simulated_conversation: { prompt: "Answer the prompt and add one natural follow-up detail.", guidance: "Respond without relying on a fixed script." },
     real_world_production: { prompt: "Deliver this message as you would outside the app.", guidance: "Use the language for a real communicative purpose." },
   };
+  const advanced = isAdvancedLevel(opts?.level);
+  const stageMaxTurns = speakingStage === "fixed_phrases" ? 4 : speakingStage === "variation" ? 6 : speakingStage === "guided_description" ? 8 : 12;
+  const stageFollowUpDepth: MethodSupport["conversation"]["followUpDepth"] =
+    speakingStage === "fixed_phrases" ? "single" : speakingStage === "variation" || speakingStage === "guided_description" ? "layered" : "counterpoint";
   const readingWritingGuidance: Record<ReadingWritingStage, string> = {
     guided_reading: "Read one useful sentence, then explain its meaning before writing.",
     open_writing: "Write a new sentence from the meaning, not by copying the model.",
@@ -408,9 +430,13 @@ export function supportForProgression(
       promotionEvidence: SPEAKING_STAGE_CRITERIA[speakingStage].evidence,
     },
     conversation: {
-      maxTurns: speakingStage === "fixed_phrases" ? 4 : speakingStage === "variation" ? 6 : speakingStage === "guided_description" ? 8 : 12,
-      followUpDepth: speakingStage === "fixed_phrases" ? "single" : speakingStage === "variation" || speakingStage === "guided_description" ? "layered" : "counterpoint",
-      promptStyle: speakingSupport[speakingStage].prompt,
+      // The floor only ever raises these — an advanced learner who has also earned a later
+      // stage keeps whatever the evidence gives them.
+      maxTurns: advanced ? Math.max(stageMaxTurns, ADVANCED_CONVERSATION_FLOOR.minTurns) : stageMaxTurns,
+      followUpDepth: advanced ? ADVANCED_CONVERSATION_FLOOR.followUpDepth : stageFollowUpDepth,
+      promptStyle: advanced
+        ? "Open with a substantive prompt and follow the learner's own line of thought."
+        : speakingSupport[speakingStage].prompt,
       familiarTopicCadenceDays: 7,
     },
     readingWriting: {

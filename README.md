@@ -70,9 +70,15 @@ Install dependencies:
 npm install
 ```
 
-Kokoro and Whisper models are downloaded automatically on first use and stored
-under `~/Library/Application Support/PhraseLoop/models/native`. Downloads are
-verified by SHA-256 and installed atomically.
+Kokoro and Whisper models are stored under
+`~/Library/Application Support/PhraseLoop/models/native`. Downloads are verified
+by SHA-256 and installed atomically.
+
+Kokoro (349 MB) starts downloading on its own as soon as onboarding finishes, so
+it is usually in place before the learner first needs generated audio; a bar
+above the tabs reports progress on every screen until it lands. Whisper is still
+fetched on first use. The bundled lessons' 292 audio clips ship with the app, so
+nothing in the core loop waits on either download.
 
 ## Running
 

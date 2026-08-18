@@ -1,6 +1,7 @@
 import type { DailyTask, TaskItem, TaskType } from "./schema";
 
-export type PlanOnboardingStep = "goal" | "availability" | "generating";
+/** Generation itself has no step: it runs in the background once the modal closes. */
+export type PlanOnboardingStep = "goal" | "availability";
 
 export interface PlanNavigationHandlers {
   onDiscover?: () => void;

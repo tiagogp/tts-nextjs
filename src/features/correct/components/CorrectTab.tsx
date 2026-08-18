@@ -31,7 +31,7 @@ import { useDeckGeneration } from "@/features/cards/hooks/useDeckGeneration";
 import type { DeckPayload } from "@/features/cards/exportDeck";
 import { ProviderPicker } from "@/features/cards/components/ProviderPicker";
 import { DeckPreview } from "@/features/cards/components/DeckPreview";
-import { useKokoroModel } from "@/features/speech/hooks/useKokoroModel";
+import { useKokoroModel, useWhisperModel, type LocalModelState } from "@/features/speech/hooks/useLocalModel";
 import { CORRECTION_INPUT_OPTIONS } from "@/features/correct/constants";
 import type { CorrectionInputMode } from "@/features/correct/types";
 import { newDraft, parseErrorsJson } from "@/features/correct/utils";
@@ -58,16 +58,22 @@ import { NaturalnessReview } from "@/features/correct/components/NaturalnessRevi
 export default function CorrectTab({
   onOpenSettings,
   onStudyNow,
+  kokoroModel,
 }: {
   onOpenSettings?: () => void;
   onStudyNow?: () => void;
+  kokoroModel?: LocalModelState;
 }) {
   const { t } = useT();
   const feedbackTimer = useStageTimer("feedback", 3);
   const retryTimer = useStageTimer("retry", 2, { autoStart: false });
   // The deck export synthesizes audio locally, so it needs the Kokoro model on
   // disk. Surface its download state here too — not just in the Anki Export tab.
-  const kokoro = useKokoroModel();
+  const localKokoro = useKokoroModel();
+  const kokoro = kokoroModel ?? localKokoro;
+  // Speaking or uploading the text to correct goes through Whisper, so its
+  // one-time install belongs next to the record button, not only on the app bar.
+  const whisper = useWhisperModel();
   const [events, setEvents] = useState<ErrorEvent[]>([]);
   const [deckPreview, setDeckPreview] = useState<{
     data: DeckPayload;
@@ -646,6 +652,7 @@ export default function CorrectTab({
                 evaluating={evaluating}
                 transcribing={transcribing}
                 recording={recording}
+                whisper={whisper}
                 note={aiNote}
                 evaluatorHint={evaluatorHint}
                 ollamaOffline={ollamaOffline}

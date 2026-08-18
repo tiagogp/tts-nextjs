@@ -19,12 +19,10 @@ import { useAiSettings } from "@/features/settings/context/AiSettingsContext";
 import { nextLevelOf } from "@/features/levelup/model";
 import { LevelTestFlow } from "@/features/levelup/components/LevelTestFlow";
 import { LocalPlacementCheck } from "@/features/levelup/components/LocalPlacementCheck";
-import { resolveInterfaceLang } from "@/i18n/config";
-import { translate } from "@/i18n/translate";
 
 const subscribe = () => () => {};
-type Step = "welcome" | "profile";
-const STEPS: Step[] = ["welcome", "profile"];
+type Step = "level" | "welcome" | "profile";
+const STEPS: Step[] = ["level", "welcome", "profile"];
 
 /** `objective` drives the method's study distribution; `label` is display/prompt text
  * only. Keep them separate — a translated label must never change the distribution. */
@@ -39,7 +37,7 @@ const GOAL_OPTIONS: readonly { objective: MethodObjective; label: string }[] = [
 export default function OnboardingDialog({ onOpenSettings: _onOpenSettings }: Readonly<{ onOpenSettings: () => void }>) {
   void _onOpenSettings;
   const [dismissed, setDismissed] = useState(false);
-  const [step, setStep] = useState<Step>("welcome");
+  const [step, setStep] = useState<Step>("level");
   const [levelCheckOpen, setLevelCheckOpen] = useState<"local" | "ai" | null>(null);
   const [profile] = useState(getLearningProfile);
   const [level, setLevel] = useState<EnglishLevel>(profile.level);
@@ -55,10 +53,12 @@ export default function OnboardingDialog({ onOpenSettings: _onOpenSettings }: Re
   );
   const open = firstVisit && !dismissed;
 
-  // Localize the dialog live so sub-B1 Portuguese learners can read it before
-  // the profile is even saved.
-  const uiLang = resolveInterfaceLang({ level, nativeLang });
-  const t = (en: string, vars?: Record<string, string | number>) => translate(uiLang, en, vars);
+  const t = (en: string, vars?: Record<string, string | number>) => {
+    if (!vars) return en;
+    return en.replace(/\{(\w+)\}/g, (match, key: string) =>
+      key in vars ? String(vars[key]) : match,
+    );
+  };
   const languageOptions = NATIVE_LANGUAGES.map((l) => ({ value: l.code, label: t(l.label) }));
 
   const finish = async () => {
@@ -123,6 +123,46 @@ export default function OnboardingDialog({ onOpenSettings: _onOpenSettings }: Re
         ))}
       </div>
 
+      {step === "level" && (
+        <div className="space-y-4">
+          <div>
+            <p className="text-xs uppercase tracking-widest text-accent">{t("Your level")}</p>
+            <h2 id="welcome-title" className="mt-1 text-xl font-semibold text-ink">
+              {t("Choose your English level first")}
+            </h2>
+            <p className="mt-2 text-sm text-ink-soft">
+              {t("This helps PhraseLoop start with phrases that are useful without being too easy.")}
+            </p>
+          </div>
+          <Field label={t("Level")}>
+            <Select
+              value={level}
+              onChange={(value) => setLevel(value as EnglishLevel)}
+              options={ENGLISH_LEVELS}
+            />
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+              {/* The local check needs no provider, so "not sure" is never a dead end. */}
+              <button
+                type="button"
+                onClick={() => setLevelCheckOpen("local")}
+                className="cursor-pointer text-xs font-medium text-accent hover:opacity-80"
+              >
+                {t("Not sure? Take a 5-minute check")}
+              </button>
+              {levelCheckTarget && defaultProvider?.available === true && (
+                <button
+                  type="button"
+                  onClick={() => setLevelCheckOpen("ai")}
+                  className="cursor-pointer text-xs font-medium text-ink-muted hover:opacity-80"
+                >
+                  {t("Or take the full {level} test with AI", { level: levelCheckTarget })}
+                </button>
+              )}
+            </div>
+          </Field>
+        </div>
+      )}
+
       {step === "welcome" && (
         <div>
           <p className="text-xs uppercase tracking-widest text-accent">{t("Welcome")}</p>
@@ -166,32 +206,6 @@ export default function OnboardingDialog({ onOpenSettings: _onOpenSettings }: Re
               </div>
             </Field>
           </div>
-          <Field label={t("Level")}>
-            <Select
-              value={level}
-              onChange={(value) => setLevel(value as EnglishLevel)}
-              options={ENGLISH_LEVELS}
-            />
-            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
-              {/* The local check needs no provider, so "not sure" is never a dead end. */}
-              <button
-                type="button"
-                onClick={() => setLevelCheckOpen("local")}
-                className="cursor-pointer text-xs font-medium text-accent hover:opacity-80"
-              >
-                {t("Not sure? Take a 5-minute check")}
-              </button>
-              {levelCheckTarget && defaultProvider?.available === true && (
-                <button
-                  type="button"
-                  onClick={() => setLevelCheckOpen("ai")}
-                  className="cursor-pointer text-xs font-medium text-ink-muted hover:opacity-80"
-                >
-                  {t("Or take the full {level} test with AI", { level: levelCheckTarget })}
-                </button>
-              )}
-            </div>
-          </Field>
           <Field label={t("Main goal")}>
             <Segmented
               label={t("Main goal")}

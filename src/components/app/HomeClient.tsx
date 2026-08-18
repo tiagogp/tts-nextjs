@@ -10,6 +10,7 @@ import { useUnlockedTabs } from "@/components/app/useUnlockedTabs";
 import { useDockDueBadge } from "@/components/app/useDockDueBadge";
 import C1Tab from "@/features/c1/components/C1Tab";
 import ConverseTab from "@/features/converse/components/ConverseTab";
+import ConversationTab from "@/features/converse/components/ConversationTab";
 import CorrectTab from "@/features/correct/components/CorrectTab";
 import { startFirstRunActivation } from "@/features/activation/firstRun";
 import { TabErrorBoundary } from "@/components/app/TabErrorBoundary";
@@ -26,8 +27,11 @@ import OnboardingDialog from "@/features/settings/components/OnboardingDialog";
 import SpeechTab from "@/features/speech/components/SpeechTab";
 import StudyTab from "@/features/study/components/StudyTab";
 import { PlanOnboarding } from "@/features/plan/components/PlanOnboarding";
+import { PlanGenerationToast } from "@/features/plan/components/PlanGenerationToast";
 import { installDefaultPlan } from "@/features/plan/defaultPlans";
 import type { TaskItem } from "@/features/plan/schema";
+import ModelDownloadBar from "@/features/speech/components/ModelDownloadBar";
+import { useKokoroModel, type LocalModelState } from "@/features/speech/hooks/useLocalModel";
 import { useT } from "@/i18n/I18nProvider";
 import { Button } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -70,6 +74,7 @@ function TabContent({
   speakSurface,
   onSpeakDone,
   discoverPrefill,
+  kokoro,
 }: {
   tab: HomeTab;
   onOpenSettings: () => void;
@@ -87,6 +92,7 @@ function TabContent({
   speakSurface: "guided" | "converse";
   onSpeakDone: () => void;
   discoverPrefill?: { url: string; nonce: number } | null;
+  kokoro: LocalModelState;
 }) {
   if (tab === "hoje") {
     return (
@@ -116,7 +122,8 @@ function TabContent({
   }
   if (tab === "study") return <StudyTab onDiscover={onOpenDiscover} onConversation={onSpeak} onLesson={() => onOpenLesson()} onCorrect={onOpenCorrect} />;
   if (tab === "speak") return <SpeakTab surface={speakSurface} onOpenSettings={onOpenSettings} onDone={onSpeakDone} />;
-  if (tab === "correct") return <CorrectTab onOpenSettings={onOpenSettings} onStudyNow={onOpenPractice} />;
+  if (tab === "conversa") return <ConversationTab onOpenSettings={onOpenSettings} />;
+  if (tab === "correct") return <CorrectTab onOpenSettings={onOpenSettings} onStudyNow={onOpenPractice} kokoroModel={kokoro} />;
   return null;
 }
 
@@ -153,6 +160,11 @@ function SpeakTab({
 // functional, reachable as an overlay rather than a phantom tab. C1 diagnosis (experimental,
 // experimental diagnosis follows the same pattern: never a primary tab.
 // `speak` is the beginner half of that pair — see `openSpeaking`.
+//
+// The W3 demotion holds up to B2, where producing language at all is still the bottleneck and a
+// roleplay tab would sit unused next to the drill that actually helps. From C1 it stops holding:
+// those learners can already converse, and conversation is the only surface that supplies the
+// repertoire they're short of — so it earns a real tab there. See `tabsForUnlockTier`.
 type Overlay = "settings" | "tools" | "converse" | "speak" | "c1" | null;
 
 function OverlayHeader({
@@ -188,8 +200,10 @@ function HomeContent() {
   const [planDialogOpen, setPlanDialogOpen] = useState(false);
   const [discoverPrefill] = useState<{ url: string; nonce: number } | null>(null);
   const lessonRequestRef = useRef(0);
-  const { tabs, tier, dueCount, announcement, clearAnnouncement } = useUnlockedTabs();
+  const kokoro = useKokoroModel();
+  // Provider first: the Conversation tab's visibility depends on it.
   const { hasEvaluator } = useProviderSelection({ fallbackToEvaluator: true });
+  const { tabs, tier, dueCount, announcement, clearAnnouncement } = useUnlockedTabs({ hasEvaluator });
   const activeTab = tabs.some((item) => item.id === tab) ? tab : "hoje";
   const advancedSurfacesUnlocked = tier >= 3;
   useDockDueBadge();
@@ -239,16 +253,27 @@ function HomeContent() {
    *
    * From tier 1 the Speak tab is that surface's persistent home; the overlay remains
    * only for the tier-0 learner routed here (e.g. a starter-plan converse task).
+   *
+   * Once the Talk tab exists (C1-C2 with a provider) it owns roleplay, and Speak falls back to
+   * the guided drill — otherwise the identical conversation would render in two tabs at once.
    */
-  const speakSurface: "guided" | "converse" = advancedSurfacesUnlocked && hasEvaluator ? "converse" : "guided";
+  const hasTalkTab = tabs.some((item) => item.id === "conversa");
+  const speakSurface: "guided" | "converse" =
+    !hasTalkTab && advancedSurfacesUnlocked && hasEvaluator ? "converse" : "guided";
   const openSpeaking = useCallback(() => {
     setLessonId(null);
+    // Callers here mean "go talk" (Study's conversation prompt, Hoje's speak CTA). When Talk
+    // exists it is that destination; Speak now holds the guided drill instead.
+    if (hasTalkTab) {
+      changeTab("conversa");
+      return;
+    }
     if (tabs.some((item) => item.id === "speak")) {
       changeTab("speak");
       return;
     }
     setOverlay(speakSurface === "converse" ? "converse" : "speak");
-  }, [changeTab, speakSurface, tabs]);
+  }, [changeTab, hasTalkTab, speakSurface, tabs]);
 
   // "Hoje" -> Start: open the learner's recommended bundled lesson through the
   // same save -> review path used after custom discovery.
@@ -304,6 +329,13 @@ function HomeContent() {
             tabs={tabs}
             badges={{ study: dueCount }}
           />
+
+          {/* The model installs start on their own — voice right after onboarding,
+              speech recognition on first use — so this bar lives above <main> and
+              outside the tab switch: whichever tab or overlay the learner is on,
+              they can see a download is still running and, if it failed, retry
+              from where they already are. */}
+          <ModelDownloadBar />
 
           <main className="flex-1 min-h-0" id="main-content">
             {lessonId !== null ? (
@@ -385,7 +417,7 @@ function HomeContent() {
                     backLabel={t("Back to Settings")}
                     onBack={() => setOverlay("settings")}
                   />
-                  <SpeechTab />
+                  <SpeechTab kokoroModel={kokoro} />
                 </div>
               </div>
             ) : (
@@ -428,6 +460,7 @@ function HomeContent() {
                           speakSurface={speakSurface}
                           onSpeakDone={() => changeTab("hoje")}
                           discoverPrefill={discoverPrefill}
+                          kokoro={kokoro}
                         />
                       </TabErrorBoundary>
                     </m.div>
@@ -436,18 +469,23 @@ function HomeContent() {
               })
             )}
           </main>
-          {announcedLabel && (
-            <m.div
-              className="pointer-events-none fixed bottom-5 left-1/2 z-30 -translate-x-1/2 rounded-md border border-line bg-card px-3 py-2 text-sm font-medium text-ink shadow-lg"
-              initial={{ opacity: 0, y: 10, filter: `blur(${BLUR}px)` }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              exit={{ opacity: 0, y: 10, filter: `blur(${BLUR}px)` }}
-              transition={springSoft}
-              role="status"
-            >
-              {t("New section unlocked: {section}", { section: t(announcedLabel) })}
-            </m.div>
-          )}
+          {/* One bottom-center stack, so a plan finishing while a section unlocks
+              does not put two toasts on top of each other. */}
+          <div className="pointer-events-none fixed bottom-5 left-1/2 z-30 flex -translate-x-1/2 flex-col items-center gap-2">
+            {announcedLabel && (
+              <m.div
+                className="rounded-md border border-line bg-card px-3 py-2 text-sm font-medium text-ink shadow-lg"
+                initial={{ opacity: 0, y: 10, filter: `blur(${BLUR}px)` }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                exit={{ opacity: 0, y: 10, filter: `blur(${BLUR}px)` }}
+                transition={springSoft}
+                role="status"
+              >
+                {t("New section unlocked: {section}", { section: t(announcedLabel) })}
+              </m.div>
+            )}
+            <PlanGenerationToast onViewPlan={() => changeTab("hoje")} />
+          </div>
           <OnboardingDialog
             onOpenSettings={() => {
               setLessonId(null);
@@ -457,7 +495,6 @@ function HomeContent() {
           <PlanOnboarding
             open={planDialogOpen}
             onClose={() => setPlanDialogOpen(false)}
-            onPlanCreated={() => setPlanDialogOpen(false)}
             onOpenSettings={() => {
               setPlanDialogOpen(false);
               setSettingsAiIntent(true);

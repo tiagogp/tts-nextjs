@@ -54,6 +54,43 @@ describe("buildConverseSystem", () => {
     expect(system).toContain("defend a view");
     expect(system.toLowerCase()).toContain("do not correct");
   });
+
+  it("asks an advanced partner for fresh expressions and to stop repeating old ones", () => {
+    const system = buildConverseSystem({
+      scenario: "negotiating scope",
+      targetLang: "en",
+      level: "C1",
+      taughtExpressions: ["a false economy", "a sticking point"],
+    });
+    expect(system).toContain("[[repertoire:");
+    expect(system).toContain("a false economy; a sticking point");
+    expect(system).toContain("do not mark any of them again");
+  });
+
+  it("asks the partner to make room for an expression the learner has never produced", () => {
+    const system = buildConverseSystem({
+      scenario: "negotiating scope",
+      targetLang: "en",
+      level: "C1",
+      elicitExpressions: ["a false economy"],
+    });
+    expect(system).toContain("becomes the natural thing for them to say next");
+    expect(system).toContain("a false economy");
+    // Eliciting must not turn into instructing — that would break character and pre-empt Phase 2.
+    expect(system).toContain("Never tell them to use it");
+  });
+
+  it("leaves the repertoire contract out below C1, where the constraint is fluency not lexis", () => {
+    const system = buildConverseSystem({
+      scenario: "ordering at a restaurant",
+      targetLang: "en",
+      level: "A2",
+      taughtExpressions: ["a false economy"],
+      elicitExpressions: ["a sticking point"],
+    });
+    expect(system).not.toContain("[[repertoire:");
+    expect(system).not.toContain("a false economy");
+  });
 });
 
 describe("buildCorrectRequest", () => {

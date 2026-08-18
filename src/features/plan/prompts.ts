@@ -1,6 +1,6 @@
-import type { EffortSnapshot, Phase, PlanMeta } from "./schema";
+import type { EffortSnapshot, Phase, PlanMeta, TaskType } from "./schema";
 
-export function buildPlanPrompt(meta: {
+export interface PlanPromptMeta {
   goal: string;
   currentLevel: string;
   targetLevel: string;
@@ -8,51 +8,126 @@ export function buildPlanPrompt(meta: {
   planDays: number;
   language: string;
   objective?: string;
-}): string {
-  return `You are a language learning curriculum designer. Generate a structured ${meta.planDays}-day learning plan for a learner with these parameters:
+}
 
-- Current level: ${meta.currentLevel}
-- Target level: ${meta.targetLevel}
-- Goal: ${meta.goal}
-- Language being learned: ${meta.language}
-- Daily availability: ${meta.availabilityMinutes} minutes
-- Plan length: ${meta.planDays} days
-- Structured objective: ${meta.objective ?? "conversation"}
+/** Shape of the previous chunk handed to the next one, so blocks stay continuous. */
+export interface ChunkContext {
+  /** Running task-type totals for every day authored so far. */
+  counts: Partial<Record<TaskType, number>>;
+  /** The last few authored days, so the next block does not repeat instructions. */
+  recentDays: Array<{ dayNumber: number; instructions: string[] }>;
+}
 
-The app has these activities the learner can do each day:
+const ACTIVITY_MENU = `The app has these activities the learner can do each day:
 - "discover": Find a YouTube video, article, or PDF, extract useful phrases, and generate flashcards from it
 - "lesson": Follow a structured input-to-output lesson from learn to retry
 - "study": Review due flashcards using spaced repetition (FSRS algorithm)
 - "converse": Practice conversation with an AI partner in a chosen scenario
 - "correct": Write or speak something, get corrections, turn mistakes into flashcards
-- "readWrite": Read a meaningful sentence for comprehension, then write a short new message
+- "readWrite": Read a meaningful sentence for comprehension, then write a short new message`;
 
-Design 3 phases that build on each other. Each phase should have a clear focus (e.g., "Listening and vocabulary building", "Output and error correction", "Consolidation and fluency").
+function learnerBlock(meta: PlanPromptMeta): string {
+  return `- Current level: ${meta.currentLevel}
+- Target level: ${meta.targetLevel}
+- Goal: ${meta.goal}
+- Language being learned: ${meta.language}
+- Daily availability: ${meta.availabilityMinutes} minutes
+- Plan length: ${meta.planDays} days
+- Structured objective: ${meta.objective ?? "conversation"}`;
+}
 
-For EACH of the ${meta.planDays} days, provide 1-3 tasks. Each task must have:
-- type: one of "discover", "lesson", "study", "converse", "correct", "readWrite"
-- instruction: a short, concrete, actionable instruction (max 80 chars)
-- targetMetric (optional): what counts as "done" (action + quantity)
+/**
+ * Call 1 of the chunked generation: phases only.
+ *
+ * Kept separate from the day blocks because every block needs the same phase
+ * structure as context, and a 3-item JSON answers far faster than 90 days.
+ */
+export function buildPlanSkeletonPrompt(meta: PlanPromptMeta): string {
+  return `You are a language learning curriculum designer. Design the phase structure of a ${meta.planDays}-day learning plan for a learner with these parameters:
 
-Rules:
-- Speaking must be present from day 1 with a simple level-appropriate prompt.
-- Use the structured objective to change the balance of discover, converse, correct, readWrite, lesson, and study. Conversation and travel emphasize speaking/listening; academic emphasizes reading/writing; professional balances speaking with writing; media emphasizes listening.
-- Every 14 days, include one "correct" task for a short progress check-in with targetMetric action "progress_checkin"
-- study should appear 5-6 days per week (spaced repetition needs consistency)
-- discover 2-3 times per week (not every day)
-- Keep total estimatedMinutes close to ${meta.availabilityMinutes} per day
-- study ≈ 10 min, discover ≈ 20-30 min, converse ≈ 15 min, correct ≈ 15 min
+${learnerBlock(meta)}
+
+${ACTIVITY_MENU}
+
+Design exactly 3 phases that build on each other and together cover days 1 to ${meta.planDays} with no gap and no overlap. Each phase needs a clear focus (e.g., "Listening and vocabulary building", "Output and error correction", "Consolidation and fluency") that moves the learner from ${meta.currentLevel} toward ${meta.targetLevel} for this specific goal.
 
 Return ONLY valid JSON matching this exact shape:
 {
   "phases": [
     { "number": 1, "title": "string", "focus": "string", "startDay": 1, "endDay": 30 }
-  ],
+  ]
+}`;
+}
+
+/**
+ * Call 2..N: the daily tasks for one block of days.
+ *
+ * The block is two whole weeks, so the weekly quotas below (study 5-6x, discover
+ * 2-3x) and the 14-day check-in cadence all resolve inside a single answer.
+ */
+export function buildPlanChunkPrompt(
+  meta: PlanPromptMeta,
+  phases: Phase[],
+  startDay: number,
+  endDay: number,
+  context: ChunkContext,
+): string {
+  const phasesDesc = phases
+    .map((phase) => `  Phase ${phase.number} (days ${phase.startDay}-${phase.endDay}): ${phase.title} - ${phase.focus}`)
+    .join("\n");
+
+  const countsDesc = Object.entries(context.counts)
+    .filter(([, count]) => count > 0)
+    .map(([type, count]) => `${type}: ${count}`)
+    .join(", ");
+
+  const recentDesc = context.recentDays
+    .map((day) => `  - Day ${day.dayNumber}: ${day.instructions.join(" | ")}`)
+    .join("\n");
+
+  const dayCount = endDay - startDay + 1;
+  const isFirstBlock = startDay === 1;
+
+  return `You are a language learning curriculum designer writing one block of an existing ${meta.planDays}-day learning plan.
+
+Learner:
+${learnerBlock(meta)}
+
+Plan phases:
+${phasesDesc}
+
+${ACTIVITY_MENU}
+
+${
+  isFirstBlock
+    ? "This is the first block of the plan."
+    : `Already authored: days 1-${startDay - 1}.
+Task types used so far: ${countsDesc || "none"}.
+Last authored days:
+${recentDesc || "  (none)"}`
+}
+
+Write ONLY days ${startDay} to ${endDay} (${dayCount} days). For EACH day, provide 1-3 tasks. Each task must have:
+- type: one of "discover", "lesson", "study", "converse", "correct", "readWrite"
+- instruction: a short, concrete, actionable instruction (max 80 chars)
+- targetMetric (optional): what counts as "done" (action + quantity)
+
+Rules:
+- Use the phase that contains each day number and match its focus.
+${isFirstBlock ? "- Speaking must be present from day 1 with a simple level-appropriate prompt.\n" : "- Do not repeat the instructions of the last authored days; move the learner forward.\n"}- Use the structured objective to change the balance of discover, converse, correct, readWrite, lesson, and study. Conversation and travel emphasize speaking/listening; academic emphasizes reading/writing; professional balances speaking with writing; media emphasizes listening.
+- Every 14 days (day 14, 28, 42, ...), include one "correct" task for a short progress check-in with targetMetric action "progress_checkin"
+- study should appear 5-6 days per week (spaced repetition needs consistency)
+- discover 2-3 times per week (not every day)
+- Keep total estimatedMinutes close to ${meta.availabilityMinutes} per day
+- study ≈ 10 min, discover ≈ 20-30 min, converse ≈ 15 min, correct ≈ 15 min
+
+Return ONLY valid JSON with exactly ${dayCount} days, numbered ${startDay} to ${endDay}:
+{
   "days": [
     {
-      "dayNumber": 1,
+      "dayNumber": ${startDay},
       "phase": 1,
-      "estimatedMinutes": 20,
+      "estimatedMinutes": ${meta.availabilityMinutes},
       "tasks": [
         {
           "type": "discover",
