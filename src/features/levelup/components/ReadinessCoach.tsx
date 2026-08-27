@@ -19,9 +19,12 @@ import {
   getConversations,
   getErrorEvents,
   getLevelTestAttempts,
+  getListeningAttempts,
   getProgressAssessments,
+  getProductionAttempts,
   getPronunciationAttempts,
   getReviews,
+  getRetryOutcomes,
 } from "@/lib/store/repository";
 import { computeProgressSnapshot } from "@/features/progress/model";
 import type { Weakness } from "@/lib/srs/analytics";
@@ -56,12 +59,15 @@ export function ReadinessCoach({ weaknesses, generatingKey, onPractice, onGenera
   const refresh = useCallback(async () => {
     if (!isStoreAvailable()) return;
     const profile = getLearningProfile();
-    const [reviews, errorEvents, conversations, pronunciationAttempts, assessments, cards, cardsWithSrs, attempts] =
+    const [reviews, errorEvents, conversations, pronunciationAttempts, listeningAttempts, productionAttempts, retryOutcomes, assessments, cards, cardsWithSrs, attempts] =
       await Promise.all([
         getReviews(),
         getErrorEvents(),
         getConversations(),
         getPronunciationAttempts(),
+        getListeningAttempts(),
+        getProductionAttempts(),
+        getRetryOutcomes(),
         getProgressAssessments(),
         getCards(),
         getCardsWithSrs(),
@@ -73,6 +79,9 @@ export function ReadinessCoach({ weaknesses, generatingKey, onPractice, onGenera
       errorEvents,
       conversations,
       pronunciationAttempts,
+      listeningAttempts,
+      productionAttempts,
+      retryOutcomes,
       assessments,
     });
     const lastCheckinAt = assessments.find((assessment) => assessment.kind === "checkin")?.createdAt;

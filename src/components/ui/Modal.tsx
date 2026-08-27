@@ -15,6 +15,9 @@ interface ModalProps {
   closeOnBackdrop?: boolean;
 }
 
+const FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 export function Modal({
   open,
   onClose,
@@ -26,6 +29,7 @@ export function Modal({
 }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const onCloseRef = useRef(onClose);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     onCloseRef.current = onClose;
@@ -34,14 +38,40 @@ export function Modal({
   useEffect(() => {
     if (!open) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onCloseRef.current?.();
+      if (event.key === "Escape") {
+        onCloseRef.current?.();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const panel = panelRef.current;
+      if (!panel) return;
+      const focusable = Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
+      if (focusable.length === 0) {
+        event.preventDefault();
+        return;
+      }
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [open]);
 
   useEffect(() => {
-    if (open) panelRef.current?.focus();
+    if (open) {
+      previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
+      panelRef.current?.focus();
+    } else if (previouslyFocusedRef.current) {
+      previouslyFocusedRef.current.focus();
+      previouslyFocusedRef.current = null;
+    }
   }, [open]);
 
   return (
@@ -69,7 +99,10 @@ export function Modal({
             exit={{ opacity: 0, scale: 0.97, y: 8, filter: "blur(8px)" }}
             transition={springSoft}
             className={cn(
-              "w-[min(100%,30rem)] rounded-xl border border-line bg-card p-6 shadow-[0_20px_60px_rgb(0_0_0/0.25)] outline-none",
+              // The panel scrolls itself: a centred grid item taller than the viewport would
+              // otherwise overflow a fixed overlay that has nowhere to scroll, silently cutting
+              // off the end of long dialogs (the placement check's later items and its buttons).
+              "max-h-[calc(100dvh-2rem)] w-[min(100%,30rem)] overflow-y-auto overscroll-contain rounded-xl border border-line bg-card p-6 shadow-[0_20px_60px_rgb(0_0_0/0.25)] outline-none",
               className,
             )}
           >

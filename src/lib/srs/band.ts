@@ -167,8 +167,12 @@ export function gateVerdict(m: BandGateMetrics): BandVerdict {
 export interface BandGateResult {
   metrics: BandGateMetrics;
   verdict: BandVerdict;
-  /** One-line, honest read of the result for a human running the gate. */
+  /**
+   * One-line, honest read of the result for a human running the gate. This is the English
+   * source string for `t()`; the numbers travel in `noteVars` so the surface can translate it.
+   */
   note: string;
+  noteVars: Record<string, string | number>;
 }
 
 /**
@@ -180,18 +184,26 @@ export interface BandGateResult {
 export function simulateBandGate(reviews: ReviewRecord[]): BandGateResult {
   const metrics = bandGateMetrics(reviews);
   const verdict = gateVerdict(metrics);
-  const pct = (x: number) => `${Math.round(x * 100)}%`;
+  const pct = (x: number) => Math.round(x * 100);
   let note: string;
+  let noteVars: Record<string, string | number>;
   if (verdict === "insufficient-data") {
-    note = `Only ${metrics.samples} retrievals reconstructed — need ≥${MIN_SAMPLES} before trusting a verdict.`;
+    note = "Only {samples} retrievals reconstructed — need at least {minimum} before trusting a verdict.";
+    noteVars = { samples: metrics.samples, minimum: MIN_SAMPLES };
   } else if (verdict === "adopt") {
     note =
-      `${pct(metrics.shareTooEasy)} too-easy / ${pct(metrics.shareTooHard)} too-hard reviews land off the band ` +
-      `(only ${pct(metrics.shareInBand)} in band) — band ordering has headroom. Verify live before shipping.`;
+      "{tooEasy}% too-easy / {tooHard}% too-hard reviews land off the band (only {inBand}% in band) — " +
+      "band ordering has headroom. Verify live before shipping.";
+    noteVars = {
+      tooEasy: pct(metrics.shareTooEasy),
+      tooHard: pct(metrics.shareTooHard),
+      inBand: pct(metrics.shareInBand),
+    };
   } else {
     note =
-      `${pct(metrics.shareInBand)} of reviews already sit in the band (mean recall ${pct(metrics.meanRecall)}) — ` +
-      `band ordering would change little. Skip until the distribution drifts off-target.`;
+      "{inBand}% of reviews already sit in the band (mean recall {meanRecall}%) — " +
+      "band ordering would change little. Skip until the distribution drifts off-target.";
+    noteVars = { inBand: pct(metrics.shareInBand), meanRecall: pct(metrics.meanRecall) };
   }
-  return { metrics, verdict, note };
+  return { metrics, verdict, note, noteVars };
 }

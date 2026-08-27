@@ -13,6 +13,15 @@ export async function sendConversationTurn(input: {
   targetLang?: string;
   level?: string;
   challenge?: boolean;
+  conversationStage?: string;
+  maxTurns?: number;
+  followUpDepth?: "single" | "layered" | "counterpoint";
+  promptStyle?: string;
+  speakerFamiliarity?: "familiar" | "mixed" | "unfamiliar";
+  /** C1-C2 repertoire mode: already introduced, so the partner picks something else. */
+  taughtExpressions?: string[];
+  /** C1-C2 repertoire mode: heard but never said back, so the partner makes room for them. */
+  elicitExpressions?: string[];
   history: ConversationTurn[];
   signal?: AbortSignal;
 }): Promise<{ reply: string }> {
@@ -28,6 +37,13 @@ export async function sendConversationTurn(input: {
       sourceLang: nativeLang,
       level: input.level || undefined,
       challenge: input.challenge || undefined,
+      conversationStage: input.conversationStage,
+      maxTurns: input.maxTurns,
+      followUpDepth: input.followUpDepth,
+      promptStyle: input.promptStyle,
+      speakerFamiliarity: input.speakerFamiliarity,
+      taughtExpressions: input.taughtExpressions,
+      elicitExpressions: input.elicitExpressions,
       history: input.history,
     }),
     signal: input.signal,

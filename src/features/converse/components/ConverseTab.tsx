@@ -1,9 +1,6 @@
 "use client";
 
-// FROZEN until W5 passes (docs/validation-action-plan.md Phase 0): no fixes, polish,
-// or refactors here except crash fixes. See AGENTS.md "Feature freeze".
-
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "motion/react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -11,21 +8,40 @@ import { Chip } from "@/components/ui/Chip";
 import { Field, Input } from "@/components/ui/Field";
 import { Segmented } from "@/components/ui/Segmented";
 import { Spinner } from "@/components/ui/Spinner";
+import { Notice } from "@/components/ui/Notice";
 import Disclosure from "@/components/ui/Disclosure";
 import ProviderBadge from "@/components/ui/ProviderBadge";
 import { cn } from "@/lib/cn";
+import { useT } from "@/i18n/I18nProvider";
 import { listItem, staggerContainer } from "@/lib/motion";
 import { normalizeContext } from "@/lib/cards/context";
+import { isRepertoireLevel } from "@/lib/cards/shared";
 import type { ConversationTurn } from "@/lib/cards/provider";
-import type { ErrorEvent } from "@/lib/cards/schema";
+import type { AdvancedReview } from "@/lib/cards/schema";
 import {
   deleteConversation,
   getConversations,
   saveConversation,
   saveCorrectionDeck,
+  saveAudioRecording,
+  saveProductionAttempt,
+  saveRetryOutcome,
+  getMethodProgression,
+  getErrorEvents,
   type Conversation,
 } from "@/lib/store/repository";
+import type { ProductionAttempt, RetryOutcome } from "@/lib/performance/types";
+import {
+  SPEAKING_STAGE_LABEL,
+  selectFamiliarTopic,
+  stageLabel,
+  supportForProgression,
+  type MethodProgressionState,
+} from "@/features/method/progression";
+import { selectRecurringError } from "@/features/pronunciation/speakingDrill";
 import { emitActivity } from "@/lib/store/activityLog";
+import { useStageTimer } from "@/features/method/useStageTimer";
+import { useCorrectionAudio } from "@/features/correct/hooks/useCorrectionAudio";
 import { useProviderSelection } from "@/features/cards/hooks/useProviderSelection";
 import { ProviderPicker } from "@/features/cards/components/ProviderPicker";
 import { exportAndSaveDeck } from "@/features/cards/exportDeck";
@@ -35,14 +51,32 @@ import {
   transcribeAudio,
 } from "@/features/correct/api";
 import { NaturalnessReview } from "@/features/correct/components/NaturalnessReview";
+import { countPolishFeedback, focusFeedback, prioritizeFeedback, type FeedbackIssue } from "@/features/correct/feedbackContract";
 import { sendConversationTurn, synthesizeSpeech } from "@/features/converse/api";
+import LocalModelNotice from "@/features/speech/components/LocalModelNotice";
+import { useWhisperModel } from "@/features/speech/hooks/useLocalModel";
 import { getLearnerLangs } from "@/features/settings/learningProfile";
 import {
   CONVERSATION_LEVELS,
   CONVERSATION_SCENARIOS,
   DEFAULT_LEVEL,
   type ConversationLevel,
+  type ConversationScenario,
 } from "@/features/converse/constants";
+import {
+  detectRepertoireUse,
+  markRepertoireUsed,
+  mergeRepertoire,
+  parseRepertoire,
+  recentTaughtExpressions,
+  repertoireUptake,
+  segmentRepertoire,
+  unusedRepertoire,
+  type RepertoireItem,
+} from "@/features/converse/repertoire";
+import { advanceVad, computeRms, createVadState, silenceCountdownSeconds } from "@/features/converse/vad";
+import { RepertoirePanel } from "@/features/converse/components/RepertoirePanel";
+import { RepertoireRecall } from "@/features/converse/components/RepertoireRecall";
 
 /**
  * Phase 1 — in-app conversation practice. Speak (or type) with an AI partner in a chosen
@@ -52,13 +86,36 @@ import {
  * Gated like the Correct tab: a configured, available provider (OpenRouter, Ollama, Claude, GPT)
  * is required to hold a conversation.
  */
-export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () => void }) {
+/**
+ * How many still-unused expressions the partner is asked to make room for in one turn. Two is
+ * enough to give it a choice of openings; more and every reply starts fishing for a phrase.
+ */
+const ELICIT_PER_TURN = 2;
+
+export interface ConverseTabProps {
+  onOpenSettings?: () => void;
+  /** Starter scenarios offered as chips. Defaults to the everyday role-play set. */
+  scenarios?: ConversationScenario[];
+  /** Lead with the free-text topic field and demote the chips to suggestions. */
+  topicFirst?: boolean;
+  /** Open in hands-free mode instead of guided turn-taking. */
+  defaultFreeTalk?: boolean;
+}
+
+export default function ConverseTab({
+  onOpenSettings,
+  scenarios = CONVERSATION_SCENARIOS,
+  topicFirst = false,
+  defaultFreeTalk = false,
+}: ConverseTabProps) {
+  const { t } = useT();
   const selection = useProviderSelection({ fallbackToEvaluator: true });
   const { provider, activeProvider, hasEvaluator, selectedModel } = selection;
+  const speakTimer = useStageTimer("speak", 2);
 
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [past, setPast] = useState<Conversation[]>([]);
-  const [scenarioId, setScenarioId] = useState<string>(CONVERSATION_SCENARIOS[0].id);
+  const [scenarioId, setScenarioId] = useState<string>(() => (topicFirst ? "custom" : scenarios[0].id));
   const [customScenario, setCustomScenario] = useState("");
   const [level, setLevel] = useState<ConversationLevel>(() => getLearnerLangs().level || DEFAULT_LEVEL);
   const [challenge, setChallenge] = useState(false);
@@ -66,10 +123,22 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
   const [busy, setBusy] = useState(false);
   const [recording, setRecording] = useState(false);
   const [transcribing, setTranscribing] = useState(false);
+  // Speaking a turn goes through Whisper; free talk depends on it entirely. Show
+  // the one-time install next to the mic instead of failing the first turn.
+  const whisper = useWhisperModel();
   const [note, setNote] = useState<string | null>(null);
   // Free talk = hands-free: after each AI reply the mic auto-opens and silence detection
   // (a "debounce" on quiet) decides when you've finished and sends your turn automatically.
-  const [freeTalk, setFreeTalk] = useState(false);
+  const [freeTalk, setFreeTalk] = useState(defaultFreeTalk);
+  const [progression, setProgression] = useState<MethodProgressionState | undefined>();
+  const [recurringError, setRecurringError] = useState<Awaited<ReturnType<typeof getErrorEvents>>[number] | undefined>();
+  // The declared level raises the conversation floor: a C1/C2 learner with no recorded evidence
+  // would otherwise get the 4-turn beginner shape. See `supportForProgression`.
+  const progressionSupport = supportForProgression(progression, { level });
+  // Expressions the partner introduced this session, accumulated across turns.
+  const [repertoire, setRepertoire] = useState<RepertoireItem[]>([]);
+  // Seconds until a silent free-talk turn is sent, so a 3s pause doesn't look like a freeze.
+  const [silenceCountdown, setSilenceCountdown] = useState<number | null>(null);
 
   // Phase 2 — post-session review (find mistakes → cards). `review` is the conversation being
   // reviewed; null while in setup or an active chat.
@@ -78,6 +147,10 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
   const [generating, setGenerating] = useState(false);
   const [reviewNote, setReviewNote] = useState<string | null>(null);
   const [reviewCarded, setReviewCarded] = useState(false);
+  const [retryText, setRetryText] = useState("");
+  const [retryChecking, setRetryChecking] = useState(false);
+  const [retryReview, setRetryReview] = useState<AdvancedReview | null>(null);
+  const [retryResolution, setRetryResolution] = useState<"pending" | "completed" | "deferred" | "dismissed">("pending");
 
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -91,8 +164,29 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
   // Refs bridge the start↔listen↔send cycle so the callbacks below don't need to
   // depend on each other (which would create a definition-order knot).
   const freeTalkRef = useRef(freeTalk);
-  const sendTurnRef = useRef<(text: string) => void>(() => {});
+  const sendTurnRef = useRef<(text: string, spoken?: boolean) => void>(() => {});
+  const typedInputWasSpokenRef = useRef(false);
+  const retrySpokenRef = useRef(false);
+  const retryBlobRef = useRef<Blob | null>(null);
   const listenRef = useRef<() => void>(() => {});
+
+  const retryAudio = useCorrectionAudio({
+    onNote: setReviewNote,
+    onText: (updater) => {
+      retrySpokenRef.current = true;
+      setRetryText(updater);
+      setRetryReview(null);
+    },
+    onBlob: (blob) => {
+      retryBlobRef.current = blob;
+    },
+  });
+  const {
+    recording: retryRecording,
+    transcribing: retryTranscribing,
+    startRecording: startRetryRecording,
+    stopRecording: stopRetryRecording,
+  } = retryAudio;
   useEffect(() => {
     freeTalkRef.current = freeTalk;
   }, [freeTalk]);
@@ -111,6 +205,24 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
     const loadProfileLevel = () => setLevel(getLearnerLangs().level);
     window.addEventListener("phraseloop:profile-updated", loadProfileLevel);
     return () => window.removeEventListener("phraseloop:profile-updated", loadProfileLevel);
+  }, []);
+
+  useEffect(() => {
+    const loadProgression = () => {
+      void Promise.all([getMethodProgression(), getErrorEvents()])
+        .then(([nextProgression, errors]) => {
+          setProgression(nextProgression);
+          setRecurringError(selectRecurringError(errors));
+        })
+        .catch(() => undefined);
+    };
+    loadProgression();
+    window.addEventListener("phraseloop:progress-updated", loadProgression);
+    window.addEventListener("phraseloop:activity", loadProgression);
+    return () => {
+      window.removeEventListener("phraseloop:progress-updated", loadProgression);
+      window.removeEventListener("phraseloop:activity", loadProgression);
+    };
   }, []);
 
   useEffect(() => {
@@ -145,6 +257,15 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
     setConversation({ ...target, endedAt: undefined });
     setTyped("");
     setNote(null);
+    // Prefer the stored list: it carries the glosses and the uptake stamps, neither of which
+    // survives in the turns (the trailer is stripped before a turn is saved). Conversations from
+    // before repertoire was persisted fall back to rebuilding bare items from the markers.
+    setRepertoire(
+      target.repertoire ??
+        target.turns
+          .filter((turn) => turn.role === "assistant")
+          .reduce<RepertoireItem[]>((items, turn) => mergeRepertoire(items, parseRepertoire(turn.text).items), []),
+    );
   }, []);
 
   const removePast = useCallback(
@@ -159,6 +280,9 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
   // to play. We await this *before* revealing the assistant bubble so text and voice land
   // together. Audio is optional (Kokoro may not be downloaded, etc.), so failures return null
   // and the conversation continues silently.
+  //
+  // Callers must pass the *plain* text: at C1-C2 the reply carries repertoire markup, and Kokoro
+  // would happily pronounce the asterisks and the trailer.
   const synthReply = useCallback(async (text: string): Promise<HTMLAudioElement | null> => {
     try {
       const blob = await synthesizeSpeech(text);
@@ -188,21 +312,38 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
   }, []);
 
   const evaluatorHint = !hasEvaluator
-    ? `${activeProvider?.label ?? "No provider"} is unavailable. Open Settings with the gear button to connect one.`
+    ? t("{provider} is unavailable. Open Settings with the gear button to connect one.", { provider: activeProvider?.label ?? t("No provider") })
     : null;
   const cloudNote =
     activeProvider && !activeProvider.isLocal
-      ? `Your turns are sent to ${activeProvider.label} to generate replies.`
+      ? t("Your turns are sent to {provider} to generate replies.", { provider: activeProvider.label })
       : null;
 
+  // `past` is newest-first, so this is the freshest slice of what the partner has already given.
+  const pastTaught = useMemo(() => recentTaughtExpressions(past), [past]);
+
   const usingCustom = scenarioId === "custom";
-  const activeScenario = CONVERSATION_SCENARIOS.find((s) => s.id === scenarioId);
+  const activeScenario = scenarios.find((s) => s.id === scenarioId);
+  // Repertoire mode follows the learner's level, not the surface: a C1 learner gets it in the
+  // Speak tab too, and the panel stays hidden below that band where it would only distract.
+  const showRepertoire = isRepertoireLevel(level) && repertoire.length > 0;
   const customTrimmed = customScenario.trim();
   const canStart = hasEvaluator && (usingCustom ? customTrimmed.length > 0 : Boolean(activeScenario));
 
   const start = useCallback(async () => {
     if (busy || !canStart) return;
-    const scenarioPrompt = usingCustom ? customTrimmed : activeScenario?.prompt;
+    const familiarTopic = !usingCustom && activeScenario?.id === "personal-update"
+      ? selectFamiliarTopic(
+          past.map((item) => ({ topicId: item.topicId, context: item.context, createdAt: item.startedAt })),
+          Date.now(),
+          progressionSupport.conversation.familiarTopicCadenceDays,
+        )
+      : undefined;
+    const scenarioPrompt = usingCustom
+      ? customTrimmed
+      : activeScenario?.prompt && familiarTopic
+        ? `${activeScenario.prompt} Revisit the familiar topic “${familiarTopic.label}” today. ${familiarTopic.prompt}`
+        : activeScenario?.prompt;
     if (!scenarioPrompt) return;
     const fallbackContext = usingCustom
       ? normalizeContext(customTrimmed) ?? "conversation"
@@ -217,9 +358,19 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
         level,
         challenge,
         history: [],
+        conversationStage: progressionSupport.speaking.stage,
+        maxTurns: progressionSupport.conversation.maxTurns,
+        followUpDepth: progressionSupport.conversation.followUpDepth,
+        promptStyle: recurringError
+          ? `${progressionSupport.conversation.promptStyle} Revisit this recurring correction naturally: ${recurringError.corrected}`
+          : progressionSupport.conversation.promptStyle,
+        speakerFamiliarity: progressionSupport.listening.speakerFamiliarity,
+        taughtExpressions: pastTaught,
       });
       // Hold the "Starting…" state through TTS so the greeting bubble and its voice appear together.
-      const audio = reply ? await synthReply(reply) : null;
+      const parsed = reply ? parseRepertoire(reply) : null;
+      const audio = parsed ? await synthReply(parsed.plain) : null;
+      if (parsed) setRepertoire(parsed.items);
       const conv: Conversation = {
         id: crypto.randomUUID(),
         scenario: scenarioPrompt,
@@ -230,27 +381,43 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
         sourceLang: getLearnerLangs().nativeLang,
         level,
         challenge,
-        turns: reply ? [{ role: "assistant", text: reply }] : [],
+        progressionStage: progressionSupport.speaking.stage,
+        topicId: familiarTopic?.id,
+        // Store `display`: the trailer is stripped (it is plumbing, not conversation) but the
+        // inline markers stay, so reopening a saved session keeps its highlights.
+        turns: parsed ? [{ role: "assistant", text: parsed.display }] : [],
+        repertoire: parsed?.items ?? [],
         startedAt: Date.now(),
       };
       persist(conv);
       if (reply) speak(audio);
     } catch (err: unknown) {
-      setNote(err instanceof Error ? err.message : "Couldn't start the conversation.");
+      setNote(err instanceof Error ? err.message : t("Couldn't start the conversation."));
     } finally {
       setBusy(false);
     }
-  }, [busy, canStart, usingCustom, customTrimmed, activeScenario, provider, selectedModel, level, challenge, persist, synthReply, speak]);
+  }, [busy, canStart, usingCustom, customTrimmed, activeScenario, past, pastTaught, provider, selectedModel, level, challenge, persist, synthReply, speak, progressionSupport, recurringError, t]);
 
   const sendTurn = useCallback(
-    async (text: string) => {
+    async (text: string, spoken = false) => {
       const trimmed = text.trim();
       if (!trimmed || busy || !conversation) return;
+      const learnerTurns = conversation.turns.filter((turn) => turn.role === "user").length;
+      if (learnerTurns >= progressionSupport.conversation.maxTurns) {
+        setNote(t("This {stage} practice is complete. Finish it to review your output.", { stage: t(SPEAKING_STAGE_LABEL[progressionSupport.speaking.stage]) }));
+        return;
+      }
       setBusy(true);
       setNote(null);
+      // Credit any expression the learner reached for before the turn goes out, so the partner's
+      // next reply is shaped by what has actually been taken up rather than by what was said at
+      // them. Nothing is surfaced mid-conversation — the panel updates, the flow doesn't break.
+      const afterUse = markRepertoireUsed(repertoire, detectRepertoireUse(trimmed, repertoire));
+      setRepertoire(afterUse);
       const withUser: Conversation = {
         ...conversation,
-        turns: [...conversation.turns, { role: "user", text: trimmed }],
+        turns: [...conversation.turns, { role: "user", text: trimmed, spoken }],
+        repertoire: afterUse,
       };
       persist(withUser);
       void emitActivity("conversation_turn", {
@@ -258,7 +425,19 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
         scenarioId: conversation.context,
         turnIndex: withUser.turns.length - 1,
       });
+      // Stage 5 — original production, as opposed to the `repeat` stage's imitation.
+      // One window per turn: commit this turn, then reopen for the next.
+      const speakMinutes = speakTimer.commit();
+      speakTimer.start();
+      void emitActivity("method_stage", {
+        stage: "speak",
+        area: "speaking",
+        source: "converse",
+        minutes: speakMinutes,
+        subjectId: conversation.id,
+      });
       setTyped("");
+      typedInputWasSpokenRef.current = false;
       try {
         const { reply } = await sendConversationTurn({
           provider,
@@ -268,24 +447,40 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
           level: conversation.level,
           challenge: conversation.challenge,
           history: withUser.turns,
+          conversationStage: progressionSupport.speaking.stage,
+          maxTurns: progressionSupport.conversation.maxTurns,
+          followUpDepth: progressionSupport.conversation.followUpDepth,
+          promptStyle: recurringError
+            ? `${progressionSupport.conversation.promptStyle} Revisit this recurring correction naturally: ${recurringError.corrected}`
+            : progressionSupport.conversation.promptStyle,
+          speakerFamiliarity: progressionSupport.listening.speakerFamiliarity,
+          taughtExpressions: [...pastTaught, ...afterUse.map((item) => item.expression)],
+          // Only the last few, and only ones still unused: asking the partner to engineer an
+          // opening for a dozen expressions at once turns the conversation into a drill.
+          elicitExpressions: unusedRepertoire(afterUse).slice(-ELICIT_PER_TURN).map((item) => item.expression),
         });
         if (reply) {
           // Stage the audio first, then reveal the bubble + play together (kept in sync).
-          const audio = await synthReply(reply);
+          const parsed = parseRepertoire(reply);
+          const audio = await synthReply(parsed.plain);
+          const nextRepertoire =
+            parsed.items.length > 0 ? mergeRepertoire(afterUse, parsed.items) : afterUse;
           const withReply: Conversation = {
             ...withUser,
-            turns: [...withUser.turns, { role: "assistant", text: reply }],
+            turns: [...withUser.turns, { role: "assistant", text: parsed.display }],
+            repertoire: nextRepertoire,
           };
           persist(withReply);
+          setRepertoire(nextRepertoire);
           speak(audio);
         }
       } catch (err: unknown) {
-        setNote(err instanceof Error ? err.message : "Couldn't get a reply.");
+        setNote(err instanceof Error ? err.message : t("Couldn't get a reply."));
       } finally {
         setBusy(false);
       }
     },
-    [busy, conversation, provider, selectedModel, persist, synthReply, speak],
+    [busy, conversation, repertoire, pastTaught, provider, selectedModel, persist, synthReply, speak, speakTimer, progressionSupport, recurringError, t],
   );
   useEffect(() => {
     sendTurnRef.current = sendTurn;
@@ -300,20 +495,21 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
     try {
       const text = await transcribeAudio(blob);
       if (!text) {
-        setNote("Couldn't make out any speech in that clip.");
+        setNote(t("Couldn't make out any speech in that clip."));
         return;
       }
       if (opts?.autoSend) {
-        sendTurnRef.current(text);
+        sendTurnRef.current(text, true);
       } else {
+        typedInputWasSpokenRef.current = true;
         setTyped((prev) => (prev.trim() ? `${prev.trim()} ${text}` : text));
       }
     } catch (err: unknown) {
-      setNote(err instanceof Error ? err.message : "Transcription failed.");
+      setNote(err instanceof Error ? err.message : t("Transcription failed."));
     } finally {
       setTranscribing(false);
     }
-  }, []);
+  }, [t]);
 
   // Tear down the VAD analyser loop. Safe to call repeatedly.
   const cleanupVad = useCallback(() => {
@@ -321,6 +517,7 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
     vadFrameRef.current = null;
     void audioCtxRef.current?.close().catch(() => {});
     audioCtxRef.current = null;
+    setSilenceCountdown(null);
   }, []);
 
   const startRecording = useCallback(async () => {
@@ -341,9 +538,9 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
       recorder.start();
       setRecording(true);
     } catch {
-      setNote("Couldn't access the microphone. Check the browser's permission.");
+      setNote(t("Couldn't access the microphone. Check the browser's permission."));
     }
-  }, [transcribeBlob]);
+  }, [transcribeBlob, t]);
 
   // Free-talk listening: open the mic and watch the input level. Once speech has been heard,
   // a sustained quiet stretch (SILENCE_MS — the "debounce") ends the turn and auto-sends it.
@@ -380,46 +577,38 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
       source.connect(analyser);
       const data = new Uint8Array(analyser.fftSize);
 
-      const SPEECH_RMS = 0.025; // ~normal speaking volume; tuned against ambient noise
-      const SILENCE_MS = 1500; // quiet stretch that counts as "done talking"
-      const NO_SPEECH_MS = 9000; // give up if they never start
-      const startedAt = performance.now();
-      let heardSpeech = false;
-      let silenceSince = 0;
+      // The threshold is measured from this room rather than hard-coded — see `speechThreshold`.
+      let vad = createVadState(performance.now());
+      setSilenceCountdown(null);
 
       const tick = () => {
         analyser.getByteTimeDomainData(data);
-        let sum = 0;
-        for (let i = 0; i < data.length; i++) {
-          const v = (data[i] - 128) / 128;
-          sum += v * v;
-        }
-        const rms = Math.sqrt(sum / data.length);
-        const now = performance.now();
+        const step = advanceVad(vad, computeRms(data), performance.now());
+        vad = step.state;
 
-        if (rms > SPEECH_RMS) {
-          heardSpeech = true;
-          silenceSince = 0;
-        } else if (heardSpeech) {
-          if (!silenceSince) silenceSince = now;
-          else if (now - silenceSince > SILENCE_MS) {
-            recorderRef.current?.stop(); // → onstop → transcribe + auto-send
-            return;
-          }
-        } else if (now - startedAt > NO_SPEECH_MS) {
+        if (step.action === "submit") {
+          setSilenceCountdown(null);
+          recorderRef.current?.stop(); // → onstop → transcribe + auto-send
+          return;
+        }
+        if (step.action === "giveup") {
+          setSilenceCountdown(null);
           discardRef.current = true; // nothing said — bail without a wasted transcription
           recorderRef.current?.stop();
           return;
         }
+        // Only count down once a pause is actually building, so the hint doesn't flicker
+        // on the natural gaps between words.
+        setSilenceCountdown(step.silenceElapsedMs > 600 ? silenceCountdownSeconds(step.silenceElapsedMs) : null);
         vadFrameRef.current = requestAnimationFrame(tick);
       };
       vadFrameRef.current = requestAnimationFrame(tick);
     } catch {
       cleanupVad();
       setRecording(false);
-      setNote("Couldn't access the microphone. Check the browser's permission.");
+      setNote(t("Couldn't access the microphone. Check the browser's permission."));
     }
-  }, [transcribeBlob, cleanupVad]);
+  }, [transcribeBlob, cleanupVad, t]);
   useEffect(() => {
     listenRef.current = startListening;
   }, [startListening]);
@@ -427,6 +616,7 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
   const stopRecording = useCallback(() => {
     // In free talk a manual stop is a cancel — discard rather than send a half-formed turn.
     if (vadFrameRef.current || audioCtxRef.current) discardRef.current = true;
+    setSilenceCountdown(null);
     cleanupVad();
     recorderRef.current?.stop();
     recorderRef.current = null;
@@ -445,13 +635,29 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
         .trim();
       // Nothing the learner said → nothing to correct. Mark reviewed (empty) and move on.
       if (!userText) {
+        const correctedAt = Date.now();
         const reviewed: Conversation = {
           ...conv,
           errors: [],
           advancedReview: { errors: [], refinements: [] },
-          correctedAt: Date.now(),
+          correctedAt,
         };
+        const productionAttempt: ProductionAttempt = {
+          id: conv.id,
+          source: "conversation",
+          stage: "production",
+          context: conv.context,
+          prompt: conv.scenario,
+          text: userText,
+          spoken: conv.turns.some((turn) => turn.role === "user" && turn.spoken),
+          wordCount: userText.split(/\s+/).filter(Boolean).length,
+          finished: true,
+          issueCount: 0,
+          createdAt: correctedAt,
+        };
+        void saveProductionAttempt(productionAttempt).catch(() => {});
         setReview(reviewed);
+        setRetryResolution("completed");
         void saveConversation(reviewed);
         void refreshPast();
         return;
@@ -476,16 +682,43 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
           advancedReview: advanced,
           correctedAt: Date.now(),
         };
+        const productionAttempt: ProductionAttempt = {
+          id: conv.id,
+          source: "conversation",
+          stage: "production",
+          context: conv.context,
+          prompt: conv.scenario,
+          text: userText,
+          spoken: conv.turns.some((turn) => turn.role === "user" && turn.spoken),
+          wordCount: userText.split(/\s+/).filter(Boolean).length,
+          finished: true,
+          issueCount: advanced.errors.length,
+          createdAt: reviewed.correctedAt ?? Date.now(),
+        };
+        void saveProductionAttempt(productionAttempt).catch(() => {});
+        void emitActivity("production_attempt", {
+          attemptId: productionAttempt.id,
+          source: productionAttempt.source,
+          context: productionAttempt.context,
+          prompt: productionAttempt.prompt,
+          text: productionAttempt.text,
+          spoken: productionAttempt.spoken,
+          wordCount: productionAttempt.wordCount,
+          finished: productionAttempt.finished,
+          issueCount: productionAttempt.issueCount,
+          createdAt: productionAttempt.createdAt,
+        }).catch(() => {});
         setReview(reviewed);
+        setRetryResolution(advanced.errors.length > 0 ? "pending" : "completed");
         void saveConversation(reviewed);
         void refreshPast();
       } catch (err: unknown) {
-        setReviewNote(err instanceof Error ? err.message : "Couldn't review the conversation.");
+        setReviewNote(err instanceof Error ? err.message : t("Couldn't review the conversation."));
       } finally {
         setCorrecting(false);
       }
     },
-    [hasEvaluator, evaluatorHint, provider, selectedModel, refreshPast],
+    [hasEvaluator, evaluatorHint, provider, selectedModel, refreshPast, t],
   );
 
   const openReview = useCallback(
@@ -498,6 +731,12 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
       setNote(null);
       setReviewNote(null);
       setReviewCarded(false);
+      setRetryText("");
+      setRetryReview(null);
+      setRetryResolution("pending");
+      retrySpokenRef.current = false;
+      retryBlobRef.current = null;
+      stopRetryRecording();
       const ended: Conversation = conv.endedAt ? conv : { ...conv, endedAt: Date.now() };
       setReview(ended);
       if (conv.correctedAt) {
@@ -507,7 +746,7 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
         void correctReview(ended);
       }
     },
-    [correctReview, refreshPast, stopRecording],
+    [correctReview, refreshPast, stopRecording, stopRetryRecording],
   );
 
   const finish = useCallback(() => {
@@ -534,24 +773,203 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
       setReviewCarded(true);
       setReviewNote(note);
     } catch (err: unknown) {
-      setReviewNote(err instanceof Error ? err.message : "Couldn't export the cards.");
+      setReviewNote(err instanceof Error ? err.message : t("Couldn't export the cards."));
     } finally {
       setGenerating(false);
     }
-  }, [review, generating, provider, selectedModel]);
+  }, [review, generating, provider, selectedModel, t]);
 
   const closeReview = useCallback(() => {
     setReview(null);
     setReviewNote(null);
+    setRetryText("");
+    setRetryReview(null);
+    setRetryResolution("pending");
+    retrySpokenRef.current = false;
+    retryBlobRef.current = null;
+    stopRetryRecording();
     void refreshPast();
-  }, [refreshPast]);
+  }, [refreshPast, stopRetryRecording]);
+
+  // Credit an expression produced in the review's recall prompt, so it stops being offered and
+  // the session's uptake count reflects it. Same store as the live conversation — the recall is
+  // part of the session, not a separate exercise.
+  const markReviewRepertoireUsed = useCallback(
+    (used: RepertoireItem[]) => {
+      if (!review?.repertoire?.length) return;
+      const next: Conversation = { ...review, repertoire: markRepertoireUsed(review.repertoire, used) };
+      setReview(next);
+      void saveConversation(next);
+    },
+    [review],
+  );
+
+  const checkConversationRetry = useCallback(async () => {
+    const text = retryText.trim();
+    if (!text || retryChecking || !hasEvaluator || !review) return;
+    setRetryChecking(true);
+    setReviewNote(null);
+    try {
+      const next = await reviewAdvancedText({
+        provider,
+        selectedModel,
+        text,
+        context: review.context,
+        level: review.level,
+      });
+      setRetryReview(next);
+      setRetryResolution(next.errors.length === 0 ? "completed" : "pending");
+      const attemptId = crypto.randomUUID();
+      const createdAt = Date.now();
+      const wordCount = text.split(/\s+/).length;
+      const spoken = retrySpokenRef.current;
+      const recordingId = spoken && retryBlobRef.current ? crypto.randomUUID() : undefined;
+      if (recordingId && retryBlobRef.current) {
+        await saveAudioRecording({
+          id: recordingId,
+          blob: retryBlobRef.current,
+          mimeType: retryBlobRef.current.type || "audio/webm",
+          sizeBytes: retryBlobRef.current.size,
+          createdAt,
+        }).catch(() => undefined);
+      }
+      const productionAttempt: ProductionAttempt = {
+        id: attemptId,
+        source: "conversation",
+        context: review.context,
+        prompt: review.scenario,
+        text,
+        spoken,
+        wordCount,
+        finished: true,
+        issueCount: next.errors.length,
+        recordingId,
+        createdAt,
+      };
+      const retryOutcome: RetryOutcome = {
+        id: crypto.randomUUID(),
+        retryOf: review.id,
+        feedbackIds: focusFeedback(prioritizeFeedback(review.errors ?? [])).map((issue) => issue.event.id),
+        source: "conversation",
+        text,
+        spoken,
+        wordCount,
+        resolved: next.errors.length === 0,
+        resolution: next.errors.length === 0 ? "completed" : undefined,
+        issueCount: next.errors.length,
+        createdAt,
+      };
+      void saveProductionAttempt(productionAttempt).catch(() => {});
+      void saveRetryOutcome(retryOutcome).catch(() => {});
+      void emitActivity("production_attempt", {
+        attemptId: productionAttempt.id,
+        source: "conversation",
+        context: review.context,
+        prompt: review.scenario,
+        text,
+        spoken,
+        recordingId,
+        wordCount: productionAttempt.wordCount,
+        finished: true,
+        issueCount: productionAttempt.issueCount,
+        createdAt: productionAttempt.createdAt,
+      }).catch(() => {});
+      void emitActivity("retry_outcome", {
+        attemptId: retryOutcome.id,
+        retryOf: retryOutcome.retryOf,
+        feedbackIds: retryOutcome.feedbackIds,
+        source: "conversation",
+        text,
+        spoken,
+        wordCount: retryOutcome.wordCount,
+        resolved: retryOutcome.resolved,
+        resolution: retryOutcome.resolved ? "completed" : undefined,
+        issueCount: retryOutcome.issueCount,
+        createdAt: retryOutcome.createdAt,
+      }).catch(() => {});
+    } catch (err: unknown) {
+      setReviewNote(err instanceof Error ? err.message : t("Couldn't check the retry."));
+    } finally {
+      setRetryChecking(false);
+    }
+  }, [hasEvaluator, provider, retryChecking, retryText, review, selectedModel, t]);
+
+  const deferConversationRetry = useCallback(() => {
+    if (!review || !review.errors?.length) return;
+    const outcome: RetryOutcome = {
+      id: crypto.randomUUID(),
+      retryOf: review.id,
+      feedbackIds: focusFeedback(prioritizeFeedback(review.errors)).map((issue) => issue.event.id),
+      source: "conversation",
+      text: "",
+      spoken: false,
+      wordCount: 0,
+      resolved: false,
+      resolution: "deferred",
+      issueCount: review.errors.length,
+      createdAt: Date.now(),
+    };
+    void saveRetryOutcome(outcome).catch(() => {});
+    void emitActivity("retry_outcome", {
+      attemptId: outcome.id,
+      retryOf: outcome.retryOf,
+      feedbackIds: outcome.feedbackIds,
+      source: outcome.source,
+      text: outcome.text,
+      spoken: outcome.spoken,
+      wordCount: outcome.wordCount,
+      resolved: false,
+      resolution: "deferred",
+      issueCount: outcome.issueCount,
+      createdAt: outcome.createdAt,
+    }).catch(() => {});
+    setRetryResolution("deferred");
+  }, [review]);
+
+  const dismissConversationRetry = useCallback(() => {
+    if (!review || !review.errors?.length) return;
+    const outcome: RetryOutcome = {
+      id: crypto.randomUUID(),
+      retryOf: review.id,
+      feedbackIds: focusFeedback(prioritizeFeedback(review.errors)).map((issue) => issue.event.id),
+      source: "conversation",
+      text: "",
+      spoken: false,
+      wordCount: 0,
+      resolved: false,
+      resolution: "dismissed",
+      issueCount: review.errors.length,
+      createdAt: Date.now(),
+    };
+    void saveRetryOutcome(outcome).catch(() => {});
+    void emitActivity("retry_outcome", {
+      attemptId: outcome.id,
+      retryOf: outcome.retryOf,
+      feedbackIds: outcome.feedbackIds,
+      source: outcome.source,
+      text: outcome.text,
+      spoken: outcome.spoken,
+      wordCount: outcome.wordCount,
+      resolved: false,
+      resolution: "dismissed",
+      issueCount: outcome.issueCount,
+      createdAt: outcome.createdAt,
+    }).catch(() => {});
+    setRetryResolution("dismissed");
+  }, [review]);
 
   // ───────────────────────── review (Phase 2) ─────────────────────────
   if (review) {
     const errors = review.errors;
+    const allPrioritizedErrors = prioritizeFeedback(errors ?? []);
+    const prioritizedErrors = focusFeedback(allPrioritizedErrors);
+    const polishCount = countPolishFeedback(allPrioritizedErrors);
     const advanced = review.advancedReview;
     const refinements = advanced?.refinements ?? [];
     const userTurns = review.turns.filter((t) => t.role === "user").length;
+    const reviewRepertoire = review.repertoire ?? [];
+    const uptake = repertoireUptake(reviewRepertoire);
+    const stillUnused = unusedRepertoire(reviewRepertoire);
     return (
       <div className="space-y-5">
         <Card className="space-y-4 p-5">
@@ -564,10 +982,34 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
                 {userTurns} {userTurns === 1 ? "turn" : "turns"} you spoke
               </p>
             </div>
-            <Button variant="secondary" onClick={closeReview} className="h-9 shrink-0">
-              Done
+                <Button variant="secondary" onClick={closeReview} disabled={Boolean(errors?.length) && retryResolution === "pending"} className="h-9 shrink-0">
+              {t("Done")}
             </Button>
           </div>
+
+          {/* Repertoire outcome sits above the corrections: at C1-C2 what you reached for is a
+              better read on the session than what you got wrong, and the errors are usually few. */}
+          {uptake.total > 0 && (
+            <div className="space-y-3">
+              <p className="rounded-lg border border-line bg-surface px-4 py-3 text-sm text-ink-soft">
+                {t("Your partner handed you {total} expressions. You said {used} of them back.", {
+                  total: uptake.total,
+                  used: uptake.used,
+                })}
+              </p>
+              {stillUnused.length > 0 && (
+                <RepertoireRecall
+                  items={stillUnused}
+                  context={review.context}
+                  level={review.level}
+                  provider={provider}
+                  selectedModel={selectedModel}
+                  hasEvaluator={hasEvaluator}
+                  onUsed={markReviewRepertoireUsed}
+                />
+              )}
+            </div>
+          )}
 
           {correcting ? (
             <p className="flex items-center gap-2 text-sm text-ink-muted">
@@ -585,11 +1027,86 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
           ) : errors && errors.length > 0 ? (
             <>
               <ul className="space-y-2">
-                {errors.map((e) => (
-                  <ErrorRow key={e.id} error={e} />
+                {prioritizedErrors.map((issue) => (
+                  <ErrorRow key={issue.event.id} issue={issue} />
                 ))}
               </ul>
+              {polishCount > 0 && (
+                <details className="rounded border border-line px-3 py-2 text-xs text-ink-muted">
+                  <summary className="cursor-pointer">{t("Show {count} minor polish issues", { count: polishCount })}</summary>
+                  <ul className="mt-2 space-y-2">
+                    {allPrioritizedErrors.filter((issue) => issue.priority === "polish").map((issue) => (
+                      <ErrorRow key={issue.event.id} issue={issue} />
+                    ))}
+                  </ul>
+                </details>
+              )}
               <NaturalnessReview refinements={refinements} overall={advanced?.overall} />
+              <div className="space-y-3 rounded-lg border border-accent/30 bg-accent/5 p-4">
+                <div>
+                  <p className="text-sm font-medium text-ink">{t("Try the important correction again")}</p>
+                  <p className="mt-1 text-xs text-ink-soft">
+                    {t("Rewrite one or two ideas in the same {context} situation. Minor polish does not block completion.", { context: review.context })}
+                  </p>
+                </div>
+                <textarea
+                  value={retryText}
+                  onChange={(event) => {
+                    retrySpokenRef.current = false;
+                    retryBlobRef.current = null;
+                    setRetryText(event.target.value);
+                    setRetryReview(null);
+                  }}
+                  rows={3}
+                  placeholder={t("Write your improved response here…")}
+                  className="w-full resize-y rounded border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-accent/40"
+                  disabled={retryChecking}
+                />
+                <LocalModelNotice model={whisper} />
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant={retryRecording ? "primary" : "secondary"}
+                    onClick={() => (retryRecording ? stopRetryRecording() : void startRetryRecording())}
+                    disabled={retryChecking || retryTranscribing}
+                    aria-pressed={retryRecording}
+                  >
+                    {retryTranscribing ? t("Transcribing…") : retryRecording ? t("Stop recording") : t("Speak retry")}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => void checkConversationRetry()}
+                    disabled={!retryText.trim() || retryChecking || retryTranscribing || !hasEvaluator}
+                  >
+                    {retryChecking ? t("Checking retry…") : t("Check my retry")}
+                  </Button>
+                </div>
+                {retryReview && (
+                  <Notice tone={retryReview.errors.length === 0 ? "success" : "warning"}>
+                    {retryReview.errors.length === 0
+                      ? t("Your retry applies the important feedback in this situation.")
+                      : t("{count} issues remain. Compare with the corrections above and try again if useful.", { count: retryReview.errors.length })}
+                  </Notice>
+                )}
+                {retryResolution === "deferred" ? (
+                  <Notice tone="default">{t("This retry is deferred for a later review.")}</Notice>
+                ) : retryResolution === "dismissed" ? (
+                  <Notice tone="default">{t("This retry was explicitly dismissed.")}</Notice>
+                ) : retryResolution === "pending" ? (
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="button" variant="ghost" onClick={deferConversationRetry} disabled={retryChecking}>
+                      {t("Defer retry for later")}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={dismissConversationRetry}
+                      disabled={retryChecking}
+                    >
+                      {t("Dismiss retry")}
+                    </Button>
+                  </div>
+                ) : null}
+              </div>
               <Button
                 variant="primary"
                 onClick={() => void generateReviewCards()}
@@ -597,10 +1114,10 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
                 className="h-10"
               >
                 {generating
-                  ? "Exporting…"
+                  ? t("Exporting…")
                   : reviewCarded
-                    ? "Exported ✓"
-                    : `Export ${errors.length} card${errors.length === 1 ? "" : "s"} to Anki →`}
+                    ? t("Exported ✓")
+                    : t("Export {count} cards to Anki →", { count: errors.length })}
               </Button>
             </>
           ) : (
@@ -610,7 +1127,7 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
               disabled={!hasEvaluator}
               className="h-10"
             >
-              Find my mistakes →
+              {t("Find my mistakes →")}
             </Button>
           )}
 
@@ -630,7 +1147,7 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
             <p className="text-xs text-ink-muted">
               {evaluatorHint}{" "}
               {onOpenSettings && (
-                <button onClick={onOpenSettings} className="underline hover:no-underline">Open Settings →</button>
+                <button onClick={onOpenSettings} className="underline hover:no-underline">{t("Open Settings →")}</button>
               )}
             </p>
           )}
@@ -645,39 +1162,89 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
       <div className="space-y-5">
         <Card className="space-y-4 p-5">
         <div>
-          <p className="text-sm font-semibold tracking-[-0.01em] text-ink">Practice speaking</p>
+          <p className="text-sm font-semibold tracking-[-0.01em] text-ink">{t("Practice speaking")}</p>
           <p className="mt-0.5 text-xs text-ink-muted">
-            Speak with an AI partner in a role-play. Keep going naturally; your mistakes become cards afterward.
+            {t("Speak with an AI partner in a role-play. Keep going naturally; your mistakes become cards afterward.")}
           </p>
         </div>
 
-        <Field label="Scenario">
-          <div className="flex flex-wrap gap-1.5">
-            {CONVERSATION_SCENARIOS.map((s) => (
-              <Chip key={s.id} active={scenarioId === s.id} onClick={() => setScenarioId(s.id)}>
-                {s.label}
-              </Chip>
-            ))}
-            <Chip active={usingCustom} onClick={() => setScenarioId("custom")}>
-              Custom…
-            </Chip>
-          </div>
-        </Field>
+        <Notice tone="default" className="space-y-1">
+          {/* The speaking stage is scaffolding for a learner still building production, and it
+              stays evidence-based — so at C1-C2 it reads as "fixed phrases / keep the model
+              phrase as your scaffold" next to a 12-turn counterpoint conversation. True but
+              contradictory, and not what the advanced surface is about, so it's dropped there. */}
+          {!topicFirst && (
+            <>
+              <p className="text-sm font-medium text-ink">
+                {t("Speaking stage: {stage}", { stage: t(SPEAKING_STAGE_LABEL[progressionSupport.speaking.stage]) })}
+              </p>
+              <p className="text-xs text-ink-soft">{t(progressionSupport.speaking.guidance)}</p>
+            </>
+          )}
+          <p className={cn("text-ink-muted", topicFirst ? "text-sm" : "text-xs")}>
+            {t("This practice uses up to {turns} learner turns with {depth} follow-ups.", {
+              turns: progressionSupport.conversation.maxTurns,
+              depth: progressionSupport.conversation.followUpDepth,
+            })}
+          </p>
+        </Notice>
 
-        {usingCustom && (
-          <Field label="Describe the situation">
-            <Input
-              type="text"
-              value={customScenario}
-              onChange={(e) => setCustomScenario(e.target.value)}
-              placeholder="e.g. negotiating an apartment lease with a landlord"
-            />
-          </Field>
+        {topicFirst ? (
+          // Advanced learners come with something they want to talk about, so the free-text
+          // topic leads and the presets sit underneath as suggestions.
+          <>
+            <Field label={t("What do you want to talk about?")} hint={t("Anything — a decision at work, something you read, an argument you want to test.")}>
+              <Input
+                type="text"
+                value={customScenario}
+                onChange={(e) => {
+                  setScenarioId("custom");
+                  setCustomScenario(e.target.value);
+                }}
+                placeholder={t("e.g. whether remote work actually helps junior engineers")}
+              />
+            </Field>
+            <Field label={t("Or start from one of these")}>
+              <div className="flex flex-wrap gap-1.5">
+                {scenarios.map((s) => (
+                  <Chip key={s.id} active={scenarioId === s.id} onClick={() => setScenarioId(s.id)}>
+                    {s.label}
+                  </Chip>
+                ))}
+              </div>
+            </Field>
+          </>
+        ) : (
+          <>
+            <Field label={t("Scenario")}>
+              <div className="flex flex-wrap gap-1.5">
+                {scenarios.map((s) => (
+                  <Chip key={s.id} active={scenarioId === s.id} onClick={() => setScenarioId(s.id)}>
+                    {s.label}
+                  </Chip>
+                ))}
+                <Chip active={usingCustom} onClick={() => setScenarioId("custom")}>
+                  {t("Custom…")}
+                </Chip>
+              </div>
+            </Field>
+
+            {usingCustom && (
+              <Field label={t("Describe the situation")}>
+                <Input
+                  type="text"
+                  value={customScenario}
+                  onChange={(e) => setCustomScenario(e.target.value)}
+                  placeholder={t("e.g. negotiating an apartment lease with a landlord")}
+                />
+              </Field>
+            )}
+          </>
         )}
 
-        <Field label="Level" hint="Sets how challenging your partner's English is.">
+        <Field label={t("Level")} hint={t("Sets how challenging your partner's English is.")}>
           <Segmented<ConversationLevel>
-            label="CEFR level"
+            label={t("CEFR level")}
             value={level}
             onChange={setLevel}
             options={CONVERSATION_LEVELS.map((l) => ({ value: l, label: l }))}
@@ -685,33 +1252,33 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
           />
         </Field>
 
-        <Field label="Partner" hint="Supportive keeps the role-play simple. Challenging asks follow-ups and pushes your reasoning.">
+        <Field label={t("Partner")} hint={t("Supportive keeps the role-play simple. Challenging asks follow-ups and pushes your reasoning.")}>
           <Segmented<"supportive" | "challenging">
-            label="Conversation partner style"
+            label={t("Conversation partner style")}
             value={challenge ? "challenging" : "supportive"}
             onChange={(v) => setChallenge(v === "challenging")}
             options={[
-              { value: "supportive", label: "Supportive" },
-              { value: "challenging", label: "Challenging" },
+              { value: "supportive", label: t("Supportive") },
+              { value: "challenging", label: t("Challenging") },
             ]}
           />
         </Field>
 
         <Field
-          label="Mode"
+          label={t("Mode")}
           hint={
             freeTalk
-              ? "Free talk: the mic opens after each reply and sends when you pause — fully hands-free."
-              : "Guided: tap Speak (or type), review, then send each turn yourself."
+              ? t("Free talk: the mic opens after each reply and sends when you pause — fully hands-free.")
+              : t("Guided: tap Speak (or type), review, then send each turn yourself.")
           }
         >
           <Segmented<"guided" | "free">
-            label="Conversation mode"
+            label={t("Conversation mode")}
             value={freeTalk ? "free" : "guided"}
             onChange={(v) => setFreeTalk(v === "free")}
             options={[
-              { value: "guided", label: "Guided" },
-              { value: "free", label: "Free talk" },
+              { value: "guided", label: t("Guided") },
+              { value: "free", label: t("Free talk") },
             ]}
           />
         </Field>
@@ -721,21 +1288,21 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
 
         <div className="flex items-center gap-3">
           <Button variant="primary" onClick={start} disabled={!canStart || busy} className="h-10">
-            {busy ? "Starting…" : "Start practice →"}
+            {busy ? t("Starting…") : t("Start practice →")}
           </Button>
           {evaluatorHint && (
             <p className="text-xs text-ink-muted">
               {evaluatorHint}{" "}
               {onOpenSettings && (
-                <button onClick={onOpenSettings} className="underline hover:no-underline">Open Settings →</button>
+                <button onClick={onOpenSettings} className="underline hover:no-underline">{t("Open Settings →")}</button>
               )}
             </p>
           )}
         </div>
 
         <Disclosure
-          title="Advanced options"
-          description="Change the AI provider for this conversation."
+          title={t("Advanced options")}
+          description={t("Change the AI provider for this conversation.")}
           badge={activeProvider ? <ProviderBadge isLocal={activeProvider.isLocal} available={activeProvider.available} /> : undefined}
           nested
         >
@@ -745,26 +1312,26 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
 
         {past.length > 0 && (
           <Card className="p-5">
-            <p className="mb-3 text-sm font-semibold tracking-[-0.01em] text-ink">Recent conversations</p>
+            <p className="mb-3 text-sm font-semibold tracking-[-0.01em] text-ink">{t("Recent conversations")}</p>
             <ul className="space-y-2">
               {past.slice(0, 6).map((c) => (
                 <li key={c.id} className="flex items-center gap-3 py-1">
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm text-ink">{c.context}</p>
                     <p className="text-xs text-ink-muted">
-                      {c.turns.length} {c.turns.length === 1 ? "turn" : "turns"} · {formatWhen(c.startedAt)}
-                      {c.endedAt ? "" : " · in progress"}
+                      {t("{count} turns", { count: c.turns.length })} · {formatWhen(c.startedAt, t)}
+                      {c.endedAt ? "" : ` · ${t("in progress")}`}
                     </p>
                   </div>
-                  {c.endedAt && <Chip onClick={() => openReview(c)}>Review</Chip>}
-                  <Chip onClick={() => resume(c)}>Resume</Chip>
+                  {c.endedAt && <Chip onClick={() => openReview(c)}>{t("Review")}</Chip>}
+                  <Chip onClick={() => resume(c)}>{t("Resume")}</Chip>
                   <button
                     type="button"
                     onClick={() => void removePast(c.id)}
                     className="shrink-0 cursor-pointer rounded-sm px-2 py-1 text-xs font-medium text-ink-muted opacity-60 transition-opacity hover:text-danger hover:opacity-100"
-                    aria-label="Delete conversation"
+                    aria-label={t("Delete conversation")}
                   >
-                    Delete
+                    {t("Delete")}
                   </button>
                 </li>
               ))}
@@ -787,38 +1354,56 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-1.5 text-xs text-ink-muted">
-            <span>{conversation.turns.length} {conversation.turns.length === 1 ? "turn" : "turns"}</span>
-            {conversation.level && <span>Level {conversation.level}</span>}
-            <span>{activeProvider?.label ?? "AI partner"}</span>
-            {conversation.challenge && <span className="text-accent">Challenging</span>}
-            {freeTalk && <span className="text-accent">Free talk</span>}
+            <span>{t("{count} turns", { count: conversation.turns.length })}</span>
+            {conversation.level && <span>{t("Level {level}", { level: conversation.level })}</span>}
+            <span>{activeProvider?.label ?? t("AI partner")}</span>
+            {conversation.challenge && <span className="text-accent">{t("Challenging")}</span>}
+            {/* Same reason the stage notice is dropped above: "fixed phrases" is scaffolding
+                language that contradicts the advanced surface it would be sitting on. */}
+            {!topicFirst && conversation.progressionStage && (
+              <span>{t(stageLabel(conversation.progressionStage))}</span>
+            )}
+            {freeTalk && <span className="text-accent">{t("Free talk")}</span>}
           </div>
         </div>
         <Button variant="secondary" onClick={finish} className="h-9 shrink-0">
-          Finish
+          {t("Finish")}
         </Button>
       </div>
 
-      <motion.ul
-        className="flex-1 space-y-4 overflow-y-auto bg-card px-4 py-5 app-scroll-region sm:px-6"
-        variants={staggerContainer}
-        initial="hidden"
-        animate="show"
-        aria-live="polite"
-      >
-        {conversation.turns.map((turn, i) => (
-          <TurnBubble key={i} turn={turn} />
-        ))}
-        {busy && (
-          <li className="flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-2 text-xs font-medium text-ink-muted shadow-sm">
-            <Spinner className="h-3.5 w-3.5" /> Thinking…
-          </li>
+      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+        <motion.ul
+          className="min-h-0 flex-1 space-y-4 overflow-y-auto bg-card px-4 py-5 app-scroll-region sm:px-6"
+          variants={staggerContainer}
+          initial="hidden"
+          animate="show"
+          aria-live="polite"
+        >
+          {conversation.turns.map((turn, i) => (
+            <TurnBubble key={i} turn={turn} items={repertoire} />
+          ))}
+          {busy && (
+            <li className="flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-2 text-xs font-medium text-ink-muted shadow-sm">
+              <Spinner className="h-3.5 w-3.5" /> {t("Thinking…")}
+            </li>
+          )}
+          <div ref={bottomRef} />
+        </motion.ul>
+
+        {showRepertoire && (
+          <RepertoirePanel items={repertoire} context={conversation.context} conversationId={conversation.id} />
         )}
-        <div ref={bottomRef} />
-      </motion.ul>
+      </div>
 
       <div className="space-y-2 border-t border-line bg-surface p-3 sm:p-4">
         {note && <p className="text-xs text-danger">{note}</p>}
+        <LocalModelNotice model={whisper} />
+        <p className="text-[11px] text-ink-muted">
+          {t("{used}/{total} speaking turns", {
+            used: conversation.turns.filter((turn) => turn.role === "user").length,
+            total: progressionSupport.conversation.maxTurns,
+          })} · {progressionSupport.conversation.promptStyle}
+        </p>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <Button
             variant="secondary"
@@ -829,7 +1414,12 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
             {recording ? (
               <>
                 <span className="h-2 w-2 animate-pulse rounded-full bg-danger" />
-                {freeTalk ? "Listening…" : "Stop"}
+                {/* A 3s pause is long enough to read as a freeze, so show the turn closing. */}
+                {freeTalk
+                  ? silenceCountdown !== null
+                    ? t("Sending in {seconds}s…", { seconds: silenceCountdown })
+                    : t("Listening…")
+                  : t("Stop")}
               </>
             ) : transcribing ? (
               <>
@@ -839,31 +1429,34 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
             ) : (
               <>
                 <MicrophoneIcon />
-                Speak
+                {t("Speak")}
               </>
             )}
           </Button>
           <Input
             type="text"
             value={typed}
-            onChange={(e) => setTyped(e.target.value)}
+            onChange={(e) => {
+              typedInputWasSpokenRef.current = false;
+              setTyped(e.target.value);
+            }}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
-                void sendTurn(typed);
+                void sendTurn(typed, typedInputWasSpokenRef.current);
               }
             }}
-            placeholder="Type your reply, or tap Speak…"
+            placeholder={t("Type your reply, or tap Speak…")}
             disabled={busy}
             className="h-11 flex-1"
           />
           <Button
             variant="primary"
-            onClick={() => void sendTurn(typed)}
+            onClick={() => void sendTurn(typed, typedInputWasSpokenRef.current)}
             disabled={!typed.trim() || busy}
             className="h-11 shrink-0 sm:min-w-24"
           >
-            Send
+            {t("Send")}
           </Button>
         </div>
       </div>
@@ -872,22 +1465,29 @@ export default function ConverseTab({ onOpenSettings }: { onOpenSettings?: () =>
 }
 
 /** Short relative-ish stamp for the recent list: "today", "yesterday", else a date. */
-function formatWhen(ts: number): string {
+function formatWhen(ts: number, t: ReturnType<typeof useT>["t"]): string {
   const dayMs = 86_400_000;
   const startOfToday = new Date().setHours(0, 0, 0, 0);
   const days = Math.floor((startOfToday - new Date(ts).setHours(0, 0, 0, 0)) / dayMs);
-  if (days <= 0) return "today";
-  if (days === 1) return "yesterday";
-  if (days < 7) return `${days} days ago`;
+  if (days <= 0) return t("today");
+  if (days === 1) return t("yesterday");
+  if (days < 7) return t("{count} days ago", { count: days });
   return new Date(ts).toLocaleDateString();
 }
 
-function ErrorRow({ error }: { error: ErrorEvent }) {
+function ErrorRow({ issue }: { issue: FeedbackIssue }) {
+  const { event: error } = issue;
   return (
     <li className="rounded-lg border border-line p-3">
       <p className="text-sm text-ink-muted line-through">{error.original}</p>
       <p className="text-sm text-ink">{error.corrected}</p>
       <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+        <span className="rounded border border-accent/30 px-1.5 py-0.5 text-[0.65rem] font-medium text-accent">
+          {issue.priority}
+        </span>
+        <span className="rounded border border-line px-1.5 py-0.5 text-[0.65rem] font-medium text-ink-muted">
+          {issue.category}
+        </span>
         {error.errorTypes.map((t) => (
           <span
             key={t}
@@ -902,8 +1502,17 @@ function ErrorRow({ error }: { error: ErrorEvent }) {
   );
 }
 
-function TurnBubble({ turn }: { turn: ConversationTurn }) {
+function TurnBubble({ turn, items = [] }: { turn: ConversationTurn; items?: RepertoireItem[] }) {
   const isUser = turn.role === "user";
+  // Only the partner's turns carry repertoire markup; the learner's text is shown verbatim.
+  const parsed = isUser ? null : parseRepertoire(turn.text);
+  // Glosses come from the session list, not from this turn: the stored text keeps the inline
+  // markers but not the trailer, so re-parsing alone would leave every expression unglossed.
+  const glosses = new Map(items.map((item) => [item.expression.toLowerCase(), item.gloss]));
+  const glossed = (parsed?.items ?? []).map((item) => ({
+    ...item,
+    gloss: item.gloss || glosses.get(item.expression.toLowerCase()) || "",
+  }));
   return (
     <motion.li variants={listItem} className={cn("flex", isUser ? "justify-end" : "justify-start")}>
       <div
@@ -914,7 +1523,24 @@ function TurnBubble({ turn }: { turn: ConversationTurn }) {
             : "rounded-bl-md border border-line bg-surface text-ink",
         )}
       >
-        {turn.text}
+        {parsed && glossed.length > 0
+          ? segmentRepertoire(parsed.display, glossed).map((segment, i) =>
+              segment.item ? (
+                <button
+                  key={i}
+                  type="button"
+                  // The gloss is the accessible name so it is reachable without a hover.
+                  title={segment.item.gloss || undefined}
+                  aria-label={segment.item.gloss ? `${segment.text}: ${segment.item.gloss}` : segment.text}
+                  className="cursor-help rounded-sm bg-accent/12 px-0.5 font-medium text-ink decoration-accent/60 decoration-dotted underline-offset-4 transition-colors hover:bg-accent/20 hover:underline"
+                >
+                  {segment.text}
+                </button>
+              ) : (
+                <span key={i}>{segment.text}</span>
+              ),
+            )
+          : (parsed?.plain ?? turn.text)}
       </div>
     </motion.li>
   );

@@ -53,6 +53,32 @@ export function orderDueQueue(
   opts: { fatigueOf?: (c: DueCard) => number; at?: Date } = {},
 ): BandQueueResult {
   const gate = simulateBandGate(reviews);
-  if (gate.verdict !== "adopt") return { queue: due, gate, applied: false };
-  return { queue: orderByBand(due, opts), gate, applied: true };
+  const ordered = gate.verdict === "adopt" ? orderByBand(due, opts) : due;
+  return {
+    queue: interleaveDueQueue(ordered),
+    gate,
+    applied: gate.verdict === "adopt",
+  };
+}
+
+function familyOf(item: DueCard): string {
+  return item.card.patternId || `${item.card.source?.kind ?? "card"}:${item.card.source?.id ?? item.card.id}`;
+}
+
+/**
+ * Preserve the scheduler's priority as much as possible while avoiding back-to-back
+ * recognition/production siblings or repeated examples of one pattern.
+ */
+export function interleaveDueQueue(items: DueCard[]): DueCard[] {
+  const remaining = [...items];
+  const result: DueCard[] = [];
+  while (remaining.length) {
+    const previous = result.at(-1);
+    const previousFamily = previous ? familyOf(previous) : undefined;
+    const index = previousFamily === undefined
+      ? 0
+      : remaining.findIndex((item) => familyOf(item) !== previousFamily);
+    result.push(remaining.splice(index >= 0 ? index : 0, 1)[0]);
+  }
+  return result;
 }

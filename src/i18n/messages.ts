@@ -10,6 +10,81 @@ import type { UiLang } from "./config";
  * falls back to English for them.
  */
 export const messages: Record<string, Partial<Record<UiLang, string>>> = {
+
+  /* ── pattern practice, transfer verification and honest metrics ────────── */
+  "That works. Your wording does not have to match the example.": { pt: "Funciona. Sua frase não precisa ser igual ao exemplo." },
+  "Correct English, but this card practises “{frame}”. Try it with that structure.": { pt: "Inglês correto, mas este card treina “{frame}”. Tente com essa estrutura." },
+  "Compare your answer with the example and grade yourself honestly.": { pt: "Compare sua resposta com o exemplo e se avalie com honestidade." },
+  "This is close to the sentence you studied. Say the same kind of thing about something else.": { pt: "Isso está muito perto da frase que você estudou. Diga algo do mesmo tipo sobre outra coisa." },
+  "Good English, but use the structure this card practises.": { pt: "Inglês bom, mas use a estrutura que este card treina." },
+  "Which one is correct English?": { pt: "Qual das duas é o inglês correto?" },
+  "Keep “{frame}” and change the rest. You have already used: {taught}. Write a different one.": { pt: "Mantenha “{frame}” e mude o resto. Você já usou: {taught}. Escreva uma diferente." },
+  "Complete “{frame}” for something that happened to you this week. The blank takes {slot}.": { pt: "Complete “{frame}” com algo que aconteceu com você esta semana. A lacuna pede {slot}." },
+  "Write about a situation from your own week where you would say something like “{example}”. Do not reuse its words.": { pt: "Escreva sobre uma situação da sua semana em que você diria algo como “{example}”. Não repita as palavras dela." },
+  "Retention checks": { pt: "Provas de retenção" },
+  "Cold listening check": { pt: "Prova de escuta fria" },
+  "An AI is connected": { pt: "Uma IA está conectada" },
+  "Connect an AI to get the whole method": { pt: "Conecte uma IA para ter o método inteiro" },
+  "Connect an AI": { pt: "Conectar uma IA" },
+  "Start without AI for now": { pt: "Começar sem IA por enquanto" },
+  "PhraseLoop will use it to judge open answers, build listening checks from what you import, and give focused feedback.": { pt: "O PhraseLoop vai usá-la para avaliar respostas abertas, montar provas de escuta do que você importar e dar feedback focado." },
+  "PhraseLoop was built to work with an AI, not around one. It is what judges an open answer, writes a listening check from a video you import, and tells you which two mistakes matter.": { pt: "O PhraseLoop foi feito para funcionar com uma IA, não para contorná-la. É ela que avalia uma resposta aberta, monta uma prova de escuta a partir de um vídeo que você importa e diz quais dois erros importam." },
+  "Works without AI": { pt: "Funciona sem IA" },
+  "Needs an AI": { pt: "Precisa de IA" },
+  "Guided lessons, spaced review, pattern drills, transfer checks and the retention proof all run on your device.": { pt: "Lições guiadas, revisão espaçada, drills de padrão, checagem de transferência e a prova de retenção rodam no seu aparelho." },
+  "Open answers judged for meaning, free conversation, mining phrases from your own content, and listening checks on unfamiliar voices.": { pt: "Respostas abertas avaliadas por sentido, conversa livre, garimpo de frases do seu próprio conteúdo e provas de escuta com vozes desconhecidas." },
+  "A cloud AI receives the practice content you send it — phrases, mistakes, conversations. A local AI (Ollama) keeps everything on this machine. You choose which, and you can change it later.": { pt: "Uma IA na nuvem recebe o conteúdo de prática que você envia — frases, erros, conversas. Uma IA local (Ollama) mantém tudo nesta máquina. Você escolhe qual, e pode mudar depois." },
+  "{seconds}s of what you just imported": { pt: "{seconds}s do que você acabou de importar" },
+  "Before you read the transcript: can you follow this speaker on one listen? This is the only moment the voice is still new to you.": { pt: "Antes de ler a transcrição: você acompanha esta pessoa em uma única escuta? Este é o único momento em que a voz ainda é nova para você." },
+  "Take the check": { pt: "Fazer a prova" },
+  "Skip to the transcript": { pt: "Ir direto para a transcrição" },
+  "Writing the questions…": { pt: "Escrevendo as perguntas…" },
+  "Could not build a check for this audio. Nothing was recorded.": { pt: "Não consegui montar uma prova para este áudio. Nada foi registrado." },
+  "One play, full speed, no transcript — this measures listening, it does not train it.": { pt: "Uma escuta, velocidade normal, sem transcrição — isto mede a escuta, não treina." },
+  "Continue to the transcript": { pt: "Continuar para a transcrição" },
+  "{count} of these were scored by an AI model rather than the on-device check.": { pt: "{count} destas foram avaliadas por um modelo de IA, não pela checagem no dispositivo." },
+  "These windows were not all scored the same way, so compare them with care.": { pt: "Estas janelas não foram avaliadas todas do mesmo jeito — compare com cuidado." },
+  "No known error found": { pt: "Nenhum erro conhecido encontrado" },
+  "{count} clips left": { pt: "{count} áudios restantes" },
+  "A voice you have not heard before, played once. No transcript, no replay — this measures listening, it does not train it.": { pt: "Uma voz que você nunca ouviu, tocada uma única vez. Sem transcrição, sem repetir — isto mede a escuta, não treina." },
+  "Topic: {topic} · accent: {accent}": { pt: "Tema: {topic} · sotaque: {accent}" },
+  "Play once": { pt: "Tocar uma vez" },
+  "Main idea followed on one listen.": { pt: "Ideia principal entendida em uma escuta." },
+  "Main idea missed. Recorded — nothing about your schedule changes.": { pt: "Ideia principal não captada. Registrado — seu agendamento não muda." },
+  "{correct} of {total} details": { pt: "{correct} de {total} detalhes" },
+  "From your reviews": { pt: "A partir das suas revisões" },
+  "{count} checked": { pt: "{count} verificadas" },
+  "These come from a separate check that picks cards at random, easy or hard, and never changes your schedule.": { pt: "Estas vêm de uma prova separada que sorteia cards ao acaso, fáceis ou difíceis, e nunca altera seu agendamento." },
+  "Read these as optimistic: your schedule only spaces cards this far apart once you are already getting them right.": { pt: "Leia com ceticismo: seu agendamento só espaça os cards assim depois que você já está acertando." },
+  "Evidence of learning": { pt: "Evidência de aprendizado" },
+  "words you have produced unaided, twice, a week apart": { pt: "palavras que você produziu sem apoio, duas vezes, com uma semana de intervalo" },
+  "typical pause before answering language you already know": { pt: "pausa típica antes de responder algo que você já domina" },
+  "of your attempts at “{pattern}” still contain an error": { pt: "das suas tentativas de “{pattern}” ainda têm erro" },
+  "Answer out loud. You have {seconds} seconds to think.": { pt: "Responda em voz alta. Você tem {seconds} segundos para pensar." },
+  "Speak now — the question is hidden on purpose.": { pt: "Fale agora — a pergunta está escondida de propósito." },
+  "Unprepared question": { pt: "Pergunta sem preparo" },
+  "Show the question again": { pt: "Ver a pergunta de novo" },
+  "Keep the structure, change what you say with it": { pt: "Mantenha a estrutura, mude o que você diz com ela" },
+  "Pattern practice": { pt: "Prática de padrão" },
+  "Change the blank": { pt: "Mude a lacuna" },
+  "Complete it about you": { pt: "Complete sobre você" },
+  "Spot the correct one": { pt: "Ache a forma correta" },
+  "Use it somewhere new": { pt: "Use em outra situação" },
+  "Write your sentence in English": { pt: "Escreva sua frase em inglês" },
+  "That is the structure carrying new content. That is the whole point.": { pt: "É a estrutura levando conteúdo novo. É exatamente esse o objetivo." },
+  "Try a different word in the blank — one you have not used here before.": { pt: "Tente outra palavra na lacuna — uma que você ainda não usou aqui." },
+  "Day {days} check": { pt: "Prova do dia {days}" },
+  "{count} left": { pt: "faltam {count}" },
+  "This does not change your schedule. Answer from memory or leave it.": { pt: "Isto não altera seu agendamento. Responda de memória ou pule." },
+  "Held after {days} days.": { pt: "Se manteve depois de {days} dias." },
+  "Not yet — recorded, and your schedule is unchanged.": { pt: "Ainda não — registrado, e seu agendamento continua igual." },
+  "Recorded without a verdict: this one was too open to judge on the device.": { pt: "Registrado sem veredito: esta ficou aberta demais para julgar no aparelho." },
+  "The phrases this lesson taught are selected. Add more only if you want them.": { pt: "As frases que esta lição ensinou já estão marcadas. Adicione outras só se quiser." },
+  "The phrases you just studied are selected. The ones you already saved are not — they are already in your reviews.": { pt: "As frases que você acabou de estudar já estão marcadas. As que você salvou antes não — elas já estão nas suas revisões." },
+  "Understanding an unfamiliar voice: not measured yet. Every built-in clip uses the same synthetic voice, so import real audio to test this.": { pt: "Compreensão de uma voz desconhecida: ainda não medida. Todo áudio embutido usa a mesma voz sintética — importe áudio real para testar isso." },
+  "Understanding an unfamiliar voice: not measured yet.": { pt: "Compreensão de uma voz desconhecida: ainda não medida." },
+  "You caught the main idea in {correct} of {attempts} clips from a voice you had never heard.": { pt: "Você pegou a ideia principal em {correct} de {attempts} áudios de uma voz que nunca tinha ouvido." },
+  "Every built-in clip uses the same synthetic voice. Import real audio — this stage cannot be measured without it.": { pt: "Todo áudio embutido usa a mesma voz sintética. Importe áudio real — esta etapa não tem como ser medida sem isso." },
   /* ── navigation ─────────────────────────────────────────── */
   Discover: { de: "Entdecken", es: "Descubrir", fr: "Découvrir", ja: "発見", pt: "Descobrir", ar: "اكتشف", cs: "Objevit", it: "Scopri", ko: "탐색", nl: "Ontdekken", zh: "发现" },
   Study: { de: "Lernen", es: "Estudiar", fr: "Étudier", ja: "学習", pt: "Estudar", ar: "ادرس", cs: "Studovat", it: "Studia", ko: "학습", nl: "Studeren", zh: "学习" },
@@ -298,6 +373,7 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   Work: { de: "Arbeit", es: "Trabajo", fr: "Travail", ja: "仕事", pt: "Trabalho", ar: "العمل", cs: "Práce", it: "Lavoro", ko: "업무", nl: "Werk", zh: "工作" },
   Conversation: { de: "Konversation", es: "Conversación", fr: "Conversation", ja: "会話", pt: "Conversação", ar: "المحادثة", cs: "Konverzace", it: "Conversazione", ko: "회화", nl: "Conversatie", zh: "对话" },
   "Movies & podcasts": { de: "Filme & Podcasts", es: "Películas y podcasts", fr: "Films et podcasts", ja: "映画・ポッドキャスト", pt: "Filmes e podcasts", ar: "أفلام وبودكاست", cs: "Filmy a podcasty", it: "Film e podcast", ko: "영화 & 팟캐스트", nl: "Films & podcasts", zh: "电影和播客" },
+  "Study & exams": { de: "Studium & Prüfungen", es: "Estudios y exámenes", fr: "Études et examens", ja: "学習・試験", pt: "Estudos e provas", ar: "الدراسة والامتحانات", cs: "Studium a zkoušky", it: "Studio ed esami", ko: "학업 & 시험", nl: "Studie & examens", zh: "学习与考试" },
   "Intermediate is English-only.": {
     de: "Die Mittelstufe ist nur Englisch.",
     es: "Intermedio es solo inglés.",
@@ -470,10 +546,16 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "The AI will create a {days}-day plan with {minutes} min of tasks per day, divided into phases that match your progress from {currentLevel} toward {targetLevel}.": { pt: "A IA criará um plano de {days} dias com {minutes} min de tarefas por dia, dividido em fases que acompanham seu progresso de {currentLevel} até {targetLevel}." },
   "Generated by {provider}.": { pt: "Gerado por {provider}." },
   "Generate my plan": { pt: "Gerar meu plano" },
-  "Building your {days}-day plan…": { pt: "Criando seu plano de {days} dias…" },
-  "{provider} is designing your phases and daily tasks.": { pt: "{provider} está desenhando suas fases e tarefas diárias." },
   "The AI": { pt: "A IA" },
   "Couldn't generate the plan. Try again.": { pt: "Não foi possível gerar o plano. Tente novamente." },
+  "Building your plan in the background": { pt: "Montando seu plano em segundo plano" },
+  "Day {done} of {total} — keep using the app.": { pt: "Dia {done} de {total} — pode continuar usando o app." },
+  "Cancel plan generation": { pt: "Cancelar a criação do plano" },
+  "Your {days}-day plan is ready": { pt: "Seu plano de {days} dias está pronto" },
+  "Open it whenever you want.": { pt: "Abra quando quiser." },
+  "See plan": { pt: "Ver plano" },
+  "Later": { pt: "Depois" },
+  "A plan is already being generated. Wait for it to finish.": { pt: "Já estou montando um plano. Espere ele terminar." },
   "Choose how PhraseLoop uses AI.": { pt: "Escolha como o PhraseLoop usa IA." },
   "Back to PhraseLoop": { pt: "Voltar para o PhraseLoop" },
   "Manage your local PhraseLoop data.": { pt: "Gerencie seus dados locais do PhraseLoop." },
@@ -499,6 +581,9 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "Saved locally — enter a new key to replace it": { pt: "Salva localmente — digite uma nova chave para substituir" },
   "Paste your API key": { pt: "Cole sua chave de API" },
   "Save key": { pt: "Salvar chave" },
+  "Connecting a cloud AI sends your practice content — phrases, mistakes, conversations — to {provider}. Continue?": {
+    pt: "Conectar uma IA na nuvem envia seu conteúdo de prática — frases, erros, conversas — para {provider}. Continuar?",
+  },
   "Test connection": { pt: "Testar conexão" },
   "Remove the saved {provider} credential?": { pt: "Remover a credencial salva de {provider}?" },
   "Remove key": { pt: "Remover chave" },
@@ -618,6 +703,13 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "Transcribing… {percent}%": { pt: "Transcrevendo… {percent}%" },
   "Downloading audio…": { pt: "Baixando áudio…" },
   "Extracting…": { pt: "Extraindo…" },
+  "Downloading and transcribing your video. Longer videos take a few minutes — you can leave this open.": {
+    pt: "Baixando e transcrevendo seu vídeo. Vídeos longos levam alguns minutos — você pode deixar aberto.",
+  },
+  "Reading your source and pulling out the phrases. This usually takes a few seconds.": {
+    pt: "Lendo sua fonte e separando as frases. Costuma levar alguns segundos.",
+  },
+  "{seconds}s elapsed": { pt: "{seconds}s decorridos" },
   "Find phrases to learn": { pt: "Buscar frases para aprender" },
   "You can import a source and save hand-picked phrases now — no setup needed. To pick phrases automatically and add translations, connect an AI": {
     pt: "Você pode importar uma fonte e salvar frases escolhidas à mão agora — sem configuração. Para escolher frases automaticamente e adicionar traduções, conecte uma IA",
@@ -635,14 +727,41 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "The local voice model (Kokoro, about 349 MB) needs to be downloaded once before audio can be generated.": {
     pt: "O modelo de voz local (Kokoro, cerca de 349 MB) precisa ser baixado uma vez antes de gerar áudio.",
   },
+  "The voice-model download failed. Audio stays unavailable until it finishes.": {
+    pt: "O download do modelo de voz falhou. O áudio fica indisponível até ele terminar.",
+  },
   "Downloading voice model… {percent}%": { pt: "Baixando o modelo de voz… {percent}%" },
   "Preparing voice model download…": { pt: "Preparando o download do modelo de voz…" },
+  "Voice model download progress": { pt: "Progresso do download do modelo de voz" },
+  "Preparing…": { pt: "Preparando…" },
   "Download voice model": { pt: "Baixar modelo de voz" },
+  "Voice ready.": { pt: "Voz pronta." },
+  "Downloading {model}… {percent}%": { pt: "Baixando {model}… {percent}%" },
+  "Speech recognition (Whisper, about 488 MB) is being downloaded once so the app can hear you.": {
+    pt: "O reconhecimento de fala (Whisper, cerca de 488 MB) está sendo baixado uma vez para o app poder te ouvir.",
+  },
+  "The speech-recognition download failed. Speaking practice stays unavailable until it finishes.": {
+    pt: "O download do reconhecimento de fala falhou. A prática de fala fica indisponível até ele terminar.",
+  },
+  "Speech recognition (Whisper, about 488 MB) needs to be downloaded once before the app can hear you.": {
+    pt: "O reconhecimento de fala (Whisper, cerca de 488 MB) precisa ser baixado uma vez antes de o app poder te ouvir.",
+  },
+  "Downloading speech recognition… {percent}%": {
+    pt: "Baixando o reconhecimento de fala… {percent}%",
+  },
+  "Preparing speech-recognition download…": {
+    pt: "Preparando o download do reconhecimento de fala…",
+  },
+  "Speech recognition ready.": { pt: "Reconhecimento de fala pronto." },
+  "Download speech recognition": { pt: "Baixar reconhecimento de fala" },
+  "Speech-recognition download progress": {
+    pt: "Progresso do download do reconhecimento de fala",
+  },
+  "Checking voice model…": { pt: "Verificando o modelo de voz…" },
+  "Generating…": { pt: "Gerando…" },
+  "Generate audio": { pt: "Gerar áudio" },
   "in Settings →": { pt: "em Configurações →" },
   "in Settings.": { pt: "em Configurações." },
-  "Preparing audio discovery for the first time. This can take a minute.": {
-    pt: "Preparando a descoberta por áudio pela primeira vez. Pode levar um minuto.",
-  },
   "1 passage pre-selected for {level}.": { pt: "1 trecho pré-selecionado para {level}." },
   "{count} passages pre-selected for {level}.": {
     pt: "{count} trechos pré-selecionados para {level}.",
@@ -664,16 +783,16 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "Find new phrases": { pt: "Buscar novas frases" },
   "{count} cards to review": { pt: "{count} cartões para revisar" },
   "{count} practice phrases due": { pt: "{count} frases para praticar esperando revisão" },
-  "{count} cards for today — 1 came from your mistake yesterday": {
+  "{count} phrases for today — 1 came from your mistake yesterday": {
     pt: "{count} frases para hoje — 1 veio do seu erro de ontem",
   },
-  "{count} cards for today — {mistakes} came from your mistakes yesterday": {
+  "{count} phrases for today — {mistakes} came from your mistakes yesterday": {
     pt: "{count} frases para hoje — {mistakes} vieram dos seus erros de ontem",
   },
-  "{count} cards for today — 1 came from your mistake": {
+  "{count} phrases for today — 1 came from your mistake": {
     pt: "{count} frases para hoje — 1 veio do seu erro",
   },
-  "{count} cards for today — {mistakes} came from your mistakes": {
+  "{count} phrases for today — {mistakes} came from your mistakes": {
     pt: "{count} frases para hoje — {mistakes} vieram dos seus erros",
   },
   "Review while yesterday is still fresh.": {
@@ -688,6 +807,27 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   },
   "Study now": { pt: "Estudar agora" },
   "Review now": { pt: "Revisar agora" },
+  "Next step": { pt: "Próximo passo" },
+  Next: { pt: "Próximo" },
+  "A simple daily plan for your goal.": { pt: "Um plano diário simples para o seu objetivo." },
+  "Do an activity and it is checked off for you.": {
+    pt: "Faça uma atividade e ela é marcada como feita para você.",
+  },
+  "Start with due phrases. Progress and your library are here when you need them.": {
+    pt: "Comece pelas frases do dia. O progresso e a sua biblioteca ficam aqui quando você precisar.",
+  },
+  "Nice work — {count} phrases reviewed so far. This is a good place to stop, or take one light session.": {
+    pt: "Bom trabalho — {count} frases revisadas até agora. Este é um bom ponto para parar, ou faça uma sessão leve.",
+  },
+  "Start with your weak spots. Detailed numbers are one tap away.": {
+    pt: "Comece pelos seus pontos fracos. Os números detalhados estão a um toque.",
+  },
+  "{cards} phrases saved · {due} due now": {
+    pt: "{cards} frases salvas · {due} para revisar agora",
+  },
+  "Show detailed stats": { pt: "Mostrar estatísticas detalhadas" },
+  "Hide detailed stats": { pt: "Ocultar estatísticas detalhadas" },
+  "Say the phrase in your own voice.": { pt: "Diga a frase com a sua própria voz." },
   "You're caught up": { pt: "Você está em dia" },
   "Nothing to review right now": { pt: "Nada para revisar agora" },
   "Add a new source to find more phrases, or come back when cards are due.": {
@@ -713,19 +853,24 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "Hear real phrases, save the useful ones, then review them — no setup needed.": {
     pt: "Ouça frases reais, salve as úteis e revise — sem configurar nada.",
   },
-  "Hear native audio, save a few phrases, and review right away — no setup needed.": {
-    pt: "Ouça áudio nativo, salve algumas frases e revise na hora — sem configurar nada.",
+  // Bundled clips are synthesized on-device, so this copy says "clear audio", never "native".
+  // Original-source audio arrives with the learner's own video or podcast, not with a lesson.
+  "Hear clear audio, save a few phrases, and review right away — no setup needed.": {
+    pt: "Ouça áudio claro, salve algumas frases e revise na hora — sem configurar nada.",
   },
-  "Practice phrases from a native clip and your own mistake — no setup needed.": {
-    pt: "Pratique frases de um clipe nativo e de um erro seu — sem configurar nada.",
+  "Practice phrases from a lesson clip and your own mistake — no setup needed.": {
+    pt: "Pratique frases de um clipe da lição e de um erro seu — sem configurar nada.",
+  },
+  "Audio in the bundled lessons is generated on your Mac. When you bring your own video or podcast, the cards keep that source's original audio.": {
+    pt: "O áudio das lições que já vêm no app é gerado no seu Mac. Quando você traz seu próprio vídeo ou podcast, os cards mantêm o áudio original da fonte.",
   },
   "See real phrases, keep the useful ones, and study them — no setup needed.": {
     pt: "Veja frases reais, guarde as úteis e estude — sem configurar nada.",
   },
   "Import your own": { pt: "Importar o seu conteúdo" },
   "{lesson} ({level})": { pt: "{lesson} ({level})" },
-  "Start with graded phrases, native audio, and Study cards — no setup needed.": {
-    pt: "Comece com frases graduadas, áudio nativo e cartões no Estudar — sem configurar nada.",
+  "Start with graded phrases, clear audio, and Study cards — no setup needed.": {
+    pt: "Comece com frases graduadas, áudio claro e cartões no Estudar — sem configurar nada.",
   },
   "Continue the guided path, or come back when cards are due.": {
     pt: "Continue a trilha guiada ou volte quando houver cartões para revisar.",
@@ -749,10 +894,6 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "First task started with": { pt: "Início da primeira tarefa" },
   "Own material": { pt: "Material próprio" },
   "Bundled lesson": { pt: "Lição incluída" },
-  "W5 validation": { pt: "Validação W5" },
-  "First-task times and return visits recorded on this device for the W5 session.": {
-    pt: "Tempos da primeira tarefa e retornos registrados neste dispositivo para a sessão W5.",
-  },
   "Local activity data is unavailable in this build.": {
     pt: "Os dados locais de atividade não estão disponíveis nesta build.",
   },
@@ -817,6 +958,9 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "{count} practice phrases saved. Now write one sentence of your own below.": {
     pt: "{count} frases para praticar salvas. Agora escreva uma frase sua aqui embaixo.",
   },
+  "{count} practice phrases saved, each practiced in both directions. Now write one sentence of your own below.": {
+    pt: "{count} frases para praticar salvas, cada uma nos dois sentidos. Agora escreva uma frase sua aqui embaixo.",
+  },
   "You saved {count} phrases to review: {phrases} from real English and 1 from your own mistake.": {
     pt: "Você salvou {count} frases para revisar: {phrases} de inglês real e 1 do seu próprio erro.",
   },
@@ -847,6 +991,10 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "1 · Learn": { pt: "1 · Aprender" },
   "Learn three useful phrases": { pt: "Aprenda três frases úteis" },
   "Learn five useful phrases": { pt: "Aprenda cinco frases úteis" },
+  "Learn {count} useful phrases": { pt: "Aprenda {count} frases úteis" },
+  "You already studied the first phrases of this lesson. These are the ones it had left.": {
+    pt: "Você já estudou as primeiras frases desta lição. Estas são as que faltavam.",
+  },
   "Study the meaning, pattern, and situation. You will hear this language next.": {
     pt: "Estude o significado, o padrão e a situação. Você vai ouvir essa linguagem em seguida.",
   },
@@ -881,6 +1029,13 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   },
   "You caught the main idea and both phrase meanings.": {
     pt: "Você identificou a ideia principal e o significado das duas frases.",
+  },
+  "Check what you just learned": { pt: "Confira o que você acabou de aprender" },
+  "This lesson has no recorded dialogue yet, so this is a recall check on the phrases you just studied — not a test of understanding new speech.": {
+    pt: "Esta lição ainda não tem diálogo gravado, então esta é uma checagem das frases que você acabou de estudar — não um teste de entender fala nova.",
+  },
+  "You matched both clips to their meaning.": {
+    pt: "Você ligou os dois áudios ao significado certo.",
   },
   "You caught the main idea and the important details.": {
     pt: "Você identificou a ideia principal e os detalhes importantes.",
@@ -952,6 +1107,56 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "Message clarity": { pt: "Clareza da mensagem" },
   "Lesson language": { pt: "Linguagem da lição" },
   "Writing mechanics": { pt: "Mecânica da escrita" },
+
+  /* ── PT→EN transfer-error notes (src/features/learn/transferErrors.ts) ── */
+  "Age uses “to be” in English: I am 30 years old, not I have 30 years.": {
+    pt: "Idade em inglês usa “to be”: I am 30 years old, não I have 30 years.",
+  },
+  "A singular job or role needs “a” or “an”: I am a student.": {
+    pt: "Profissão ou papel no singular pede “a” ou “an”: I am a student.",
+  },
+  "“Depend” takes “on”, not “of”.": { pt: "“Depend” pede “on”, não “of”." },
+  "“Arrive” takes “at” or “in”, never “to”.": {
+    pt: "“Arrive” pede “at” ou “in”, nunca “to”.",
+  },
+  "“People” is plural in English: people are, people have.": {
+    pt: "“People” é plural em inglês: people are, people have.",
+  },
+  "“Married” takes “to”, not “with”.": { pt: "“Married” pede “to”, não “with”." },
+  "“Explain” needs “to” before the person: explain it to me.": {
+    pt: "“Explain” precisa de “to” antes da pessoa: explain it to me.",
+  },
+  "Use “tell someone”, not “say someone”.": {
+    pt: "Use “tell someone”, não “say someone”.",
+  },
+  "“Agree” is the verb by itself: I agree, not I am agree.": {
+    pt: "“Agree” já é o verbo: I agree, não I am agree.",
+  },
+  "Days of the week take “on”: on Monday.": {
+    pt: "Dias da semana pedem “on”: on Monday.",
+  },
+  "Use “good at” for skills, not “good in”.": {
+    pt: "Use “good at” para habilidades, não “good in”.",
+  },
+  "“Listen” needs “to” before what you hear.": {
+    pt: "“Listen” precisa de “to” antes do que você ouve.",
+  },
+  "In English you “ask” a question, you do not “make” one.": {
+    pt: "Em inglês você “ask” a question — não “make”.",
+  },
+  "This word has no plural in English.": { pt: "Esta palavra não tem plural em inglês." },
+  "Short adjectives form the comparative with “-er”, not “more”.": {
+    pt: "Adjetivos curtos formam o comparativo com “-er”, não com “more”.",
+  },
+  "With “since”, English uses the present perfect: I have lived here since 2020.": {
+    pt: "Com “since”, o inglês usa o present perfect: I have lived here since 2020.",
+  },
+  "Use “there is” / “there are” to say that something exists.": {
+    pt: "Use “there is” / “there are” para dizer que algo existe.",
+  },
+  "Use “to” + verb for purpose: I came to study.": {
+    pt: "Use “to” + verbo para finalidade: I came to study.",
+  },
   "Lesson 1 — Greetings": { pt: "Lição 1 — Cumprimentos" },
   "Lesson 2 — Names": { pt: "Lição 2 — Nomes" },
   "Lesson 3 — Countries and Cities": { pt: "Lição 3 — Países e cidades" },
@@ -994,6 +1199,2351 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "Making exact claims with controlled emphasis": { pt: "Fazer afirmações exatas com ênfase controlada" },
   "Controlling argument flow and emphasis": { pt: "Controlar o fluxo do argumento e a ênfase" },
   "Bundled B1 sample from the demo": { pt: "Amostra B1 incluída do demo" },
+
+  /* ── Wave 1 lesson material (100-lesson roadmap backlog) ─── */
+  /* a2-cooking */
+  "Lesson 30 — In the Kitchen": { pt: "Lição 30 — Na cozinha" },
+  "Ingredients, quantities, and following a recipe": { pt: "Ingredientes, quantidades e como seguir uma receita" },
+  "Follow and give simple cooking instructions using quantities.": { pt: "Seguir e dar instruções simples de cozinha usando quantidades." },
+  "Linking a final consonant to 'it': cut it, put it, turn it.": { pt: "Ligar a consoante final a 'it': cut it, put it, turn it." },
+  "Describe a simple dish you cook at home. Say what you need and give two instructions.": { pt: "Descreva um prato simples que você faz em casa. Diga do que você precisa e dê duas instruções." },
+  "Use one quantity word (a little, enough, how many) and start one instruction with a verb.": { pt: "Use uma palavra de quantidade (a little, enough, how many) e comece uma instrução com um verbo." },
+  "What are the two speakers doing?": { pt: "O que as duas pessoas estão fazendo?" },
+  "Cooking a meal together": { pt: "Cozinhando uma refeição juntos" },
+  "Ordering food in a restaurant": { pt: "Pedindo comida em um restaurante" },
+  "Shopping at the supermarket": { pt: "Fazendo compras no supermercado" },
+  "What does Bruno ask Ana to do first?": { pt: "O que Bruno pede que Ana faça primeiro?" },
+  "Cut the onions": { pt: "Cortar as cebolas" },
+  "Wash the rice": { pt: "Lavar o arroz" },
+  "Turn off the oven": { pt: "Desligar o forno" },
+  "Which ingredient is missing?": { pt: "Qual ingrediente está faltando?" },
+  "Flour": { pt: "Farinha" },
+  "Salt": { pt: "Sal" },
+  "Oil": { pt: "Óleo" },
+  /* a2-hobbies */
+  "Lesson 31 — Free Time": { pt: "Lição 31 — Tempo livre" },
+  "Hobbies and how often you do them": { pt: "Hobbies e com que frequência você os pratica" },
+  "Say what you do in your free time and how often you do it.": { pt: "Dizer o que você faz no tempo livre e com que frequência." },
+  "Stress on the first syllable: USUally, NORmally, HARDly.": { pt: "Acento na primeira sílaba: USUally, NORmally, HARDly." },
+  "Talk about one thing you do in your free time. Say how often you do it and why you like it.": { pt: "Fale sobre algo que você faz no tempo livre. Diga com que frequência e por que gosta." },
+  "Add one frequency expression (usually, twice a week, hardly ever) and one reason.": { pt: "Acrescente uma expressão de frequência (usually, twice a week, hardly ever) e um motivo." },
+  "What are Carla and Diego talking about?": { pt: "Sobre o que Carla e Diego estão conversando?" },
+  "Their free-time activities": { pt: "As atividades de tempo livre deles" },
+  "Their work schedules": { pt: "Os horários de trabalho deles" },
+  "A trip they are planning": { pt: "Uma viagem que estão planejando" },
+  "How often does Diego go to the gym?": { pt: "Com que frequência Diego vai à academia?" },
+  "Twice a week": { pt: "Duas vezes por semana" },
+  "Every day": { pt: "Todos os dias" },
+  "Once a month": { pt: "Uma vez por mês" },
+  "Why does Carla like her hobby?": { pt: "Por que Carla gosta do hobby dela?" },
+  "It helps her relax": { pt: "Isso a ajuda a relaxar" },
+  "It earns her money": { pt: "Isso lhe dá dinheiro" },
+  "Her friends do it too": { pt: "Os amigos dela também fazem isso" },
+  /* a2-hotel */
+  "Lesson 32 — At the Hotel": { pt: "Lição 32 — No hotel" },
+  "Checking in, room needs, and small complaints": { pt: "Check-in, necessidades do quarto e pequenas reclamações" },
+  "Check into a hotel, ask for what your room needs, and report a small problem.": { pt: "Fazer check-in em um hotel, pedir o que o quarto precisa e relatar um problema simples." },
+  "Polite rising intonation on requests: Could I have a towel?": { pt: "Entonação ascendente e educada nos pedidos: Could I have a towel?" },
+  "You have just arrived at a hotel. Check in, ask one question about the room, and report one problem.": { pt: "Você acabou de chegar a um hotel. Faça o check-in, faça uma pergunta sobre o quarto e relate um problema." },
+  "Use one polite request (Could I..., Could you...) and describe the problem with isn't working or there's no.": { pt: "Use um pedido educado (Could I..., Could you...) e descreva o problema com isn't working ou there's no." },
+  "Where is this conversation happening?": { pt: "Onde essa conversa está acontecendo?" },
+  "At a hotel reception desk": { pt: "Na recepção de um hotel" },
+  "At an airport check-in desk": { pt: "No balcão de check-in do aeroporto" },
+  "In a restaurant": { pt: "Em um restaurante" },
+  "What does the guest ask about first?": { pt: "Sobre o que o hóspede pergunta primeiro?" },
+  "Whether breakfast is included": { pt: "Se o café da manhã está incluso" },
+  "The price of the room": { pt: "O preço do quarto" },
+  "The way to the station": { pt: "O caminho até a estação" },
+  "What problem does the guest report?": { pt: "Qual problema o hóspede relata?" },
+  "The air conditioning is broken": { pt: "O ar-condicionado está quebrado" },
+  "The room is too small": { pt: "O quarto é pequeno demais" },
+  "The key does not work": { pt: "A chave não funciona" },
+  /* a2-airport */
+  "Lesson 33 — At the Airport": { pt: "Lição 33 — No aeroporto" },
+  "Check-in, security, gates, and delays": { pt: "Check-in, segurança, portões e atrasos" },
+  "Get through check-in and security, and understand gate and delay announcements.": { pt: "Passar pelo check-in e pela segurança e entender avisos de portão e de atraso." },
+  "Numbers and letters said clearly: gate B12, flight LA8067.": { pt: "Números e letras ditos com clareza: gate B12, flight LA8067." },
+  "You are checking in for a flight. Ask two questions and say what luggage you have.": { pt: "Você está fazendo check-in para um voo. Faça duas perguntas e diga que bagagem você tem." },
+  "Use I'd like for your request and one question word (which, how long, where).": { pt: "Use I'd like no seu pedido e uma palavra interrogativa (which, how long, where)." },
+  "What is the traveller doing?": { pt: "O que o viajante está fazendo?" },
+  "Checking in for a flight": { pt: "Fazendo check-in para um voo" },
+  "Buying a plane ticket": { pt: "Comprando uma passagem de avião" },
+  "Collecting lost luggage": { pt: "Buscando uma bagagem perdida" },
+  "What does the traveller ask for?": { pt: "O que o viajante pede?" },
+  "A window seat": { pt: "Um assento na janela" },
+  "An extra bag": { pt: "Uma mala extra" },
+  "A refund": { pt: "Um reembolso" },
+  "What does the agent say at the end?": { pt: "O que o atendente diz no final?" },
+  "The flight is delayed by an hour": { pt: "O voo está atrasado em uma hora" },
+  "The gate has changed": { pt: "O portão mudou" },
+  "The flight is full": { pt: "O voo está lotado" },
+  /* a2-appointments */
+  "Lesson 34 — Appointments": { pt: "Lição 34 — Compromissos" },
+  "Booking, changing, and cancelling an appointment": { pt: "Marcar, remarcar e cancelar um compromisso" },
+  "Book an appointment, then move or cancel it politely.": { pt: "Marcar um horário e depois remarcá-lo ou cancelá-lo com educação." },
+  "Weak 'to' in phrases like need to and want to.": { pt: "O 'to' fraco em expressões como need to e want to." },
+  "Call to book an appointment, then explain that you have to change it. Suggest a new time.": { pt: "Ligue para marcar um horário e depois explique que precisa remarcá-lo. Sugira um novo horário." },
+  "Use one booking phrase and one polite excuse (I'm afraid..., Something has come up).": { pt: "Use uma expressão para marcar e uma desculpa educada (I'm afraid..., Something has come up)." },
+  "What happens across this conversation?": { pt: "O que acontece ao longo dessa conversa?" },
+  "An appointment is booked and then changed": { pt: "Um horário é marcado e depois remarcado" },
+  "A patient complains about a doctor": { pt: "Um paciente reclama de um médico" },
+  "A clinic cancels all its appointments": { pt: "Uma clínica cancela todos os horários" },
+  "Which day was not available?": { pt: "Qual dia não estava disponível?" },
+  "Thursday": { pt: "Quinta-feira" },
+  "Friday": { pt: "Sexta-feira" },
+  "Tuesday": { pt: "Terça-feira" },
+  "Why does Marta call the second time?": { pt: "Por que Marta liga pela segunda vez?" },
+  "She cannot come on Friday": { pt: "Ela não pode ir na sexta" },
+  "She wants a different doctor": { pt: "Ela quer outro médico" },
+  "She forgot the address": { pt: "Ela esqueceu o endereço" },
+  /* a2-clarification */
+  "Lesson 35 — When You Don't Understand": { pt: "Lição 35 — Quando você não entende" },
+  "Asking someone to repeat, slow down, or explain": { pt: "Pedir para repetir, falar mais devagar ou explicar" },
+  "Keep a conversation going when you miss a word or lose the thread.": { pt: "Manter a conversa quando você perde uma palavra ou o fio da meada." },
+  "Sorry? and Again? rise at the end; a flat tone sounds rude.": { pt: "Sorry? e Again? sobem no final; um tom plano soa grosseiro." },
+  "Someone gives you an instruction you only half understand. Ask two different questions to make it clear.": { pt: "Alguém te dá uma instrução que você entendeu pela metade. Faça duas perguntas diferentes para esclarecer." },
+  "Ask about one specific word or part, and check your understanding with So you mean...?": { pt: "Pergunte sobre uma palavra ou parte específica e confirme com So you mean...?" },
+  "What is Paulo doing in this conversation?": { pt: "O que Paulo está fazendo nessa conversa?" },
+  "Checking that he understood correctly": { pt: "Confirmando que entendeu corretamente" },
+  "Refusing to do the work": { pt: "Recusando-se a fazer o trabalho" },
+  "Asking for more money": { pt: "Pedindo mais dinheiro" },
+  "When is the draft due now?": { pt: "Quando o rascunho vence agora?" },
+  "Monday": { pt: "Segunda-feira" },
+  "Next month": { pt: "No mês que vem" },
+  "What does Paulo ask for at the end?": { pt: "O que Paulo pede no final?" },
+  "An example": { pt: "Um exemplo" },
+  "A written summary": { pt: "Um resumo por escrito" },
+  "A longer deadline": { pt: "Um prazo maior" },
+  /* b1-job-interviews */
+  "Lesson 36 — Job Interviews": { pt: "Lição 36 — Entrevistas de emprego" },
+  "Experience, strengths, and interview follow-ups": { pt: "Experiência, pontos fortes e retornos após a entrevista" },
+  "Present your experience and strengths in an interview with evidence, not adjectives.": { pt: "Apresentar sua experiência e seus pontos fortes em uma entrevista com evidências, não com adjetivos." },
+  "Contracted present perfect: I've worked, I've been, I've led.": { pt: "Present perfect contraído: I've worked, I've been, I've led." },
+  "Answer the question 'What is your main strength?' with one strength and one concrete result that proves it.": { pt: "Responda à pergunta 'What is your main strength?' com um ponto forte e um resultado concreto que o comprove." },
+  "Replace any adjective about yourself with something you actually did and its outcome.": { pt: "Troque qualquer adjetivo sobre você por algo que você realmente fez e o resultado disso." },
+  "How does Renata support her claim about her strength?": { pt: "Como Renata sustenta o que diz sobre seu ponto forte?" },
+  "With a concrete result from her last job": { pt: "Com um resultado concreto do último emprego" },
+  "By repeating the word 'organised'": { pt: "Repetindo a palavra 'organised'" },
+  "By comparing herself to her colleagues": { pt: "Comparando-se aos colegas" },
+  "How long has Renata worked in logistics?": { pt: "Há quanto tempo Renata trabalha com logística?" },
+  "Six years": { pt: "Seis anos" },
+  "Six months": { pt: "Seis meses" },
+  "Three years": { pt: "Três anos" },
+  "How does she explain leaving her current company?": { pt: "Como ela explica a saída da empresa atual?" },
+  "She wants more responsibility": { pt: "Ela quer mais responsabilidade" },
+  "She dislikes her manager": { pt: "Ela não gosta do gestor dela" },
+  "The company is closing": { pt: "A empresa está fechando" },
+  /* b1-work-meetings */
+  "Lesson 37 — Meetings": { pt: "Lição 37 — Reuniões" },
+  "Giving updates, asking questions, and agreeing action items": { pt: "Dar atualizações, fazer perguntas e definir próximos passos" },
+  "Give a status update in a meeting and leave with clear action items.": { pt: "Dar uma atualização de status em uma reunião e sair com próximos passos claros." },
+  "Falling tone on decisions, rising tone on checks: We'll ship Friday. Agreed?": { pt: "Tom descendente nas decisões, ascendente nas confirmações: We'll ship Friday. Agreed?" },
+  "Give a one-minute update on something you are working on. Include one problem and one action item with a deadline.": { pt: "Dê uma atualização de um minuto sobre algo em que você trabalha. Inclua um problema e um próximo passo com prazo." },
+  "Make sure your update says who does what by when, not only how you feel about the work.": { pt: "Garanta que sua atualização diga quem faz o quê e até quando, não só como você se sente." },
+  "What is the purpose of this meeting?": { pt: "Qual é o objetivo dessa reunião?" },
+  "Sharing status and assigning next steps": { pt: "Compartilhar status e definir próximos passos" },
+  "Interviewing a new supplier": { pt: "Entrevistar um novo fornecedor" },
+  "Training the team on a tool": { pt: "Treinar a equipe em uma ferramenta" },
+  "What is holding Tomás up?": { pt: "O que está atrasando Tomás?" },
+  "He is waiting on the supplier": { pt: "Ele está esperando o fornecedor" },
+  "He has lost the report": { pt: "Ele perdeu o relatório" },
+  "He is on holiday next week": { pt: "Ele estará de férias na semana que vem" },
+  "What does Tomás commit to at the end?": { pt: "Com o que Tomás se compromete no final?" },
+  "Sending the report by Wednesday": { pt: "Enviar o relatório até quarta" },
+  "Rewriting the whole process": { pt: "Reescrever todo o processo" },
+  "Cancelling the supplier contract": { pt: "Cancelar o contrato do fornecedor" },
+  /* b1-email-messages */
+  "Lesson 38 — Email and Messages": { pt: "Lição 38 — E-mails e mensagens" },
+  "Professional tone in email and chat": { pt: "Tom profissional em e-mails e no chat" },
+  "Write a short professional message that is direct without sounding cold.": { pt: "Escrever uma mensagem profissional curta, direta e sem soar fria." },
+  "Read your message aloud: if it sounds abrupt, it reads abrupt.": { pt: "Leia sua mensagem em voz alta: se soa ríspida, ela é lida como ríspida." },
+  "Rewrite this message so it stays direct but sounds polite: 'Send me the report today.'": { pt: "Reescreva esta mensagem para que continue direta, mas soe educada: 'Send me the report today.'" },
+  "Keep the request and the deadline. Add a reason for writing and one closing line.": { pt: "Mantenha o pedido e o prazo. Acrescente um motivo para escrever e uma linha de encerramento." },
+  "Why did Júlia's first message sound rude?": { pt: "Por que a primeira mensagem de Júlia soou grosseira?" },
+  "It gave an order with no context": { pt: "Deu uma ordem sem contexto" },
+  "It was far too long": { pt: "Estava longa demais" },
+  "It contained spelling mistakes": { pt: "Tinha erros de ortografia" },
+  "What does Sam tell her to start with?": { pt: "Com o que Sam diz que ela deve começar?" },
+  "The reason she is writing": { pt: "O motivo de estar escrevendo" },
+  "An apology": { pt: "Um pedido de desculpas" },
+  "The invoice number": { pt: "O número da fatura" },
+  "What does Sam say about the deadline?": { pt: "O que Sam diz sobre o prazo?" },
+  "She should keep it": { pt: "Ela deve mantê-lo" },
+  "She should remove it": { pt: "Ela deve removê-lo" },
+  "She should make it later": { pt: "Ela deve adiá-lo" },
+  /* b1-travel-problems */
+  "Lesson 39 — When Travel Goes Wrong": { pt: "Lição 39 — Quando a viagem dá errado" },
+  "Missed connections, lost items, and finding alternatives": { pt: "Conexões perdidas, itens extraviados e alternativas" },
+  "Explain what went wrong on a trip and negotiate a workable alternative.": { pt: "Explicar o que deu errado em uma viagem e negociar uma alternativa viável." },
+  "Stay calm and level: stress the facts, not the frustration.": { pt: "Mantenha a calma e o tom neutro: enfatize os fatos, não a frustração." },
+  "Your flight was cancelled and you must be somewhere tomorrow. Explain the problem and ask for two alternatives.": { pt: "Seu voo foi cancelado e você precisa estar em outro lugar amanhã. Explique o problema e peça duas alternativas." },
+  "Separate the facts from the request: say what happened, then ask what your options are.": { pt: "Separe os fatos do pedido: diga o que aconteceu e depois pergunte quais são suas opções." },
+  "What is Marcos trying to achieve?": { pt: "O que Marcos está tentando conseguir?" },
+  "A way to reach Lisbon tonight": { pt: "Uma forma de chegar a Lisboa hoje à noite" },
+  "A refund for his suitcase": { pt: "Um reembolso pela mala" },
+  "An upgrade to business class": { pt: "Um upgrade para a classe executiva" },
+  "Why did he miss his connection?": { pt: "Por que ele perdeu a conexão?" },
+  "His first flight landed late": { pt: "O primeiro voo dele pousou atrasado" },
+  "He arrived at the airport late": { pt: "Ele chegou atrasado ao aeroporto" },
+  "He went to the wrong gate": { pt: "Ele foi ao portão errado" },
+  "What alternative does the agent offer?": { pt: "Que alternativa o atendente oferece?" },
+  "A train he must pay for": { pt: "Um trem que ele mesmo precisa pagar" },
+  "A free hotel room": { pt: "Um quarto de hotel gratuito" },
+  "A flight with another airline": { pt: "Um voo com outra companhia" },
+  /* b1-personal-finance */
+  "Lesson 40 — Money Decisions": { pt: "Lição 40 — Decisões de dinheiro" },
+  "Budgets, bills, saving, and everyday money choices": { pt: "Orçamento, contas, poupança e escolhas do dia a dia" },
+  "Talk about what you spend, what you save, and why a purchase is or is not worth it.": { pt: "Falar sobre o que você gasta, o que guarda e por que uma compra vale ou não a pena." },
+  "Contracted 'used to' and 'have to': I usta, I hafta.": { pt: "As formas reduzidas de 'used to' e 'have to': I usta, I hafta." },
+  "Describe one money decision you are weighing. Say what it costs, what you would give up, and whether it is worth it.": { pt: "Descreva uma decisão financeira que você está avaliando. Diga quanto custa, do que abriria mão e se vale a pena." },
+  "Use one value phrase (worth it, afford, pays for itself) and give an actual reason.": { pt: "Use uma expressão de valor (worth it, afford, pays for itself) e dê um motivo concreto." },
+  "What are Léo and Bia deciding?": { pt: "O que Léo e Bia estão decidindo?" },
+  "Whether Léo can afford a car": { pt: "Se Léo consegue pagar um carro" },
+  "Where Léo should live": { pt: "Onde Léo deveria morar" },
+  "How much rent to pay": { pt: "Quanto pagar de aluguel" },
+  "What already takes most of Léo's salary?": { pt: "O que já consome a maior parte do salário de Léo?" },
+  "Rent": { pt: "Aluguel" },
+  "Food": { pt: "Comida" },
+  // "Travel" is already translated above as an onboarding topic.
+  "What does Léo prefer to do?": { pt: "O que Léo prefere fazer?" },
+  "Save up rather than borrow": { pt: "Juntar dinheiro em vez de pegar emprestado" },
+  "Borrow from the bank": { pt: "Pegar emprestado no banco" },
+  "Ask his family for money": { pt: "Pedir dinheiro à família" },
+  /* b1-storytelling */
+  "Lesson 41 — Telling a Story": { pt: "Lição 41 — Contando uma história" },
+  "Sequencing events and adding detail to a personal story": { pt: "Ordenar acontecimentos e acrescentar detalhes a uma história pessoal" },
+  "Tell a personal story in order, with background detail and a point at the end.": { pt: "Contar uma história pessoal em ordem, com detalhes de contexto e um desfecho." },
+  "Slow down before the punchline; pause where the listener should react.": { pt: "Desacelere antes do desfecho; faça uma pausa onde o ouvinte deve reagir." },
+  "Tell a short story about something unexpected that happened to you. Set the scene, say what interrupted it, and end with the outcome.": { pt: "Conte uma história curta sobre algo inesperado que aconteceu com você. Situe a cena, diga o que a interrompeu e termine com o desfecho." },
+  "Use one past continuous to set the scene and one closing phrase (in the end, ever since then).": { pt: "Use um past continuous para situar a cena e uma expressão de fechamento (in the end, ever since then)." },
+  "What is Rafa's story about?": { pt: "Sobre o que é a história de Rafa?" },
+  "An unexpected meeting at a bus stop": { pt: "Um encontro inesperado num ponto de ônibus" },
+  "A bad day at school": { pt: "Um dia ruim na escola" },
+  "A journey he never finished": { pt: "Uma viagem que ele nunca terminou" },
+  "What happened first?": { pt: "O que aconteceu primeiro?" },
+  "He was waiting for the bus": { pt: "Ele estava esperando o ônibus" },
+  "He recognised his teacher": { pt: "Ele reconheceu a professora" },
+  "They missed the bus": { pt: "Eles perderam o ônibus" },
+  "Why didn't he recognise her immediately?": { pt: "Por que ele não a reconheceu na hora?" },
+  "He had never seen her outside school": { pt: "Ele nunca a tinha visto fora da escola" },
+  "She had changed her name": { pt: "Ela tinha mudado de nome" },
+  "It was too dark": { pt: "Estava escuro demais" },
+  /* b1-recommendations */
+  "Lesson 42 — Recommendations": { pt: "Lição 42 — Recomendações" },
+  "Recommending things and backing the recommendation with reasons": { pt: "Recomendar algo e sustentar a recomendação com motivos" },
+  "Recommend or warn against something and justify it with a reason and a caveat.": { pt: "Recomendar algo ou desaconselhar, justificando com um motivo e uma ressalva." },
+  "Stress the reason, not the adjective: it's great BECAUSE it's quiet.": { pt: "Enfatize o motivo, não o adjetivo: it's great BECAUSE it's quiet." },
+  "Recommend a place, film, or app to someone. Give one reason, one downside, and say who it suits.": { pt: "Recomende um lugar, filme ou aplicativo. Dê um motivo, um ponto negativo e diga para quem serve." },
+  "A recommendation without a reason is just an opinion. Add why, and add one honest downside.": { pt: "Uma recomendação sem motivo é só uma opinião. Acrescente o porquê e um ponto negativo honesto." },
+  "What is Gui doing?": { pt: "O que Gui está fazendo?" },
+  "Recommending a restaurant with an honest caveat": { pt: "Recomendando um restaurante com uma ressalva honesta" },
+  "Warning Tati not to go out": { pt: "Avisando Tati para não sair" },
+  "Complaining about a bad meal": { pt: "Reclamando de uma refeição ruim" },
+  "What did Gui like most?": { pt: "Do que Gui mais gostou?" },
+  "The service": { pt: "Do atendimento" },
+  "The music": { pt: "Da música" },
+  "The location": { pt: "Da localização" },
+  "What downside does he admit?": { pt: "Que ponto negativo ele admite?" },
+  "It is expensive": { pt: "É caro" },
+  "It is far away": { pt: "É longe" },
+  "It is always full": { pt: "Está sempre lotado" },
+  /* b1-apologies */
+  "Lesson 43 — Apologising and Fixing It": { pt: "Lição 43 — Pedir desculpas e resolver" },
+  "Taking responsibility and repairing a situation": { pt: "Assumir responsabilidade e consertar a situação" },
+  "Apologise for a real mistake, take responsibility, and propose the repair.": { pt: "Pedir desculpas por um erro real, assumir a responsabilidade e propor a solução." },
+  "A sincere apology is slower and lower; speed sounds defensive.": { pt: "Um pedido de desculpas sincero é mais lento e mais grave; pressa soa defensiva." },
+  "You missed a deadline that affected someone else. Apologise, take responsibility, and propose one concrete fix.": { pt: "Você perdeu um prazo e isso afetou outra pessoa. Peça desculpas, assuma a responsabilidade e proponha uma solução concreta." },
+  "Check that your apology contains no 'but'. Then add one specific thing you will change.": { pt: "Verifique se seu pedido de desculpas não tem nenhum 'but'. Depois acrescente algo específico que você vai mudar." },
+  "How does Dani handle the complaint?": { pt: "Como Dani lida com a reclamação?" },
+  "She takes responsibility and offers a fix": { pt: "Ela assume a responsabilidade e propõe uma solução" },
+  "She blames her team": { pt: "Ela culpa a equipe dela" },
+  "She denies the report was late": { pt: "Ela nega que o relatório atrasou" },
+  "What does the client say the delay caused?": { pt: "O que o cliente diz que o atraso causou?" },
+  "The review had to be postponed": { pt: "A revisão teve que ser adiada" },
+  "The contract was cancelled": { pt: "O contrato foi cancelado" },
+  "The team lost a client": { pt: "A equipe perdeu um cliente" },
+  "What does Dani promise at the end?": { pt: "O que Dani promete no final?" },
+  "A status note every Friday": { pt: "Um informe de status toda sexta" },
+  "A full refund": { pt: "Um reembolso total" },
+  "A new project manager": { pt: "Um novo gerente de projeto" },
+  /* a1-classroom */
+  "Lesson 44 — In the Classroom": { pt: "Lição 44 — Na sala de aula" },
+  "Classroom objects and simple instructions": { pt: "Objetos da sala de aula e instruções simples" },
+  "Follow simple classroom instructions and ask for the things you need.": { pt: "Seguir instruções simples em sala e pedir o que você precisa." },
+  "Stress the important word in a question: Which PAGE? What WORD?": { pt: "Enfatize a palavra importante na pergunta: Which PAGE? What WORD?" },
+  "You are in class. Ask which page to open, say you do not have one object, and ask to borrow it.": { pt: "Você está em aula. Pergunte qual página deve abrir, diga que não tem um objeto e peça-o emprestado." },
+  "Use Which page...? for the instruction and Can I borrow...? for the object.": { pt: "Use Which page...? para a instrução e Can I borrow...? para o objeto." },
+  "What are the students getting ready to do?": { pt: "O que os alunos estão se preparando para fazer?" },
+  "An activity in pairs": { pt: "Uma atividade em duplas" },
+  "A test on their own": { pt: "Uma prova individual" },
+  "A game outside": { pt: "Um jogo do lado de fora" },
+  "Which page do they need?": { pt: "De qual página eles precisam?" },
+  "Page eighteen": { pt: "Página dezoito" },
+  "Page eight": { pt: "Página oito" },
+  "Page eighty": { pt: "Página oitenta" },
+  "What does Lia borrow?": { pt: "O que Lia pega emprestado?" },
+  "A pen": { pt: "Uma caneta" },
+  "A book": { pt: "Um livro" },
+  "A phone": { pt: "Um celular" },
+  /* a1-time-dates */
+  "Lesson 45 — Time and Dates": { pt: "Lição 45 — Horários e datas" },
+  "Clock time, days, dates, and schedules": { pt: "Horas, dias, datas e horários" },
+  "Ask and answer basic questions about times, days, and dates.": { pt: "Fazer e responder perguntas básicas sobre horários, dias e datas." },
+  "Keep thirteen and thirty distinct: thirTEEN, THIRty.": { pt: "Diferencie thirteen de thirty: thirTEEN, THIRty." },
+  "Tell a classmate the day, date, and time of your next class or appointment, then say if you are early or late.": { pt: "Diga a um colega o dia, a data e a hora da sua próxima aula ou compromisso; depois diga se você está adiantado ou atrasado." },
+  "Use on before the day or date and at before the clock time.": { pt: "Use on antes do dia ou da data e at antes do horário." },
+  "What are Ivo and Maya checking?": { pt: "O que Ivo e Maya estão conferindo?" },
+  "The date and time of a class": { pt: "A data e o horário de uma aula" },
+  "The price of a course": { pt: "O preço de um curso" },
+  "The address of a café": { pt: "O endereço de um café" },
+  "When is the class?": { pt: "Quando é a aula?" },
+  "Tuesday, May twelfth": { pt: "Terça-feira, doze de maio" },
+  "Thursday, May twentieth": { pt: "Quinta-feira, vinte de maio" },
+  "Tuesday, March twelfth": { pt: "Terça-feira, doze de março" },
+  "How early is Ivo?": { pt: "Quanto tempo adiantado Ivo está?" },
+  "Fifteen minutes": { pt: "Quinze minutos" },
+  "Five minutes": { pt: "Cinco minutos" },
+  "Thirty minutes": { pt: "Trinta minutos" },
+  /* a1-likes */
+  "Lesson 46 — Things You Like": { pt: "Lição 46 — Coisas de que você gosta" },
+  "Likes, dislikes, and simple reasons": { pt: "Gostos, preferências e motivos simples" },
+  "Talk about things you like and dislike and give a simple reason.": { pt: "Falar sobre coisas de que você gosta ou não e dar um motivo simples." },
+  "Stress the thing you contrast: I like TEA, but I don't like COFFEE.": { pt: "Enfatize as coisas que você contrasta: I like TEA, but I don't like COFFEE." },
+  "Talk about one kind of music, food, or film you like and one you do not like. Give a reason for each.": { pt: "Fale sobre um tipo de música, comida ou filme de que você gosta e outro de que não gosta. Dê um motivo para cada um." },
+  "Add because after each opinion so the listener knows your reason.": { pt: "Acrescente because depois de cada opinião para que o ouvinte saiba o motivo." },
+  "What are Ana and Caio talking about?": { pt: "Sobre o que Ana e Caio estão conversando?" },
+  "Their taste in music": { pt: "O gosto musical deles" },
+  "A film they watched": { pt: "Um filme a que assistiram" },
+  "Food for a party": { pt: "Comida para uma festa" },
+  "Why does Ana like pop music?": { pt: "Por que Ana gosta de música pop?" },
+  "Because it is fun": { pt: "Porque é divertida" },
+  "Because it is quiet": { pt: "Porque é tranquila" },
+  "Because it is new": { pt: "Porque é nova" },
+  "What does Ana prefer?": { pt: "O que Ana prefere?" },
+  "Faster songs": { pt: "Músicas mais rápidas" },
+  "Slower songs": { pt: "Músicas mais lentas" },
+  "Scary films": { pt: "Filmes de terror" },
+  /* a1-abilities */
+  "Lesson 47 — What You Can Do": { pt: "Lição 47 — O que você sabe fazer" },
+  "Abilities, help, and learning a skill": { pt: "Habilidades, ajuda e aprendizado" },
+  "Say what you can and cannot do and ask someone to show or help you.": { pt: "Dizer o que você sabe ou não sabe fazer e pedir que alguém mostre ou ajude." },
+  "Can is usually weak in statements; can't is stressed: I can SWIM. I CAN'T DRIVE.": { pt: "Can costuma ser fraco nas afirmações; can't recebe ênfase: I can SWIM. I CAN'T DRIVE." },
+  "Name one thing you can do well and one thing you cannot do yet. Ask someone to show you one step.": { pt: "Diga algo que você sabe fazer bem e algo que ainda não sabe. Peça que alguém mostre um passo." },
+  "Use can or can't plus the base verb, then ask Could you show me...?": { pt: "Use can ou can't com o verbo base; depois pergunte Could you show me...?" },
+  "What is Bela helping Niko do?": { pt: "O que Bela está ajudando Niko a fazer?" },
+  "Draw a face": { pt: "Desenhar um rosto" },
+  "Drive a car": { pt: "Dirigir um carro" },
+  "Cook a meal": { pt: "Preparar uma refeição" },
+  "What is Bela good at drawing?": { pt: "O que Bela sabe desenhar bem?" },
+  Faces: { pt: "Rostos" },
+  Houses: { pt: "Casas" },
+  Animals: { pt: "Animais" },
+  "What does Niko draw after the circle?": { pt: "O que Niko desenha depois do círculo?" },
+  "The eyes": { pt: "Os olhos" },
+  "The mouth": { pt: "A boca" },
+  "The hair": { pt: "O cabelo" },
+  /* a2-responsibilities */
+  "Lesson 48 — Sharing Responsibilities": { pt: "Lição 48 — Dividindo responsabilidades" },
+  "Chores, responsibilities, and routine obligations": { pt: "Tarefas domésticas, responsabilidades e obrigações da rotina" },
+  "Explain routine responsibilities and agree who will do each task.": { pt: "Explicar responsabilidades da rotina e combinar quem fará cada tarefa." },
+  "Have to often sounds like hafta in natural speech: I hafta clean.": { pt: "Have to muitas vezes soa como hafta na fala natural: I hafta clean." },
+  "You share a home with someone. Divide three chores between you and say when you will do your tasks.": { pt: "Você divide a casa com alguém. Distribua três tarefas e diga quando fará as suas." },
+  "Use responsible for or my turn for ownership, then give a clear time with I'll...": { pt: "Use responsible for ou my turn para indicar responsabilidade; depois dê um horário claro com I'll..." },
+  "What are Rui and Cris doing?": { pt: "O que Rui e Cris estão fazendo?" },
+  "Dividing the housework before guests arrive": { pt: "Dividindo as tarefas antes de os convidados chegarem" },
+  "Planning a shopping trip for next week": { pt: "Planejando uma ida às compras para a semana que vem" },
+  "Looking for someone to clean their home": { pt: "Procurando alguém para limpar a casa" },
+  "Which room will Cris clean?": { pt: "Qual cômodo Cris vai limpar?" },
+  "The bathroom": { pt: "O banheiro" },
+  "The kitchen": { pt: "A cozinha" },
+  "The bedroom": { pt: "O quarto" },
+  "What did Cris forget to do?": { pt: "O que Cris esqueceu de fazer?" },
+  "Take the rubbish out": { pt: "Levar o lixo para fora" },
+  "Buy the food": { pt: "Comprar a comida" },
+  "Wash the dishes": { pt: "Lavar a louça" },
+  /* a2-technology */
+  "Lesson 49 — Everyday Technology": { pt: "Lição 49 — Tecnologia do dia a dia" },
+  "Devices, messages, passwords, and basic problems": { pt: "Aparelhos, mensagens, senhas e problemas básicos" },
+  "Describe a common technology problem, follow a simple suggestion, and confirm whether it worked.": {
+    pt: "Descrever um problema comum de tecnologia, seguir uma sugestão simples e confirmar se funcionou.",
+  },
+  "Stress the problem word: My phone won't turn ON. The battery is almost DEAD.": {
+    pt: "Enfatize a palavra que indica o problema: My phone won't turn ON. The battery is almost DEAD.",
+  },
+  "Your phone or computer has a simple problem. Describe it, ask for help, and say whether the suggested solution works.": {
+    pt: "Seu celular ou computador está com um problema simples. Descreva-o, peça ajuda e diga se a solução sugerida funciona.",
+  },
+  "Name the exact problem with won't or can't, then respond to one suggestion with Try... or It works now.": {
+    pt: "Diga qual é o problema com won't ou can't; depois responda a uma sugestão com Try... ou It works now.",
+  },
+  "What problem does Leo solve?": { pt: "Que problema Leo resolve?" },
+  "He connects to the Wi-Fi": { pt: "Ele se conecta ao Wi-Fi" },
+  "He repairs a broken screen": { pt: "Ele conserta uma tela quebrada" },
+  "He buys a new phone": { pt: "Ele compra um celular novo" },
+  "Why did the first password fail?": { pt: "Por que a primeira senha não funcionou?" },
+  "It was the old password": { pt: "Era a senha antiga" },
+  "Leo typed his name": { pt: "Leo digitou o nome dele" },
+  "The network had no password": { pt: "A rede não tinha senha" },
+  "What does Leo ask for after the Wi-Fi works?": { pt: "O que Leo pede depois que o Wi-Fi funciona?" },
+  "The call link": { pt: "O link da chamada" },
+  "A phone charger": { pt: "Um carregador de celular" },
+  "An app update": { pt: "Uma atualização do aplicativo" },
+  /* a2-comparisons */
+  "Lesson 50 — Comparing Options": { pt: "Lição 50 — Comparando opções" },
+  "Comparing people, places, and products": { pt: "Comparação de pessoas, lugares e produtos" },
+  "Compare two products using clear differences and choose the better option for a need.": {
+    pt: "Comparar dois produtos com diferenças claras e escolher a melhor opção para uma necessidade.",
+  },
+  "Stress the comparative word: CHEAPer, MORE comfortable, NOT as heavy.": {
+    pt: "Enfatize a palavra comparativa: CHEAPer, MORE comfortable, NOT as heavy.",
+  },
+  "Compare two phones, bags, places, or other familiar options. Give two differences and choose one for a specific need.": {
+    pt: "Compare dois celulares, bolsas, lugares ou outras opções conhecidas. Dê duas diferenças e escolha uma para uma necessidade específica.",
+  },
+  "Use one comparative with than and one not as ... as sentence before you state your choice.": {
+    pt: "Use um comparativo com than e uma frase com not as ... as antes de dizer sua escolha.",
+  },
+  "What are Nina and Tom deciding?": { pt: "O que Nina e Tom estão decidindo?" },
+  "Which travel bag to buy": { pt: "Qual mala de viagem comprar" },
+  "Where to go on holiday": { pt: "Onde passar as férias" },
+  "How to repair a suitcase": { pt: "Como consertar uma mala" },
+  "How are the two bags similar?": { pt: "Em que as duas malas são parecidas?" },
+  "They are about the same size": { pt: "Elas têm mais ou menos o mesmo tamanho" },
+  "They cost the same": { pt: "Elas custam o mesmo" },
+  "They are the same colour": { pt: "Elas têm a mesma cor" },
+  "Why does Nina prefer the blue bag?": { pt: "Por que Nina prefere a mala azul?" },
+  "It is lighter and more comfortable": { pt: "Ela é mais leve e mais confortável" },
+  "It is cheaper and larger": { pt: "Ela é mais barata e maior" },
+  "It has a longer guarantee": { pt: "Ela tem uma garantia mais longa" },
+  /* a2-childhood */
+  "Lesson 51 — Childhood Memories": { pt: "Lição 51 — Lembranças da infância" },
+  "Childhood routines and simple memories": { pt: "Rotinas da infância e lembranças simples" },
+  "Describe where you grew up and share a few simple childhood habits and memories.": {
+    pt: "Descrever onde você cresceu e compartilhar alguns hábitos e lembranças simples da infância.",
+  },
+  "Used to links together in speech: I used_to play; Did_you use_to walk?": {
+    pt: "Used to se liga às outras palavras na fala: I used_to play; Did_you use_to walk?",
+  },
+  "Describe where you grew up. Share two things you used to do and one thing you did not have or do.": {
+    pt: "Descreva onde você cresceu. Conte duas coisas que costumava fazer e uma coisa que não tinha ou não fazia.",
+  },
+  "Use used to for repeated habits and the past simple for one fact or period.": {
+    pt: "Use used to para hábitos repetidos e o passado simples para um fato ou período.",
+  },
+  "What is Sam describing?": { pt: "O que Sam está descrevendo?" },
+  "His childhood in a small town": { pt: "A infância dele em uma cidade pequena" },
+  "His first job in a city": { pt: "O primeiro emprego dele em uma cidade" },
+  "His plans to visit his cousins": { pt: "Os planos dele de visitar os primos" },
+  "Who lived near Sam?": { pt: "Quem morava perto de Sam?" },
+  "His grandparents": { pt: "Os avós dele" },
+  "His teacher": { pt: "O professor dele" },
+  "His best friend": { pt: "O melhor amigo dele" },
+  "What did Sam do after school?": { pt: "O que Sam fazia depois da escola?" },
+  "He played outside with his cousins": { pt: "Ele brincava fora com os primos" },
+  "He called friends on his phone": { pt: "Ele ligava para os amigos pelo celular" },
+  "He worked in his grandparents' shop": { pt: "Ele trabalhava na loja dos avós" },
+  /* a2-obligations */
+  "Lesson 52 — Rules and Permissions": { pt: "Lição 52 — Regras e permissões" },
+  "Rules with have to, must, and can": { pt: "Regras com have to, must e can" },
+  "Ask about and explain rules, permission, and what is or is not required in a public place.": {
+    pt: "Perguntar e explicar regras, permissões e o que é ou não obrigatório em um lugar público.",
+  },
+  "Contrast must and mustn't clearly; the final t helps the listener hear the rule.": {
+    pt: "Diferencie must de mustn't com clareza; o t final ajuda quem ouve a entender a regra.",
+  },
+  "Explain three rules for a museum, workplace, school, or other familiar place. Include one thing that is optional.": {
+    pt: "Explique três regras de um museu, local de trabalho, escola ou outro lugar conhecido. Inclua algo que seja opcional.",
+  },
+  "Use must or have to for a requirement, can't for a prohibition, and don't have to for something optional.": {
+    pt: "Use must ou have to para uma obrigação, can't para uma proibição e don't have to para algo opcional.",
+  },
+  "What is the guide explaining?": { pt: "O que o guia está explicando?" },
+  "The rules for visiting a place": { pt: "As regras para visitar um lugar" },
+  "The route to a train station": { pt: "O caminho até uma estação de trem" },
+  "The price of different tickets": { pt: "O preço de ingressos diferentes" },
+  "What must visitors show?": { pt: "O que os visitantes devem mostrar?" },
+  "Their ID": { pt: "O documento deles" },
+  "A photograph": { pt: "Uma fotografia" },
+  "Their bags": { pt: "As bolsas deles" },
+  "What are visitors allowed to do?": { pt: "O que os visitantes podem fazer?" },
+  "Take photos without a flash": { pt: "Tirar fotos sem flash" },
+  "Bring food inside": { pt: "Entrar com comida" },
+  "Stay after six": { pt: "Ficar depois das seis" },
+  /* b1-reasons-examples */
+  "Lesson 53 — Reasons and Examples": { pt: "Lição 53 — Motivos e exemplos" },
+  "Explaining a point with reasons and examples": { pt: "Explicação de um ponto com motivos e exemplos" },
+  "Support an opinion with an organised reason, a relevant example, and a fair limitation.": {
+    pt: "Sustentar uma opinião com um motivo organizado, um exemplo relevante e uma ressalva justa.",
+  },
+  "Pause after signposts such as The main reason is... and For example... so the structure is easy to follow.": {
+    pt: "Faça uma pausa depois de marcadores como The main reason is... e For example... para deixar a estrutura fácil de acompanhar.",
+  },
+  "Give your opinion about a change at work, school, or home. Support it with one main reason, one specific example, and one limitation.": {
+    pt: "Dê sua opinião sobre uma mudança no trabalho, na escola ou em casa. Sustente-a com um motivo principal, um exemplo específico e uma ressalva.",
+  },
+  "Make the logic visible: state The main reason..., add For example..., then acknowledge a limit with That doesn't mean...": {
+    pt: "Deixe a lógica visível: diga The main reason..., acrescente For example... e depois reconheça um limite com That doesn't mean...",
+  },
+  "What change does Jo suggest?": { pt: "Que mudança Jo sugere?" },
+  "Using shorter meetings for weekly updates": { pt: "Usar reuniões mais curtas para atualizações semanais" },
+  "Cancelling every team meeting": { pt: "Cancelar todas as reuniões da equipe" },
+  "Moving all projects to Friday": { pt: "Passar todos os projetos para sexta-feira" },
+  "What example supports Jo's point?": { pt: "Que exemplo sustenta o ponto de Jo?" },
+  "Their Friday check-in takes twenty minutes": { pt: "A reunião rápida de sexta-feira leva vinte minutos" },
+  "The team works from home twice a week": { pt: "A equipe trabalha de casa duas vezes por semana" },
+  "A client cancelled a long meeting": { pt: "Um cliente cancelou uma reunião longa" },
+  "What limitation do Jo and Ben recognise?": { pt: "Que ressalva Jo e Ben reconhecem?" },
+  "Some projects need more discussion": { pt: "Alguns projetos precisam de mais discussão" },
+  "Short meetings always cost more": { pt: "Reuniões curtas sempre custam mais" },
+  "Weekly updates need every team member": { pt: "Atualizações semanais precisam de todos da equipe" },
+  /* b1-news-media */
+  "Lesson 54 — Reading the News Carefully": { pt: "Lição 54 — Lendo notícias com atenção" },
+  "Summarising news and distinguishing fact from opinion": {
+    pt: "Resumo de notícias e distinção entre fato e opinião",
+  },
+  "Summarise a news report, identify what is confirmed, and explain why a claim needs checking.": {
+    pt: "Resumir uma notícia, identificar o que está confirmado e explicar por que uma afirmação precisa ser verificada.",
+  },
+  "Stress source and certainty words: ACCORDING to the report; it has NOT been confirmed YET.": {
+    pt: "Enfatize as palavras de fonte e certeza: ACCORDING to the report; it has NOT been confirmed YET.",
+  },
+  "Summarise a news story or online claim. Attribute the information, say what is confirmed, and name one detail you would check.": {
+    pt: "Resuma uma notícia ou afirmação on-line. Atribua a informação, diga o que está confirmado e mencione um detalhe que você verificaria.",
+  },
+  "Separate the source from the claim with According to..., then use confirmed, evidence, or opinion to show how certain it is.": {
+    pt: "Separe a fonte da afirmação com According to...; depois use confirmed, evidence ou opinion para mostrar o grau de certeza.",
+  },
+  "Why does Owen question the headline?": { pt: "Por que Owen questiona a manchete?" },
+  "It presents a possible change as a final decision": {
+    pt: "Ela apresenta uma possível mudança como decisão final",
+  },
+  "It describes a meeting that happened last year": {
+    pt: "Ela descreve uma reunião que aconteceu no ano passado",
+  },
+  "It reports the wrong location for the park": { pt: "Ela informa o local errado do parque" },
+  "What has the council actually done?": { pt: "O que a prefeitura realmente fez?" },
+  "It has considered charging an entrance fee": { pt: "Ela considerou cobrar uma taxa de entrada" },
+  "It has closed the park permanently": { pt: "Ela fechou o parque permanentemente" },
+  "It has cancelled the public meeting": { pt: "Ela cancelou a reunião pública" },
+  "Which source does Owen suggest checking?": { pt: "Qual fonte Owen sugere verificar?" },
+  "The official city website": { pt: "O site oficial da cidade" },
+  "A comment below the article": { pt: "Um comentário abaixo da matéria" },
+  "An advertisement for the park": { pt: "Um anúncio do parque" },
+  /* b1-health-fitness */
+  "Lesson 55 — A Routine You Can Keep": { pt: "Lição 55 — Uma rotina que você consegue manter" },
+  "Exercise, wellbeing, and sustainable routines": {
+    pt: "Exercício, bem-estar e rotinas sustentáveis",
+  },
+  "Describe an exercise routine, discuss a common obstacle, and suggest a realistic way to make the routine sustainable.": {
+    pt: "Descrever uma rotina de exercícios, discutir um obstáculo comum e sugerir uma maneira realista de manter a rotina.",
+  },
+  "Stress the contrast in sustainable advice: start SLOWLY, then build up GRADUALLY.": {
+    pt: "Enfatize o contraste em conselhos sustentáveis: start SLOWLY, then build up GRADUALLY.",
+  },
+  "Describe a realistic wellbeing or exercise routine. Explain one obstacle, one adjustment that makes it easier to maintain, and one effect you have noticed or expect.": {
+    pt: "Descreva uma rotina realista de bem-estar ou exercícios. Explique um obstáculo, um ajuste que facilite mantê-la e um efeito que você percebeu ou espera.",
+  },
+  "Use tend to for the obstacle, stick to for sustainability, and one gradual or short alternative instead of making an extreme plan.": {
+    pt: "Use tend to para o obstáculo, stick to para a continuidade e uma alternativa gradual ou curta em vez de fazer um plano extremo.",
+  },
+  "What are Maya and Dan trying to improve?": { pt: "O que Maya e Dan estão tentando melhorar?" },
+  "How sustainable Maya's exercise routine is": { pt: "A sustentabilidade da rotina de exercícios de Maya" },
+  "How quickly Maya can enter a competition": { pt: "Em quanto tempo Maya pode entrar em uma competição" },
+  "How much sports equipment Maya owns": { pt: "Quantos equipamentos esportivos Maya possui" },
+  "What makes Maya miss workouts?": { pt: "O que faz Maya perder treinos?" },
+  "Being busy": { pt: "Estar ocupada" },
+  "Sleeping too much": { pt: "Dormir demais" },
+  "Training with Dan": { pt: "Treinar com Dan" },
+  "What positive change has Maya noticed?": { pt: "Que mudança positiva Maya percebeu?" },
+  "She sleeps better": { pt: "Ela dorme melhor" },
+  "She works fewer hours": { pt: "Ela trabalha menos horas" },
+  "She runs every morning": { pt: "Ela corre todas as manhãs" },
+  /* b1-habits-change */
+  "Lesson 56 — Changing a Habit": { pt: "Lição 56 — Mudando um hábito" },
+  "Describing change, setbacks, and progress": { pt: "Descrição de mudanças, recaídas e progresso" },
+  "Compare a past habit with the present, describe a setback, and explain one strategy that supports progress.": {
+    pt: "Comparar um hábito passado com o presente, descrever uma recaída e explicar uma estratégia que favorece o progresso.",
+  },
+  "Contrast past and present time markers: I USED to check; NOW I leave it outside.": {
+    pt: "Contraste os marcadores de passado e presente: I USED to check; NOW I leave it outside.",
+  },
+  "Describe a habit you changed or want to change. Compare the past with now, mention a setback or difficulty, and explain one strategy that helps.": {
+    pt: "Descreva um hábito que você mudou ou quer mudar. Compare o passado com o presente, mencione uma recaída ou dificuldade e explique uma estratégia que ajuda.",
+  },
+  "Show the timeline with used to and now, then make the setback temporary by adding what helped or what you will try next.": {
+    pt: "Mostre a linha do tempo com used to e now; depois mostre que a recaída é temporária acrescentando o que ajudou ou o que você tentará em seguida.",
+  },
+  "What habit is Priya changing?": { pt: "Que hábito Priya está mudando?" },
+  "How she uses her phone around bedtime": { pt: "Como ela usa o celular perto da hora de dormir" },
+  "How often she exercises at weekends": { pt: "Com que frequência ela se exercita nos fins de semana" },
+  "How she organises her work meetings": { pt: "Como ela organiza as reuniões de trabalho" },
+  "Which strategy helped Priya most?": { pt: "Qual estratégia mais ajudou Priya?" },
+  "Leaving her phone outside the bedroom": { pt: "Deixar o celular fora do quarto" },
+  "Buying a different phone": { pt: "Comprar outro celular" },
+  "Waking up an hour earlier": { pt: "Acordar uma hora mais cedo" },
+  "How does Cal describe Priya's setback?": { pt: "Como Cal descreve a recaída de Priya?" },
+  "It does not erase her progress": { pt: "Ela não apaga o progresso de Priya" },
+  "It proves her strategy cannot work": { pt: "Ela prova que a estratégia de Priya não funciona" },
+  "It means she should make a bigger change": { pt: "Ela significa que Priya deveria fazer uma mudança maior" },
+  /* b1-processes */
+  "Lesson 57 — Explaining a Process": { pt: "Lição 57 — Explicando um processo" },
+  "Explaining how a familiar process works": { pt: "Explicação de como funciona um processo conhecido" },
+  "Explain a familiar process in a clear sequence, include a condition, and warn about one common problem.": {
+    pt: "Explicar um processo conhecido em uma sequência clara, incluir uma condição e alertar sobre um problema comum.",
+  },
+  "Pause after sequence markers so each stage is clear: FIRST... ONCE that's done... AFTER that...": {
+    pt: "Faça uma pausa depois dos marcadores de sequência para deixar cada etapa clara: FIRST... ONCE that's done... AFTER that...",
+  },
+  "Explain a familiar process such as returning an item, preparing a document, or using a service. Give the stages in order and include what to do if a problem occurs.": {
+    pt: "Explique um processo conhecido, como devolver um item, preparar um documento ou usar um serviço. Apresente as etapas em ordem e inclua o que fazer se ocorrer um problema.",
+  },
+  "Guide the listener with first, once, and after that, then add one if sentence for the problem path.": {
+    pt: "Oriente quem ouve com first, once e after that; depois acrescente uma frase com if para o caminho em caso de problema.",
+  },
+  "Which process does Max explain?": { pt: "Qual processo Max explica?" },
+  "Returning an online order": { pt: "Devolver uma compra feita pela internet" },
+  "Buying an item in a shop": { pt: "Comprar um item em uma loja" },
+  "Repairing a damaged package": { pt: "Consertar um pacote danificado" },
+  "What should Ana do before choosing a reason?": { pt: "O que Ana deve fazer antes de escolher um motivo?" },
+  "Select the item on the returns page": { pt: "Selecionar o item na página de devoluções" },
+  "Take the package to a collection point": { pt: "Levar o pacote a um ponto de coleta" },
+  "Contact customer support": { pt: "Entrar em contato com o atendimento ao cliente" },
+  "When should Ana contact customer support?": { pt: "Quando Ana deve entrar em contato com o atendimento ao cliente?" },
+  "If something goes wrong": { pt: "Se algo der errado" },
+  "Before she opens the returns page": { pt: "Antes de abrir a página de devoluções" },
+  "After the refund arrives": { pt: "Depois que o reembolso chegar" },
+  /* b1-goals-progress */
+  "Lesson 58 — Goals and Progress": { pt: "Lição 58 — Metas e progresso" },
+  "Setting goals and reflecting on progress": { pt: "Definição de metas e reflexão sobre o progresso" },
+  "Define a specific goal, assess current progress, and choose a practical next step when the plan needs adjustment.": {
+    pt: "Definir uma meta específica, avaliar o progresso atual e escolher um próximo passo prático quando o plano precisar de ajustes.",
+  },
+  "Stress progress contrasts: I'm ON TRACK with research, but I've FALLEN BEHIND with writing.": {
+    pt: "Enfatize os contrastes de progresso: I'm ON TRACK with research, but I've FALLEN BEHIND with writing.",
+  },
+  "Describe one current goal. Explain how you measure progress, say what is on track or behind, and choose one specific next step.": {
+    pt: "Descreva uma meta atual. Explique como você avalia o progresso, diga o que está dentro do prazo ou atrasado e escolha um próximo passo específico.",
+  },
+  "Make the goal measurable with a deadline or result, contrast on track with behind, and finish with My next step is to...": {
+    pt: "Torne a meta mensurável com um prazo ou resultado, contraste on track com behind e termine com My next step is to...",
+  },
+  "What does Ravi realise about his project plan?": { pt: "O que Ravi percebe sobre o plano do projeto?" },
+  "He needs to adjust it because the writing is behind": {
+    pt: "Ele precisa ajustá-lo porque a parte escrita está atrasada",
+  },
+  "He has completed every section ahead of schedule": { pt: "Ele concluiu todas as seções antes do prazo" },
+  "He needs to choose a different course": { pt: "Ele precisa escolher outro curso" },
+  "Which part of the project is on track?": { pt: "Qual parte do projeto está dentro do prazo?" },
+  "The research": { pt: "A pesquisa" },
+  "The introduction": { pt: "A introdução" },
+  "The final presentation": { pt: "A apresentação final" },
+  "What is Ravi's immediate next step?": { pt: "Qual é o próximo passo imediato de Ravi?" },
+  "Finish the introduction": { pt: "Terminar a introdução" },
+  "Add three more sections": { pt: "Acrescentar mais três seções" },
+  "Repeat all of the research": { pt: "Refazer toda a pesquisa" },
+  /* b2-cause-effect */
+  "Lesson 59 — Causes and Consequences": { pt: "Lição 59 — Causas e consequências" },
+  "Explaining causes, consequences, and contributing factors": {
+    pt: "Explicação de causas, consequências e fatores contribuintes",
+  },
+  "Explain a complex outcome by separating its immediate trigger, contributing factors, and wider consequences.": {
+    pt: "Explicar um resultado complexo separando o gatilho imediato, os fatores contribuintes e as consequências mais amplas.",
+  },
+  "Use pauses to mark the causal chain: The supplier was late / which, in turn, delayed testing.": {
+    pt: "Use pausas para marcar a cadeia causal: The supplier was late / which, in turn, delayed testing.",
+  },
+  "Explain a problem with more than one cause. Identify the immediate trigger, one underlying factor, and at least one consequence.": {
+    pt: "Explique um problema com mais de uma causa. Identifique o gatilho imediato, um fator subjacente e pelo menos uma consequência.",
+  },
+  "Avoid a single-cause explanation: use largely due to or contributed to, connect the next result with in turn, and distinguish the trigger from the underlying cause.": {
+    pt: "Evite uma explicação de causa única: use largely due to ou contributed to, conecte o resultado seguinte com in turn e diferencie o gatilho da causa subjacente.",
+  },
+  "How does Jon explain the launch delay?": { pt: "Como Jon explica o atraso no lançamento?" },
+  "He describes a material shortage, a power cut, and a missing recovery plan": {
+    pt: "Ele descreve uma falta de materiais, uma queda de energia e a ausência de um plano de recuperação",
+  },
+  "He blames the entire delay on one employee": { pt: "Ele atribui todo o atraso a um funcionário" },
+  "He says the launch was deliberately postponed": { pt: "Ele diz que o lançamento foi adiado de propósito" },
+  "What did the power cut immediately affect?": { pt: "O que a queda de energia afetou imediatamente?" },
+  Production: { pt: "A produção" },
+  "Customer demand": { pt: "A demanda dos clientes" },
+  "The project budget": { pt: "O orçamento do projeto" },
+  "What prevented the delay from becoming longer?": { pt: "O que evitou que o atraso fosse maior?" },
+  "The backup supplier": { pt: "O fornecedor reserva" },
+  "A larger testing team": { pt: "Uma equipe de testes maior" },
+  "An earlier launch date": { pt: "Uma data de lançamento antecipada" },
+  /* b2-persuasion */
+  "Lesson 60 — Making a Persuasive Case": { pt: "Lição 60 — Construindo um argumento persuasivo" },
+  "Persuading without overstating a claim": { pt: "Persuasão sem exagerar uma afirmação" },
+  "Build a persuasive recommendation with relevant benefits, measured claims, and a practical response to concerns.": {
+    pt: "Construir uma recomendação persuasiva com benefícios relevantes, afirmações ponderadas e uma resposta prática às preocupações.",
+  },
+  "Stress the contrast between claim and evidence: I wouldn't claim it's PERFECT, but the RESULTS are encouraging.": {
+    pt: "Enfatize o contraste entre afirmação e evidência: I wouldn't claim it's PERFECT, but the RESULTS are encouraging.",
+  },
+  "Recommend a change at work, school, or in your community. Present its strongest benefit, acknowledge one concern, and propose a low-risk next step.": {
+    pt: "Recomende uma mudança no trabalho, na escola ou na sua comunidade. Apresente o benefício mais forte, reconheça uma preocupação e proponha um próximo passo de baixo risco.",
+  },
+  "Keep the claim credible: acknowledge the concern, avoid promising certainty, and connect your final recommendation to the evidence with On that basis...": {
+    pt: "Mantenha a afirmação confiável: reconheça a preocupação, evite prometer certeza e conecte a recomendação final às evidências com On that basis...",
+  },
+  "How does Owen make the proposal less risky?": { pt: "Como Owen torna a proposta menos arriscada?" },
+  "He suggests a limited pilot with overlapping hours and an evaluation": {
+    pt: "Ele sugere um projeto-piloto limitado, com horários sobrepostos e uma avaliação",
+  },
+  "He promises that flexible hours will solve every problem": {
+    pt: "Ele promete que horários flexíveis resolverão todos os problemas",
+  },
+  "He removes all communication requirements": { pt: "Ele elimina todos os requisitos de comunicação" },
+  "What is Owen's strongest argument for flexible hours?": {
+    pt: "Qual é o argumento mais forte de Owen a favor de horários flexíveis?",
+  },
+  "They could extend customer coverage without adding staff": {
+    pt: "Eles poderiam ampliar o horário de atendimento sem aumentar a equipe",
+  },
+  "They would eliminate the need for customer support": {
+    pt: "Eles eliminariam a necessidade de atendimento ao cliente",
+  },
+  "They would reduce every employee's working hours": {
+    pt: "Eles reduziriam a jornada de todos os funcionários",
+  },
+  "How does Owen respond to the communication concern?": {
+    pt: "Como Owen responde à preocupação com a comunicação?",
+  },
+  "He proposes a daily two-hour overlap": { pt: "Ele propõe duas horas diárias de sobreposição" },
+  "He says communication does not matter": { pt: "Ele diz que a comunicação não importa" },
+  "He recommends hiring another manager": { pt: "Ele recomenda contratar outro gerente" },
+  /* b2-project-management */
+  "Lesson 61 — Keeping a Project on Track": { pt: "Lição 61 — Mantendo um projeto no rumo certo" },
+  "Scope, deadlines, dependencies, and risks": { pt: "Escopo, prazos, dependências e riscos" },
+  "Give a concise project update that clarifies scope, dependencies, schedule pressure, and the action needed to reduce risk.": {
+    pt: "Dar uma atualização concisa de projeto que esclareça escopo, dependências, pressão sobre o cronograma e a ação necessária para reduzir o risco.",
+  },
+  "Stress the project constraint and the response: The DEADLINE is fixed, so we need to REDUCE the scope.": {
+    pt: "Enfatize a restrição do projeto e a resposta: The DEADLINE is fixed, so we need to REDUCE the scope.",
+  },
+  "Give an update on a real or imagined project. Explain one dependency, identify a schedule risk, and recommend how to adjust the scope or plan.": {
+    pt: "Dê uma atualização sobre um projeto real ou imaginário. Explique uma dependência, identifique um risco para o cronograma e recomende como ajustar o escopo ou o plano.",
+  },
+  "Name the constraint clearly, connect the dependency to its impact, and finish with an owner, scope decision, or contingency action.": {
+    pt: "Diga a restrição com clareza, conecte a dependência ao impacto e termine com um responsável, uma decisão de escopo ou uma ação de contingência.",
+  },
+  "What do Leah and Davi decide about the dashboard?": { pt: "O que Leah e Davi decidem sobre o painel?" },
+  "They move it to a later release to protect the deadline": {
+    pt: "Eles o transferem para uma versão posterior para proteger o prazo",
+  },
+  "They add it immediately and cancel testing": { pt: "Eles o acrescentam imediatamente e cancelam os testes" },
+  "They replace it with a different research project": {
+    pt: "Eles o substituem por um projeto de pesquisa diferente",
+  },
+  "What must happen before the dashboard can be designed?": {
+    pt: "O que precisa acontecer antes que o painel possa ser desenvolvido?",
+  },
+  "The research must be completed": { pt: "A pesquisa precisa ser concluída" },
+  "The release date must be announced": { pt: "A data de lançamento precisa ser anunciada" },
+  "The testing team must hire a manager": { pt: "A equipe de testes precisa contratar um gerente" },
+  "What contingency does Davi add?": { pt: "Que margem para imprevistos Davi acrescenta?" },
+  "Two extra days for testing": { pt: "Dois dias extras para testes" },
+  "Two additional designers": { pt: "Dois designers adicionais" },
+  "A second reporting dashboard": { pt: "Um segundo painel de relatórios" },
+  /* b2-feedback-leadership */
+  "Lesson 62 — Feedback and Expectations": { pt: "Lição 62 — Feedback e expectativas" },
+  "Giving balanced feedback and setting expectations": { pt: "Feedback equilibrado e definição de expectativas" },
+  "Give specific, balanced feedback, explain its impact, and agree on a clear standard and follow-up action.": {
+    pt: "Dar feedback específico e equilibrado, explicar seu impacto e combinar um padrão claro e uma ação de acompanhamento.",
+  },
+  "Keep the praise warm and the expectation firm: Your analysis was THOROUGH. Next time, send it by THURSDAY.": {
+    pt: "Mantenha o elogio acolhedor e a expectativa firme: Your analysis was THOROUGH. Next time, send it by THURSDAY.",
+  },
+  "Give feedback on a piece of work. Name one specific strength, describe one behaviour and its impact, then set an expectation and offer useful support.": {
+    pt: "Dê feedback sobre um trabalho. Aponte um ponto forte específico, descreva um comportamento e seu impacto, depois defina uma expectativa e ofereça apoio útil.",
+  },
+  "Base the feedback on something observable, connect it to its impact, and make the next expectation concrete with a deadline or follow-up.": {
+    pt: "Baseie o feedback em algo observável, conecte-o ao impacto e torne a próxima expectativa concreta com um prazo ou acompanhamento.",
+  },
+  "What feedback does Sofia give Malik?": { pt: "Que feedback Sofia dá a Malik?" },
+  "His analysis was strong, but he needs to communicate delays earlier": {
+    pt: "A análise dele foi boa, mas ele precisa comunicar os atrasos mais cedo",
+  },
+  "His report contained no useful analysis": { pt: "O relatório dele não continha nenhuma análise útil" },
+  "He should stop working with the finance team": { pt: "Ele deveria parar de trabalhar com a equipe financeira" },
+  "Why did Malik's update arrive late?": { pt: "Por que a atualização de Malik chegou atrasada?" },
+  "He was waiting for figures from finance": { pt: "Ele estava esperando os números do financeiro" },
+  "He misunderstood the client's request": { pt: "Ele entendeu mal a solicitação do cliente" },
+  "He sent the report to the wrong team": { pt: "Ele enviou o relatório para a equipe errada" },
+  "What support do Sofia and Malik agree on?": { pt: "Que apoio Sofia e Malik combinam?" },
+  "A check-in on Wednesday": { pt: "Uma conversa na quarta-feira" },
+  "A new deadline on Friday": { pt: "Um novo prazo na sexta-feira" },
+  "A second person to write the analysis": { pt: "Uma segunda pessoa para escrever a análise" },
+  /* b2-data-interpretation */
+  "Lesson 63 — Interpreting Data Carefully": { pt: "Lição 63 — Interpretando dados com cuidado" },
+  "Interpreting charts, changes, and uncertainty": { pt: "Interpretação de gráficos, mudanças e incerteza" },
+  "Interpret a chart by describing its main pattern, making a relevant comparison, and qualifying what the data can support.": {
+    pt: "Interpretar um gráfico descrevendo seu padrão principal, fazendo uma comparação relevante e ponderando o que os dados permitem sustentar.",
+  },
+  "Use contrastive stress for careful comparisons: Sales ROSE overall, but the final MONTH was flat.": {
+    pt: "Use ênfase contrastiva em comparações cuidadosas: Sales ROSE overall, but the final MONTH was flat.",
+  },
+  "Interpret a chart or imagined dataset. Describe the main pattern, compare it with a baseline or group, identify an exception, and state one limitation.": {
+    pt: "Interprete um gráfico ou conjunto de dados imaginário. Descreva o padrão principal, compare-o com um valor inicial ou grupo, identifique uma exceção e diga uma limitação.",
+  },
+  "Separate description from conclusion: report the pattern first, add a precise comparison, then qualify the claim with suggest, exception, or a data limitation.": {
+    pt: "Separe descrição de conclusão: apresente primeiro o padrão, acrescente uma comparação precisa e depois pondere a afirmação com suggest, exception ou uma limitação dos dados.",
+  },
+  "What is Theo's interpretation of the chart?": { pt: "Qual é a interpretação de Theo para o gráfico?" },
+  "Participation rose, but the data does not prove the programme caused the increase": {
+    pt: "A participação aumentou, mas os dados não provam que o programa causou o aumento",
+  },
+  "Participation fell equally in every age group": {
+    pt: "A participação caiu igualmente em todas as faixas etárias",
+  },
+  "The programme certainly caused steady growth": { pt: "O programa certamente causou um crescimento constante" },
+  "How much did participation increase from the baseline?": {
+    pt: "Quanto a participação aumentou em relação ao valor inicial?",
+  },
+  "Twelve percent": { pt: "Doze por cento" },
+  "Twenty percent": { pt: "Vinte por cento" },
+  "Two percent": { pt: "Dois por cento" },
+  "Which limitation does Theo identify?": { pt: "Que limitação Theo identifica?" },
+  "The sample is too small": { pt: "A amostra é pequena demais" },
+  "The chart has no baseline": { pt: "O gráfico não tem um valor inicial" },
+  "The age groups are not labelled": { pt: "As faixas etárias não estão identificadas" },
+  /* a1-errands */
+  "Lesson 64 — Running Errands": { pt: "Lição 64 — Fazendo tarefas na rua" },
+  "Simple errands and everyday requests": { pt: "Tarefas simples e pedidos do dia a dia" },
+  "Make simple requests while buying, finding, paying for, or collecting everyday items.": {
+    pt: "Fazer pedidos simples ao comprar, procurar, pagar ou retirar itens do dia a dia.",
+  },
+  "Keep polite requests smooth: I'd LIKE this one, PLEASE; Can I PAY by CARD?": {
+    pt: "Mantenha os pedidos educados fluidos: I'd LIKE this one, PLEASE; Can I PAY by CARD?",
+  },
+  "Imagine two errands you need to do. Say where you need to go, ask for one item, and ask how you can pay.": {
+    pt: "Imagine duas tarefas que você precisa resolver. Diga aonde precisa ir, peça um item e pergunte como pode pagar.",
+  },
+  "Use I need to go to... for the errand, Where can I find...? for the item, and Can I pay...? at the counter.": {
+    pt: "Use I need to go to... para a tarefa, Where can I find...? para o item e Can I pay...? no caixa.",
+  },
+  "What is Clara doing?": { pt: "O que Clara está fazendo?" },
+  "Buying batteries in a shop": { pt: "Comprando pilhas em uma loja" },
+  "Collecting medicine at a pharmacy": { pt: "Retirando remédio em uma farmácia" },
+  "Returning a bag to a friend": { pt: "Devolvendo uma sacola a uma amiga" },
+  "Where are the batteries?": { pt: "Onde estão as pilhas?" },
+  "Beside the front counter": { pt: "Ao lado do caixa da frente" },
+  "Behind the pharmacy": { pt: "Atrás da farmácia" },
+  "Inside a large bag": { pt: "Dentro de uma sacola grande" },
+  "How does Clara want to pay?": { pt: "Como Clara quer pagar?" },
+  "By card": { pt: "Com cartão" },
+  "With a voucher": { pt: "Com um vale" },
+  "In cash": { pt: "Em dinheiro" },
+  /* a1-feelings */
+  "Lesson 65 — Feelings and Needs": { pt: "Lição 65 — Sentimentos e necessidades" },
+  "Feelings, preferences, and immediate needs": { pt: "Sentimentos, preferências e necessidades imediatas" },
+  "Name a basic feeling, ask how someone feels, and say what would help right now.": {
+    pt: "Nomear um sentimento básico, perguntar como alguém se sente e dizer o que ajudaria agora.",
+  },
+  "Stress the feeling word: I'm a little TIRED; I'm EXCITED about the trip.": {
+    pt: "Enfatize a palavra do sentimento: I'm a little TIRED; I'm EXCITED about the trip.",
+  },
+  "Say how you feel today, explain one reason, and say what you need or would rather do right now.": {
+    pt: "Diga como você se sente hoje, explique um motivo e diga do que precisa ou o que prefere fazer agora.",
+  },
+  "Name the feeling with I feel... or I'm..., add the reason with about or because, then state one need or preference.": {
+    pt: "Nomeie o sentimento com I feel... ou I'm..., acrescente o motivo com about ou because e depois diga uma necessidade ou preferência.",
+  },
+  "Why does Lia talk to Sam?": { pt: "Por que Lia conversa com Sam?" },
+  "He seems tired and worried": { pt: "Ele parece cansado e preocupado" },
+  "He is excited about a trip": { pt: "Ele está animado com uma viagem" },
+  "He wants to change schools": { pt: "Ele quer mudar de escola" },
+  "What is Sam worried about?": { pt: "Com o que Sam está preocupado?" },
+  "Tomorrow's test": { pt: "A prova de amanhã" },
+  "Tonight's dinner": { pt: "O jantar de hoje" },
+  "A long journey": { pt: "Uma viagem longa" },
+  "What does Sam want to do during the break?": { pt: "O que Sam quer fazer durante a pausa?" },
+  "Sit outside for a few minutes": { pt: "Sentar lá fora por alguns minutos" },
+  "Go home for the evening": { pt: "Ir para casa e ficar por lá à noite" },
+  "Take the test immediately": { pt: "Fazer a prova imediatamente" },
+  /* a2-home-problems */
+  "Lesson 66 — Problems at Home": { pt: "Lição 66 — Problemas em casa" },
+  "Repairs and common problems at home": { pt: "Consertos e problemas comuns em casa" },
+  "Report a problem at home, explain how serious it is, and arrange access for a repair.": {
+    pt: "Relatar um problema em casa, explicar a gravidade e combinar o acesso para um conserto.",
+  },
+  "Stress the broken item and the problem: The TAP is LEAKING; the HEATING isn't WORKING.": {
+    pt: "Enfatize o item com defeito e o problema: The TAP is LEAKING; the HEATING isn't WORKING.",
+  },
+  "Call about a problem in your home. Describe what is wrong, say when it started or changed, and arrange a time for someone to visit.": {
+    pt: "Ligue por causa de um problema em casa. Descreva o defeito, diga quando começou ou mudou e combine um horário para a visita.",
+  },
+  "Name the item and exact problem, add when it started or how it changed, then give a clear time when you will be home.": {
+    pt: "Nomeie o item e o problema exato, acrescente quando começou ou como mudou e depois dê um horário claro em que você estará em casa.",
+  },
+  "Why does Marta call Eli?": { pt: "Por que Marta liga para Eli?" },
+  "To report a leaking kitchen tap": { pt: "Para informar que a torneira da cozinha está vazando" },
+  "To ask for a new kitchen": { pt: "Para pedir uma cozinha nova" },
+  "To cancel a repair visit": { pt: "Para cancelar uma visita de conserto" },
+  "How has the problem changed?": { pt: "Como o problema mudou?" },
+  "It has got worse": { pt: "Ele piorou" },
+  "It has stopped completely": { pt: "Ele parou completamente" },
+  "It has moved to another room": { pt: "Ele passou para outro cômodo" },
+  "When can the repair person come?": { pt: "Quando o profissional pode ir?" },
+  "At half past six": { pt: "Às seis e meia" },
+  "Before lunchtime": { pt: "Antes da hora do almoço" },
+  "Tomorrow morning": { pt: "Amanhã de manhã" },
+  /* a2-celebrations */
+  "Lesson 67 — Celebrations": { pt: "Lição 67 — Comemorações" },
+  "Invitations, birthdays, and celebrations": { pt: "Convites, aniversários e comemorações" },
+  "Invite someone to a celebration, respond politely, and ask or offer practical details.": {
+    pt: "Convidar alguém para uma comemoração, responder com educação e perguntar ou oferecer detalhes práticos.",
+  },
+  "Let your voice rise for friendly invitation questions: Would you like to COME? Can I bring ANYTHING?": {
+    pt: "Eleve a voz nas perguntas de convite amigáveis: Would you like to COME? Can I bring ANYTHING?",
+  },
+  "Invite someone to a birthday, graduation, or other celebration. Give the day and time, then answer one question about what the guest can bring.": {
+    pt: "Convide alguém para um aniversário, formatura ou outra comemoração. Diga o dia e o horário e depois responda a uma pergunta sobre o que a pessoa pode levar.",
+  },
+  "Use Would you like to...? for the invitation, a clear time expression, and Can I bring...? or Could you bring...? for the practical detail.": {
+    pt: "Use Would you like to...? para o convite, uma expressão de horário clara e Can I bring...? ou Could you bring...? para o detalhe prático.",
+  },
+  "What are Rosa and Jack arranging?": { pt: "O que Rosa e Jack estão combinando?" },
+  "A birthday dinner for Rosa's mother": { pt: "Um jantar de aniversário para a mãe de Rosa" },
+  "A graduation lunch for Jack": { pt: "Um almoço de formatura para Jack" },
+  "A work meeting on Friday": { pt: "Uma reunião de trabalho na sexta-feira" },
+  "What time will they eat?": { pt: "A que horas eles vão comer?" },
+  "At half past seven": { pt: "Às sete e meia" },
+  "At seven exactly": { pt: "Às sete em ponto" },
+  "At half past eight": { pt: "Às oito e meia" },
+  "What does Rosa ask Jack to bring?": { pt: "O que Rosa pede para Jack levar?" },
+  "A dessert": { pt: "Uma sobremesa" },
+  "Some flowers": { pt: "Algumas flores" },
+  "A birthday card": { pt: "Um cartão de aniversário" },
+  /* a2-social-plans */
+  "Lesson 68 — Making Social Plans": { pt: "Lição 68 — Combinando programas" },
+  "Hosting, joining, confirming, and declining social events": {
+    pt: "Receber, participar, confirmar e recusar eventos sociais",
+  },
+  "Suggest and confirm a social plan, negotiate a small change, or postpone it politely.": {
+    pt: "Sugerir e confirmar um programa, negociar uma pequena mudança ou adiá-lo com educação.",
+  },
+  "Use friendly intonation to soften changes: Could we make it a little LATER? Let's do it another DAY.": {
+    pt: "Use uma entonação amigável para suavizar mudanças: Could we make it a little LATER? Let's do it another DAY.",
+  },
+  "Arrange a social plan with a friend. Suggest an activity and time, ask for one small change, and finish by confirming what happens next.": {
+    pt: "Combine um programa com um amigo. Sugira uma atividade e um horário, peça uma pequena mudança e termine confirmando o que acontece depois.",
+  },
+  "Open with Are we still on...? or Why don't we...?, negotiate with Could we...?, then confirm with a time plus works for me.": {
+    pt: "Comece com Are we still on...? ou Why don't we...?, negocie com Could we...? e depois confirme com um horário seguido de works for me.",
+  },
+  "What plan do Nina and Ben make?": { pt: "Que plano Nina e Ben fazem?" },
+  "They will visit a new café on Saturday": { pt: "Eles vão conhecer um café novo no sábado" },
+  "They will cook dinner at the station": { pt: "Eles vão preparar o jantar na estação" },
+  "They will postpone the plan until next week": { pt: "Eles vão adiar o plano até a próxima semana" },
+  "What time will Nina book the table for?": { pt: "Para que horas Nina vai reservar a mesa?" },
+  "Eight o'clock": { pt: "Oito horas" },
+  "Seven o'clock": { pt: "Sete horas" },
+  Lunchtime: { pt: "Hora do almoço" },
+  "When will Ben report any change?": { pt: "Quando Ben vai avisar sobre alguma mudança?" },
+  "By lunchtime": { pt: "Até a hora do almoço" },
+  "At the station": { pt: "Na estação" },
+  "After the café closes": { pt: "Depois que o café fechar" },
+  /* b1-cultural-differences */
+  "Lesson 69 — Talking About Cultural Differences": {
+    pt: "Lição 69 — Falando sobre diferenças culturais",
+  },
+  "Comparing customs without overgeneralizing": {
+    pt: "Comparar costumes sem generalizar demais",
+  },
+  "Compare familiar customs, describe personal experience, and avoid presenting cultural tendencies as universal facts.": {
+    pt: "Comparar costumes conhecidos, descrever experiências pessoais e evitar apresentar tendências culturais como fatos universais.",
+  },
+  "Stress the qualifier that keeps a comparison careful: In MY experience; SOME people tend to...": {
+    pt: "Enfatize a expressão que torna a comparação cuidadosa: In MY experience; SOME people tend to...",
+  },
+  "Compare one custom you have experienced in two families, workplaces, cities, or countries. Describe a difference and a similarity without saying that everyone behaves the same way.": {
+    pt: "Compare um costume que você vivenciou em duas famílias, locais de trabalho, cidades ou países. Descreva uma diferença e uma semelhança sem dizer que todos se comportam da mesma forma.",
+  },
+  "Frame the comparison with In my experience or One difference I noticed, soften tendencies with some or tend to, and finish with a similarity or exception.": {
+    pt: "Apresente a comparação com In my experience ou One difference I noticed, suavize as tendências com some ou tend to e termine com uma semelhança ou exceção.",
+  },
+  "How does André describe his experience in Helsinki?": {
+    pt: "Como André descreve sua experiência em Helsinque?",
+  },
+  "He notices differences but avoids treating them as rules about everyone": {
+    pt: "Ele percebe diferenças, mas evita tratá-las como regras sobre todas as pessoas",
+  },
+  "He believes people everywhere behave in exactly the same way": {
+    pt: "Ele acredita que as pessoas se comportam exatamente da mesma forma em todo lugar",
+  },
+  "He has decided that workplace customs are impossible to understand": {
+    pt: "Ele decidiu que os costumes no trabalho são impossíveis de entender",
+  },
+  "What difference has André noticed at work?": {
+    pt: "Que diferença André percebeu no trabalho?",
+  },
+  "Greetings are quieter and some people separate work from family life": {
+    pt: "Os cumprimentos são mais discretos e algumas pessoas separam o trabalho da vida familiar",
+  },
+  "Everyone arrives late and talks about family all day": {
+    pt: "Todos chegam atrasados e falam sobre a família o dia inteiro",
+  },
+  "Colleagues never greet one another": { pt: "Os colegas nunca se cumprimentam" },
+  "What does André do when he is unsure about politeness?": {
+    pt: "O que André faz quando não tem certeza sobre o que é educado?",
+  },
+  "He asks instead of assuming": { pt: "Ele pergunta em vez de presumir" },
+  "He copies the first person he sees": { pt: "Ele imita a primeira pessoa que vê" },
+  "He avoids speaking to anyone": { pt: "Ele evita falar com qualquer pessoa" },
+  /* b1-community-services */
+  "Lesson 70 — Asking for Community Support": {
+    pt: "Lição 70 — Pedindo apoio a serviços da comunidade",
+  },
+  "Public services, local issues, and asking for support": {
+    pt: "Serviços públicos, problemas locais e pedidos de apoio",
+  },
+  "Report a local problem to the appropriate service, provide useful details, and ask what action will happen next.": {
+    pt: "Informar um problema local ao serviço adequado, fornecer detalhes úteis e perguntar qual será a próxima ação.",
+  },
+  "Stress the service problem and location: The STREETLIGHT is OUT near the BUS STOP.": {
+    pt: "Enfatize o problema e o local: The STREETLIGHT is OUT near the BUS STOP.",
+  },
+  "Report a real or imagined issue to a community service. Give its exact location and duration, explain its impact, and ask for a reference number or update.": {
+    pt: "Informe um problema real ou imaginário a um serviço da comunidade. Dê a localização exata e a duração, explique o impacto e peça um número de protocolo ou uma atualização.",
+  },
+  "Start with I'm calling to report..., locate the issue with a street and landmark, explain why it matters, then ask when you should expect an update.": {
+    pt: "Comece com I'm calling to report..., localize o problema com uma rua e um ponto de referência, explique por que ele importa e depois pergunte quando deve esperar uma atualização.",
+  },
+  "Why does Camila contact city services?": {
+    pt: "Por que Camila entra em contato com os serviços municipais?",
+  },
+  "To report a streetlight that is creating a safety problem": {
+    pt: "Para informar sobre um poste apagado que está criando um problema de segurança",
+  },
+  "To apply for a job in the lighting department": {
+    pt: "Para se candidatar a um emprego no departamento de iluminação",
+  },
+  "To change the location of a bus stop": { pt: "Para mudar a localização de um ponto de ônibus" },
+  "Where is the broken streetlight?": { pt: "Onde fica o poste de iluminação com defeito?" },
+  "On Pine Street opposite the bus stop": {
+    pt: "Na Pine Street, em frente ao ponto de ônibus",
+  },
+  "Inside the city services office": { pt: "Dentro do escritório de serviços municipais" },
+  "Behind Camila's workplace": { pt: "Atrás do local de trabalho de Camila" },
+  "When should the light be inspected?": { pt: "Quando o poste deve ser vistoriado?" },
+  "Within two working days": { pt: "Em até dois dias úteis" },
+  "In three weeks": { pt: "Em três semanas" },
+  "Before the call ends": { pt: "Antes de a ligação terminar" },
+  /* b1-relationships-boundaries */
+  "Lesson 71 — Expectations and Boundaries": {
+    pt: "Lição 71 — Expectativas e limites",
+  },
+  "Expectations, boundaries, and respectful disagreement": {
+    pt: "Expectativas, limites e discordância respeitosa",
+  },
+  "State a personal boundary, acknowledge another person's needs, and negotiate a practical agreement without escalating conflict.": {
+    pt: "Expressar um limite pessoal, reconhecer as necessidades de outra pessoa e negociar um acordo prático sem aumentar o conflito.",
+  },
+  "Keep boundary statements calm and firm: I NEED some QUIET time after WORK.": {
+    pt: "Mantenha as afirmações de limite calmas e firmes: I NEED some QUIET time after WORK.",
+  },
+  "Describe a small conflict between friends, relatives, colleagues, or housemates. State one need, acknowledge the other person's view, and propose an agreement with a condition.": {
+    pt: "Descreva um pequeno conflito entre amigos, parentes, colegas ou pessoas que moram juntas. Expresse uma necessidade, reconheça a visão da outra pessoa e proponha um acordo com uma condição.",
+  },
+  "Open without blame, use I need or I'm not comfortable for the boundary, acknowledge the other view, and propose Could we agree to...? plus a clear condition.": {
+    pt: "Comece sem culpar, use I need ou I'm not comfortable para o limite, reconheça a outra visão e proponha Could we agree to...? com uma condição clara.",
+  },
+  "What agreement do Jordan and Rafa make?": {
+    pt: "Que acordo Jordan e Rafa fazem?",
+  },
+  "They will check with each other before weekday visitors and review the plan": {
+    pt: "Eles vão consultar um ao outro antes de receber visitas durante a semana e reavaliar o plano",
+  },
+  "They will never invite friends to their home again": {
+    pt: "Eles nunca mais vão convidar amigos para casa",
+  },
+  "They will move to different homes next week": {
+    pt: "Eles vão se mudar para casas diferentes na semana que vem",
+  },
+  "Why do unexpected visits bother Jordan?": {
+    pt: "Por que visitas inesperadas incomodam Jordan?",
+  },
+  "Jordan needs quiet time after work": { pt: "Jordan precisa de silêncio depois do trabalho" },
+  "Jordan dislikes all of Rafa's friends": { pt: "Jordan não gosta de nenhum amigo de Rafa" },
+  "Jordan works every weekend": { pt: "Jordan trabalha todo fim de semana" },
+  "When can their arrangement be more flexible?": {
+    pt: "Quando o acordo deles pode ser mais flexível?",
+  },
+  "On weekends": { pt: "Nos fins de semana" },
+  "During weekday evenings": { pt: "Durante as noites de dias úteis" },
+  "Only next year": { pt: "Somente no ano que vem" },
+  /* b2-ethical-dilemmas */
+  "Lesson 72 — Weighing an Ethical Dilemma": {
+    pt: "Lição 72 — Avaliando um dilema ético",
+  },
+  "Weighing principles and practical consequences": {
+    pt: "Avaliar princípios e consequências práticas",
+  },
+  "Analyse an ethical dilemma by identifying competing duties, affected groups, likely consequences, and a defensible course of action.": {
+    pt: "Analisar um dilema ético identificando deveres concorrentes, grupos afetados, consequências prováveis e uma linha de ação defensável.",
+  },
+  "Use contrastive stress for competing duties: We should protect PRIVACY, but we also owe the public TRANSPARENCY.": {
+    pt: "Use ênfase contrastiva para deveres concorrentes: We should protect PRIVACY, but we also owe the public TRANSPARENCY.",
+  },
+  "Analyse an ethical choice at work, in technology, health, education, or public life. Name two competing duties, identify who could be harmed, and recommend a safeguard or compromise.": {
+    pt: "Analise uma escolha ética no trabalho, na tecnologia, na saúde, na educação ou na vida pública. Nomeie dois deveres concorrentes, identifique quem pode ser prejudicado e recomende uma medida de proteção ou um meio-termo.",
+  },
+  "Set up the tension with We have a duty to... and At the same time..., separate what is legal from what is fair, then justify your choice with a consequence and safeguard.": {
+    pt: "Apresente a tensão com We have a duty to... e At the same time..., separe o que é legal do que é justo e depois justifique sua escolha com uma consequência e uma medida de proteção.",
+  },
+  "What compromise do Imani and Noah consider?": {
+    pt: "Que meio-termo Imani e Noah consideram?",
+  },
+  "Publish district totals while restricting access to detailed data": {
+    pt: "Publicar totais por distrito e restringir o acesso aos dados detalhados",
+  },
+  "Publish every participant's address without restrictions": {
+    pt: "Publicar o endereço de cada participante sem restrições",
+  },
+  "Destroy the study and provide no public information": {
+    pt: "Destruir o estudo e não fornecer nenhuma informação pública",
+  },
+  "What public benefit could the data provide?": {
+    pt: "Que benefício público os dados poderiam proporcionar?",
+  },
+  "It could help neighbourhood clinics prepare": {
+    pt: "Eles poderiam ajudar as clínicas dos bairros a se preparar",
+  },
+  "It could replace all local health services": {
+    pt: "Eles poderiam substituir todos os serviços locais de saúde",
+  },
+  "It could guarantee that no outbreak happens again": {
+    pt: "Eles poderiam garantir que nenhum surto aconteça novamente",
+  },
+  "What harm does Noah want to prevent?": {
+    pt: "Que dano Noah quer evitar?",
+  },
+  "Individuals being exposed through detailed addresses": {
+    pt: "A exposição de indivíduos por meio de endereços detalhados",
+  },
+  "Researchers comparing totals between districts": {
+    pt: "Pesquisadores comparando totais entre distritos",
+  },
+  "Clinics receiving public information": {
+    pt: "Clínicas recebendo informações públicas",
+  },
+  /* b2-remote-work */
+  "Lesson 73 — Making Remote Work Work": {
+    pt: "Lição 73 — Fazendo o trabalho remoto funcionar",
+  },
+  "Collaboration, autonomy, and communication trade-offs": {
+    pt: "Colaboração, autonomia e concessões na comunicação",
+  },
+  "Evaluate a remote-work arrangement, balance autonomy with coordination needs, and propose explicit communication practices.": {
+    pt: "Avaliar um acordo de trabalho remoto, equilibrar a autonomia com as necessidades de coordenação e propor práticas explícitas de comunicação.",
+  },
+  "Contrast flexibility with coordination: People need AUTONOMY, but the team still needs OVERLAP.": {
+    pt: "Contraste flexibilidade com coordenação: People need AUTONOMY, but the team still needs OVERLAP.",
+  },
+  "Evaluate a remote or hybrid arrangement you know or can imagine. Explain one benefit and one coordination risk, then propose communication rules and a review point.": {
+    pt: "Avalie um acordo remoto ou híbrido que você conheça ou possa imaginar. Explique um benefício e um risco de coordenação e depois proponha regras de comunicação e um momento de avaliação.",
+  },
+  "State the trade-off with gives people... but can make..., distinguish meetings from written updates, and finish with a measurable trial or review.": {
+    pt: "Apresente a concessão com gives people... but can make..., diferencie reuniões de atualizações por escrito e termine com um teste ou uma avaliação mensurável.",
+  },
+  "What remote-work arrangement do Priya and Lucas propose?": {
+    pt: "Que acordo de trabalho remoto Priya e Lucas propõem?",
+  },
+  "Shared collaboration hours, written decisions, and a six-week review": {
+    pt: "Horas de colaboração em comum, decisões por escrito e uma avaliação após seis semanas",
+  },
+  "A return to the office every day with no written updates": {
+    pt: "Um retorno diário ao escritório sem atualizações por escrito",
+  },
+  "No shared hours and no communication expectations": {
+    pt: "Nenhuma hora em comum e nenhuma expectativa de comunicação",
+  },
+  "Why does Lucas reject a daily meeting for every update?": {
+    pt: "Por que Lucas rejeita uma reunião diária para cada atualização?",
+  },
+  "Not every update requires real-time discussion": {
+    pt: "Nem toda atualização exige uma discussão em tempo real",
+  },
+  "The team is not allowed to hold online meetings": {
+    pt: "A equipe não tem permissão para realizar reuniões on-line",
+  },
+  "Managers already know every decision": {
+    pt: "Os gestores já conhecem todas as decisões",
+  },
+  "What should managers evaluate instead of online presence?": {
+    pt: "O que os gestores devem avaliar em vez da presença on-line?",
+  },
+  Outcomes: { pt: "Resultados" },
+  "Camera backgrounds": { pt: "Planos de fundo da câmera" },
+  "The number of messages sent": { pt: "O número de mensagens enviadas" },
+  /* b2-media-bias */
+  "Lesson 74 — Reading Beyond the Frame": {
+    pt: "Lição 74 — Lendo além do enquadramento",
+  },
+  "Framing, evidence selection, and source reliability": {
+    pt: "Enquadramento, seleção de evidências e confiabilidade das fontes",
+  },
+  "Compare how two reports frame the same event, test their claims against the evidence, and give a neutral summary.": {
+    pt: "Comparar como duas reportagens enquadram o mesmo acontecimento, confrontar suas afirmações com as evidências e produzir um resumo neutro.",
+  },
+  "Use contrastive stress to expose framing choices: The plan was DELAYED, not ABANDONED.": {
+    pt: "Use a ênfase contrastiva para revelar escolhas de enquadramento: The plan was DELAYED, not ABANDONED.",
+  },
+  "What do Livia and Omar conclude about the transport pilot?": {
+    pt: "O que Livia e Omar concluem sobre o projeto-piloto de transporte?",
+  },
+  "It improved the service but cost more than planned": {
+    pt: "Ele melhorou o serviço, mas custou mais que o planejado",
+  },
+  "It failed in every measured area": {
+    pt: "Ele fracassou em todas as áreas avaliadas",
+  },
+  "It stayed under budget without changing journey times": {
+    pt: "Ele ficou abaixo do orçamento sem alterar o tempo das viagens",
+  },
+  "What does the first report leave out?": {
+    pt: "O que a primeira reportagem deixa de fora?",
+  },
+  "The improvement in journey times": {
+    pt: "A redução no tempo das viagens",
+  },
+  "The name of the transport service": {
+    pt: "O nome do serviço de transporte",
+  },
+  "The fact that the pilot had a budget": {
+    pt: "O fato de que o projeto-piloto tinha um orçamento",
+  },
+  "Why do they treat the second report's main source cautiously?": {
+    pt: "Por que eles tratam com cautela a principal fonte da segunda reportagem?",
+  },
+  "The source helped design the pilot": {
+    pt: "A fonte ajudou a projetar o piloto",
+  },
+  "The source refuses to cite any figures": {
+    pt: "A fonte se recusa a citar qualquer número",
+  },
+  "The source works for the first newspaper": {
+    pt: "A fonte trabalha para o primeiro jornal",
+  },
+  "Compare two headlines or accounts of the same event. Identify one framing choice or omitted detail, evaluate the source, and give a more neutral summary.": {
+    pt: "Compare duas manchetes ou versões do mesmo acontecimento. Identifique uma escolha de enquadramento ou um detalhe omitido, avalie a fonte e produza um resumo mais neutro.",
+  },
+  "Name the frame with frames... as..., identify what the report leaves out, then limit your conclusion to what the evidence supports.": {
+    pt: "Nomeie o enquadramento com frames... as..., identifique o que a reportagem deixa de fora e limite sua conclusão ao que as evidências sustentam.",
+  },
+  /* b2-uncertainty */
+  "Lesson 75 — Reasoning Under Uncertainty": {
+    pt: "Lição 75 — Raciocinando sob incerteza",
+  },
+  "Speculation, probability, and calibrated confidence": {
+    pt: "Especulação, probabilidade e grau de confiança calibrado",
+  },
+  "Discuss competing explanations with calibrated confidence, state what could change your view, and avoid presenting speculation as fact.": {
+    pt: "Discutir explicações concorrentes com um grau de confiança calibrado, dizer o que poderia mudar sua avaliação e evitar apresentar especulação como fato.",
+  },
+  "Stress probability markers to calibrate a claim: it's LIKELY, but not CERTAIN.": {
+    pt: "Enfatize os marcadores de probabilidade para calibrar uma afirmação: it's LIKELY, but not CERTAIN.",
+  },
+  "How do Mei and Dan assess the possible launch delay?": {
+    pt: "Como Mei e Dan avaliam o possível atraso no lançamento?",
+  },
+  "It is moderately likely, but key evidence is still missing": {
+    pt: "É moderadamente provável, mas ainda faltam evidências importantes",
+  },
+  "It is certain because the supplier admitted responsibility": {
+    pt: "É certo porque o fornecedor assumiu a responsabilidade",
+  },
+  "It is impossible because internal testing is complete": {
+    pt: "É impossível porque os testes internos terminaram",
+  },
+  "What alternative explanation does Dan keep open?": {
+    pt: "Que explicação alternativa Dan mantém em aberto?",
+  },
+  "A problem with internal testing": {
+    pt: "Um problema nos testes internos",
+  },
+  "A change in the product's price": {
+    pt: "Uma mudança no preço do produto",
+  },
+  "A mistake in the marketing campaign": {
+    pt: "Um erro na campanha de marketing",
+  },
+  "What evidence would increase Dan's confidence?": {
+    pt: "Que evidência aumentaria o grau de confiança de Dan?",
+  },
+  "Final test results and a confirmed delivery date": {
+    pt: "Resultados finais dos testes e uma data de entrega confirmada",
+  },
+  "A larger advertising budget": {
+    pt: "Um orçamento de publicidade maior",
+  },
+  "An informal promise from the launch team": {
+    pt: "Uma promessa informal da equipe de lançamento",
+  },
+  "Assess an uncertain outcome at work, in study, or in daily life. Compare two explanations, state your confidence, and name evidence that would change your view.": {
+    pt: "Avalie um resultado incerto no trabalho, nos estudos ou na vida cotidiana. Compare duas explicações, declare seu grau de confiança e cite evidências que mudariam sua avaliação.",
+  },
+  "Mark uncertainty with likely, plausible, or can't rule out; identify one assumption, then say what new evidence would update your view.": {
+    pt: "Marque a incerteza com likely, plausible ou can't rule out; identifique uma suposição e diga que novas evidências atualizariam sua avaliação.",
+  },
+  /* c1-diplomatic-disagreement */
+  "Lesson 76 — Disagreeing with Precision": {
+    pt: "Lição 76 — Discordando com precisão",
+  },
+  "Challenging assumptions with diplomatic precision": {
+    pt: "Questionamento de premissas com precisão diplomática",
+  },
+  "Challenge an assumption precisely while recognising shared goals and proposing a constructive way to test the disagreement.": {
+    pt: "Questionar uma premissa com precisão, reconhecendo objetivos comuns e propondo uma forma construtiva de testar a divergência.",
+  },
+  "Soften the opening, then stress the exact point of disagreement: I see the LOGIC, but not the ASSUMPTION.": {
+    pt: "Suavize a abertura e depois enfatize o ponto exato da divergência: I see the LOGIC, but not the ASSUMPTION.",
+  },
+  "What does Elias propose instead of entering three markets at once?": {
+    pt: "O que Elias propõe em vez de entrar em três mercados de uma vez?",
+  },
+  "Testing one market before expanding to the other two": {
+    pt: "Testar um mercado antes de expandir para os outros dois",
+  },
+  "Abandoning international expansion permanently": {
+    pt: "Abandonar permanentemente a expansão internacional",
+  },
+  "Entering all three markets without customer support": {
+    pt: "Entrar nos três mercados sem atendimento ao cliente",
+  },
+  "Which assumption does Elias challenge?": {
+    pt: "Que premissa Elias questiona?",
+  },
+  "The current support model will scale smoothly": {
+    pt: "O modelo atual de atendimento ganhará escala sem dificuldades",
+  },
+  "Competitors are already in all three markets": {
+    pt: "Os concorrentes já estão nos três mercados",
+  },
+  "The company needs fewer support languages": {
+    pt: "A empresa precisa de menos idiomas no atendimento",
+  },
+  "Where do Rina and Elias still agree?": {
+    pt: "Em que Rina e Elias ainda concordam?",
+  },
+  "The company should expand internationally": {
+    pt: "A empresa deve se expandir internacionalmente",
+  },
+  "No additional support capacity is necessary": {
+    pt: "Não é necessária nenhuma capacidade adicional de atendimento",
+  },
+  "All three markets have identical needs": {
+    pt: "Os três mercados têm necessidades idênticas",
+  },
+  "Respond to a proposal you partly disagree with. Recognise its logic, identify the exact assumption or distinction you challenge, and propose a test or alternative.": {
+    pt: "Responda a uma proposta da qual você discorda em parte. Reconheça sua lógica, identifique a premissa ou distinção exata que você questiona e proponha um teste ou alternativa.",
+  },
+  "Open with shared ground, challenge one named assumption with but or although, and finish with Would you be open to...?": {
+    pt: "Comece pelo ponto em comum, questione uma premissa específica com but ou although e termine com Would you be open to...?",
+  },
+  /* c1-presentations-q-and-a */
+  "Lesson 77 — Handling Difficult Questions": {
+    pt: "Lição 77 — Lidando com perguntas difíceis",
+  },
+  "Handling difficult questions after a presentation": {
+    pt: "Como lidar com perguntas difíceis após uma apresentação",
+  },
+  "Answer a challenging presentation question directly, clarify the scope of the evidence, acknowledge limits, and commit to an accurate follow-up.": {
+    pt: "Responder diretamente a uma pergunta desafiadora após uma apresentação, esclarecer o alcance das evidências, reconhecer limites e se comprometer com um retorno preciso.",
+  },
+  "Pause after the direct answer, then signpost the qualification: YES. However, that figure refers SPECIFICALLY to....": {
+    pt: "Faça uma pausa após a resposta direta e depois sinalize a ressalva: YES. However, that figure refers SPECIFICALLY to....",
+  },
+  "How does the presenter handle the question about regional offices?": {
+    pt: "Como a apresentadora lida com a pergunta sobre os escritórios regionais?",
+  },
+  "She limits the claim, admits missing detail, and promises a verified follow-up": {
+    pt: "Ela limita a afirmação, admite que falta um detalhe e promete um retorno verificado",
+  },
+  "She applies the fifteen percent figure to every office without qualification": {
+    pt: "Ela aplica o número de quinze por cento a todos os escritórios sem ressalvas",
+  },
+  "She rejects the question because it was not submitted in advance": {
+    pt: "Ela rejeita a pergunta porque não foi enviada com antecedência",
+  },
+  "What does the fifteen percent figure describe?": {
+    pt: "O que o número de quinze por cento descreve?",
+  },
+  "A first-quarter pilot in two large offices": {
+    pt: "Um projeto-piloto do primeiro trimestre em dois escritórios grandes",
+  },
+  "Every regional office over a full year": {
+    pt: "Todos os escritórios regionais ao longo de um ano inteiro",
+  },
+  "A forecast with no observed data": {
+    pt: "Uma previsão sem dados observados",
+  },
+  "What follow-up does the presenter promise?": {
+    pt: "Que retorno a apresentadora promete?",
+  },
+  "A regional estimate with its assumptions": {
+    pt: "Uma estimativa regional com suas premissas",
+  },
+  "A new pilot completed by tomorrow": {
+    pt: "Um novo projeto-piloto concluído até amanhã",
+  },
+  "The names of everyone in the sample": {
+    pt: "Os nomes de todas as pessoas da amostra",
+  },
+  "Answer a difficult question about a proposal or result. Give the direct answer first, define the evidence's scope, acknowledge one limitation, and offer a precise follow-up if needed.": {
+    pt: "Responda a uma pergunta difícil sobre uma proposta ou resultado. Dê primeiro a resposta direta, defina o alcance das evidências, reconheça uma limitação e ofereça um retorno preciso se necessário.",
+  },
+  "Lead with The short answer is..., clarify what the figure refers to, and replace any guess with I'd rather verify that than speculate.": {
+    pt: "Comece com The short answer is..., esclareça a que o número se refere e substitua qualquer palpite por I'd rather verify that than speculate.",
+  },
+  /* c1-stakeholders */
+  "Lesson 78 — Aligning Competing Priorities": {
+    pt: "Lição 78 — Alinhando prioridades concorrentes",
+  },
+  "Aligning stakeholders with conflicting priorities": {
+    pt: "Alinhamento de partes interessadas com prioridades conflitantes",
+  },
+  "Surface the constraints behind conflicting stakeholder positions, protect shared outcomes, and negotiate a phased decision with explicit unresolved points.": {
+    pt: "Revelar as restrições por trás de posições conflitantes das partes interessadas, preservar resultados comuns e negociar uma decisão em etapas com pontos pendentes explícitos.",
+  },
+  "Use parallel stress to make a trade-off audible: protect RELIABILITY without delaying LEARNING.": {
+    pt: "Use a ênfase paralela para tornar clara a escolha envolvida: protect RELIABILITY without delaying LEARNING.",
+  },
+  "What compromise do the stakeholders reach?": {
+    pt: "A que acordo as partes interessadas chegam?",
+  },
+  "A limited launch with safeguards and a two-week review": {
+    pt: "Um lançamento limitado com salvaguardas e uma avaliação após duas semanas",
+  },
+  "A full launch next month without additional controls": {
+    pt: "Um lançamento completo no mês que vem sem controles adicionais",
+  },
+  "A permanent delay with no customer testing": {
+    pt: "Um adiamento permanente sem testes com clientes",
+  },
+  "What is Operations' non-negotiable condition?": {
+    pt: "Qual é a condição inegociável de Operações?",
+  },
+  "The existing service must not be interrupted": {
+    pt: "O serviço existente não pode ser interrompido",
+  },
+  "The first phase must include every customer": {
+    pt: "A primeira etapa deve incluir todos os clientes",
+  },
+  "Product must cancel the launch completely": {
+    pt: "Produto deve cancelar o lançamento por completo",
+  },
+  "Why does Product resist waiting a full quarter?": {
+    pt: "Por que Produto resiste a esperar um trimestre inteiro?",
+  },
+  "It wants customer learning before the busiest season": {
+    pt: "A equipe quer aprender com os clientes antes da época de maior movimento",
+  },
+  "It has already promised a full launch to Operations": {
+    pt: "A equipe já prometeu um lançamento completo a Operações",
+  },
+  "It believes reliability testing has no value": {
+    pt: "A equipe acredita que os testes de confiabilidade não têm valor",
+  },
+  "Mediate a disagreement between two groups with different priorities. Name each constraint, identify a non-negotiable, and propose a phased decision that preserves the shared outcome.": {
+    pt: "Faça a mediação de uma divergência entre dois grupos com prioridades diferentes. Nomeie cada restrição, identifique um ponto inegociável e proponha uma decisão em etapas que preserve o resultado comum.",
+  },
+  "Separate outcome from sequence, ask what would have to be true for support, and document the safeguard, phase, and review point.": {
+    pt: "Separe resultado de sequência, pergunte o que precisaria ser verdade para haver apoio e documente a salvaguarda, a etapa e o momento de avaliação.",
+  },
+  /* b2-proposals */
+  "Lesson 79 — Making a Strong Proposal": {
+    pt: "Lição 79 — Elaborando uma proposta sólida",
+  },
+  "Presenting and defending a structured proposal": {
+    pt: "Apresentação e defesa de uma proposta estruturada",
+  },
+  "Present a structured proposal with a clear rationale, practical safeguards, and a specific decision request.": {
+    pt: "Apresentar uma proposta estruturada com uma justificativa clara, salvaguardas práticas e um pedido de decisão específico.",
+  },
+  "Use signposting pauses to reveal the structure: the GOAL / the EVIDENCE / and the SAFEGUARD.": {
+    pt: "Use pausas de sinalização para revelar a estrutura: the GOAL / the EVIDENCE / and the SAFEGUARD.",
+  },
+  "What is Nora proposing?": {
+    pt: "O que Nora está propondo?",
+  },
+  "A limited six-week trial of a different support schedule": {
+    pt: "Um teste limitado de seis semanas com um horário de atendimento diferente",
+  },
+  "A permanent schedule change for the entire company": {
+    pt: "Uma mudança permanente de horário para toda a empresa",
+  },
+  "A reduction in support hours for urgent requests": {
+    pt: "Uma redução no horário de atendimento a solicitações urgentes",
+  },
+  "What evidence supports the proposal?": {
+    pt: "Que evidência sustenta a proposta?",
+  },
+  "Many urgent requests arrive after the team finishes": {
+    pt: "Muitas solicitações urgentes chegam depois que a equipe encerra o expediente",
+  },
+  "Customer satisfaction has already doubled": {
+    pt: "A satisfação dos clientes já dobrou",
+  },
+  "Every employee has requested additional hours": {
+    pt: "Todos os funcionários solicitaram horas adicionais",
+  },
+  "How does Nora address the overtime risk?": {
+    pt: "Como Nora lida com o risco de horas extras?",
+  },
+  "She limits the trial to volunteers and fifty customers": {
+    pt: "Ela limita o teste a voluntários e cinquenta clientes",
+  },
+  "She removes overtime from the review criteria": {
+    pt: "Ela retira as horas extras dos critérios de avaliação",
+  },
+  "She delays the trial until workload data is unavailable": {
+    pt: "Ela adia o teste até que os dados de carga de trabalho estejam indisponíveis",
+  },
+  "Present a proposal for a change at work, in study, or in your community. Structure the idea, support it with evidence, name one constraint and safeguard, and ask for a specific decision.": {
+    pt: "Apresente uma proposta de mudança no trabalho, nos estudos ou na sua comunidade. Estruture a ideia, sustente-a com evidências, mencione uma restrição e uma salvaguarda e peça uma decisão específica.",
+  },
+  "Signpost the parts, connect the expected benefit to evidence, address one risk with To reduce that risk..., and finish with I'm asking for....": {
+    pt: "Sinalize as partes, conecte o benefício esperado às evidências, trate um risco com To reduce that risk... e termine com I'm asking for....",
+  },
+  /* b2-professional-disagreement */
+  "Lesson 80 — Disagreeing and Moving Forward": {
+    pt: "Lição 80 — Discordando e avançando",
+  },
+  "Disagreeing clearly while preserving cooperation": {
+    pt: "Discordância clara com preservação da cooperação",
+  },
+  "Express a professional disagreement clearly, locate the source of the difference, and agree on evidence that can move the discussion forward.": {
+    pt: "Expressar uma divergência profissional com clareza, localizar a origem da diferença e chegar a um acordo sobre evidências que possam fazer a discussão avançar.",
+  },
+  "Keep the acknowledgement calm, then stress the contrast: I agree with the GOAL, but not the APPROACH.": {
+    pt: "Mantenha o reconhecimento em tom calmo e depois enfatize o contraste: I agree with the GOAL, but not the APPROACH.",
+  },
+  "How do Amira and Jonas move their disagreement forward?": {
+    pt: "Como Amira e Jonas fazem a divergência avançar?",
+  },
+  "They agree on criteria for comparing the suppliers": {
+    pt: "Eles concordam quanto aos critérios para comparar os fornecedores",
+  },
+  "They cancel both supplier contracts immediately": {
+    pt: "Eles cancelam imediatamente os contratos dos dois fornecedores",
+  },
+  "They decide that delivery time no longer matters": {
+    pt: "Eles decidem que o prazo de entrega não importa mais",
+  },
+  "Why does Amira interpret the delay evidence differently?": {
+    pt: "Por que Amira interpreta as evidências dos atrasos de outra forma?",
+  },
+  "Most delays followed late changes from their own team": {
+    pt: "A maioria dos atrasos ocorreu depois de mudanças tardias da própria equipe",
+  },
+  "The supplier delivered every order on time": {
+    pt: "O fornecedor entregou todos os pedidos no prazo",
+  },
+  "The quarterly records do not include delivery dates": {
+    pt: "Os registros trimestrais não incluem datas de entrega",
+  },
+  "What is Amira mainly concerned about?": {
+    pt: "Qual é a principal preocupação de Amira?",
+  },
+  "Reliability during a supplier transition": {
+    pt: "A confiabilidade durante a transição de fornecedor",
+  },
+  "The colour of the supplier's packaging": {
+    pt: "A cor da embalagem do fornecedor",
+  },
+  "Jonas presenting the comparison next week": {
+    pt: "Jonas apresentar a comparação na semana que vem",
+  },
+  "Respond to a professional decision you disagree with. Acknowledge the shared objective, explain exactly where your interpretation differs, and propose common criteria or evidence for the next decision.": {
+    pt: "Responda a uma decisão profissional da qual você discorda. Reconheça o objetivo comum, explique exatamente onde sua interpretação diverge e proponha critérios ou evidências comuns para a próxima decisão.",
+  },
+  "Separate the objective from the approach, ask how the conclusion was reached, and summarise the exact difference before proposing shared criteria.": {
+    pt: "Separe o objetivo da abordagem, pergunte como se chegou à conclusão e resuma a diferença exata antes de propor critérios comuns.",
+  },
+  /* b2-root-causes */
+  "Lesson 81 — Finding the Root Cause": {
+    pt: "Lição 81 — Encontrando a causa-raiz",
+  },
+  "Diagnosing problems beyond immediate symptoms": {
+    pt: "Diagnóstico de problemas além dos sintomas imediatos",
+  },
+  "Distinguish triggers, contributing factors, and root causes in order to recommend a lasting response to a recurring problem.": {
+    pt: "Distinguir gatilhos, fatores contribuintes e causas-raiz para recomendar uma resposta duradoura a um problema recorrente.",
+  },
+  "Stress the diagnostic contrast: that explains WHEN it failed, not WHY it was possible.": {
+    pt: "Enfatize o contraste do diagnóstico: that explains WHEN it failed, not WHY it was possible.",
+  },
+  "What do Priya and Marco identify as the underlying issue?": {
+    pt: "O que Priya e Marco identificam como o problema subjacente?",
+  },
+  "Unclear ownership of urgent update approvals": {
+    pt: "Falta de clareza sobre a responsabilidade pelas aprovações de atualizações urgentes",
+  },
+  "A website that cannot receive software updates": {
+    pt: "Um site que não consegue receber atualizações de software",
+  },
+  "An engineer who refuses to record incidents": {
+    pt: "Um engenheiro que se recusa a registrar incidentes",
+  },
+  "What pattern suggests that the problem is not isolated?": {
+    pt: "Que padrão indica que o problema não é isolado?",
+  },
+  "Three updates went unreviewed in two months": {
+    pt: "Três atualizações ficaram sem revisão em dois meses",
+  },
+  "The website has been online for three years": {
+    pt: "O site está no ar há três anos",
+  },
+  "Three engineers approved the same update": {
+    pt: "Três engenheiros aprovaram a mesma atualização",
+  },
+  "What lasting fix do they recommend?": {
+    pt: "Que solução duradoura eles recomendam?",
+  },
+  "Naming a backup approver and requiring recorded review": {
+    pt: "Nomear um aprovador substituto e exigir uma revisão registrada",
+  },
+  "Blocking every future software update": {
+    pt: "Bloquear todas as futuras atualizações de software",
+  },
+  "Asking one engineer to work without holidays": {
+    pt: "Pedir que um engenheiro trabalhe sem tirar férias",
+  },
+  "Analyse a recurring problem from work, study, or daily life. Distinguish the visible symptom, immediate trigger, contributing factors, and likely root cause, then recommend a lasting fix.": {
+    pt: "Analise um problema recorrente do trabalho, dos estudos ou da vida cotidiana. Distinga o sintoma visível, o gatilho imediato, os fatores contribuintes e a provável causa-raiz e então recomende uma solução duradoura.",
+  },
+  "Ask what made the failure possible, use appears to be for the diagnosis, and make sure the lasting fix addresses that cause rather than only the symptom.": {
+    pt: "Pergunte o que tornou a falha possível, use appears to be no diagnóstico e garanta que a solução duradoura trate essa causa, e não apenas o sintoma.",
+  },
+  /* b2-competing-views */
+  "Lesson 82 — Comparing Competing Views": {
+    pt: "Lição 82 — Comparando visões concorrentes",
+  },
+  "Summarizing and comparing competing positions": {
+    pt: "Resumo e comparação de posições concorrentes",
+  },
+  "Summarise competing positions fairly, expose their assumptions and shared ground, and reach a qualified evidence-based judgement.": {
+    pt: "Resumir posições concorrentes de forma justa, revelar suas premissas e pontos em comum e chegar a uma avaliação ponderada e baseada em evidências.",
+  },
+  "Use balanced stress for fair comparison: supporters point to ACCESS; critics emphasise COST.": {
+    pt: "Use ênfase equilibrada para uma comparação justa: supporters point to ACCESS; critics emphasise COST.",
+  },
+  "What conclusion do Helen and Rafael reach?": {
+    pt: "A que conclusão Helen e Rafael chegam?",
+  },
+  "A longer trial should gather passenger and cost data": {
+    pt: "Um teste mais longo deve coletar dados de passageiros e custos",
+  },
+  "Free weekend buses should begin permanently tomorrow": {
+    pt: "Os ônibus gratuitos nos fins de semana devem começar permanentemente amanhã",
+  },
+  "The city should abandon all public transport trials": {
+    pt: "A cidade deve abandonar todos os testes de transporte público",
+  },
+  "What evidence do supporters use?": {
+    pt: "Que evidência os defensores usam?",
+  },
+  "Passenger numbers rose during a recent trial": {
+    pt: "O número de passageiros aumentou durante um teste recente",
+  },
+  "The city centre eliminated all transport costs": {
+    pt: "O centro da cidade eliminou todos os custos de transporte",
+  },
+  "The trial measured ten years of economic activity": {
+    pt: "O teste mediu dez anos de atividade econômica",
+  },
+  "What is the key unresolved question?": {
+    pt: "Qual é a principal questão ainda sem resposta?",
+  },
+  "Whether increased activity would cover the extra cost": {
+    pt: "Se o aumento da atividade cobriria o custo adicional",
+  },
+  "Whether passengers know where the city centre is": {
+    pt: "Se os passageiros sabem onde fica o centro da cidade",
+  },
+  "Whether both sides want public transport to disappear": {
+    pt: "Se os dois lados querem que o transporte público desapareça",
+  },
+  "Compare two competing views on a public, professional, or everyday issue. Present each side's evidence fairly, identify shared ground and the key disagreement, and give a qualified judgement.": {
+    pt: "Compare duas visões concorrentes sobre uma questão pública, profissional ou cotidiana. Apresente as evidências de cada lado de forma justa, identifique pontos em comum e a principal divergência e faça uma avaliação ponderada.",
+  },
+  "Use Supporters point to... and Critics counter..., name one shared assumption or goal, then qualify your judgement with On balance....": {
+    pt: "Use Supporters point to... e Critics counter..., mencione uma premissa ou objetivo comum e depois pondere sua avaliação com On balance....",
+  },
+  /* c1-crisis-communication */
+  "Lesson 83 — Communicating Through a Crisis": {
+    pt: "Lição 83 — Comunicando-se durante uma crise",
+  },
+  "Communicating uncertainty and action under pressure": {
+    pt: "Comunicação de incerteza e ação sob pressão",
+  },
+  "Communicate verified facts, uncertainty, immediate action, and the next update under pressure without minimising harm or encouraging speculation.": {
+    pt: "Comunicar fatos verificados, incerteza, ações imediatas e a próxima atualização sob pressão, sem minimizar danos nem incentivar especulações.",
+  },
+  "Use a firm fall for verified facts and a measured rise for uncertainty: we CAN confirm this; we are still ESTABLISHING that.": {
+    pt: "Use uma entonação descendente firme para fatos verificados e uma ascendente moderada para incertezas: we CAN confirm this; we are still ESTABLISHING that.",
+  },
+  "How does the spokesperson communicate during the incident?": {
+    pt: "Como o porta-voz se comunica durante o incidente?",
+  },
+  "By separating verified facts, unknowns, actions, and update times": {
+    pt: "Separando fatos verificados, aspectos desconhecidos, ações e horários de atualização",
+  },
+  "By claiming the incident is resolved before the review begins": {
+    pt: "Afirmando que o incidente foi resolvido antes do início da análise",
+  },
+  "By refusing to provide any information until every fact is known": {
+    pt: "Recusando-se a fornecer qualquer informação até que todos os fatos sejam conhecidos",
+  },
+  "What remains unknown?": {
+    pt: "O que ainda não se sabe?",
+  },
+  "Whether data was exposed and what caused the interruption": {
+    pt: "Se houve exposição de dados e o que causou a interrupção",
+  },
+  "When the service interruption began": {
+    pt: "Quando começou a interrupção do serviço",
+  },
+  "Which response team is restoring access": {
+    pt: "Qual equipe de resposta está restabelecendo o acesso",
+  },
+  "What precaution has the company taken?": {
+    pt: "Que medida de precaução a empresa tomou?",
+  },
+  "It has suspended password changes": {
+    pt: "Ela suspendeu as alterações de senha",
+  },
+  "It has deleted all customer accounts": {
+    pt: "Ela excluiu todas as contas de clientes",
+  },
+  "It has restored service without testing": {
+    pt: "Ela restabeleceu o serviço sem realizar testes",
+  },
+  "Give a short crisis update about a service, safety, or operational incident. Separate confirmed facts from unknowns, state the immediate action and precaution, and commit to the next update.": {
+    pt: "Dê uma breve atualização de crise sobre um incidente de serviço, segurança ou operação. Separe os fatos confirmados dos aspectos desconhecidos, informe a ação imediata e a precaução e comprometa-se com a próxima atualização.",
+  },
+  "Use We can confirm... only for verified facts, name one unknown with still establishing, decline speculation, and give a specific time for the next update.": {
+    pt: "Use We can confirm... apenas para fatos verificados, mencione um aspecto desconhecido com still establishing, recuse-se a especular e informe um horário específico para a próxima atualização.",
+  },
+  /* c1-policy-analysis */
+  "Lesson 84 — Analysing Policy Choices": {
+    pt: "Lição 84 — Analisando escolhas de política pública",
+  },
+  "Evaluating policy aims, mechanisms, and side effects": {
+    pt: "Avaliação de objetivos, mecanismos e efeitos colaterais de políticas",
+  },
+  "Evaluate whether a policy's mechanism can achieve its stated aim, identify likely side effects, and recommend proportionate revisions.": {
+    pt: "Avaliar se o mecanismo de uma política é capaz de atingir o objetivo declarado, identificar prováveis efeitos colaterais e recomendar revisões proporcionais.",
+  },
+  "Use contrastive stress to separate intention from mechanism: the AIM is reasonable; the INCENTIVE may work against it.": {
+    pt: "Use a ênfase contrastiva para separar intenção de mecanismo: the AIM is reasonable; the INCENTIVE may work against it.",
+  },
+  "How do Ana and Ben revise the transport policy?": {
+    pt: "Como Ana e Ben revisam a política de transporte?",
+  },
+  "They add a targeted exemption and an outcomes review": {
+    pt: "Eles acrescentam uma isenção direcionada e uma avaliação de resultados",
+  },
+  "They replace the charge with a ban on all city travel": {
+    pt: "Eles substituem a taxa por uma proibição de todo deslocamento na cidade",
+  },
+  "They apply the charge only where buses are most frequent": {
+    pt: "Eles aplicam a taxa apenas onde os ônibus são mais frequentes",
+  },
+  "What condition may limit the policy's effectiveness?": {
+    pt: "Que condição pode limitar a eficácia da política?",
+  },
+  "Some workers lack viable transport alternatives": {
+    pt: "Alguns trabalhadores não têm alternativas viáveis de transporte",
+  },
+  "The city has too many empty buses at peak hours": {
+    pt: "A cidade tem ônibus vazios demais nos horários de pico",
+  },
+  "Drivers do not know where the city centre is": {
+    pt: "Os motoristas não sabem onde fica o centro da cidade",
+  },
+  "Which possible side effect concerns them?": {
+    pt: "Que possível efeito colateral os preocupa?",
+  },
+  "The burden may fall unfairly across income groups": {
+    pt: "O ônus pode recair de forma injusta entre as faixas de renda",
+  },
+  "Every short car journey may become longer": {
+    pt: "Todo trajeto curto de carro pode ficar mais longo",
+  },
+  "Public transport may become completely free": {
+    pt: "O transporte público pode se tornar totalmente gratuito",
+  },
+  "Analyse a policy from work, education, transport, health, or public life. Separate its aim from its mechanism, identify a condition and unintended effect, and recommend a safeguard and review measure.": {
+    pt: "Analise uma política do trabalho, da educação, do transporte, da saúde ou da vida pública. Separe o objetivo do mecanismo, identifique uma condição e um efeito não intencional e recomende uma salvaguarda e uma medida de revisão.",
+  },
+  "Use is intended to for the aim, depends on for a necessary condition, and could have for a side effect; finish with an outcome the policy should be reviewed against.": {
+    pt: "Use is intended to para o objetivo, depends on para uma condição necessária e could have para um efeito colateral; termine com um resultado em relação ao qual a política deva ser avaliada.",
+  },
+
+  /* c1-research-discussion */
+  "Lesson 85 — Discussing Research Responsibly": {
+    pt: "Lição 85 — Discutindo pesquisa com responsabilidade",
+  },
+  "Discussing evidence, limitations, and implications": {
+    pt: "Discussão de evidências, limitações e implicações",
+  },
+  "Discuss a research finding by separating results from interpretation, evaluating limitations, and drawing implications that remain within the evidence.": {
+    pt: "Discutir um achado de pesquisa separando resultados de interpretação, avaliando limitações e extraindo implicações que não ultrapassem as evidências.",
+  },
+  "Downstep from finding to qualification: the association was CONSISTENT, although the effect was MODEST.": {
+    pt: "Reduza o tom ao passar do achado para a ressalva: the association was CONSISTENT, although the effect was MODEST.",
+  },
+  "What conclusion do Maya and Theo draw from the study?": {
+    pt: "Que conclusão Maya e Theo tiram do estudo?",
+  },
+  "It justifies a broader controlled pilot": {
+    pt: "Ele justifica um piloto controlado mais amplo",
+  },
+  "It proves every employee should work remotely": {
+    pt: "Ele prova que todo funcionário deveria trabalhar remotamente",
+  },
+  "It shows remote work reduces concentration": {
+    pt: "Ele mostra que o trabalho remoto reduz a concentração",
+  },
+  "Why can the study not establish causation?": {
+    pt: "Por que o estudo não é capaz de estabelecer causalidade?",
+  },
+  "Participants selected themselves into the arrangement": {
+    pt: "Os participantes aderiram ao formato por escolha própria",
+  },
+  "The study measured concentration more than once": {
+    pt: "O estudo mediu a concentração mais de uma vez",
+  },
+  "Absenteeism remained stable during the study": {
+    pt: "O absenteísmo permaneceu estável durante o estudo",
+  },
+  "What limits how widely the result can be applied?": {
+    pt: "O que limita a abrangência de aplicação do resultado?",
+  },
+  "The sample came from one technology company": {
+    pt: "A amostra veio de uma única empresa de tecnologia",
+  },
+  "The analysis used several reasonable methods": {
+    pt: "A análise usou vários métodos razoáveis",
+  },
+  "The study continued for three months": {
+    pt: "O estudo durou três meses",
+  },
+  "Discuss a research result or evidence-based claim. State the finding, distinguish association from causation, identify a limitation or alternative explanation, and propose a proportionate implication.": {
+    pt: "Discuta um resultado de pesquisa ou uma afirmação baseada em evidências. Enuncie o achado, distinga associação de causalidade, identifique uma limitação ou explicação alternativa e proponha uma implicação proporcional.",
+  },
+  "Report what the study found before interpreting it, qualify the scope with may not be representative, and make the recommendation no stronger than the evidence.": {
+    pt: "Relate o que o estudo encontrou antes de interpretá-lo, delimite o alcance com may not be representative e não faça uma recomendação mais forte do que as evidências permitem.",
+  },
+
+  /* c1-mentoring */
+  "Lesson 86 — Mentoring Through Questions": {
+    pt: "Lição 86 — Mentoria por meio de perguntas",
+  },
+  "Coaching, reframing, and asking productive questions": {
+    pt: "Orientação, reenquadramento e perguntas produtivas",
+  },
+  "Guide a mentoring conversation with diagnostic questions, constructive reframing, and a learner-owned next step instead of prescribing a solution.": {
+    pt: "Conduzir uma conversa de mentoria com perguntas diagnósticas, reenquadramento construtivo e um próximo passo escolhido pelo próprio aprendiz, em vez de prescrever uma solução.",
+  },
+  "Use an open rise for exploratory questions and a calm fall for reframing: what have you TRIED?; this is a PRIORITY problem.": {
+    pt: "Use uma entonação ascendente aberta nas perguntas exploratórias e uma descendente serena no reenquadramento: what have you TRIED?; this is a PRIORITY problem.",
+  },
+  "What next step does the learner choose?": {
+    pt: "Que próximo passo o aprendiz escolhe?",
+  },
+  "Acknowledge requests and agree realistic deadlines": {
+    pt: "Confirmar o recebimento das solicitações e combinar prazos realistas",
+  },
+  "Ignore every new request until the month ends": {
+    pt: "Ignorar toda nova solicitação até o fim do mês",
+  },
+  "Work on all incoming requests immediately": {
+    pt: "Atender imediatamente a todas as solicitações que chegam",
+  },
+  "How does the mentor reframe the problem?": {
+    pt: "Como o mentor reenquadra o problema?",
+  },
+  "As a prioritisation issue rather than a lack of capability": {
+    pt: "Como uma questão de priorização, e não de falta de capacidade",
+  },
+  "As proof that the learner needs a different profession": {
+    pt: "Como prova de que o aprendiz precisa de outra profissão",
+  },
+  "As a technical failure in the request system": {
+    pt: "Como uma falha técnica no sistema de solicitações",
+  },
+  "Which assumption has shaped the learner's behaviour?": {
+    pt: "Que pressuposto moldou o comportamento do aprendiz?",
+  },
+  "A delayed reply will disappoint people": {
+    pt: "Uma resposta demorada vai decepcionar as pessoas",
+  },
+  "Daily lists are forbidden at work": {
+    pt: "Listas diárias são proibidas no trabalho",
+  },
+  "Every colleague prefers monthly replies": {
+    pt: "Todo colega prefere respostas mensais",
+  },
+  "Coach someone through a challenge without solving it for them. Clarify the desired outcome, ask about prior attempts, offer a tentative reframe, and help them choose a testable next step.": {
+    pt: "Oriente alguém diante de um desafio sem resolvê-lo por essa pessoa. Esclareça o resultado desejado, pergunte sobre tentativas anteriores, ofereça um reenquadramento provisório e ajude-a a escolher um próximo passo testável.",
+  },
+  "Ask two genuine questions before offering a reframe, use It sounds as though... tentatively, and leave the final choice and measure of progress with the learner.": {
+    pt: "Faça duas perguntas genuínas antes de propor um reenquadramento, use It sounds as though... com cautela e deixe a decisão final e a medida de progresso com o aprendiz.",
+  },
+
+  /* c1-strategic-priorities */
+  "Lesson 87 — Setting Strategic Priorities": {
+    pt: "Lição 87 — Definindo prioridades estratégicas",
+  },
+  "Distinguishing urgent work from strategically important work": {
+    pt: "Distinção entre trabalho urgente e trabalho estrategicamente importante",
+  },
+  "Distinguish urgent activity from strategic importance, make opportunity costs explicit, and define sequencing criteria for competing priorities.": {
+    pt: "Distinguir atividade urgente de importância estratégica, explicitar custos de oportunidade e definir critérios de sequenciamento para prioridades concorrentes.",
+  },
+  "Contrast immediate pressure with long-term value: it is URGENT, but it is not our highest LEVERAGE work.": {
+    pt: "Contraste a pressão imediata com o valor de longo prazo: it is URGENT, but it is not our highest LEVERAGE work.",
+  },
+  "Which work do the leaders prioritise?": {
+    pt: "Que trabalho os líderes priorizam?",
+  },
+  "Reducing customer cancellations": {
+    pt: "Reduzir os cancelamentos de clientes",
+  },
+  "Launching in a new market immediately": {
+    pt: "Entrar imediatamente em um novo mercado",
+  },
+  "Completing a full visual redesign": {
+    pt: "Concluir uma reformulação visual completa",
+  },
+  "Why do they delay expansion?": {
+    pt: "Por que eles adiam a expansão?",
+  },
+  "Current cancellations would absorb much of the growth": {
+    pt: "Os cancelamentos atuais absorveriam boa parte do crescimento",
+  },
+  "No customers are interested in the new market": {
+    pt: "Nenhum cliente tem interesse no novo mercado",
+  },
+  "The redesign has already increased retention": {
+    pt: "A reformulação já aumentou a retenção",
+  },
+  "What will trigger reconsideration?": {
+    pt: "O que fará com que reconsiderem?",
+  },
+  "Cancellations staying below four percent for two months": {
+    pt: "Os cancelamentos ficarem abaixo de quatro por cento por dois meses",
+  },
+  "Any team describing its work as urgent": {
+    pt: "Qualquer equipe descrever seu trabalho como urgente",
+  },
+  "The completion of one essential design fix": {
+    pt: "A conclusão de uma correção essencial de design",
+  },
+  "Prioritise three competing projects or responsibilities. Separate urgency from strategic value, name an opportunity cost, choose what to deprioritise, and define evidence that would change the sequence.": {
+    pt: "Priorize três projetos ou responsabilidades concorrentes. Separe urgência de valor estratégico, aponte um custo de oportunidade, escolha o que despriorizar e defina que evidência mudaria a ordem.",
+  },
+  "Name the long-term goal first, compare leverage rather than enthusiasm, state the opportunity cost explicitly, and attach reprioritisation to a measurable trigger.": {
+    pt: "Enuncie primeiro o objetivo de longo prazo, compare alavancagem em vez de entusiasmo, explicite o custo de oportunidade e vincule a repriorização a um gatilho mensurável.",
+  },
+
+  /* c1-nuanced-narratives */
+  "Lesson 88 — Telling a Nuanced Story": {
+    pt: "Lição 88 — Contando uma história com nuances",
+  },
+  "Telling complex stories with shifts in stance and perspective": {
+    pt: "Narrativas complexas com mudanças de posicionamento e perspectiva",
+  },
+  "Tell a complex narrative that distinguishes earlier beliefs from later understanding, integrates multiple perspectives, and avoids a falsely tidy conclusion.": {
+    pt: "Contar uma narrativa complexa que distinga as crenças de então da compreensão posterior, integre múltiplas perspectivas e evite uma conclusão falsamente arrumada.",
+  },
+  "Mark shifts in perspective with a reset in pitch: at the TIME, I saw it differently; in RETROSPECT, the warning was clear.": {
+    pt: "Marque as mudanças de perspectiva reiniciando o tom: at the TIME, I saw it differently; in RETROSPECT, the warning was clear.",
+  },
+  "How does the narrator's understanding change?": {
+    pt: "Como a compreensão do narrador muda?",
+  },
+  "The conflict becomes a mismatch of assumptions as well as timing": {
+    pt: "O conflito passa a ser também um descompasso de pressupostos, e não apenas de momento",
+  },
+  "Leila admits that she opposed every form of consultation": {
+    pt: "Leila admite que se opunha a qualquer forma de consulta",
+  },
+  "The narrator learns that no decisions had ever been discussed": {
+    pt: "O narrador descobre que nenhuma decisão jamais havia sido discutida",
+  },
+  "What did Leila believe the group was deciding?": {
+    pt: "O que Leila acreditava que o grupo estava decidindo?",
+  },
+  "Whether the plan should exist": {
+    pt: "Se o plano deveria existir",
+  },
+  "Who should write the final meeting notes": {
+    pt: "Quem deveria redigir a ata final da reunião",
+  },
+  "When the fixed plan would be announced": {
+    pt: "Quando o plano já definido seria anunciado",
+  },
+  "Why does the narrator avoid a simple moral?": {
+    pt: "Por que o narrador evita uma moral simples?",
+  },
+  "Both unclear consultation and late objections mattered": {
+    pt: "Tanto a consulta pouco clara quanto as objeções tardias tiveram peso",
+  },
+  "The project ended before anyone could speak": {
+    pt: "O projeto terminou antes que alguém pudesse se manifestar",
+  },
+  "Every participant now remembers events identically": {
+    pt: "Todos os participantes agora se lembram dos fatos de forma idêntica",
+  },
+  "Tell a story about a misunderstanding or changed judgement. Contrast what you believed then with what you understand now, include another perspective, and end without erasing unresolved tension.": {
+    pt: "Conte uma história sobre um mal-entendido ou uma mudança de julgamento. Contraste o que você acreditava então com o que entende agora, inclua outra perspectiva e termine sem apagar a tensão que ficou sem solução.",
+  },
+  "Signal the time shift with At the time and In retrospect, attribute another perspective carefully, and use partly or at the same time to preserve complexity.": {
+    pt: "Sinalize a mudança temporal com At the time e In retrospect, atribua a outra perspectiva com cuidado e use partly ou at the same time para preservar a complexidade.",
+  },
+
+  /* c2-implicit-assumptions */
+  "Lesson 89 — Exposing Hidden Assumptions": {
+    pt: "Lição 89 — Revelando pressupostos ocultos",
+  },
+  "Exposing assumptions and expressing epistemic caution": {
+    pt: "Explicitação de pressupostos e expressão de cautela epistêmica",
+  },
+  "Expose the implicit assumptions carrying an argument, assess how conclusions depend on them, and express epistemic caution without becoming evasive.": {
+    pt: "Revelar os pressupostos implícitos que sustentam um argumento, avaliar em que medida as conclusões dependem deles e expressar cautela epistêmica sem se tornar evasivo.",
+  },
+  "How do Iris and Sam evaluate the report's conclusion?": {
+    pt: "Como Iris e Sam avaliam a conclusão do relatório?",
+  },
+  "They expose its assumptions while preserving relevant negative evidence": {
+    pt: "Eles explicitam seus pressupostos e preservam as evidências negativas relevantes",
+  },
+  "They accept promotion as the only possible measure of value": {
+    pt: "Eles aceitam a promoção como a única medida possível de valor",
+  },
+  "They dismiss every measured outcome as unimportant": {
+    pt: "Eles descartam como irrelevante todo resultado medido",
+  },
+  "Which assumptions underlie the report?": {
+    pt: "Que pressupostos sustentam o relatório?",
+  },
+  "Promotion is the right measure and six months is sufficient": {
+    pt: "Que a promoção é a medida correta e que seis meses são suficientes",
+  },
+  "Retention always changes before training begins": {
+    pt: "Que a retenção sempre muda antes do início do treinamento",
+  },
+  "Internal mobility can never be measured": {
+    pt: "Que a mobilidade interna nunca pode ser medida",
+  },
+  "What evidence could weaken the broader interpretation?": {
+    pt: "Que evidência poderia enfraquecer a interpretação mais ampla?",
+  },
+  "No later change in retention or role mobility": {
+    pt: "Nenhuma mudança posterior em retenção ou mobilidade de cargo",
+  },
+  "A different title for the training programme": {
+    pt: "Um nome diferente para o programa de treinamento",
+  },
+  "More promotion data from the same six months": {
+    pt: "Mais dados de promoção do mesmo período de seis meses",
+  },
+  "Examine an argument whose conclusion seems stronger than its evidence. Identify an implicit assumption, show how the conclusion depends on it, calibrate your confidence, and name disconfirming evidence.": {
+    pt: "Examine um argumento cuja conclusão pareça mais forte do que suas evidências. Identifique um pressuposto implícito, mostre como a conclusão depende dele, calibre seu grau de confiança e aponte uma evidência que o refutaria.",
+  },
+  "State the hidden premise as an assumption, use only if to expose the dependency, then say what evidence would change your view.": {
+    pt: "Enuncie a premissa oculta como um pressuposto, use only if para expor a dependência e depois diga que evidência mudaria sua opinião.",
+  },
+
+  /* c2-analogy-metaphor */
+  "Lesson 90 — Reasoning with Analogy and Metaphor": {
+    pt: "Lição 90 — Raciocinando com analogia e metáfora",
+  },
+  "Using and critiquing analogy, metaphor, and framing": {
+    pt: "Uso e crítica de analogia, metáfora e enquadramento",
+  },
+  "Use analogy and metaphor to illuminate structure while testing where the comparison breaks down and how its framing guides judgement.": {
+    pt: "Usar analogia e metáfora para iluminar a estrutura de um problema, testando onde a comparação deixa de valer e como seu enquadramento orienta o julgamento.",
+  },
+  "Why do Nadia and Owen prefer the portfolio analogy?": {
+    pt: "Por que Nadia e Owen preferem a analogia do portfólio?",
+  },
+  "It better represents uncertainty and reallocation": {
+    pt: "Ela representa melhor a incerteza e a realocação",
+  },
+  "It proves creative work behaves exactly like finance": {
+    pt: "Ela prova que o trabalho criativo se comporta exatamente como as finanças",
+  },
+  "It removes the need to explain innovation": {
+    pt: "Ela elimina a necessidade de explicar a inovação",
+  },
+  "What does the pipeline metaphor obscure?": {
+    pt: "O que a metáfora do pipeline oculta?",
+  },
+  "Ideas can combine, pause, and return": {
+    pt: "Que as ideias podem se combinar, pausar e retornar",
+  },
+  "Some ideas eventually reach a market": {
+    pt: "Que algumas ideias acabam chegando ao mercado",
+  },
+  "Selection requires any criteria at all": {
+    pt: "Que a seleção exige algum critério",
+  },
+  "What limitation does Nadia see in the portfolio analogy?": {
+    pt: "Que limitação Nadia vê na analogia do portfólio?",
+  },
+  "It may frame creative teams as financial assets": {
+    pt: "Ela pode enquadrar equipes criativas como ativos financeiros",
+  },
+  "It contains no concept of uncertainty": {
+    pt: "Ela não contempla nenhuma noção de incerteza",
+  },
+  "It assumes resources can be allocated": {
+    pt: "Ela pressupõe que recursos podem ser alocados",
+  },
+  "Use an analogy or metaphor to explain a complex process or choice. State the relevant similarity, identify where the comparison breaks down, and explain what the framing highlights and obscures.": {
+    pt: "Use uma analogia ou metáfora para explicar um processo ou uma escolha complexa. Enuncie a semelhança relevante, identifique onde a comparação deixa de valer e explique o que o enquadramento destaca e o que ele oculta.",
+  },
+  "Name the shared structure with useful because, mark the boundary with breaks down when, and do not let a vivid comparison replace the mechanism.": {
+    pt: "Nomeie a estrutura compartilhada com useful because, marque o limite com breaks down when e não deixe que uma comparação vívida substitua o mecanismo.",
+  },
+
+  /* c2-high-stakes-negotiation */
+  "Lesson 91 — Negotiating Under Pressure": {
+    pt: "Lição 91 — Negociando sob pressão",
+  },
+  "Strategic ambiguity and precise concessions": {
+    pt: "Ambiguidade estratégica e concessões precisas",
+  },
+  "Negotiate under high stakes by separating interests from positions, managing strategic ambiguity, and making conditional concessions without accidental commitment.": {
+    pt: "Negociar em contextos de alto risco separando interesses de posições, administrando a ambiguidade estratégica e fazendo concessões condicionais sem se comprometer por acidente.",
+  },
+  "Where do the negotiators find possible movement?": {
+    pt: "Onde os negociadores encontram espaço para avançar?",
+  },
+  "A shorter exclusivity term linked to volume and later pricing": {
+    pt: "Um prazo de exclusividade mais curto, vinculado a volume e a preços posteriores",
+  },
+  "Unlimited liability in exchange for permanent exclusivity": {
+    pt: "Responsabilidade ilimitada em troca de exclusividade permanente",
+  },
+  "Immediate agreement without board approval": {
+    pt: "Acordo imediato sem aprovação do conselho",
+  },
+  "Which boundary does the supplier maintain?": {
+    pt: "Que limite o fornecedor mantém?",
+  },
+  "Liability cannot exceed the contract value": {
+    pt: "A responsabilidade não pode exceder o valor do contrato",
+  },
+  "Exclusivity must last at least five years": {
+    pt: "A exclusividade deve durar pelo menos cinco anos",
+  },
+  "Prices can never change after signing": {
+    pt: "Os preços nunca podem mudar após a assinatura",
+  },
+  "Why does the buyer clarify the meaning of silence?": {
+    pt: "Por que o comprador esclarece o significado do silêncio?",
+  },
+  "To prevent it being treated as acceptance on liability": {
+    pt: "Para evitar que ele seja tratado como aceitação quanto à responsabilidade",
+  },
+  "To accept every term without further discussion": {
+    pt: "Para aceitar todos os termos sem mais discussão",
+  },
+  "To withdraw the request for supply security": {
+    pt: "Para retirar o pedido de garantia de fornecimento",
+  },
+  "Negotiate two linked high-stakes terms. Identify the interests beneath each position, state one firm boundary, exchange conditional concessions, and clarify what remains exploratory or subject to approval.": {
+    pt: "Negocie dois termos interligados de alto risco. Identifique os interesses por trás de cada posição, estabeleça um limite firme, troque concessões condicionais e deixe claro o que ainda é exploratório ou depende de aprovação.",
+  },
+  "Use subject to and contingent on for genuine conditions, pair every concession with reciprocity, and state when language is not yet an offer.": {
+    pt: "Use subject to e contingent on para condições reais, associe cada concessão a uma contrapartida e diga quando uma formulação ainda não constitui uma oferta.",
+  },
+
+  /* c2-editorial-argument */
+  "Lesson 92 — Crafting an Editorial Argument": {
+    pt: "Lição 92 — Construindo um argumento editorial",
+  },
+  "Building a concise, rhetorically controlled editorial argument": {
+    pt: "Construção de um argumento editorial conciso e retoricamente controlado",
+  },
+  "Build a concise editorial argument with a defensible thesis, a fair concession, controlled rhetoric, and a proportionate call to action.": {
+    pt: "Construir um argumento editorial conciso, com uma tese defensável, uma concessão justa, retórica controlada e uma chamada à ação proporcional.",
+  },
+  "How does the writer revise the editorial?": {
+    pt: "Como o autor revisa o editorial?",
+  },
+  "It argues for a monitored extension of a limited trial": {
+    pt: "Ele passa a defender a extensão monitorada de um teste limitado",
+  },
+  "It demands an immediate permanent ban across the city": {
+    pt: "Ele exige uma proibição permanente e imediata em toda a cidade",
+  },
+  "It withdraws any claim that the trial produced evidence": {
+    pt: "Ele retira qualquer afirmação de que o teste produziu evidências",
+  },
+  "What is the strongest objection?": {
+    pt: "Qual é a objeção mais forte?",
+  },
+  "Traffic may be displaced to neighbouring streets": {
+    pt: "O trânsito pode ser deslocado para as ruas vizinhas",
+  },
+  "Emergency vehicles were unable to enter the area": {
+    pt: "Veículos de emergência não conseguiram entrar na área",
+  },
+  "Footfall declined throughout the trial": {
+    pt: "O fluxo de pedestres caiu ao longo do teste",
+  },
+  "Which baseline does the editor recommend?": {
+    pt: "Que parâmetro de comparação o editor recomenda?",
+  },
+  "The current situation": {
+    pt: "A situação atual",
+  },
+  "A perfect transport system": {
+    pt: "Um sistema de transporte perfeito",
+  },
+  "A city with no central streets": {
+    pt: "Uma cidade sem ruas centrais",
+  },
+  "Make a concise editorial case for a specific action. Narrow the thesis to the evidence, state the strongest objection fairly, compare action with the status quo, and end with a proportionate call to action.": {
+    pt: "Defenda de forma concisa uma ação específica em um editorial. Ajuste a tese ao que as evidências sustentam, apresente com justiça a objeção mais forte, compare a ação com o status quo e termine com uma chamada à ação proporcional.",
+  },
+  "Replace sweeping language with the strongest defensible claim, concede one legitimate concern, and match rhetorical urgency to the evidence.": {
+    pt: "Substitua as generalizações pela afirmação mais forte que você consiga defender, reconheça uma preocupação legítima e ajuste a urgência retórica ao peso das evidências.",
+  },
+
+  /* c2-debate-synthesis */
+  "Lesson 93 — Synthesising a Complex Debate": {
+    pt: "Lição 93 — Sintetizando um debate complexo",
+  },
+  "Synthesizing dense debate without flattening disagreement": {
+    pt: "Síntese de debates densos sem achatar as divergências",
+  },
+  "Synthesise a dense debate by mapping distinct claims, evidence, values, and uncertainties while preserving disagreements that cannot honestly be reconciled.": {
+    pt: "Sintetizar um debate denso mapeando afirmações, evidências, valores e incertezas distintos, preservando as divergências que não podem ser honestamente conciliadas.",
+  },
+  "What does the analyst's synthesis preserve?": {
+    pt: "O que a síntese do analista preserva?",
+  },
+  "Limited empirical agreement and a genuine ethical disagreement": {
+    pt: "Um acordo empírico limitado e uma divergência ética genuína",
+  },
+  "Complete consensus that automated screening is harmless": {
+    pt: "Um consenso completo de que a triagem automatizada é inofensiva",
+  },
+  "A single question with one uncontested answer": {
+    pt: "Uma única pergunta com uma resposta incontestada",
+  },
+  "Which short-term claim has the strongest evidence?": {
+    pt: "Que afirmação de curto prazo tem as evidências mais fortes?",
+  },
+  "Screening detects more inconsistent applications": {
+    pt: "A triagem detecta mais inscrições inconsistentes",
+  },
+  "Screening eliminates every wrong decision": {
+    pt: "A triagem elimina toda decisão equivocada",
+  },
+  "Screening has no effect on administrative work": {
+    pt: "A triagem não tem efeito algum sobre o trabalho administrativo",
+  },
+  "What issue remains unresolved?": {
+    pt: "Que questão permanece sem solução?",
+  },
+  "Who should bear the risk of a wrong decision": {
+    pt: "Quem deve arcar com o risco de uma decisão equivocada",
+  },
+  "Whether errors can occur in public administration": {
+    pt: "Se podem ocorrer erros na administração pública",
+  },
+  "Whether applications contain any information": {
+    pt: "Se as inscrições contêm alguma informação",
+  },
+  "Synthesise a complex debate with several speakers or sources. Separate the questions and claim types, state where evidence and values align or diverge, and preserve one genuinely unresolved issue.": {
+    pt: "Sintetize um debate complexo com vários interlocutores ou fontes. Separe as perguntas e os tipos de afirmação, indique onde evidências e valores convergem ou divergem e preserve uma questão genuinamente sem solução.",
+  },
+  "Do not average positions into vague middle ground; classify each claim, distinguish apparent from genuine contradiction, and state the residual disagreement precisely.": {
+    pt: "Não faça a média das posições em um meio-termo vago; classifique cada afirmação, distinga contradição aparente de contradição genuína e enuncie com precisão a divergência remanescente.",
+  },
+
+  /* a2-shopping */
+  "Lesson 11 — Shopping": { pt: "Lição 11 — Compras" },
+  "Shopping and prices": { pt: "Compras e preços" },
+
+  /* a2-past */
+  "Lesson 12 — Last Weekend": { pt: "Lição 12 — No fim de semana passado" },
+  "Simple past for everyday stories": { pt: "Passado simples para histórias do dia a dia" },
+
+  /* a2-plans */
+  "Lesson 13 — Making Plans": { pt: "Lição 13 — Fazendo planos" },
+  "Inviting, suggesting, and confirming": { pt: "Convidar, sugerir e confirmar" },
+
+  /* a2-travel */
+  "Lesson 14 — Getting around": { pt: "Lição 14 — Circulando pela cidade" },
+  "Travel and public transport": { pt: "Viagens e transporte público" },
+
+  /* a2-health */
+  "Lesson 15 — At the doctor": { pt: "Lição 15 — No médico" },
+  "Health and feeling unwell": { pt: "Saúde e mal-estar" },
+
+  /* b1-opinions */
+  "Lesson 16 — Opinions and Agreement": { pt: "Lição 16 — Opiniões e concordância" },
+  "Giving opinions and reacting to them": { pt: "Dar opiniões e reagir a elas" },
+
+  /* b1-experiences */
+  "Lesson 17 — Past Experiences": { pt: "Lição 17 — Experiências passadas" },
+  "Present perfect for life experiences": { pt: "Present perfect para experiências de vida" },
+
+  /* b1-future */
+  "Lesson 18 — Future Plans": { pt: "Lição 18 — Planos futuros" },
+  "Talking about plans and predictions": { pt: "Falar sobre planos e previsões" },
+
+  /* b1-work */
+  "Lesson 19 — At Work": { pt: "Lição 19 — No trabalho" },
+  "Everyday phrases for the workplace": { pt: "Frases do dia a dia no ambiente de trabalho" },
+
+  /* b1-problems */
+  "Lesson 20 — Sorting out problems": { pt: "Lição 20 — Resolvendo problemas" },
+  "Complaints and finding a solution": { pt: "Reclamações e busca de solução" },
+
+  /* b1-phone */
+  "Lesson 21 — On the phone": { pt: "Lição 21 — Ao telefone" },
+  "Handling everyday phone calls": { pt: "Lidar com ligações do dia a dia" },
+
+  /* b2-arguments */
+  "Lesson 22 — Making Arguments": { pt: "Lição 22 — Construindo argumentos" },
+  "Debating and defending a position": { pt: "Debater e defender uma posição" },
+
+  /* b2-conditionals */
+  "Lesson 23 — Hypotheticals": { pt: "Lição 23 — Hipóteses" },
+  "Conditionals and unreal situations": { pt: "Condicionais e situações irreais" },
+
+  /* b2-negotiation */
+  "Lesson 24 — Negotiating": { pt: "Lição 24 — Negociando" },
+  "Reaching an agreement": { pt: "Chegar a um acordo" },
+
+  /* b2-trends */
+  "Lesson 25 — Trends and Data": { pt: "Lição 25 — Tendências e dados" },
+  "Describing changes and numbers": { pt: "Descrever mudanças e números" },
+
+  /* c1-nuance */
+  "Lesson 26 — Nuance and Stance": { pt: "Lição 26 — Nuances e posicionamento" },
+
+  /* c1-register */
+  "Lesson 27 — Register and Professional Tone": { pt: "Lição 27 — Registro e tom profissional" },
+
+  /* c2-precision */
+  "Lesson 28 — Precision and Emphasis": { pt: "Lição 28 — Precisão e ênfase" },
+
+  /* c2-rhetoric */
+  "Lesson 29 — Rhetorical Control": { pt: "Lição 29 — Controle retórico" },
   "Complete Lesson 1 — Greetings": { pt: "Complete a Lição 1 — Cumprimentos" },
   "Complete Lesson 2 — Names": { pt: "Complete a Lição 2 — Nomes" },
   "Complete Lesson 3 — Countries and Cities": { pt: "Complete a Lição 3 — Países e cidades" },
@@ -1012,6 +3562,96 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
 
   // Study/Review tab (StudyTab, StudyCard, GradeButtons, PerformanceStats,
   // SavedCardsBrowser, SessionSummary) and PronunciationCoach.
+  Progress: { pt: "Progresso" },
+  Library: { pt: "Biblioteca" },
+  "Review sections": { pt: "Seções da revisão" },
+  "Your review workspace": { pt: "Sua área de revisão" },
+  "Start with due phrases. Open practice, progress, or your library only when you need them.": {
+    pt: "Comece pelas frases pendentes. Abra a prática, o progresso ou a biblioteca só quando precisar.",
+  },
+  "Due now": { pt: "Para agora" },
+  "Review queue": { pt: "Fila de revisão" },
+  "{count} phrases need your attention": { pt: "{count} frases precisam da sua atenção" },
+  "Your review queue is clear": { pt: "Sua fila de revisão está em dia" },
+  "Recall each phrase before revealing the answer. Support is available when you need it.": {
+    pt: "Tente lembrar cada frase antes de revelar a resposta. Use a ajuda quando precisar.",
+  },
+  "You can stop here, choose a light session, or add a small batch of new phrases.": {
+    pt: "Você pode parar por aqui, escolher uma sessão leve ou adicionar um pequeno lote de frases novas.",
+  },
+  "Review recommendation": { pt: "Recomendação de revisão" },
+  "Other ways to practice": { pt: "Outras formas de praticar" },
+  "Practice plan": { pt: "Plano de prática" },
+  "Turn recall into usable language": { pt: "Transforme lembrança em inglês que você consegue usar" },
+  "Follow the recommended mix, resume today's learning loop, or reuse a saved phrase in a new context.": {
+    pt: "Siga a combinação recomendada, retome o ciclo de hoje ou reutilize uma frase salva em outro contexto.",
+  },
+  "Progress and focus": { pt: "Progresso e foco" },
+  "See what needs attention next": { pt: "Veja o que precisa de atenção agora" },
+  "Start with recurring weak spots, then use the detailed signals to adjust your practice.": {
+    pt: "Comece pelos pontos fracos recorrentes e use os sinais detalhados para ajustar sua prática.",
+  },
+  "Phrase library": { pt: "Biblioteca de frases" },
+  "Find a saved practice phrase": { pt: "Encontre uma frase salva" },
+  "Search the phrases, corrections, and contexts you have collected without interrupting your review queue.": {
+    pt: "Busque as frases, correções e contextos que você reuniu sem interromper sua fila de revisão.",
+  },
+  "Today's practice plan": { pt: "Plano de prática de hoje" },
+  "Resume your input-to-output loop": { pt: "Retome seu ciclo de entrada para saída" },
+  "Completed stages are tracked from your activity, so you can leave and return without losing your place.": {
+    pt: "As etapas concluídas são registradas pela sua atividade, então você pode sair e voltar sem perder o ponto.",
+  },
+  "Session length": { pt: "Duração da sessão" },
+  "Session complete": { pt: "Sessão concluída" },
+  "Next · Step {step} of {total}": { pt: "Agora · Etapa {step} de {total}" },
+  "Start a new loop when you want to work on another area.": {
+    pt: "Comece outro ciclo quando quiser trabalhar uma área diferente.",
+  },
+  "{done}/{total} complete": { pt: "{done}/{total} concluídas" },
+  "Weekly focus · {focus}": { pt: "Foco da semana · {focus}" },
+  "{days}/7 active days": { pt: "{days}/7 dias ativos" },
+  "Weekly rhythm details": { pt: "Detalhes do ritmo semanal" },
+  "Next rhythm focus · {focus}. {guidance}": { pt: "Próximo foco · {focus}. {guidance}" },
+  "Seven-day practice rhythm": { pt: "Ritmo de prática de sete dias" },
+  "Step {step}": { pt: "Etapa {step}" },
+  "Needs attention": { pt: "Precisa de atenção" },
+  "Recurring patterns from your reviews, ordered by how often they cause difficulty.": {
+    pt: "Padrões recorrentes das suas revisões, ordenados pela frequência com que causam dificuldade.",
+  },
+  "{count} patterns": { pt: "{count} padrões" },
+  "Create variants": { pt: "Criar variações" },
+  "Search saved phrases": { pt: "Buscar frases salvas" },
+  "This week": { pt: "Esta semana" },
+  "Building up": { pt: "Ganhando ritmo" },
+  "In the zone": { pt: "No ritmo certo" },
+  "Big week": { pt: "Semana intensa" },
+  Conversations: { pt: "Conversas" },
+  "Output turns": { pt: "Turnos produzidos" },
+  "Weekly goal": { pt: "Meta semanal" },
+  "Decrease goal": { pt: "Diminuir meta" },
+  "Increase goal": { pt: "Aumentar meta" },
+  "{count} more conversation(s) to hit your goal.": { pt: "Mais {count} conversa(s) para alcançar sua meta." },
+  "Right amount of challenge — keep it up.": { pt: "Um bom nível de desafio — continue assim." },
+  "You're well past your goal this week. Rest counts too.": {
+    pt: "Você já passou bastante da meta desta semana. Descansar também conta.",
+  },
+  "Use a saved idea in a new context": { pt: "Use uma ideia salva em outro contexto" },
+  "Write or speak a short response, then decide whether the meaning was clear.": {
+    pt: "Escreva ou fale uma resposta curta e depois avalie se o sentido ficou claro.",
+  },
+  "Support · {stage}": { pt: "Apoio · {stage}" },
+  "Guidance · {guidance}": { pt: "Orientação · {guidance}" },
+  "Recurring pattern": { pt: "Padrão recorrente" },
+  "Play prompt": { pt: "Ouvir enunciado" },
+  "Your response": { pt: "Sua resposta" },
+  "Record response": { pt: "Gravar resposta" },
+  "You can also type your response.": { pt: "Você também pode digitar a resposta." },
+  "Continue to self-check": { pt: "Continuar para autoavaliação" },
+  "Response saved": { pt: "Resposta salva" },
+  "Was the meaning clear?": { pt: "O sentido ficou claro?" },
+  "Your answer records transfer evidence and helps adjust future support.": {
+    pt: "Sua resposta registra evidência de transferência e ajuda a ajustar o apoio futuro.",
+  },
   "Again": { pt: "De novo" },
   "Hard": { pt: "Difícil" },
   "Good": { pt: "Bom" },
@@ -1028,6 +3668,54 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "Practice phrase": { pt: "Frase para praticar" },
   "{count} in today's queue": { pt: "{count} na fila de hoje" },
   "Show answer": { pt: "Mostrar resposta" },
+  "Say it in English, then check.": { pt: "Diga em inglês e depois confira." },
+  "D+30 unaided production": { pt: "Produção sem ajuda em D+30" },
+  "D30 observed production": { pt: "Produção observada em D30" },
+  "learning evidence": { pt: "evidência de aprendizagem" },
+  "{count} observed": { pt: "{count} observadas" },
+  "Write or speak a short response. PhraseLoop checks it before the review is complete.": { pt: "Escreva ou fale uma resposta curta. O PhraseLoop verifica antes de concluir a revisão." },
+  "Check response": { pt: "Verificar resposta" },
+  "Transfer confirmed": { pt: "Transferência confirmada" },
+  "Try once more": { pt: "Tente mais uma vez" },
+  "Evaluation unavailable": { pt: "Avaliação indisponível" },
+  "Finish transfer": { pt: "Concluir transferência" },
+  "Retry without seeing the answer": { pt: "Tentar novamente sem ver a resposta" },
+  "Reviews complete": { pt: "Revisões concluídas" },
+  "Complete the evaluated transfer check below to finish this session.": { pt: "Conclua a verificação avaliada de transferência abaixo para finalizar esta sessão." },
+  "The model answer stays hidden until you submit the retry.": { pt: "A resposta-modelo fica oculta até você enviar a nova tentativa." },
+  "There is still one language point to fix. Try again without the model answer.": { pt: "Ainda há um ponto de língua a corrigir. Tente de novo sem a resposta-modelo." },
+  "There are still {count} language points to fix. Try again without the model answer.": { pt: "Ainda há {count} pontos de língua a corrigir. Tente de novo sem a resposta-modelo." },
+  "Stay with natural connected speech. Import authentic audio for a truly unfamiliar voice.": { pt: "Continue com fala conectada em velocidade natural. Importe áudio autêntico para ouvir uma voz realmente desconhecida." },
+  "The corrected model stays hidden until your second attempt is clear.": { pt: "O modelo corrigido fica oculto até sua segunda tentativa estar clara." },
+  "Checked for known errors only — connect an evaluator to have the answer itself judged.": { pt: "Verificamos só os erros conhecidos — conecte um avaliador para que a resposta em si seja avaliada." },
+  "Write something before checking.": { pt: "Escreva algo antes de verificar." },
+  "Answer the situation in a full sentence.": { pt: "Responda à situação com uma frase completa." },
+  "This repeats the task back. Say what you would actually say in that situation.": { pt: "Isso apenas repete o enunciado. Diga o que você realmente diria nessa situação." },
+  "Restate the meaning more precisely, then try again.": { pt: "Reformule o significado com mais precisão e tente novamente." },
+  "Use the target pattern without copying the model answer.": { pt: "Use o padrão-alvo sem copiar a resposta-modelo." },
+  "Pass at least 80% of observed D30 production attempts.": { pt: "Acerte pelo menos 80% das tentativas de produção observadas em D30." },
+  "Broad learning evidence": { pt: "Evidência ampla de aprendizagem" },
+  "Build evaluated evidence across recall, grammar, comprehension, and production.": { pt: "Construa evidência avaliada em recuperação, gramática, compreensão e produção." },
+  "{correct}/{attempts} answers produced correctly before reveal around day 30.": { pt: "{correct}/{attempts} respostas produzidas corretamente antes da revelação por volta do dia 30." },
+  "Not enough evidence yet: PhraseLoop needs an unaided answer recorded around day 30.": { pt: "Ainda não há evidência suficiente: o PhraseLoop precisa registrar uma resposta sem ajuda por volta do dia 30." },
+  "You can say this now": { pt: "Você já consegue dizer" },
+  "Production phrases recalled without help after at least {days} days away.": {
+    pt: "Frases de produção lembradas sem ajuda após pelo menos {days} dias sem vê-las.",
+  },
+  "{count} held": { pt: "{count} consolidadas" },
+  "Your first phrase appears here after a later unaided review confirms it held.": {
+    pt: "Sua primeira frase aparecerá aqui quando uma revisão futura sem ajuda confirmar que ela ficou.",
+  },
+  "Not measured yet": { pt: "Ainda não medido" },
+  "{percent}% of {count}": { pt: "{percent}% de {count}" },
+  "No qualifying attempt": { pt: "Nenhuma tentativa válida" },
+  "At or above 40%": { pt: "40% ou mais" },
+  "Under 40%": { pt: "Abaixo de 40%" },
+  "Unaided production counts PT→EN cards answered with no hint, no replay and no reveal, at least {rest} days after the learner last saw them ({cards} cards).": {
+    pt: "Produção sem ajuda conta cards PT→EN respondidos sem dica, sem repetir o áudio e sem revelar a resposta, pelo menos {rest} dias depois da última vez que a pessoa viu o card ({cards} cards).",
+  },
+  "PT → EN": { pt: "PT → EN" },
+  "EN → PT": { pt: "EN → PT" },
   "Listen & repeat": { pt: "Ouvir e repetir" },
   "You've struggled with this one — hear it first, then say it back.": {
     pt: "Você tem tido dificuldade com esta — ouça primeiro, depois repita em voz alta.",
@@ -1062,6 +3750,17 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
     pt: "Amanhã: {count} frases te esperam.",
   },
   "Performance": { pt: "Desempenho" },
+  "Due-review rhythm": { pt: "Ritmo de revisões no prazo" },
+  "{done} of {total} scheduled reviews were completed on their due day.": {
+    pt: "{done} de {total} revisões agendadas foram concluídas no dia previsto.",
+  },
+  "Tracking starts with your next scheduled review.": {
+    pt: "O acompanhamento começa na sua próxima revisão agendada.",
+  },
+  "{count} due day(s) in rhythm": { pt: "{count} dia(s) de revisão no ritmo" },
+  "Days with nothing due are rest days and never interrupt this rhythm.": {
+    pt: "Dias sem revisões previstas são dias de descanso e nunca interrompem esse ritmo.",
+  },
   "Reviews": { pt: "Revisões" },
   "Accuracy": { pt: "Acerto" },
   "Streak": { pt: "Sequência" },
@@ -1140,13 +3839,34 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "Recommended": { pt: "Recomendado" },
   "Pronunciation": { pt: "Pronúncia" },
   "Listen, repeat, then check what was heard.": { pt: "Ouça, repita e depois veja o que foi reconhecido." },
+  "This is a transcript-alignment signal, not phonemic pronunciation scoring.": {
+    pt: "Isto é um sinal de alinhamento com a transcrição, não uma avaliação fonêmica de pronúncia.",
+  },
   "Playing...": { pt: "Tocando..." },
   "Checking...": { pt: "Verificando..." },
   "Try again": { pt: "Tentar de novo" },
+  "Write it again, using the correction": { pt: "Escreva de novo, usando a correção" },
+  "Feedback sticks when you use it immediately. Say the same idea, the clearer way.": {
+    pt: "O feedback fixa quando você usa na hora. Diga a mesma ideia, do jeito mais claro.",
+  },
+  "Check my second attempt": { pt: "Verificar minha segunda tentativa" },
+  "That's clear now. Saved for tomorrow's practice.": {
+    pt: "Agora ficou claro. Salvo para a prática de amanhã.",
+  },
+  "Still one thing to fix: {correction}": { pt: "Ainda falta um ajuste: {correction}" },
+  "Still {count} things to fix. Compare with the corrections above.": {
+    pt: "Ainda faltam {count} ajustes. Compare com as correções acima.",
+  },
   "Record": { pt: "Gravar" },
   "Completeness": { pt: "Completude" },
   "Rhythm": { pt: "Ritmo" },
   "Heard: {transcript}": { pt: "Reconhecido: {transcript}" },
+  "Use the score to compare your own attempts over time; it does not judge individual sounds or accent.": {
+    pt: "Use a pontuação para comparar suas próprias tentativas ao longo do tempo; ela não julga sons individuais nem sotaque.",
+  },
+  "This comparison uses transcript alignment and recording length only; it is a longitudinal practice signal, not a phonemic pronunciation diagnosis.": {
+    pt: "Esta comparação usa apenas alinhamento com a transcrição e duração da gravação; é um sinal longitudinal de prática, não um diagnóstico fonêmico de pronúncia.",
+  },
   "Couldn't play the reference audio.": { pt: "Não foi possível tocar o áudio de referência." },
   "Couldn't make out any speech in that clip.": { pt: "Não foi possível reconhecer fala nesse áudio." },
   "Pronunciation assessment failed.": { pt: "A avaliação de pronúncia falhou." },
@@ -1195,7 +3915,7 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
     pt: "Mais erros desse tipo na sua escrita ao longo do tempo",
   },
 
-  /* ── c1 diagnosis (experimental, pre-W5 exception) ─────────── */
+  /* ── c1 diagnosis (experimental) ─────────── */
   "C1 diagnosis": { pt: "Diagnóstico C1" },
   "C1 diagnosis (experimental)": { pt: "Diagnóstico C1 (experimental)" },
   "Register, naturalness, and collocation feedback for past B1/B2 writing.": {
@@ -1239,7 +3959,7 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   Hide: { pt: "Ocultar" },
   "Practice speaking": { pt: "Praticar a fala" },
 
-  "cards reviewed": { pt: "cartões revisados" },
+  "phrases reviewed": { pt: "frases revisadas" },
   accuracy: { pt: "precisão" },
 
   /* ── level advancement: readiness coach + level test ────── */
@@ -1257,6 +3977,11 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   pending: { pt: "pendente" },
   "What's in the way": { pt: "O que está no caminho" },
   "Take the level test": { pt: "Fazer o teste de nível" },
+  "Not sure? Take a 5-minute check": { pt: "Não tem certeza? Faça um teste de 5 minutos" },
+  "Play": { pt: "Tocar" },
+  "Weekly transfer": { pt: "Transferência da semana" },
+  "Use one saved phrase somewhere new": { pt: "Use uma frase salva em uma situação nova" },
+  "Practice transfer": { pt: "Praticar transferência" },
   "Available again in {count} day(s).": { pt: "Disponível de novo em {count} dia(s)." },
   "Next step: {criterion}.": { pt: "Próximo passo: {criterion}." },
   "Level test: {from} → {to}": { pt: "Teste de nível: {from} → {to}" },
@@ -1421,4 +4146,1118 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   AI: { pt: "IA" },
   unavailable: { pt: "indisponível" },
   "Ollama model": { pt: "Modelo Ollama" },
+
+  // The method's next-action card (learningLoop) and the speaking surfaces. The eight
+  // stages are what Hoje recommends, so this copy is the learner's whole view of the
+  // method — it was previously English-only even for PT-BR learners.
+  "Listen before adding more cards": { pt: "Ouça antes de adicionar mais cartões" },
+  "Spend a few minutes with real English. Catch the topic, known words, and one useful phrase.": {
+    pt: "Passe alguns minutos com inglês real. Capte o tema, palavras conhecidas e uma frase útil.",
+  },
+  "Find listening": { pt: "Encontrar áudio" },
+  "Keep what you just heard": { pt: "Guarde o que você acabou de ouvir" },
+  "You listened, but nothing was saved. Pull out the two or three phrases you would actually use.": {
+    pt: "Você ouviu, mas nada foi salvo. Separe as duas ou três frases que você realmente usaria.",
+  },
+  "Pick phrases to keep": { pt: "Escolher frases para guardar" },
+  "Say the phrase out loud": { pt: "Diga a frase em voz alta" },
+  "Imitate the model line first. Repeating what you noticed is what makes it available when you speak.": {
+    pt: "Imite o modelo primeiro. Repetir o que você notou é o que deixa a frase disponível na hora de falar.",
+  },
+  "Listen and repeat": { pt: "Ouvir e repetir" },
+  "Produce English out loud": { pt: "Produza inglês em voz alta" },
+  "Answer one short prompt in your own voice, using a phrase you already saved.": {
+    pt: "Responda a uma pergunta curta com a sua voz, usando uma frase que você já salvou.",
+  },
+  "Speak now": { pt: "Falar agora" },
+  "Write, get feedback, then try again": { pt: "Escreva, receba feedback e tente de novo" },
+  "A short answer is enough. The important step is applying the correction immediately.": {
+    pt: "Uma resposta curta basta. O importante é aplicar a correção imediatamente.",
+  },
+  "Open Mistakes": { pt: "Abrir Erros" },
+  "Review to make phrases usable": { pt: "Revise para tornar as frases utilizáveis" },
+  "Use active recall before adding new material, so your useful phrases stay available.": {
+    pt: "Use recuperação ativa antes de adicionar material novo, para que suas frases úteis continuem disponíveis.",
+  },
+  "Start with one useful phrase": { pt: "Comece com uma frase útil" },
+  "Learn it, hear it, repeat it, then use it in your own sentence.": {
+    pt: "Aprenda, ouça, repita e use em uma frase sua.",
+  },
+  "Try a corrected idea again": { pt: "Tente de novo uma ideia corrigida" },
+  "Feedback only sticks when you immediately say or write a clearer version.": {
+    pt: "O feedback só fixa quando você diz ou escreve uma versão mais clara na hora.",
+  },
+
+  // Guided speaking (the beginner Speak surface) and the lesson's spoken production.
+  // "Speak", "Back", and "Try again" are already translated above.
+  Done: { pt: "Concluído" },
+  "Warm up, then say something of your own": { pt: "Aqueça e depois diga algo seu" },
+  "Imitate the model line first. You do not need to sound perfect — you need to be understood.": {
+    pt: "Imite o modelo primeiro. Você não precisa soar perfeito — precisa ser compreendido.",
+  },
+  "Repeat {current} of {total}": { pt: "Repetição {current} de {total}" },
+  "Listen, then say it back. Match the rhythm, not every sound.": {
+    pt: "Ouça e repita. Acompanhe o ritmo, não cada som.",
+  },
+  "Say one sentence of your own using this phrase.": {
+    pt: "Diga uma frase sua usando esta expressão.",
+  },
+  "No speaking material is available yet.": { pt: "Ainda não há material de fala disponível." },
+  "You spoke English and saved a sentence of your own. It comes back in review tomorrow.": {
+    pt: "Você falou inglês e salvou uma frase sua. Ela volta na revisão amanhã.",
+  },
+  "Say your sentence": { pt: "Diga sua frase" },
+  "Say it again": { pt: "Diga de novo" },
+  "Speak, or write your sentence here…": { pt: "Fale, ou escreva sua frase aqui…" },
+  "Say one sentence in English": { pt: "Diga uma frase em inglês" },
+
+  // The method-balance card (the learner's only view of the four study areas).
+  "Input → output method": { pt: "Método entrada → saída" },
+  "Practice phrases are due": { pt: "Há frases para revisar" },
+  "Review first. Retrieval is the structured part that keeps input available for speaking.": {
+    pt: "Revise primeiro. A recuperação é a parte estruturada que mantém o input disponível para falar.",
+  },
+  "~{count} min": { pt: "~{count} min" },
+  // The four area labels ("Study" / "Listen" / "Speak" / "Write") are already translated.
+
+  // Shared app hierarchy and workflow orientation.
+  "Your day": { pt: "Seu dia" },
+  "Start with the next useful action. Your plan and saved work stay within reach.": {
+    pt: "Comece pela próxima ação útil. Seu plano e o que você salvou continuam ao alcance.",
+  },
+  "Build your phrase library": { pt: "Construa sua biblioteca de frases" },
+  "Bring in useful English, choose what matters, and turn it into focused daily practice.": {
+    pt: "Traga inglês útil, escolha o que importa e transforme em prática diária focada.",
+  },
+  "Phrase workflow": { pt: "Fluxo de frases" },
+  "Choose source": { pt: "Escolha a fonte" },
+  "Pick phrases": { pt: "Escolha frases" },
+  "Use one now": { pt: "Use uma agora" },
+  "Choose a source": { pt: "Escolha uma fonte" },
+  "Learn from your output": { pt: "Aprenda com o que você produz" },
+  "Get focused feedback, try the important correction again, and save only what is worth reviewing.": {
+    pt: "Receba feedback focado, refaça a correção importante e salve só o que vale revisar.",
+  },
+  "Correction workflow": { pt: "Fluxo de correção" },
+  "Add your output": { pt: "Adicione sua produção" },
+  "Review and retry": { pt: "Revise e tente de novo" },
+  "Save for review": { pt: "Salve para revisar" },
+  "Add something to correct": { pt: "Adicione algo para corrigir" },
+  "Paste or speak freely, or enter a correction you already know.": {
+    pt: "Cole ou fale livremente, ou insira uma correção que você já conhece.",
+  },
+  "Context and advanced options": { pt: "Contexto e opções avançadas" },
+  "Add a situation, import correction JSON, or temporarily change the AI.": {
+    pt: "Adicione uma situação, importe um JSON de correções ou troque a IA temporariamente.",
+  },
+  "{label}, {count} due": { pt: "{label}, {count} pendentes" },
+  "Review register, naturalness, and collocation at an advanced level.": {
+    pt: "Revise registro, naturalidade e colocações em nível avançado.",
+  },
+  "Repeat a useful phrase, then use it in a sentence of your own.": {
+    pt: "Repita uma frase útil e depois use-a em uma frase sua.",
+  },
+  "Practice a real conversation and retry the most important correction.": {
+    pt: "Pratique uma conversa real e refaça a correção mais importante.",
+  },
+  "Settings sections": { pt: "Seções das configurações" },
+  "Data and privacy": { pt: "Dados e privacidade" },
+  "AI and tools": { pt: "IA e ferramentas" },
+
+  /* ── Legacy A1/A2 authored lesson material from pedagogy audit ─── */
+  "Greet someone, answer politely, and close a short first meeting.": { pt: "Cumprimente alguém, responda de forma educada e encerre uma primeira conversa curta." },
+  "Keep greetings short and clear: HEL-lo, good MOR-ning, see you SOON.": { pt: "Mantenha os cumprimentos curtos e claros: HEL-lo, good MOR-ning, see you SOON." },
+  "What is happening in the conversation?": { pt: "O que está acontecendo na conversa?" },
+  "Two people greet each other": { pt: "Duas pessoas se cumprimentam" },
+  "Two people order lunch": { pt: "Duas pessoas pedem almoço" },
+  "Two people ask for directions": { pt: "Duas pessoas pedem direções" },
+  "How does Ana say she feels?": { pt: "Como Ana diz que se sente?" },
+  "She is fine": { pt: "Ela está bem" },
+  "She is tired": { pt: "Ela está cansada" },
+  "She is late": { pt: "Ela está atrasada" },
+  "What do they say at the end?": { pt: "O que eles dizem no final?" },
+  "I need help": { pt: "Eu preciso de ajuda" },
+  "Greet someone for the first time, say how you are, and say goodbye.": { pt: "Cumprimente alguém pela primeira vez, diga como você está e se despeça." },
+  "Use one greeting, one answer to How are you?, and one goodbye phrase.": { pt: "Use um cumprimento, uma resposta para How are you? e uma frase de despedida." },
+  "Introduce yourself, ask a name, and say where you are from.": { pt: "Apresente-se, pergunte um nome e diga de onde você é." },
+  "Link short introductions smoothly: my NAME is, I'm FROM, I LIVE in.": { pt: "Ligue apresentações curtas com naturalidade: my NAME is, I'm FROM, I LIVE in." },
+  "What are Ana and Pedro doing?": { pt: "O que Ana e Pedro estão fazendo?" },
+  "Introducing themselves": { pt: "Apresentando-se" },
+  "Buying tickets": { pt: "Comprando ingressos" },
+  "Talking about dinner": { pt: "Falando sobre o jantar" },
+  "Where is Pedro from?": { pt: "De onde Pedro é?" },
+  "Brazil": { pt: "Brasil" },
+  "Canada": { pt: "Canadá" },
+  "Portugal": { pt: "Portugal" },
+  "What does Ana ask after Pedro says his name?": { pt: "O que Ana pergunta depois que Pedro diz o nome?" },
+  "Where are you from?": { pt: "De onde você é?" },
+  "Can you help me?": { pt: "Você pode me ajudar?" },
+  "How much is this?": { pt: "Quanto custa isto?" },
+  "Introduce yourself. Say your name, where you are from, and where you live.": { pt: "Apresente-se. Diga seu nome, de onde você é e onde mora." },
+  "Use My name is or I'm, then add I'm from and I live in.": { pt: "Use My name is ou I'm, depois acrescente I'm from e I live in." },
+  "Describe a simple place and ask if it is near or far.": { pt: "Descreva um lugar simples e pergunte se ele fica perto ou longe." },
+  "Stress place words clearly: HERE, THERE, NEAR the CEN-ter, not FAR.": { pt: "Enfatize claramente as palavras de lugar: HERE, THERE, NEAR the CEN-ter, not FAR." },
+  "What are they talking about?": { pt: "Sobre o que eles estão conversando?" },
+  "Places in a city": { pt: "Lugares em uma cidade" },
+  "Family names": { pt: "Nomes de família" },
+  "Food at a cafe": { pt: "Comida em um café" },
+  "Where does Lia live?": { pt: "Onde Lia mora?" },
+  "Near the center": { pt: "Perto do centro" },
+  "Across from the park": { pt: "Em frente ao parque" },
+  "Inside a hotel": { pt: "Dentro de um hotel" },
+  "What does Tom ask first?": { pt: "O que Tom pergunta primeiro?" },
+  "Is it far?": { pt: "É longe?" },
+  "What is your name?": { pt: "Qual é o seu nome?" },
+  "Do you take cards?": { pt: "Vocês aceitam cartão?" },
+  "Describe your city or neighborhood. Say one place that is here, there, near, or far.": { pt: "Descreva sua cidade ou bairro. Diga um lugar que fica aqui, ali, perto ou longe." },
+  "Use one full sentence with is and one location word like here, there, near, or far.": { pt: "Use uma frase completa com is e uma palavra de localização como here, there, near ou far." },
+  "Use am, are, and is in simple statements and questions.": { pt: "Use am, are e is em afirmações e perguntas simples." },
+  "Do not drop the be verb: I AM ready, you ARE right, it IS easy.": { pt: "Não deixe o verbo be de fora: I AM ready, you ARE right, it IS easy." },
+  "What grammar pattern do you hear?": { pt: "Que padrão gramatical você ouve?" },
+  "Simple sentences with be": { pt: "Frases simples com be" },
+  "Past stories with went": { pt: "Histórias no passado com went" },
+  "Food requests": { pt: "Pedidos de comida" },
+  "How does Leo feel?": { pt: "Como Leo se sente?" },
+  "Ready": { pt: "Pronto" },
+  "Busy": { pt: "Ocupado" },
+  "Lost": { pt: "Perdido" },
+  "What does Mia say after Leo is ready?": { pt: "O que Mia diz depois que Leo está pronto?" },
+  "We are here": { pt: "Estamos aqui" },
+  "I don't eat meat": { pt: "Eu não como carne" },
+  "Turn left": { pt: "Vire à esquerda" },
+  "Say three short sentences about yourself or people near you using am, are, and is.": { pt: "Diga três frases curtas sobre você ou pessoas próximas usando am, are e is." },
+  "Check that every sentence has a subject and the right be form: I am, you/we/they are, he/she/it is.": { pt: "Confira se cada frase tem sujeito e a forma certa de be: I am, you/we/they are, he/she/it is." },
+  "Talk about work or study and ask for simple help.": { pt: "Fale sobre trabalho ou estudo e peça ajuda simples." },
+  "Keep request rhythm polite: CAN you HELP me? THANK you for your HELP.": { pt: "Mantenha o ritmo do pedido educado: CAN you HELP me? THANK you for your HELP." },
+  "Work, study, and help": { pt: "Trabalho, estudo e ajuda" },
+  "Directions to a bank": { pt: "Direções até um banco" },
+  "Where does Nina work?": { pt: "Onde Nina trabalha?" },
+  "In a store": { pt: "Em uma loja" },
+  "In a hospital": { pt: "Em um hospital" },
+  "At a hotel": { pt: "Em um hotel" },
+  "What does Nina need today?": { pt: "Do que Nina precisa hoje?" },
+  "Help": { pt: "Ajuda" },
+  "Two tickets": { pt: "Dois ingressos" },
+  "A receipt": { pt: "Um recibo" },
+  "Say what you do or study, then ask someone for help politely.": { pt: "Diga o que você faz ou estuda, depois peça ajuda a alguém de forma educada." },
+  "Use I work in or I study, then ask Can you help me?": { pt: "Use I work in ou I study, depois pergunte Can you help me?" },
+  "Introduce family members and say what people have or do not have.": { pt: "Apresente familiares e diga o que as pessoas têm ou não têm." },
+  "Make plural endings audible: sister, brothers, parents, children.": { pt: "Deixe os plurais audíveis: sister, brothers, parents, children." },
+  "What is the conversation about?": { pt: "Sobre o que é a conversa?" },
+  "Family": { pt: "Família" },
+  "Daily routine": { pt: "Rotina diária" },
+  "Shopping": { pt: "Compras" },
+  "How many brothers does Ana have?": { pt: "Quantos irmãos Ana tem?" },
+  "Two": { pt: "Dois" },
+  "One": { pt: "Um" },
+  "Three": { pt: "Três" },
+  "Who does Ana introduce first?": { pt: "Quem Ana apresenta primeiro?" },
+  "Her mother and father": { pt: "A mãe e o pai dela" },
+  "Her teacher": { pt: "A professora dela" },
+  "Her children": { pt: "Os filhos dela" },
+  "Introduce two people in your family or a friend's family, then say one thing about them.": { pt: "Apresente duas pessoas da sua família ou da família de um amigo, depois diga algo sobre elas." },
+  "Use This is my, I have, or My family is. Watch singular and plural words.": { pt: "Use This is my, I have ou My family is. Preste atenção no singular e no plural." },
+  "Use numbers for age, prices, time, and simple quantities.": { pt: "Use números para idade, preços, horários e quantidades simples." },
+  "Separate number words clearly: TWEN-ty, THREE questions, at NINE.": { pt: "Separe bem as palavras numéricas: TWEN-ty, THREE questions, at NINE." },
+  "What information do they exchange?": { pt: "Que informações eles trocam?" },
+  "Age, time, and price": { pt: "Idade, horário e preço" },
+  "Restaurant orders": { pt: "Pedidos em restaurante" },
+  "What time does the class start?": { pt: "Que horas a aula começa?" },
+  "At nine": { pt: "Às nove" },
+  "At five": { pt: "Às cinco" },
+  "At ten": { pt: "Às dez" },
+  "What does Joao need?": { pt: "Do que João precisa?" },
+  "Three questions": { pt: "Três perguntas" },
+  "A phone number": { pt: "Um número de telefone" },
+  "Say your age or a simple price, then add one time or quantity.": { pt: "Diga sua idade ou um preço simples, depois acrescente um horário ou quantidade." },
+  "For age, use I am ... years old. For time, use at before the number.": { pt: "Para idade, use I am ... years old. Para horário, use at antes do número." },
+  "Describe a simple daily routine with present-tense actions.": { pt: "Descreva uma rotina diária simples com ações no presente." },
+  "Keep routine chunks smooth: wake UP, go TO work, AT night.": { pt: "Mantenha os blocos de rotina fluidos: wake UP, go TO work, AT night." },
+  "What is Mara describing?": { pt: "O que Mara está descrevendo?" },
+  "Her daily routine": { pt: "A rotina diária dela" },
+  "A shopping trip": { pt: "Uma ida às compras" },
+  "A doctor's visit": { pt: "Uma consulta médica" },
+  "When does Mara eat lunch?": { pt: "Quando Mara almoça?" },
+  "At noon": { pt: "Ao meio-dia" },
+  "At night": { pt: "À noite" },
+  "What does Leo do at night?": { pt: "O que Leo faz à noite?" },
+  "He studies": { pt: "Ele estuda" },
+  "He sleeps": { pt: "Ele dorme" },
+  "He drinks coffee": { pt: "Ele toma café" },
+  "Describe three things you do on a normal day.": { pt: "Descreva três coisas que você faz em um dia normal." },
+  "Start each sentence with I and use one time phrase like early, at noon, at night, or at eleven.": { pt: "Comece cada frase com I e use uma expressão de tempo como early, at noon, at night ou at eleven." },
+  "Order food politely, explain a preference, and ask to pay.": { pt: "Peça comida com educação, explique uma preferência e peça para pagar." },
+  "Soften polite requests: I'd LIKE a coffee, PLEASE; could we PAY, PLEASE?": { pt: "Suavize pedidos educados: I'd LIKE a coffee, PLEASE; could we PAY, PLEASE?" },
+  "Where does the conversation happen?": { pt: "Onde a conversa acontece?" },
+  "At a train station": { pt: "Em uma estação de trem" },
+  "In a classroom": { pt: "Em uma sala de aula" },
+  "What does Ana order?": { pt: "O que Ana pede?" },
+  "A coffee": { pt: "Um café" },
+  "A blue shirt": { pt: "Uma camisa azul" },
+  "What food preference does Ana mention?": { pt: "Que preferência alimentar Ana menciona?" },
+  "She doesn't eat meat": { pt: "Ela não come carne" },
+  "She doesn't drink coffee": { pt: "Ela não bebe café" },
+  "She wants extra salt": { pt: "Ela quer sal extra" },
+  "Order something in a cafe or restaurant. Ask one question about the food and ask to pay.": { pt: "Peça algo em um café ou restaurante. Faça uma pergunta sobre a comida e peça para pagar." },
+  "Use I'd like or Can I have, then add please. Use don't for one food preference if needed.": { pt: "Use I'd like ou Can I have, depois acrescente please. Use don't para uma preferência alimentar se precisar." },
+  "Ask for directions and understand a short route with landmarks.": { pt: "Peça direções e entenda um caminho curto com pontos de referência." },
+  "Stress route commands: go STRAIGHT, turn LEFT, turn RIGHT, next TO.": { pt: "Enfatize comandos de rota: go STRAIGHT, turn LEFT, turn RIGHT, next TO." },
+  "What does the visitor need?": { pt: "Do que o visitante precisa?" },
+  "Directions to the bank": { pt: "Direções até o banco" },
+  "A restaurant bill": { pt: "Uma conta de restaurante" },
+  "A doctor's appointment": { pt: "Uma consulta médica" },
+  "Where should the visitor turn left?": { pt: "Onde o visitante deve virar à esquerda?" },
+  "At the corner": { pt: "Na esquina" },
+  "After the park": { pt: "Depois do parque" },
+  "Inside the pharmacy": { pt: "Dentro da farmácia" },
+  "How long does the walk take?": { pt: "Quanto tempo a caminhada leva?" },
+  "About ten minutes": { pt: "Cerca de dez minutos" },
+  "About two hours": { pt: "Cerca de duas horas" },
+  "About five days": { pt: "Cerca de cinco dias" },
+  "Ask where a place is, then give a short route using two landmarks.": { pt: "Pergunte onde fica um lugar, depois dê um caminho curto usando dois pontos de referência." },
+  "Use Excuse me, where is...? and include two route words like straight, left, right, next to, or across from.": { pt: "Use Excuse me, where is...? e inclua duas palavras de rota como straight, left, right, next to ou across from." },
+  "See you soon": { pt: "Até logo" },
+  "Good afternoon": { pt: "Boa tarde" },
+  "Family and children": { pt: "Família e filhos" },
+
+  "Talk about today's weather and choose the right clothes.": { pt: "Fale sobre o tempo de hoje e escolha a roupa certa." },
+  "Blend it is into IT'S: IT'S sunny today; IT'S cold outside.": { pt: "Junte it is em IT'S: IT'S sunny today; IT'S cold outside." },
+  "Say what the weather is like today and what you are wearing.": { pt: "Diga como está o tempo hoje e o que você está usando." },
+  "Start with It's for the weather, then use I'm wearing for your clothes.": { pt: "Comece com It's para o tempo, depois use I'm wearing para as suas roupas." },
+  "What are Tom and Bia talking about?": { pt: "Sobre o que Tom e Bia estão falando?" },
+  "The weather and clothes": { pt: "O tempo e as roupas" },
+  "A restaurant menu": { pt: "Um cardápio de restaurante" },
+  "A train ticket": { pt: "Uma passagem de trem" },
+  "What does Tom need?": { pt: "Do que Tom precisa?" },
+  "A jacket": { pt: "Uma jaqueta" },
+  "A new phone": { pt: "Um celular novo" },
+  "A cup of tea": { pt: "Uma xícara de chá" },
+  "Is it raining now?": { pt: "Está chovendo agora?" },
+  "No, it isn't": { pt: "Não, não está" },
+  "Yes, it is": { pt: "Sim, está" },
+  "It is snowing": { pt: "Está nevando" },
+  "Ask about price and size in a shop, then buy or say no politely.": { pt: "Pergunte preço e tamanho em uma loja e depois compre ou recuse com educação." },
+  "Stress the question word: HOW much is this? Do you TAKE cards?": { pt: "Enfatize a palavra da pergunta: HOW much is this? Do you TAKE cards?" },
+  "Ask the price of something in a shop, ask for another color, and say if you will buy it.": { pt: "Pergunte o preço de algo em uma loja, peça outra cor e diga se vai comprar." },
+  "Use How much is this? for the price and Do you have this in ...? for the color.": { pt: "Use How much is this? para o preço e Do you have this in ...? para a cor." },
+  "Where is this conversation?": { pt: "Onde acontece esta conversa?" },
+  "In a clothes shop": { pt: "Em uma loja de roupas" },
+  "On a train": { pt: "Em um trem" },
+  "What does Rafa say about the price?": { pt: "O que Rafa diz sobre o preço?" },
+  "It's a bit too expensive": { pt: "Está um pouco caro demais" },
+  "It's very cheap": { pt: "Está muito barato" },
+  "It's free": { pt: "É de graça" },
+  "How does Rafa want to pay?": { pt: "Como Rafa quer pagar?" },
+  "With a card": { pt: "Com cartão" },
+  "With a check": { pt: "Com cheque" },
+  "In coins": { pt: "Em moedas" },
+  "Tell a short story about last weekend using the simple past.": { pt: "Conte uma história curta sobre o fim de semana passado usando o passado simples." },
+  "Keep -ed endings short: rained sounds like RAIND, stayed like STAYD, relaxed like RELAXT.": { pt: "Mantenha as terminações -ed curtas: rained soa como RAIND, stayed como STAYD, relaxed como RELAXT." },
+  "Tell what you did last weekend in three or four past-tense sentences.": { pt: "Conte o que você fez no fim de semana passado em três ou quatro frases no passado." },
+  "Use went, had, saw, and ate for irregular verbs, and didn't plus the base verb for what you did not do.": { pt: "Use went, had, saw e ate para verbos irregulares, e didn't mais o verbo base para o que você não fez." },
+  "What are Carol and Leo talking about?": { pt: "Sobre o que Carol e Leo estão falando?" },
+  "Their last weekend": { pt: "O fim de semana passado deles" },
+  "Their next holiday": { pt: "As próximas férias deles" },
+  "Their favorite food": { pt: "A comida favorita deles" },
+  "Where did Carol go?": { pt: "Aonde Carol foi?" },
+  "To the beach": { pt: "À praia" },
+  "To the airport": { pt: "Ao aeroporto" },
+  "To the hospital": { pt: "Ao hospital" },
+  "What did Leo do last night?": { pt: "O que Leo fez ontem à noite?" },
+  "He stayed home": { pt: "Ele ficou em casa" },
+  "He went dancing": { pt: "Ele foi dançar" },
+  "He worked late": { pt: "Ele trabalhou até tarde" },
+  "Invite someone, suggest a time, and confirm or refuse a plan politely.": { pt: "Convide alguém, sugira um horário e confirme ou recuse um plano com educação." },
+  "Let invitations rise at the end: would you like to grab a COFFEE? How about SATURDAY?": { pt: "Deixe os convites subirem no final: would you like to grab a COFFEE? How about SATURDAY?" },
+  "Invite a friend to do something, suggest a day and a time, and confirm the plan.": { pt: "Convide um amigo para fazer algo, sugira um dia e um horário e confirme o plano." },
+  "Use Would you like to ...? to invite, How about ...? to suggest, and See you on ... to confirm.": { pt: "Use Would you like to ...? para convidar, How about ...? para sugerir e See you on ... para confirmar." },
+  "What are Nina and Paulo doing?": { pt: "O que Nina e Paulo estão fazendo?" },
+  "Making a plan to meet": { pt: "Combinando um encontro" },
+  "Ordering dinner": { pt: "Pedindo o jantar" },
+  "Buying train tickets": { pt: "Comprando passagens de trem" },
+  "Why does Paulo say no to Saturday?": { pt: "Por que Paulo recusa o sábado?" },
+  "He is busy": { pt: "Ele está ocupado" },
+  "He doesn't like coffee": { pt: "Ele não gosta de café" },
+  "He is traveling": { pt: "Ele está viajando" },
+  "What time do they finally meet?": { pt: "Que horas eles se encontram no final?" },
+  "At eight": { pt: "Às oito" },
+  "At six": { pt: "Às seis" },
+  "Buy a ticket, check the right transport, and ask how long a trip takes.": { pt: "Compre uma passagem, confirme o transporte certo e pergunte quanto tempo dura a viagem." },
+  "Link the question chunks: HOW do I GET to...? WHAT time does the NEXT train leave?": { pt: "Ligue os blocos da pergunta: HOW do I GET to...? WHAT time does the NEXT train leave?" },
+  "Ask how to get to a place, buy one ticket, and ask how long the trip takes.": { pt: "Pergunte como chegar a um lugar, compre uma passagem e pergunte quanto tempo dura a viagem." },
+  "Use How do I get to ...?, then What time does the next ... leave? and How long does the trip take?": { pt: "Use How do I get to ...?, depois What time does the next ... leave? e How long does the trip take?" },
+  "What does Duda want to do?": { pt: "O que Duda quer fazer?" },
+  "Get to the airport": { pt: "Chegar ao aeroporto" },
+  "Book a hotel room": { pt: "Reservar um quarto de hotel" },
+  "Return a shirt": { pt: "Devolver uma camisa" },
+  "Which platform does the train leave from?": { pt: "De qual plataforma o trem sai?" },
+  "Platform three": { pt: "Plataforma três" },
+  "Platform one": { pt: "Plataforma um" },
+  "Platform nine": { pt: "Plataforma nove" },
+  "How long is the trip?": { pt: "Quanto tempo dura a viagem?" },
+  "About forty minutes": { pt: "Cerca de quarenta minutos" },
+  "About four hours": { pt: "Cerca de quatro horas" },
+  "About ten days": { pt: "Cerca de dez dias" },
+  "Describe a symptom, ask for an appointment, and check how to take medicine.": { pt: "Descreva um sintoma, peça uma consulta e confirme como tomar o remédio." },
+  "Keep have-phrases smooth: I HAVE a headache; I've HAD a fever SINCE yesterday.": { pt: "Mantenha as frases com have fluidas: I HAVE a headache; I've HAD a fever SINCE yesterday." },
+  "Say how you feel, describe one symptom, and ask for an appointment.": { pt: "Diga como você se sente, descreva um sintoma e peça uma consulta." },
+  "Use I don't feel well, then I have a ... for the symptom and I'd like to see a doctor to ask.": { pt: "Use I don't feel well, depois I have a ... para o sintoma e I'd like to see a doctor para pedir." },
+  "Where is Igor?": { pt: "Onde Igor está?" },
+  "At a clinic": { pt: "Em uma clínica" },
+  "At a bus stop": { pt: "Em um ponto de ônibus" },
+  "At a bank": { pt: "Em um banco" },
+  "Since when has Igor had a fever?": { pt: "Desde quando Igor está com febre?" },
+  "Since yesterday": { pt: "Desde ontem" },
+  "Since last month": { pt: "Desde o mês passado" },
+  "Since this morning": { pt: "Desde esta manhã" },
+  "What is Igor allergic to?": { pt: "A que Igor é alérgico?" },
+  "Penicillin": { pt: "Penicilina" },
+  "Coffee": { pt: "Café" },
+  "Dust": { pt: "Poeira" },
+  "Describe your home and what is near it, and invite someone over.": { pt: "Descreva sua casa e o que há perto dela, e convide alguém para visitar." },
+  "Blend there-is and it-takes: THERE'S a market near my house; it TAKES ten minutes.": { pt: "Junte there is e it takes: THERE'S a market near my house; it TAKES ten minutes." },
+  "Describe where you live, one place near it, and invite someone to visit.": { pt: "Descreva onde você mora, um lugar perto dali e convide alguém para visitar." },
+  "Use I live in ..., There is a ... near ..., and It takes ... minutes to ...": { pt: "Use I live in ..., There is a ... near ... e It takes ... minutes to ..." },
+  "What is Sofia describing?": { pt: "O que Sofia está descrevendo?" },
+  "Her home and neighborhood": { pt: "A casa e o bairro dela" },
+  "Her new job": { pt: "O novo emprego dela" },
+  "A trip to the beach": { pt: "Uma viagem à praia" },
+  "How long does it take to walk downtown?": { pt: "Quanto tempo leva para caminhar até o centro?" },
+  "Ten minutes": { pt: "Dez minutos" },
+  "Two hours": { pt: "Duas horas" },
+  "Half a day": { pt: "Meio dia" },
+  "Where is the bus stop?": { pt: "Onde fica o ponto de ônibus?" },
+  "Across the street": { pt: "Do outro lado da rua" },
+  "Inside the market": { pt: "Dentro do mercado" },
+  "Next to the beach": { pt: "Ao lado da praia" },
+  "Find your starting level": { pt: "Descubra seu nível inicial" },
+  "Works offline · no AI needed": { pt: "Funciona offline · sem IA" },
+  "A few short clips to understand, a few sentences to complete, and one thing to write. It picks where to start you — it is not an official level test.": { pt: "Alguns áudios curtos para entender, algumas frases para completar e um texto para escrever. Isso escolhe por onde começar — não é um teste oficial de nível." },
+  "Start the check": { pt: "Começar a verificação" },
+  "Skip anything you don't know — a skipped answer counts as no evidence, not a mistake.": { pt: "Pule o que você não souber — uma resposta pulada conta como falta de evidência, não como erro." },
+  "What did you hear?": { pt: "O que você ouviu?" },
+  "Missing word": { pt: "Palavra que falta" },
+  "Write 2-4 sentences…": { pt: "Escreva de 2 a 4 frases…" },
+  "How did that feel?": { pt: "Como foi para você?" },
+  "I struggled": { pt: "Foi difícil" },
+  "I managed": { pt: "Consegui" },
+  "I was comfortable": { pt: "Foi tranquilo" },
+  "Your own rating is kept as a before/after note. It does not change the suggested level.": { pt: "Sua autoavaliação fica guardada como uma nota de antes/depois. Ela não muda o nível sugerido." },
+  "See my starting level": { pt: "Ver meu nível inicial" },
+  "Not enough answers to suggest a level": { pt: "Respostas insuficientes para sugerir um nível" },
+  "You answered {answered} of {total}. Pick a level yourself for now — a few lessons will say more than this check can.": { pt: "Você respondeu {answered} de {total}. Escolha um nível por conta própria por enquanto — algumas lições vão dizer mais do que esta verificação." },
+  "Suggested starting level: {level}": { pt: "Nível inicial sugerido: {level}" },
+  "Based on {correct} of {total} understood. It is a starting point, not a diagnosis — change it any time in Settings.": { pt: "Com base em {correct} de {total} compreendidos. É um ponto de partida, não um diagnóstico — mude quando quiser nos Ajustes." },
+  "{level}: {correct}/{total} understood": { pt: "{level}: {correct}/{total} compreendidos" },
+  "Your writing, self-rated \"{rating}\", was saved as a note, not as a score.": { pt: "Sua escrita, autoavaliada como \"{rating}\", foi salva como nota, não como pontuação." },
+  "Start at {level}": { pt: "Começar no {level}" },
+  "Choose myself": { pt: "Escolher eu mesmo" },
+  "{answered} of {total} answered": { pt: "{answered} de {total} respondidas" },
+  "Or take the full {level} test with AI": { pt: "Ou faça o teste completo de {level} com IA" },
+
+  /* ── conversation: converse tab, free talk, repertoire ── */
+  "Talk about whatever you want. Your partner works in expressions worth stealing.": { pt: "Fale sobre o que quiser. Seu parceiro usa expressões que valem a pena roubar." },
+  "What do you want to talk about?": { pt: "Sobre o que você quer falar?" },
+  "Anything — a decision at work, something you read, an argument you want to test.": { pt: "Qualquer coisa — uma decisão no trabalho, algo que você leu, um argumento que quer testar." },
+  "e.g. whether remote work actually helps junior engineers": { pt: "ex.: se o trabalho remoto realmente ajuda quem está começando" },
+  "Or start from one of these": { pt: "Ou comece por uma destas" },
+  "Scenario": { pt: "Cenário" },
+  "Describe the situation": { pt: "Descreva a situação" },
+  "e.g. negotiating an apartment lease with a landlord": { pt: "ex.: negociar o aluguel de um apartamento com o proprietário" },
+  "Sets how challenging your partner's English is.": { pt: "Define o quanto o inglês do seu parceiro será desafiador." },
+  "CEFR level": { pt: "Nível CEFR" },
+  "Partner": { pt: "Parceiro" },
+  "Supportive keeps the role-play simple. Challenging asks follow-ups and pushes your reasoning.": { pt: "Acolhedor mantém a simulação simples. Desafiador faz perguntas de acompanhamento e pressiona seu raciocínio." },
+  "Conversation partner style": { pt: "Estilo do parceiro de conversa" },
+  "Supportive": { pt: "Acolhedor" },
+  "Challenging": { pt: "Desafiador" },
+  "Mode": { pt: "Modo" },
+  "Conversation mode": { pt: "Modo de conversa" },
+  "Guided": { pt: "Guiado" },
+  "Free talk": { pt: "Conversa livre" },
+  "Free talk: the mic opens after each reply and sends when you pause — fully hands-free.": { pt: "Conversa livre: o microfone abre após cada resposta e envia quando você pausa — totalmente sem as mãos." },
+  "Guided: tap Speak (or type), review, then send each turn yourself.": { pt: "Guiado: toque em Falar (ou digite), revise e envie cada turno você mesmo." },
+  "Change the AI provider for this conversation.": { pt: "Trocar o provedor de IA desta conversa." },
+  "Recent conversations": { pt: "Conversas recentes" },
+  "Delete conversation": { pt: "Excluir conversa" },
+  "Resume": { pt: "Retomar" },
+  "Delete": { pt: "Excluir" },
+  "Finish": { pt: "Encerrar" },
+  "Send": { pt: "Enviar" },
+  "Custom…": { pt: "Personalizado…" },
+  "Thinking…": { pt: "Pensando…" },
+  "Listening…": { pt: "Ouvindo…" },
+  "Sending in {seconds}s…": { pt: "Enviando em {seconds}s…" },
+  "Type your reply, or tap Speak…": { pt: "Digite sua resposta, ou toque em Falar…" },
+  "Start practice →": { pt: "Começar a prática →" },
+  "AI partner": { pt: "Parceiro de IA" },
+  "Level {level}": { pt: "Nível {level}" },
+  "{count} turns": { pt: "{count} turnos" },
+  "{used}/{total} speaking turns": { pt: "{used}/{total} turnos de fala" },
+  "in progress": { pt: "em andamento" },
+  "today": { pt: "hoje" },
+  "yesterday": { pt: "ontem" },
+  "{count} days ago": { pt: "{count} dias atrás" },
+  "Speaking stage: {stage}": { pt: "Estágio de fala: {stage}" },
+  "This practice uses up to {turns} learner turns with {depth} follow-ups.": { pt: "Esta prática usa até {turns} turnos do aluno com acompanhamentos {depth}." },
+  "Speak with an AI partner in a role-play. Keep going naturally; your mistakes become cards afterward.": { pt: "Fale com um parceiro de IA em uma simulação. Siga naturalmente; seus erros viram cards depois." },
+  "This {stage} practice is complete. Finish it to review your output.": { pt: "Esta prática de {stage} está completa. Encerre para revisar o que você produziu." },
+  "Couldn't start the conversation.": { pt: "Não consegui começar a conversa." },
+  "Couldn't get a reply.": { pt: "Não consegui obter uma resposta." },
+  "Transcription failed.": { pt: "A transcrição falhou." },
+  "Couldn't review the conversation.": { pt: "Não consegui revisar a conversa." },
+  "Couldn't export the cards.": { pt: "Não consegui exportar os cards." },
+  "Couldn't check the retry.": { pt: "Não consegui verificar a nova tentativa." },
+  "No provider": { pt: "Nenhum provedor" },
+  "Your turns are sent to {provider} to generate replies.": { pt: "Seus turnos são enviados para {provider} para gerar as respostas." },
+  "Try the important correction again": { pt: "Tente de novo a correção importante" },
+  "Rewrite one or two ideas in the same {context} situation. Minor polish does not block completion.": { pt: "Reescreva uma ou duas ideias na mesma situação de {context}. Ajustes menores não impedem a conclusão." },
+  "Write your improved response here…": { pt: "Escreva aqui sua resposta melhorada…" },
+  "Speak retry": { pt: "Falar a nova tentativa" },
+  "Checking retry…": { pt: "Verificando a tentativa…" },
+  "Check my retry": { pt: "Verificar minha tentativa" },
+  "Your retry applies the important feedback in this situation.": { pt: "Sua nova tentativa aplica o feedback importante nesta situação." },
+  "{count} issues remain. Compare with the corrections above and try again if useful.": { pt: "Restam {count} problemas. Compare com as correções acima e tente de novo se for útil." },
+  "This retry is deferred for a later review.": { pt: "Esta tentativa foi adiada para uma revisão futura." },
+  "This retry was explicitly dismissed.": { pt: "Esta tentativa foi descartada explicitamente." },
+  "Defer retry for later": { pt: "Adiar tentativa para depois" },
+  "Dismiss retry": { pt: "Descartar tentativa" },
+  "Exported ✓": { pt: "Exportado ✓" },
+  "Export {count} cards to Anki →": { pt: "Exportar {count} cards para o Anki →" },
+  "Find my mistakes →": { pt: "Encontrar meus erros →" },
+  "Show {count} minor polish issues": { pt: "Mostrar {count} ajustes menores" },
+  "Worth stealing": { pt: "Vale a pena roubar" },
+  "You've said {used} of {total} back.": { pt: "Você já usou {used} de {total}." },
+  "said": { pt: "usada" },
+  "Your partner handed you {total} expressions. You said {used} of them back.": {
+    pt: "Seu parceiro te passou {total} expressões. Você usou {used} delas.",
+  },
+  "Say one of these back": { pt: "Use uma delas agora" },
+  "You heard these but never used them. Put one into a sentence of your own about {context}.": {
+    pt: "Você ouviu estas mas não usou nenhuma. Coloque uma numa frase sua sobre {context}.",
+  },
+  "Say it": { pt: "Falar" },
+  "Check": { pt: "Conferir" },
+  "None of these are in there yet. Work one into a sentence you'd actually say.": {
+    pt: "Nenhuma delas apareceu ainda. Encaixe uma numa frase que você realmente diria.",
+  },
+  "You used {expression}. That's it moving from heard to yours.": {
+    pt: "Você usou {expression}. É assim que ela deixa de ser só ouvida e passa a ser sua.",
+  },
+  "You used {expression} — that's the one that counts. {count} smaller issues elsewhere in the sentence.": {
+    pt: "Você usou {expression} — é isso que conta. {count} pontos menores no resto da frase.",
+  },
+  "Keep {count} as cards": { pt: "Guardar {count} como cards" },
+  "Already in your cards.": { pt: "Já está nos seus cards." },
+  "Saved {count} to your cards.": { pt: "Salvei {count} nos seus cards." },
+  "Couldn't save these to your cards.": { pt: "Não consegui salvar isso nos seus cards." },
+  "{count} without a meaning were left out.": { pt: "{count} sem significado ficaram de fora." },
+  "Talk": { pt: "Conversa" },
+
+  /* ── Surfaces that previously fell back to English for PT-BR learners ── */
+  "Your level": { pt: "Seu nível" },
+  "Choose your English level first": { pt: "Escolha primeiro o seu nível de inglês" },
+  "This helps PhraseLoop start with phrases that are useful without being too easy.": { pt: "Isso ajuda o PhraseLoop a começar com frases úteis sem serem fáceis demais." },
+  "overall": { pt: "geral" },
+  "on": { pt: "ligada" },
+  "off": { pt: "desligada" },
+  "Open tools": { pt: "Abrir ferramentas" },
+  "Today’s plan": { pt: "Plano de hoje" },
+  "Use one phrase now": { pt: "Use uma frase agora" },
+  "Review saved phrases": { pt: "Revisar frases salvas" },
+  "Create a plan": { pt: "Criar um plano" },
+  "Use starter plan": { pt: "Usar plano inicial" },
+  "Your plan is complete. Start another plan or keep the weekly method loop.": { pt: "Seu plano terminou. Comece outro plano ou siga o ciclo semanal do método." },
+  "Complete this task by doing the linked activity": { pt: "Conclua esta tarefa fazendo a atividade indicada" },
+  "AI model": { pt: "Modelo de IA" },
+  "Default AI": { pt: "IA padrão" },
+  "Temporarily change the AI.": { pt: "Trocar a IA temporariamente." },
+  "Advanced AI for custom content": { pt: "IA avançada para conteúdo próprio" },
+  "Connect local or cloud AI only when you want custom sources, corrections, conversations, or custom plans.": { pt: "Conecte uma IA local ou na nuvem só quando quiser fontes próprias, correções, conversas ou planos personalizados." },
+  "The bundled lesson and review work without AI setup. Custom content can use local or cloud AI.": { pt: "A lição inclusa e a revisão funcionam sem configurar IA. Conteúdo próprio pode usar IA local ou na nuvem." },
+  "Something went wrong on this tab.": { pt: "Algo deu errado nesta aba." },
+  "Try again, or switch to another tab.": { pt: "Tente de novo ou vá para outra aba." },
+  "Loading progress…": { pt: "Carregando seu progresso…" },
+  "4 · Repeat": { pt: "4 · REPETIR" },
+  "5 · Speak": { pt: "5 · FALAR" },
+  "6 · Feedback": { pt: "6 · FEEDBACK" },
+  "7 · Retry": { pt: "7 · TENTAR DE NOVO" },
+  "8 · Review": { pt: "8 · REVISAR" },
+  "Repeat the phrases you kept": { pt: "Repita as frases que você guardou" },
+  "Listen and say each one back before creating a sentence of your own. A microphone denial leaves typing available in the next step.": { pt: "Ouça e repita cada uma antes de criar uma frase sua. Se o microfone for negado, você ainda pode digitar no passo seguinte." },
+  "Complete one recording for each kept phrase to unlock your own sentence.": { pt: "Grave uma vez cada frase guardada para liberar a sua própria frase." },
+  "Microphone access was denied. Type the phrase back once to continue with an accessibility fallback.": { pt: "O acesso ao microfone foi negado. Digite a frase uma vez para continuar por uma alternativa acessível." },
+  "Continue with typed repeat": { pt: "Continuar digitando a repetição" },
+  "Typed repeat fallback": { pt: "Repetição digitada" },
+  "Typed fallback completed. You can continue to your own sentence.": { pt: "Repetição digitada concluída. Você já pode ir para a sua própria frase." },
+  "Replay and reveal transcript": { pt: "Ouvir de novo e mostrar a transcrição" },
+  "Replay each clip once more before revealing the transcript.": { pt: "Ouça cada áudio mais uma vez antes de mostrar a transcrição." },
+  "You completed the check. The transcript will help you find the main idea and useful details.": { pt: "Você concluiu a checagem. A transcrição vai ajudar a achar a ideia principal e os detalhes úteis." },
+  "Playback {rate}%": { pt: "Velocidade {rate}%" },
+  "Support: {stage} · {guidance}": { pt: "Apoio: {stage} · {guidance}" },
+  "Input profile: {speaker} speakers · transcript {transcript} · connected speech {connected}": { pt: "Perfil do áudio: vozes {speaker} · transcrição {transcript} · fala conectada {connected}" },
+  "Fixes we could check": { pt: "Correções que conseguimos verificar" },
+  "This offline check only knows common Portuguese-to-English mistakes, so other errors can remain. Connect an AI in Settings for a full check.": { pt: "Esta checagem offline só conhece erros comuns de português para inglês, então outros erros podem continuar. Conecte uma IA em Configurações para uma revisão completa." },
+  "No known mistake found, and you used the lesson language.": { pt: "Nenhum erro conhecido encontrado, e você usou a linguagem da lição." },
+  "Couldn't evaluate the retry.": { pt: "Não consegui avaliar a segunda tentativa." },
+  "Still {count} important issue(s) remain. You can try again or defer this for review.": { pt: "Ainda restam {count} ponto(s) importante(s). Você pode tentar de novo ou deixar para revisar depois." },
+  "{count} minor issue(s) are not blocking this retry.": { pt: "{count} ponto(s) menor(es) não impedem esta segunda tentativa." },
+  "{count} minor polish issue(s) are available, but do not block your retry.": { pt: "Há {count} ajuste(s) fino(s) disponível(is), mas eles não bloqueiam sua segunda tentativa." },
+  "Show {count} minor polish issue(s)": { pt: "Mostrar {count} ajuste(s) fino(s)" },
+  "Hide {count} minor polish issue(s)": { pt: "Ocultar {count} ajuste(s) fino(s)" },
+  "Defer for review": { pt: "Deixar para revisar" },
+  "Dismiss this retry": { pt: "Dispensar esta tentativa" },
+  "This correction is deferred for a later review.": { pt: "Esta correção ficou para uma revisão posterior." },
+  "This AI correction is deferred for a later review.": { pt: "Esta correção da IA ficou para uma revisão posterior." },
+  "This AI retry was explicitly dismissed.": { pt: "Esta tentativa da IA foi dispensada por você." },
+  "Your manual correction has a completed retry.": { pt: "Sua correção manual já tem uma segunda tentativa concluída." },
+  "Write or say a new sentence…": { pt: "Escreva ou fale uma frase nova…" },
+  "Yes, it was clear": { pt: "Sim, ficou claro" },
+  "Needs more support": { pt: "Preciso de mais apoio" },
+  "Shared feedback focus": { pt: "Foco de feedback compartilhado" },
+  "The same priority contract drives lessons, corrections, conversations, and progress.": { pt: "A mesma regra de prioridade vale para lições, correções, conversas e progresso." },
+  "Timed speaking": { pt: "Fala cronometrada" },
+  "Keep speaking for {seconds} seconds": { pt: "Continue falando por {seconds} segundos" },
+  "Start recording": { pt: "Começar a gravar" },
+  "Stop recording · {elapsed}/{limit}s": { pt: "Parar a gravação · {elapsed}/{limit}s" },
+  "Save speaking evidence": { pt: "Salvar a evidência de fala" },
+  "Timed monologue transcript": { pt: "Transcrição do monólogo cronometrado" },
+  "Your transcript appears here; you can also type if the microphone is unavailable.": { pt: "Sua transcrição aparece aqui; você também pode digitar se o microfone não estiver disponível." },
+  "Speaking duration and word-rate evidence saved separately from study time.": { pt: "A duração da fala e o ritmo de palavras ficam guardados separados do tempo de estudo." },
+  "Current speaking support: {stage}. {guidance}": { pt: "Apoio atual da fala: {stage}. {guidance}" },
+  "Speaking stage: {stage} · aim for {seconds} seconds": { pt: "Etapa de fala: {stage} · mire em {seconds} segundos" },
+  "Transfer practice": { pt: "Prática de transferência" },
+  "Open transfer": { pt: "Transferência aberta" },
+  "Topic retell": { pt: "Recontar o assunto" },
+  "Listening recognition": { pt: "Reconhecimento auditivo" },
+  "Listening recognition audio": { pt: "Áudio de reconhecimento auditivo" },
+  "Reading comprehension": { pt: "Compreensão de leitura" },
+  "Skip for now": { pt: "Pular por enquanto" },
+  "Progress signal": { pt: "Sinal de progresso" },
+  "{level} confidence": { pt: "confiança {level}" },
+  "low": { pt: "baixa" },
+  "medium": { pt: "média" },
+  "high": { pt: "alta" },
+  "Support level · listening {listening} · speaking {speaking} · reading/writing {readingWriting}": { pt: "Nível de apoio · escuta {listening} · fala {speaking} · leitura/escrita {readingWriting}" },
+  "1 of them comes back later today — the first repetition is spaced in minutes.": { pt: "1 delas volta ainda hoje — a primeira repetição é espaçada em minutos." },
+  "{count} of them come back later today — the first repetitions are spaced in minutes.": { pt: "{count} delas voltam ainda hoje — as primeiras repetições são espaçadas em minutos." },
+  "sound familiarity": { pt: "familiaridade com os sons" },
+  "word recognition": { pt: "reconhecimento de palavras" },
+  "main idea": { pt: "ideia principal" },
+  "functional comprehension": { pt: "compreensão funcional" },
+  "natural comprehension": { pt: "compreensão natural" },
+  "fixed phrases": { pt: "frases fixas" },
+  "variation": { pt: "variação" },
+  "guided description": { pt: "descrição guiada" },
+  "timed monologue": { pt: "monólogo cronometrado" },
+  "simulated conversation": { pt: "conversa simulada" },
+  "real-world production": { pt: "produção no mundo real" },
+  "guided reading": { pt: "leitura guiada" },
+  "open writing": { pt: "escrita livre" },
+  "revision": { pt: "revisão" },
+  "independent transfer": { pt: "transferência independente" },
+  "familiar": { pt: "conhecidas" },
+  "mixed": { pt: "variadas" },
+  "unfamiliar": { pt: "desconhecidas" },
+  "hidden": { pt: "oculta" },
+  "after your attempt": { pt: "depois da sua tentativa" },
+  "after a replay": { pt: "depois de ouvir de novo" },
+  "Repeated listening evidence met the stage requirement: {evidence}.": { pt: "As evidências repetidas de escuta atingiram o requisito da etapa: {evidence}." },
+  "Keep the current support until this evidence is available: {evidence}.": { pt: "Mantenha o apoio atual até ter esta evidência: {evidence}." },
+  "Recent comprehension is struggling, so transcript and speed support should return.": { pt: "A compreensão recente está difícil, então a transcrição e a velocidade reduzida voltam a ajudar." },
+  "Repeated production met the stage requirement: {evidence}.": { pt: "A produção repetida atingiu o requisito da etapa: {evidence}." },
+  "Complete more evaluated production evidence before increasing independence: {evidence}.": { pt: "Reúna mais evidências de produção avaliada antes de aumentar a independência: {evidence}." },
+  "Recent production is struggling, so prompts and scaffolds should become more supported.": { pt: "A produção recente está difícil, então os comandos e apoios voltam a ser mais guiados." },
+  "Repeated reading, writing, and transfer evidence supports the next scaffold.": { pt: "As evidências repetidas de leitura, escrita e transferência sustentam o próximo passo." },
+  "Keep building evidence before withdrawing support: {evidence}.": { pt: "Continue reunindo evidências antes de reduzir o apoio: {evidence}." },
+  "Recent reading or writing evidence is struggling, so the next task restores more guidance.": { pt: "As evidências recentes de leitura ou escrita estão difíceis, então a próxima tarefa traz mais orientação." },
+  "2 complete checks with at least 72% comprehension": { pt: "2 checagens completas com pelo menos 72% de compreensão" },
+  "3 checks with at least 78% comprehension": { pt: "3 checagens com pelo menos 78% de compreensão" },
+  "3 checks with the main idea and details holding at 82%": { pt: "3 checagens com ideia principal e detalhes em 82%" },
+  "4 checks at 85% while using less transcript support": { pt: "4 checagens em 85% usando menos apoio da transcrição" },
+  "5 checks at 88% with natural-speed, mixed-speaker input": { pt: "5 checagens em 88% com fala em velocidade natural e vozes variadas" },
+  "2 evaluated productions at 72% or better": { pt: "2 produções avaliadas em 72% ou mais" },
+  "3 evaluated productions at 78% or better": { pt: "3 produções avaliadas em 78% ou mais" },
+  "3 evaluated descriptions at 82% or better": { pt: "3 descrições avaliadas em 82% ou mais" },
+  "4 evaluated productions holding for 2 minutes at 84% or better": { pt: "4 produções avaliadas de 2 minutos em 84% ou mais" },
+  "5 evaluated productions holding for 5 minutes at 86% or better": { pt: "5 produções avaliadas de 5 minutos em 86% ou mais" },
+  "5 evaluated real-world productions holding for 5 minutes at 88% or better": { pt: "5 produções reais avaliadas de 5 minutos em 88% ou mais" },
+  "2 meaning checks at 70% or better": { pt: "2 checagens de sentido em 70% ou mais" },
+  "2 original written messages at 70% or better": { pt: "2 mensagens escritas por você em 70% ou mais" },
+  "2 focused revisions that resolve the target issue": { pt: "2 revisões focadas que resolvem o ponto trabalhado" },
+  "5 clear transfers across new contexts": { pt: "5 transferências claras para contextos novos" },
+  "Start with slower supported input and replay freely.": { pt: "Comece com áudio mais lento e apoiado, repetindo à vontade." },
+  "Listen for familiar words before checking the main idea.": { pt: "Procure palavras conhecidas antes de conferir a ideia principal." },
+  "Catch the situation first; details can wait.": { pt: "Primeiro capte a situação; os detalhes podem esperar." },
+  "Try natural speed and use the transcript after the check.": { pt: "Tente a velocidade natural e use a transcrição depois da checagem." },
+  "Stay with natural speed and unfamiliar connected speech.": { pt: "Fique na velocidade natural, com fala conectada e vozes desconhecidas." },
+  "Use the kept phrase in one clear sentence.": { pt: "Use a frase que você guardou em uma frase clara." },
+  "Keep the model phrase as your scaffold.": { pt: "Mantenha a frase modelo como apoio." },
+  "Keep the phrase frame, but change one detail about your situation.": { pt: "Mantenha a estrutura da frase, mas troque um detalhe pela sua situação." },
+  "Withdraw one piece of support by changing a detail.": { pt: "Tire um apoio trocando um detalhe." },
+  "Describe this situation in two or three connected sentences.": { pt: "Descreva esta situação em duas ou três frases conectadas." },
+  "Use the situation as a guide, not a script.": { pt: "Use a situação como guia, não como roteiro." },
+  "Speak about this situation until the timer ends.": { pt: "Fale sobre esta situação até o cronômetro terminar." },
+  "Keep speaking until the timer ends; pauses are allowed.": { pt: "Continue falando até o cronômetro terminar; pode fazer pausas." },
+  "Answer the prompt and add one natural follow-up detail.": { pt: "Responda ao comando e acrescente um detalhe natural." },
+  "Respond without relying on a fixed script.": { pt: "Responda sem depender de um roteiro pronto." },
+  "Deliver this message as you would outside the app.": { pt: "Passe esta mensagem como você faria fora do app." },
+  "Use the language for a real communicative purpose.": { pt: "Use a língua para um objetivo real de comunicação." },
+  "Open with a substantive prompt and follow the learner's own line of thought.": { pt: "Comece com um tema substancial e siga o raciocínio de quem aprende." },
+  "Read one useful sentence, then explain its meaning before writing.": { pt: "Leia uma frase útil e explique o sentido antes de escrever." },
+  "Write a new sentence from the meaning, not by copying the model.": { pt: "Escreva uma frase nova a partir do sentido, sem copiar o modelo." },
+  "Use one focused correction to improve the same message.": { pt: "Use uma correção focada para melhorar a mesma mensagem." },
+  "Reuse the language in a new topic with minimal support.": { pt: "Reaproveite a linguagem em um assunto novo com pouco apoio." },
+  "Say the corrected idea in a new situation: “{phrase}”": { pt: "Diga a ideia corrigida em uma situação nova: “{phrase}”" },
+  "Retell a short familiar situation while avoiding this earlier error: “{phrase}”.": { pt: "Reconte uma situação conhecida e curta evitando este erro anterior: “{phrase}”." },
+  "Rebuild the clearer sentence from memory for this earlier error: “{phrase}”.": { pt: "Reconstrua de memória a frase mais clara para este erro anterior: “{phrase}”." },
+  "Retell one useful point from your {context} conversation in a new way.": { pt: "Reconte de um jeito novo um ponto útil da sua conversa sobre {context}." },
+  "Use “{phrase}” in a new situation from your life.": { pt: "Use “{phrase}” em uma situação nova da sua vida." },
+  "Read “{phrase}” and explain its meaning in your own words.": { pt: "Leia “{phrase}” e explique o sentido com suas palavras." },
+  "Say a new sentence that means the same as “{phrase}”.": { pt: "Diga uma frase nova com o mesmo sentido de “{phrase}”." },
+  "Listen to the clearer form. What did you hear before revealing the text?": { pt: "Ouça a forma mais clara. O que você entendeu antes de ver o texto?" },
+  "Listen first. Explain what you recognized before checking the phrase.": { pt: "Ouça primeiro. Diga o que reconheceu antes de conferir a frase." },
+  "Listening comprehension": { pt: "Compreensão auditiva" },
+  "Recall": { pt: "Memória" },
+  "Grammar control": { pt: "Domínio da gramática" },
+  "Naturalness": { pt: "Naturalidade" },
+  "Pronunciation signal": { pt: "Sinal de pronúncia" },
+  "Fluency": { pt: "Fluência" },
+  "Consistency": { pt: "Constância" },
+  "1 listening attempt; main idea and details measured separately": { pt: "1 tentativa de escuta; ideia principal e detalhes medidos separadamente" },
+  "{count} listening attempts; main idea and details measured separately": { pt: "{count} tentativas de escuta; ideia principal e detalhes medidos separadamente" },
+  "Complete a listening check to measure comprehension": { pt: "Faça uma checagem de escuta para medir a compreensão" },
+  "{passed}/{total} recent reviews passed": { pt: "{passed}/{total} revisões recentes acertadas" },
+  "Review cards to build a recall signal": { pt: "Revise cards para formar um sinal de memória" },
+  "1 recent correction vs {earlier} before": { pt: "1 correção recente contra {earlier} antes" },
+  "{count} recent corrections vs {earlier} before": { pt: "{count} correções recentes contra {earlier} antes" },
+  "Correct writing or speech to reveal grammar patterns": { pt: "Corrija textos ou falas para revelar padrões de gramática" },
+  "1 style or word-choice issue recently": { pt: "1 ponto de estilo ou escolha de palavra recentemente" },
+  "{count} style or word-choice issues recently": { pt: "{count} pontos de estilo ou escolha de palavras recentemente" },
+  "Run advanced corrections to track native-like phrasing": { pt: "Use correções avançadas para acompanhar o jeito nativo de falar" },
+  "1 transcript-alignment attempt in 30 days; not phonemic scoring": { pt: "1 tentativa de alinhamento com a transcrição em 30 dias; não é avaliação de fonemas" },
+  "{count} transcript-alignment attempts in 30 days; not phonemic scoring": { pt: "{count} tentativas de alinhamento com a transcrição em 30 dias; não é avaliação de fonemas" },
+  "Record in lessons or Study to add a coarse pronunciation signal": { pt: "Grave nas lições ou em Revisar para ter um sinal aproximado de pronúncia" },
+  "{count} original production attempts; {samples} fluency samples tracked separately": { pt: "{count} produções próprias; {samples} amostras de fluência medidas separadamente" },
+  "Start conversations to measure output stamina": { pt: "Comece conversas para medir seu fôlego de produção" },
+  "1/14 active day": { pt: "1/14 dia ativo" },
+  "{count}/14 active days": { pt: "{count}/14 dias ativos" },
+  "Do a short check-in so PhraseLoop can find your next focus.": { pt: "Faça um check-in rápido para o PhraseLoop achar seu próximo foco." },
+  "Review due cards until recent recall is above 80%.": { pt: "Revise os cards pendentes até a memória recente passar de 80%." },
+  "Correct one short answer and turn recurring mistakes into drills.": { pt: "Corrija uma resposta curta e transforme os erros recorrentes em treino." },
+  "Ask for native-sounding rewrites and save useful phrasing.": { pt: "Peça versões mais naturais e salve as construções úteis." },
+  "Record three short repetitions and compare the transcript-alignment signal over time.": { pt: "Grave três repetições curtas e compare o sinal de alinhamento ao longo do tempo." },
+  "Hold one longer conversation and aim for six learner turns.": { pt: "Tenha uma conversa mais longa, mirando em seis falas suas." },
+  "Keep the habit alive with one small session today.": { pt: "Mantenha o hábito vivo com uma sessão pequena hoje." },
+  "message clarity": { pt: "clareza da mensagem" },
+  "missing information": { pt: "informação faltando" },
+  "naturalness": { pt: "naturalidade" },
+  "pronunciation": { pt: "pronúncia" },
+  "blocking": { pt: "bloqueia a mensagem" },
+  "important": { pt: "importante" },
+  "polish": { pt: "acabamento" },
+  "Say or write the same idea again with this correction.": { pt: "Diga ou escreva a mesma ideia de novo com esta correção." },
+  "Try the same idea once more if it is useful now.": { pt: "Tente a mesma ideia mais uma vez, se fizer sentido agora." },
+  "grammar": { pt: "gramática" },
+  "Challenge": { pt: "Desafio" },
+  "Stretch into fresh material and produce language while you're sharp.": { pt: "Avance em material novo e produza inglês enquanto está com a cabeça fresca." },
+  "Nothing due right now.": { pt: "Nada pendente agora." },
+  "1 phrase due — lock it in at the right time.": { pt: "1 frase pendente — fixe no momento certo." },
+  "{count} phrases due — lock them in at the right time.": { pt: "{count} frases pendentes — fixe no momento certo." },
+  "A short, easy round to keep the rhythm without the load.": { pt: "Uma rodada curta e leve para manter o ritmo sem peso." },
+  "~{minutes} min focused": { pt: "~{minutes} min de foco" },
+  "~{minutes} min light": { pt: "~{minutes} min leve" },
+  "Task completion": { pt: "Cumprimento da tarefa" },
+  "Task completed": { pt: "Tarefa cumprida" },
+  "Task partly completed": { pt: "Tarefa parcialmente cumprida" },
+  "Task not completed": { pt: "Tarefa não cumprida" },
+  "No language correction needed.": { pt: "Nenhuma correção de linguagem necessária." },
+  "Write or speak a short response, then reflect on what felt difficult. This is practice, not a scored result.": {
+    pt: "Escreva ou fale uma resposta curta e reflita sobre o que foi difícil. Isto é prática, não uma nota.",
+  },
+  "How did that attempt feel?": { pt: "Como foi essa tentativa?" },
+  "Your reflection is saved as practice context; it does not score the response or change your level.": {
+    pt: "Sua reflexão fica salva como contexto de prática; ela não dá nota nem muda seu nível.",
+  },
+  "It felt clear": { pt: "Pareceu claro" },
+  "I need another try": { pt: "Preciso tentar de novo" },
+  "Reflection saved. A later evaluated task is needed to confirm this transfer.": {
+    pt: "Reflexão salva. Uma tarefa avaliada depois será necessária para confirmar essa transferência.",
+  },
+  "Reflection saved. Keep this pattern in view and try another context when you are ready.": {
+    pt: "Reflexão salva. Mantenha esse padrão em vista e tente outro contexto quando estiver pronto.",
+  },
+  "Next prompt": { pt: "Próximo desafio" },
+
+  /* ── progress: milestones, measured signals and check-in ──── */
+  "{achieved}/{total} milestones": { pt: "{achieved}/{total} marcos" },
+  "All current milestones are complete.": { pt: "Todos os marcos atuais foram concluídos." },
+  "Last check-in {date}": { pt: "Último check-in {date}" },
+  "First progress signal": { pt: "Primeiro sinal de progresso" },
+  "Complete reviews, speaking, correction, or pronunciation practice.": { pt: "Faça revisões, fala, correção ou treino de pronúncia." },
+  "Weekly rhythm": { pt: "Ritmo semanal" },
+  "Be active on at least 5 days in a 14-day window.": { pt: "Pratique em pelo menos 5 dias dentro de 14 dias." },
+  "Recall control": { pt: "Controle da memória" },
+  "Pass at least 80% of D+30 unaided production attempts.": { pt: "Acerte pelo menos 80% das produções sem apoio em D+30." },
+  "Speaking stamina": { pt: "Fôlego de fala" },
+  "Average at least 6 learner turns in recent conversations.": { pt: "Tenha em média pelo menos 6 falas suas nas conversas recentes." },
+  "Clearer pronunciation signal": { pt: "Pronúncia mais clara" },
+  "Reach 80% average on transcript-alignment attempts.": { pt: "Alcance 80% de média nas tentativas comparadas com a transcrição." },
+  "Next-level readiness": { pt: "Pronto para o próximo nível" },
+  "Reach an 80+ overall signal with grammar under control.": { pt: "Chegue a 80+ no sinal geral com a gramática sob controle." },
+  "Spoken attempts": { pt: "Tentativas faladas" },
+  "Recording length": { pt: "Duração da gravação" },
+  "Retry resolution": { pt: "Correções resolvidas" },
+  "Reading/writing": { pt: "Leitura/escrita" },
+  "Listening": { pt: "Escuta" },
+  "Support": { pt: "Apoio" },
+  "Independence": { pt: "Independência" },
+  "Transfer": { pt: "Transferência" },
+  "Preparation": { pt: "Preparação" },
+  "{seconds}s": { pt: "{seconds}s" },
+  "{percent}%": { pt: "{percent}%" },
+  "attempts · {count} transfers": { pt: "tentativas · {count} transferências" },
+  "accuracy · {count} checks": { pt: "de precisão · {count} checagens" },
+  "words/min · {count} samples": { pt: "palavras/min · {count} amostras" },
+  "scaffolded · {count} skipped": { pt: "com apoio · {count} puladas" },
+  "attempts · {percent}% supported": { pt: "tentativas · {percent}% com apoio" },
+  "clear · {count} old errors avoided": { pt: "claras · {count} erros antigos evitados" },
+  "average · {count} samples": { pt: "em média · {count} amostras" },
+  "{correct}/{attempts} production reviews passed after at least {days} days away.": { pt: "{correct}/{attempts} revisões de produção acertadas após pelo menos {days} dias sem ver a frase." },
+  "Not enough evidence yet: PhraseLoop needs production cards reviewed unaided after at least {days} days away.": { pt: "Ainda faltam evidências: o PhraseLoop precisa de cards de produção revisados sem apoio após pelo menos {days} dias sem ver a frase." },
+  "not enough data": { pt: "dados insuficientes" },
+  "on track": { pt: "no caminho" },
+  "needs work": { pt: "precisa de trabalho" },
+  "1 card": { pt: "1 card" },
+  "{count} cards": { pt: "{count} cards" },
+  "Checkpoint due now": { pt: "Check-in disponível agora" },
+  "Next checkpoint {date}": { pt: "Próximo check-in em {date}" },
+  "Progress check-in": { pt: "Check-in de progresso" },
+  "Write a short answer, or save a checkpoint from your current local signals.": { pt: "Escreva uma resposta curta ou salve um check-in a partir dos seus sinais locais atuais." },
+  "14-day rhythm": { pt: "Ritmo de 14 dias" },
+  "Answer in English: what got easier since your last session, and what still feels hard?": { pt: "Responda em inglês: o que ficou mais fácil desde a última sessão e o que ainda parece difícil?" },
+  "Connect an AI to evaluate the writing sample. Saving still records the measurable progress signals.": { pt: "Conecte uma IA para avaliar o texto. Salvar já registra os sinais de progresso que dá para medir." },
+  "Add a little more text for AI evaluation, or save the checkpoint without writing analysis.": { pt: "Escreva um pouco mais para a avaliação com IA, ou salve o check-in sem análise do texto." },
+  "AI: {provider}": { pt: "IA: {provider}" },
+  "Checkpoint saved with 1 correction.": { pt: "Check-in salvo com 1 correção." },
+  "Checkpoint saved with {count} corrections.": { pt: "Check-in salvo com {count} correções." },
+  "Checkpoint saved from your current learning signals.": { pt: "Check-in salvo a partir dos seus sinais de aprendizado atuais." },
+  "Couldn't save this checkpoint.": { pt: "Não foi possível salvar este check-in." },
+  "Evaluate and save": { pt: "Avaliar e salvar" },
+  "Save checkpoint": { pt: "Salvar check-in" },
+
+  /* ── review order: offline band gate verdict ─────────────── */
+  "Only {samples} retrievals reconstructed — need at least {minimum} before trusting a verdict.": { pt: "Só {samples} recuperações reconstruídas — são necessárias pelo menos {minimum} antes de confiar num veredito." },
+  "{tooEasy}% too-easy / {tooHard}% too-hard reviews land off the band (only {inBand}% in band) — band ordering has headroom. Verify live before shipping.": { pt: "{tooEasy}% fáceis demais / {tooHard}% difíceis demais caem fora da faixa (só {inBand}% dentro) — ordenar por faixa tem margem. Confirme no uso real antes de ativar." },
+  "{inBand}% of reviews already sit in the band (mean recall {meanRecall}%) — band ordering would change little. Skip until the distribution drifts off-target.": { pt: "{inBand}% das revisões já estão na faixa (recall médio de {meanRecall}%) — ordenar por faixa mudaria pouco. Deixe de lado até a distribuição sair do alvo." },
+  /* ── Guided material for the promoted B1–C2 lessons ─── */
+  "Give an opinion, agree or disagree politely, and concede a point without dropping your position.": { pt: "Dar uma opinião, concordar ou discordar com educação e ceder um ponto sem abrir mão da sua posição." },
+  "Weak forms in fixed phrases: 'in my o-PIN-ion', 'as far as I'm con-CERNED' — stress one syllable and swallow the rest.": { pt: "Formas fracas em expressões fixas: 'in my o-PIN-ion', 'as far as I'm con-CERNED' — acentue uma sílaba e reduza o resto." },
+  "Give your opinion about working from home. Agree or disagree with one common view, then concede one point to the other side.": { pt: "Dê sua opinião sobre trabalhar de casa. Concorde ou discorde de uma opinião comum e, depois, ceda um ponto para o outro lado." },
+  "Open with 'In my opinion' or 'As far as I'm concerned', and use one concession phrase such as 'You have a point' or 'That's a fair point'.": { pt: "Comece com 'In my opinion' ou 'As far as I'm concerned' e use uma frase de concessão como 'You have a point' ou 'That's a fair point'." },
+  "What are Marco and Lena discussing?": { pt: "Sobre o que Marco e Lena estão conversando?" },
+  "How many days the team should work from home": { pt: "Quantos dias o time deve trabalhar de casa" },
+  "Which project to start next": { pt: "Qual projeto começar em seguida" },
+  "Where to hold the next office party": { pt: "Onde fazer a próxima festa do escritório" },
+  "What does Lena say matters most?": { pt: "O que Lena diz que importa mais?" },
+  "The deadline": { pt: "O prazo" },
+  "The size of the team": { pt: "O tamanho do time" },
+  "What do they finally decide to try?": { pt: "O que eles decidem tentar no fim?" },
+  "Two fixed office days, reviewed in a month": { pt: "Dois dias fixos no escritório, com revisão em um mês" },
+  "Full remote work starting immediately": { pt: "Trabalho totalmente remoto a partir de agora" },
+  "Five days a week in the office": { pt: "Cinco dias por semana no escritório" },
+  "Talk about life experiences with the present perfect, and switch to the past simple when you give a specific time.": { pt: "Falar sobre experiências de vida com o present perfect e mudar para o past simple quando você diz um momento específico." },
+  "Contracted 'have': 'I've', 'she's', 'we've' — one quick sound before the verb, never a full 'I have' in speech.": { pt: "'Have' contraído: 'I've', 'she's', 'we've' — um som rápido antes do verbo, nunca 'I have' completo na fala." },
+  "Describe two things you have done in your life and one thing you have never done. Add a specific time for one of them.": { pt: "Descreva duas coisas que você já fez na vida e uma que nunca fez. Acrescente um momento específico para uma delas." },
+  "Use 'I've' + past participle for the experiences, and switch to the past simple ('I went…', 'I tried…') when you name a time.": { pt: "Use 'I've' + particípio para as experiências e mude para o past simple ('I went…', 'I tried…') quando disser quando foi." },
+  "What is the conversation mainly about?": { pt: "Sobre o que é a conversa principalmente?" },
+  "Travel experience and wanting to visit Japan": { pt: "Experiências de viagem e a vontade de conhecer o Japão" },
+  "A work problem Tom needs to solve": { pt: "Um problema de trabalho que Tom precisa resolver" },
+  "Planning a trip together next month": { pt: "Planejar uma viagem juntos no mês que vem" },
+  "Why hasn't Tom traveled abroad?": { pt: "Por que Tom nunca viajou para fora?" },
+  "He hasn't saved enough money": { pt: "Ele não juntou dinheiro suficiente" },
+  "He doesn't have a passport": { pt: "Ele não tem passaporte" },
+  "He doesn't like flying": { pt: "Ele não gosta de voar" },
+  "Which country did Priya visit before Japan?": { pt: "Qual país Priya visitou antes do Japão?" },
+  "Thailand": { pt: "Tailândia" },
+  "China": { pt: "China" },
+  "She went to Japan first": { pt: "Ela foi ao Japão primeiro" },
+  "Talk about plans, arrangements, and predictions, choosing between 'going to', 'will', 'might', and the present continuous.": { pt: "Falar sobre planos, compromissos e previsões, escolhendo entre 'going to', 'will', 'might' e o present continuous." },
+  "'going to' becomes 'gonna' and 'want to' becomes 'wanna' in relaxed speech — reduce them, but keep 'will' and 'might' clear.": { pt: "'going to' vira 'gonna' e 'want to' vira 'wanna' na fala relaxada — reduza essas, mas mantenha 'will' e 'might' claros." },
+  "Talk about next weekend. Say one thing that is arranged, one thing you will probably do, and one thing that might happen.": { pt: "Fale sobre o próximo fim de semana. Diga uma coisa que já está marcada, uma que você provavelmente vai fazer e uma que talvez aconteça." },
+  "Use the present continuous for the arrangement ('I'm meeting…'), 'will probably' for the likely plan, and 'might' for the possibility.": { pt: "Use o present continuous para o que está marcado ('I'm meeting…'), 'will probably' para o plano provável e 'might' para a possibilidade." },
+  "What is Dan thinking about doing?": { pt: "O que Dan está pensando em fazer?" },
+  "Looking for a new job": { pt: "Procurar um emprego novo" },
+  "Going on holiday this weekend": { pt: "Viajar de férias neste fim de semana" },
+  "Starting his own company": { pt: "Abrir a própria empresa" },
+  "What will Sofia do on Monday?": { pt: "O que Sofia vai fazer na segunda?" },
+  "Meet a recruiter": { pt: "Encontrar uma recrutadora" },
+  "Start a new job": { pt: "Começar um emprego novo" },
+  "Travel for work": { pt: "Viajar a trabalho" },
+  "What does Sofia promise to send Dan?": { pt: "O que Sofia promete mandar para Dan?" },
+  "The recruiter's number": { pt: "O número da recrutadora" },
+  "Her CV": { pt: "O currículo dela" },
+  "A job advert": { pt: "Um anúncio de vaga" },
+  "Handle everyday work exchanges: ask for help, manage timing, and hand tasks back and forth.": { pt: "Lidar com trocas cotidianas no trabalho: pedir ajuda, administrar prazos e repassar tarefas." },
+  "Phrasal verbs link and reduce: 'ged-back-to-you', 'go-over', 'set-up' — the stress falls on the particle.": { pt: "Phrasal verbs se ligam e se reduzem: 'ged-back-to-you', 'go-over', 'set-up' — o acento cai na partícula." },
+  "Ask a colleague for help with a task. Explain why, suggest a time to talk, and offer something in return.": { pt: "Peça ajuda a um colega com uma tarefa. Explique o motivo, sugira um horário para conversar e ofereça algo em troca." },
+  "Start with 'Could you give me a hand with…', say you're 'running behind schedule', and offer to 'go over' it or 'get back to' them.": { pt: "Comece com 'Could you give me a hand with…', diga que está 'running behind schedule' e ofereça-se para 'go over' o assunto ou 'get back to' a pessoa." },
+  "What does Nadia need from Chris?": { pt: "O que Nadia precisa de Chris?" },
+  "Help with a report she is behind on": { pt: "Ajuda com um relatório que está atrasado" },
+  "A reference for a new job": { pt: "Uma recomendação para um emprego novo" },
+  "Approval to take the day off": { pt: "Autorização para tirar o dia de folga" },
+  "When do they agree to talk?": { pt: "Quando eles combinam de conversar?" },
+  "After lunch": { pt: "Depois do almoço" },
+  "First thing in the morning": { pt: "Logo cedo" },
+  "At the end of the week": { pt: "No fim da semana" },
+  "What does Chris say about the client's delivery question?": { pt: "O que Chris diz sobre a pergunta do cliente sobre a entrega?" },
+  "It's really the account team's job, but he'll pass it on": { pt: "Na verdade é função do time de conta, mas ele vai repassar" },
+  "He'll answer the client right away": { pt: "Ele vai responder o cliente na hora" },
+  "Nadia should handle it herself": { pt: "A própria Nadia deve resolver" },
+  "Make a complaint politely, describe what went wrong, and push for a specific solution.": { pt: "Fazer uma reclamação com educação, descrever o que deu errado e insistir em uma solução específica." },
+  "Rising-then-falling intonation keeps a complaint firm but civil: 'this isn't what I ↗ordered↘'.": { pt: "Entonação que sobe e depois desce mantém a reclamação firme, mas educada: 'this isn't what I ↗ordered↘'." },
+  "Complain about something you bought that was wrong or broken. Say what happened and ask for the solution you want.": { pt: "Reclame de algo que você comprou e veio errado ou quebrado. Diga o que aconteceu e peça a solução que você quer." },
+  "Open with 'There seems to be a problem with…', describe what you ordered versus what came, and end with 'I'd appreciate…' or 'Is there anything you can do?'.": { pt: "Comece com 'There seems to be a problem with…', descreva o que você pediu e o que veio, e termine com 'I'd appreciate…' ou 'Is there anything you can do?'." },
+  "Why is Bea contacting the company?": { pt: "Por que Bea está entrando em contato com a empresa?" },
+  "She received the wrong item": { pt: "Ela recebeu o item errado" },
+  "She wants to change her address": { pt: "Ela quer mudar o endereço" },
+  "She never received any order": { pt: "Ela nunca recebeu nenhum pedido" },
+  "What did Bea originally order?": { pt: "O que Bea pediu originalmente?" },
+  "A blue one in medium": { pt: "Um azul, tamanho médio" },
+  "A grey one in large": { pt: "Um cinza, tamanho grande" },
+  "A black one in small": { pt: "Um preto, tamanho pequeno" },
+  "What solution does Bea prefer?": { pt: "Qual solução Bea prefere?" },
+  "A replacement item": { pt: "Um item de reposição" },
+  "A store credit": { pt: "Um crédito na loja" },
+  "Manage a routine phone call: say why you are calling, get transferred, or arrange a call back.": { pt: "Conduzir uma ligação de rotina: dizer por que está ligando, ser transferido ou combinar um retorno." },
+  "Phone-call formulas run fast and flat: 'hold-on-a-moment', 'put-you-through' — say each as one unit.": { pt: "Fórmulas de telefonema saem rápidas e planas: 'hold-on-a-moment', 'put-you-through' — diga cada uma como um bloco só." },
+  "Role-play a phone call to reschedule an appointment. Say why you're calling, react to a problem, and ask for a call back.": { pt: "Simule uma ligação para remarcar um compromisso. Diga por que está ligando, reaja a um problema e peça para ligarem de volta." },
+  "Start with 'I'm calling about…', use 'Could you hold on a moment?' or 'Could you put me through to…', and finish with 'Could you call me back later?'.": { pt: "Comece com 'I'm calling about…', use 'Could you hold on a moment?' ou 'Could you put me through to…' e termine com 'Could you call me back later?'." },
+  "Why is Hugo calling the clinic?": { pt: "Por que Hugo está ligando para a clínica?" },
+  "About his appointment on Thursday": { pt: "Por causa da consulta dele na quinta" },
+  "To register as a new patient": { pt: "Para se cadastrar como paciente novo" },
+  "To complain about a doctor": { pt: "Para reclamar de uma médica" },
+  "Why can't the appointment stay on Thursday?": { pt: "Por que a consulta não pode ficar na quinta?" },
+  "The doctor won't be in": { pt: "A médica não vai estar" },
+  "The clinic will be closed": { pt: "A clínica vai estar fechada" },
+  "Hugo will be away": { pt: "Hugo vai estar viajando" },
+  "What does Hugo ask for at the end?": { pt: "O que Hugo pede no fim?" },
+  "A call back later with other times": { pt: "Uma ligação depois com outros horários" },
+  "A refund for the visit": { pt: "Um reembolso da consulta" },
+  "A different doctor": { pt: "Uma médica diferente" },
+  "Use common phrasal verbs and idioms to talk about plans that change and results over time.": { pt: "Usar phrasal verbs e expressões idiomáticas comuns para falar sobre planos que mudam e resultados ao longo do tempo." },
+  "Idioms are memorized as chunks with fixed stress: 'by HEART', 'the back of my HAND', 'so far so GOOD'.": { pt: "Expressões idiomáticas são memorizadas como blocos com acento fixo: 'by HEART', 'the back of my HAND', 'so far so GOOD'." },
+  "Tell a colleague about a plan that was cancelled and a project that is going well. Use at least three phrasal verbs.": { pt: "Conte a um colega sobre um plano que foi cancelado e um projeto que vai bem. Use pelo menos três phrasal verbs." },
+  "Use 'call off' for the cancellation, 'pick up' or 'take off' for the good news, and 'get in touch' to arrange the next step.": { pt: "Use 'call off' para o cancelamento, 'pick up' ou 'take off' para a boa notícia e 'get in touch' para combinar o próximo passo." },
+  "What are Kayla and Marcus mainly talking about?": { pt: "Sobre o que Kayla e Marcus estão conversando principalmente?" },
+  "Work updates: a cancelled training and a new project": { pt: "Novidades do trabalho: um treinamento cancelado e um projeto novo" },
+  "A holiday they are planning": { pt: "Uma viagem que estão planejando" },
+  "A problem with a supplier": { pt: "Um problema com um fornecedor" },
+  "Why was the training called off?": { pt: "Por que o treinamento foi cancelado?" },
+  "Not enough people signed up": { pt: "Não teve gente suficiente inscrita" },
+  "The trainer was sick": { pt: "O instrutor ficou doente" },
+  "The room was double-booked": { pt: "A sala estava reservada em duplicidade" },
+  "What has happened to sales since the launch?": { pt: "O que aconteceu com as vendas desde o lançamento?" },
+  "They have picked up": { pt: "Elas melhoraram" },
+  "They have run out": { pt: "Elas se esgotaram" },
+  "They have dropped sharply": { pt: "Elas caíram bastante" },
+  "Describe your study habits, what helps you learn, and what you find hard, using conditionals and gerunds.": { pt: "Descrever seus hábitos de estudo, o que te ajuda a aprender e o que você acha difícil, usando condicionais e gerúndios." },
+  "Gerund subjects keep the stress on the noun idea: 'WRITING things down', 'MAKING mistakes' — don't stress the '-ing'.": { pt: "Sujeitos no gerúndio mantêm o acento na ideia principal: 'WRITING things down', 'MAKING mistakes' — não acentue o '-ing'." },
+  "Describe your own study routine. Say what helps you learn, what makes you lose focus, and one goal.": { pt: "Descreva sua própria rotina de estudo. Diga o que te ajuda a aprender, o que faz você perder o foco e um objetivo." },
+  "Use 'I learn faster when…', 'I lose focus if…', and 'My goal is to…'. Try one gerund subject such as 'Writing things down helps me'.": { pt: "Use 'I learn faster when…', 'I lose focus if…' e 'My goal is to…'. Tente um sujeito no gerúndio como 'Writing things down helps me'." },
+  "Pavel's language study habits and difficulties": { pt: "Os hábitos e as dificuldades de estudo de idioma do Pavel" },
+  "A test Pavel failed": { pt: "Uma prova em que Pavel foi mal" },
+  "Choosing a new course": { pt: "A escolha de um curso novo" },
+  "How has Pavel changed his routine?": { pt: "Como Pavel mudou a rotina dele?" },
+  "A little review every day instead of one long session": { pt: "Um pouco de revisão todo dia em vez de uma sessão longa" },
+  "Studying only on weekends": { pt: "Estudando só nos fins de semana" },
+  "Stopping review completely": { pt: "Parando de revisar completamente" },
+  "What does Pavel find hardest?": { pt: "O que Pavel acha mais difícil?" },
+  "Using new words naturally when speaking": { pt: "Usar palavras novas com naturalidade ao falar" },
+  "Understanding grammar rules": { pt: "Entender regras de gramática" },
+  "Remembering spelling": { pt: "Lembrar a ortografia" },
+
+  /* ── Guided material for the promoted B1–C2 lessons ─── */
+  "Defend a position in a discussion: concede fairly, challenge weak reasoning, and steer back to what matters.": { pt: "Defender uma posição em uma discussão: ceder com justiça, contestar raciocínios frágeis e voltar ao que importa." },
+  "Stress the pivot word that turns the sentence: 'the DATA suggests otherwise', 'that's beSIDE the point'.": { pt: "Acentue a palavra-chave que vira a frase: 'the DATA suggests otherwise', 'that's beSIDE the point'." },
+  "Argue for or against delaying a decision at work. Concede one point to the other side, then explain why your position still holds.": { pt: "Defenda ou critique adiar uma decisão no trabalho. Ceda um ponto para o outro lado e depois explique por que sua posição ainda se sustenta." },
+  "Use 'While I understand…, the data suggests…', concede with 'To be fair…', and close with 'Ultimately, it comes down to…'.": { pt: "Use 'While I understand…, the data suggests…', ceda com 'To be fair…' e conclua com 'Ultimately, it comes down to…'." },
+  "What are Iris and Omar disagreeing about?": { pt: "Sobre o que Iris e Omar estão discordando?" },
+  "Whether to delay the product launch": { pt: "Se devem adiar o lançamento do produto" },
+  "Which reviewer to hire": { pt: "Qual avaliador contratar" },
+  "How much to charge for the product": { pt: "Quanto cobrar pelo produto" },
+  "What does Omar say about early users?": { pt: "O que Omar diz sobre os primeiros usuários?" },
+  "They forgive small bugs": { pt: "Eles perdoam pequenos bugs" },
+  "They never come back after a problem": { pt: "Eles nunca voltam depois de um problema" },
+  "They rarely leave reviews": { pt: "Eles raramente deixam avaliações" },
+  "Why does Omar reject the idea of waiting?": { pt: "Por que Omar rejeita a ideia de esperar?" },
+  "The onboarding fix can ship later as an update": { pt: "O ajuste na integração pode sair depois como atualização" },
+  "The reviews will never improve": { pt: "As avaliações nunca vão melhorar" },
+  "The team is too small to wait": { pt: "O time é pequeno demais para esperar" },
+  "Discuss unreal and hypothetical situations with second and third conditionals, 'unless', 'even if', and 'wish'.": { pt: "Discutir situações irreais e hipotéticas com a segunda e a terceira condicionais, 'unless', 'even if' e 'wish'." },
+  "Contracted 'would' and 'had' almost disappear: 'I'd take it', 'had I known' — the vowel carries the meaning.": { pt: "'Would' e 'had' contraídos quase somem: 'I'd take it', 'had I known' — a vogal carrega o sentido." },
+  "Describe a decision you once faced. Say what you would do differently now, and give one piece of advice using 'If I were you…'.": { pt: "Descreva uma decisão que você já enfrentou. Diga o que faria diferente hoje e dê um conselho usando 'If I were you…'." },
+  "Use the third conditional for regret ('If only I had…', 'Had I known…') and the second conditional for advice ('If I were you, I'd…').": { pt: "Use a terceira condicional para arrependimento ('If only I had…', 'Had I known…') e a segunda para conselho ('If I were you, I'd…')." },
+  "What decision is Théo facing?": { pt: "Que decisão Théo está enfrentando?" },
+  "Whether to accept a job transfer to Lisbon": { pt: "Se aceita uma transferência de trabalho para Lisboa" },
+  "Whether to ask for a pay rise": { pt: "Se pede um aumento" },
+  "Whether to move in with Rania": { pt: "Se vai morar com Rania" },
+  "What does Rania advise him to do?": { pt: "O que Rania aconselha ele a fazer?" },
+  "Take the offer": { pt: "Aceitar a oferta" },
+  "Turn it down": { pt: "Recusar" },
+  "Wait a few months": { pt: "Esperar alguns meses" },
+  "Why does Théo say the salary matters less?": { pt: "Por que Théo diz que o salário importa menos?" },
+  "The role itself is a step up": { pt: "O cargo em si é um avanço" },
+  "He already has savings": { pt: "Ele já tem uma reserva" },
+  "Lisbon is cheaper": { pt: "Lisboa é mais barata" },
+  "Move a negotiation toward agreement: signal flexibility, refuse firmly where needed, and close the deal.": { pt: "Levar uma negociação rumo a um acordo: sinalizar flexibilidade, recusar com firmeza quando preciso e fechar o negócio." },
+  "Soften a refusal with a falling, unhurried tone: 'I'm afraid that's out of the question' — no sharp stress.": { pt: "Suavize uma recusa com tom descendente e sem pressa: 'I'm afraid that's out of the question' — sem acento forte." },
+  "Role-play a negotiation over a price or deadline. Make one firm refusal, offer one trade, and close with a clear agreement.": { pt: "Simule uma negociação sobre preço ou prazo. Faça uma recusa firme, ofereça uma troca e feche com um acordo claro." },
+  "Offer flexibility with 'Would you be willing to…' and 'meet halfway', refuse with 'I'm afraid that's out of the question', and close with 'Do we have a deal?'.": { pt: "Ofereça flexibilidade com 'Would you be willing to…' e 'meet halfway', recuse com 'I'm afraid that's out of the question' e feche com 'Do we have a deal?'." },
+  "What are Sami and Nora negotiating?": { pt: "O que Sami e Nora estão negociando?" },
+  "The terms of a supply contract": { pt: "As condições de um contrato de fornecimento" },
+  "A job salary": { pt: "O salário de um emprego" },
+  "The rent on an office": { pt: "O aluguel de um escritório" },
+  "Which request does Sami firmly reject?": { pt: "Qual pedido Sami recusa com firmeza?" },
+  "An eight percent discount": { pt: "Um desconto de oito por cento" },
+  "A two-year contract": { pt: "Um contrato de dois anos" },
+  "Sixty-day payment terms": { pt: "Prazo de pagamento de sessenta dias" },
+  "What do they finally agree on?": { pt: "Com o que eles concordam no fim?" },
+  "Six percent off with faster delivery and sixty-day terms": { pt: "Seis por cento de desconto com entrega mais rápida e prazo de sessenta dias" },
+  "Five percent off with no other changes": { pt: "Cinco por cento de desconto sem outras mudanças" },
+  "No deal at all": { pt: "Nenhum acordo" },
+  "Present figures and trends: describe rises, falls, and plateaus, and hedge a forecast appropriately.": { pt: "Apresentar números e tendências: descrever altas, quedas e estabilizações e fazer previsões com as devidas ressalvas." },
+  "Gradable verbs carry the emotion: 'sales have SOARED', 'a SHARP decline' — lengthen the stressed vowel.": { pt: "Verbos graduáveis carregam a emoção: 'sales have SOARED', 'a SHARP decline' — alongue a vogal acentuada." },
+  "Describe how a number you know (spending, followers, sales) has changed over the last year, and give a hedged forecast.": { pt: "Descreva como um número que você conhece (gastos, seguidores, vendas) mudou no último ano e faça uma previsão com ressalvas." },
+  "Use one movement verb ('soared', 'declined', 'plateaued'), one hedge ('is expected to', 'is likely to'), and 'overall' for the summary.": { pt: "Use um verbo de movimento ('soared', 'declined', 'plateaued'), uma ressalva ('is expected to', 'is likely to') e 'overall' para o resumo." },
+  "What is Priscila presenting?": { pt: "O que Priscila está apresentando?" },
+  "Quarterly sales results and the forecast": { pt: "Os resultados de vendas do trimestre e a previsão" },
+  "A new pricing plan": { pt: "Um novo plano de preços" },
+  "A customer complaint report": { pt: "Um relatório de reclamações de clientes" },
+  "What is happening to demand in the north?": { pt: "O que está acontecendo com a demanda no norte?" },
+  "There has been a sharp decline": { pt: "Houve uma queda acentuada" },
+  "It has soared": { pt: "Ela disparou" },
+  "It has remained steady": { pt: "Ela ficou estável" },
+  "What does Priscila expect costs to do?": { pt: "O que Priscila espera que os custos façam?" },
+  "Rise gradually": { pt: "Subir aos poucos" },
+  "Fall sharply": { pt: "Cair bruscamente" },
+  "Stay exactly the same": { pt: "Ficar exatamente iguais" },
+  "Compare two options out loud: name the trade-off, weigh risks against benefits, and explain which way you lean.": { pt: "Comparar duas opções em voz alta: nomear o trade-off, pesar riscos contra benefícios e explicar para que lado você se inclina." },
+  "Contrast pairs get matched stress: 'TIME versus QUALity', 'SHORT term / LONG term'.": { pt: "Pares de contraste recebem acento equivalente: 'TIME versus QUALity', 'SHORT term / LONG term'." },
+  "Talk through a choice between two options you face. Name the trade-off, weigh one risk against one benefit, and say which way you lean.": { pt: "Analise em voz alta uma escolha entre duas opções que você tem. Nomeie o trade-off, pese um risco contra um benefício e diga para que lado você se inclina." },
+  "Use 'The main trade-off is X versus Y', 'weigh the risks against the benefits', and 'On balance, I'm leaning toward…'.": { pt: "Use 'The main trade-off is X versus Y', 'weigh the risks against the benefits' e 'On balance, I'm leaning toward…'." },
+  "What decision are Aline and Bruno weighing?": { pt: "Que decisão Aline e Bruno estão pesando?" },
+  "Hiring a contractor now versus training someone internally": { pt: "Contratar um freelancer agora ou treinar alguém de casa" },
+  "Which office to rent": { pt: "Qual escritório alugar" },
+  "Whether to raise prices": { pt: "Se aumentam os preços" },
+  "What is the main trade-off Bruno names?": { pt: "Qual é o trade-off principal que Bruno aponta?" },
+  "Speed versus cost": { pt: "Velocidade versus custo" },
+  "Quality versus quantity": { pt: "Qualidade versus quantidade" },
+  "Risk versus reputation": { pt: "Risco versus reputação" },
+  "Which way does Bruno lean in the end?": { pt: "Para que lado Bruno se inclina no fim?" },
+  "Hire now and train in parallel": { pt: "Contratar agora e treinar em paralelo" },
+  "Wait and train only": { pt: "Esperar e só treinar" },
+  "Do nothing for now": { pt: "Não fazer nada por enquanto" },
+  "Register a precise degree of agreement or doubt, mark distinctions, and qualify a judgement without hedging into vagueness.": { pt: "Registrar um grau preciso de concordância ou dúvida, marcar distinções e qualificar um julgamento sem cair na vagueza." },
+  "Concessive discourse markers sit on their own tone unit: 'That said, —', 'I take your point, — but…'.": { pt: "Marcadores concessivos ficam em unidade de entonação própria: 'That said, —', 'I take your point, — but…'." },
+  "Give a nuanced verdict on something you have mixed feelings about. Concede one real strength, then explain the reservation that still holds.": { pt: "Dê um veredito matizado sobre algo em relação a que você tem sentimentos mistos. Reconheça uma qualidade real e depois explique a ressalva que permanece." },
+  "Qualify with 'I would hesitate to…', concede with 'That said…', and hold your line with 'I take your point, but I remain unconvinced'.": { pt: "Faça ressalvas com 'I would hesitate to…', ceda com 'That said…' e mantenha a posição com 'I take your point, but I remain unconvinced'." },
+  "What is Dela's overall stance on the pilot?": { pt: "Qual é a posição geral de Dela sobre o piloto?" },
+  "Cautiously negative — not a clear failure, but not ready to scale": { pt: "Cautelosamente negativa — não é um fracasso claro, mas não está pronto para expandir" },
+  "Strongly positive — it should be expanded now": { pt: "Fortemente positiva — deve ser expandido já" },
+  "Completely neutral — the data says nothing useful": { pt: "Totalmente neutra — os dados não dizem nada útil" },
+  "Which distinction does Dela emphasize?": { pt: "Qual distinção Dela enfatiza?" },
+  "Engagement versus retention": { pt: "Engajamento versus retenção" },
+  "Cost versus revenue": { pt: "Custo versus receita" },
+  "Short term versus long term": { pt: "Curto prazo versus longo prazo" },
+  "How does Dela respond to Halvor's point about early signs?": { pt: "Como Dela responde ao argumento de Halvor sobre os primeiros sinais?" },
+  "She acknowledges it but stays unconvinced": { pt: "Ela reconhece, mas continua não convencida" },
+  "She fully changes her mind": { pt: "Ela muda totalmente de ideia" },
+  "She dismisses it as irrelevant": { pt: "Ela descarta como irrelevante" },
+  "Raise a difficult point in a professional register: soften requests, acknowledge the other side's position, and invite correction.": { pt: "Levantar um ponto difícil em registro profissional: suavizar pedidos, reconhecer a posição do outro lado e abrir espaço para correção." },
+  "Polite formulas stay level and unstressed until the content word: 'I wanted to follow up on our previous conVERSAtion'.": { pt: "Fórmulas educadas ficam niveladas e sem acento até a palavra de conteúdo: 'I wanted to follow up on our previous conVERSAtion'." },
+  "Deliver bad news to a client or manager in a professional tone. Acknowledge their position, explain the cause, and commit to a next step.": { pt: "Dê uma notícia ruim a um cliente ou gestor em tom profissional. Reconheça a posição da pessoa, explique a causa e assuma um próximo passo." },
+  "Open with 'I wanted to follow up on…', acknowledge with 'I appreciate the constraints you're working under', and hedge with 'I wouldn't want to overstate…'.": { pt: "Comece com 'I wanted to follow up on…', reconheça com 'I appreciate the constraints you're working under' e faça ressalva com 'I wouldn't want to overstate…'." },
+  "What is the purpose of Pieter's message?": { pt: "Qual é o objetivo da fala de Pieter?" },
+  "To explain a delayed report and commit to a new date": { pt: "Explicar um relatório atrasado e se comprometer com uma nova data" },
+  "To end the contract with the client": { pt: "Encerrar o contrato com a cliente" },
+  "To ask the client for more money": { pt: "Pedir mais dinheiro à cliente" },
+  "What reason does Pieter give for the delay?": { pt: "Que motivo Pieter dá para o atraso?" },
+  "The final data arrived three days late": { pt: "Os dados finais chegaram com três dias de atraso" },
+  "A team member resigned": { pt: "Um membro da equipe pediu demissão" },
+  "The client changed the scope": { pt: "A cliente mudou o escopo" },
+  "How does Pieter present the new date?": { pt: "Como Pieter apresenta a nova data?" },
+  "As realistic, without overstating his certainty": { pt: "Como realista, sem exagerar a certeza dele" },
+  "As a firm guarantee with no risk": { pt: "Como uma garantia firme sem risco" },
+  "As impossible to predict": { pt: "Como impossível de prever" },
+  "Chair a working discussion: frame the decision, surface disagreement deliberately, and close with a clear decision and owner.": { pt: "Conduzir uma discussão de trabalho: enquadrar a decisão, trazer a discordância à tona de propósito e encerrar com uma decisão clara e um responsável." },
+  "Chairing moves start on a low, steady pitch to hold the floor: 'Before we move on, —', 'Unless there are objections, —'.": { pt: "As falas de quem conduz começam em tom baixo e estável para segurar a palavra: 'Before we move on, —', 'Unless there are objections, —'." },
+  "Chair a two-minute segment of a meeting about a decision. Frame the question, invite one objection, and close with a decision and an owner.": { pt: "Conduza um trecho de dois minutos de uma reunião sobre uma decisão. Enquadre a questão, convide uma objeção e encerre com uma decisão e um responsável." },
+  "Use 'Let's clarify what we need to decide', 'Before we move on, I'd like to hear the opposing view', and 'Unless there are objections, we'll proceed…'.": { pt: "Use 'Let's clarify what we need to decide', 'Before we move on, I'd like to hear the opposing view' e 'Unless there are objections, we'll proceed…'." },
+  "What is the meeting trying to decide?": { pt: "O que a reunião está tentando decidir?" },
+  "The launch date": { pt: "A data de lançamento" },
+  "Who to hire for support": { pt: "Quem contratar para o suporte" },
+  "The product's price": { pt: "O preço do produto" },
+  "What concern does Marina raise?": { pt: "Que preocupação Marina levanta?" },
+  "Support isn't trained yet": { pt: "O suporte ainda não foi treinado" },
+  "The build is unstable": { pt: "A build está instável" },
+  "The budget is gone": { pt: "O orçamento acabou" },
+  "How does Renata close the discussion?": { pt: "Como Renata encerra a discussão?" },
+  "Proceeding with the twenty-second unless anyone objects": { pt: "Seguindo com o dia vinte e dois, a menos que alguém se oponha" },
+  "Postponing the decision to next week": { pt: "Adiando a decisão para a semana que vem" },
+  "Letting each team decide separately": { pt: "Deixando cada time decidir por conta própria" },
+  "Make an exact claim: bound it with conditions, separate it from a near neighbour, and place emphasis deliberately rather than by volume.": { pt: "Fazer uma afirmação exata: delimitá-la com condições, separá-la de uma ideia parecida e colocar a ênfase de propósito, não pelo volume." },
+  "Emphasis by contrast, not force: drop pitch on 'not incidental', lift it on 'it is CENtral' — the fall-rise carries the weight.": { pt: "Ênfase por contraste, não por força: abaixe o tom em 'not incidental', suba em 'it is CENtral' — a curva descendente-ascendente carrega o peso." },
+  "State a claim you believe is often oversimplified. Bound it with the conditions under which it holds, and name the near neighbour it gets confused with.": { pt: "Enuncie uma afirmação que você acha que costuma ser simplificada demais. Delimite-a com as condições sob as quais ela vale e nomeie a ideia parecida com que ela é confundida." },
+  "Use 'X is less a … than a …', 'it holds only under specific conditions', and 'the conclusion follows, but only with several caveats'.": { pt: "Use 'X is less a … than a …', 'it holds only under specific conditions' e 'the conclusion follows, but only with several caveats'." },
+  "What is the editorial disagreement about?": { pt: "Sobre o que é a divergência editorial?" },
+  "How precisely the draft states its claims": { pt: "Com que precisão o rascunho enuncia suas afirmações" },
+  "Whether to publish the article at all": { pt: "Se o artigo deve ser publicado" },
+  "Which study to cite first": { pt: "Qual estudo citar primeiro" },
+  "How does Idil characterize the relationship between the two studies?": { pt: "Como Idil caracteriza a relação entre os dois estudos?" },
+  "A shift in emphasis rather than a contradiction": { pt: "Uma mudança de ênfase, não uma contradição" },
+  "A direct contradiction": { pt: "Uma contradição direta" },
+  "Two identical findings": { pt: "Duas conclusões idênticas" },
+  "What does Idil agree to do about the causal claim?": { pt: "O que Idil concorda em fazer com a afirmação causal?" },
+  "Add the caveats and conditions it depends on": { pt: "Acrescentar as ressalvas e condições de que ela depende" },
+  "Remove it entirely": { pt: "Removê-la por completo" },
+  "Make it stronger": { pt: "Torná-la mais forte" },
+  "Control the shape of an argument in real time: redirect attention, rank objections by weight, and return the discussion to its core.": { pt: "Controlar a forma de um argumento em tempo real: redirecionar a atenção, hierarquizar objeções por peso e devolver a discussão ao seu núcleo." },
+  "Structural signposts take a full pause on both sides: 'That may be true — but it does not settle the matter'.": { pt: "Sinalizadores estruturais pedem pausa completa dos dois lados: 'That may be true — but it does not settle the matter'." },
+  "Take a discussion that has drifted onto a minor point and steer it back. Concede the small point, name the real issue, and state the central tension.": { pt: "Pegue uma discussão que derivou para um ponto menor e traga-a de volta. Ceda o ponto pequeno, nomeie o problema de fato e enuncie a tensão central." },
+  "Use 'That may be true, but it does not settle the matter', 'The real issue lies elsewhere', and 'This brings us back to the central tension'.": { pt: "Use 'That may be true, but it does not settle the matter', 'The real issue lies elsewhere' e 'This brings us back to the central tension'." },
+  "What is Wen trying to do in this exchange?": { pt: "O que Wen está tentando fazer nesta troca?" },
+  "Redirect the discussion to what she sees as the core issue": { pt: "Redirecionar a discussão para o que ela vê como a questão central" },
+  "Concede that the funding figure decides everything": { pt: "Admitir que a cifra do financiamento decide tudo" },
+  "End the meeting without a conclusion": { pt: "Encerrar a reunião sem conclusão" },
+  "What does Wen say is the real issue?": { pt: "O que Wen diz ser o problema de fato?" },
+  "Who controls the timeline": { pt: "Quem controla o cronograma" },
+  "The exact funding figure": { pt: "O valor exato do financiamento" },
+  "The size of the committee": { pt: "O tamanho do comitê" },
+  "Why does Wen think the timeline objection now gains force?": { pt: "Por que Wen acha que a objeção sobre o cronograma ganha força agora?" },
+  "Seen in the context of the last two delays": { pt: "Vista no contexto dos dois últimos atrasos" },
+  "Because the committee is new": { pt: "Porque o comitê é novo" },
+  "Because funding was cut": { pt: "Porque o financiamento foi cortado" },
+  "Synthesize conflicting findings: locate each at its own level, state the narrowest claim the data supports, and resist single-cause explanations.": { pt: "Sintetizar conclusões conflitantes: situar cada uma em seu próprio nível, enunciar a afirmação mais restrita que os dados sustentam e resistir a explicações de causa única." },
+  "List the levels with parallel intonation and equal weight: 'at the indiVIDual level — the other at the institUtional level'.": { pt: "Liste os níveis com entonação paralela e peso igual: 'at the indiVIDual level — the other at the institUtional level'." },
+  "Take two opposing claims you have read about one topic. Show how each could be partly right at a different level, and state the narrower conclusion that survives both.": { pt: "Pegue duas afirmações opostas que você leu sobre um tema. Mostre como cada uma pode estar parcialmente certa em um nível diferente e enuncie a conclusão mais restrita que sobrevive às duas." },
+  "Use 'The two accounts are not mutually exclusive', 'one operates at the … level, the other at the … level', and 'the strongest claim the data supports is considerably narrower'.": { pt: "Use 'The two accounts are not mutually exclusive', 'one operates at the … level, the other at the … level' e 'the strongest claim the data supports is considerably narrower'." },
+  "How does Emre reconcile the two papers?": { pt: "Como Emre concilia os dois artigos?" },
+  "They describe different levels, so both can hold in a narrower form": { pt: "Eles descrevem níveis diferentes, então ambos podem valer de forma mais restrita" },
+  "One paper is simply wrong": { pt: "Um dos artigos está simplesmente errado" },
+  "The topic cannot be studied at all": { pt: "O tema não pode ser estudado de jeito nenhum" },
+  "At which two levels do the explanations operate?": { pt: "Em quais dois níveis as explicações operam?" },
+  "Individual and institutional": { pt: "Individual e institucional" },
+  "Local and global": { pt: "Local e global" },
+  "Short term and long term": { pt: "Curto prazo e longo prazo" },
+  "What does Emre say about the second paper's sampling limitation?": { pt: "O que Emre diz sobre a limitação de amostragem do segundo artigo?" },
+  "It doesn't invalidate the broader insight": { pt: "Ela não invalida a percepção mais ampla" },
+  "It makes the paper worthless": { pt: "Ela torna o artigo inútil" },
+  "It proves the first paper right": { pt: "Ela prova que o primeiro artigo está certo" },
+  "Contrastive stress marks the pivot: 'only IF we treat demand as stable', 'the DIRECTION, not the magnitude'.": { pt: "O acento contrastivo marca o ponto de virada: 'only IF we treat demand as stable', 'the DIRECTION, not the magnitude'." },
+  "Balance the two halves of a contrast: 'FOREgrounds fragility and obSCURES adaptability' — equal weight on each verb.": { pt: "Equilibre as duas metades de um contraste: 'FOREgrounds fragility and obSCURES adaptability' — peso igual em cada verbo." },
+  "Deliver hedged commitments flat and unhurried: 'this is NOT yet an offer' — drop the pitch, don't rush the line.": { pt: "Diga compromissos com ressalva de forma plana e sem pressa: 'this is NOT yet an offer' — abaixe o tom, não acelere a fala." },
+  "End-weight on the reversal: 'narrower — and STRONGer — than advocates suggest', with a pause before the dash.": { pt: "Peso no fim, na reviravolta: 'narrower — and STRONGer — than advocates suggest', com uma pausa antes do travessão." },
+  "Group a list with level tone and short pauses: 'claims — evidence — values — uncertainties'.": { pt: "Agrupe uma lista com tom nivelado e pausas curtas: 'claims — evidence — values — uncertainties'." },
+
 };

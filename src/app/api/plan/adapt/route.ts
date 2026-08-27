@@ -21,6 +21,7 @@ import { logger } from "@/lib/logger";
 import type { Phase, PlanMeta, EffortSnapshot } from "@/features/plan/schema";
 import { extractJsonObject, validateGeneratedDays } from "@/features/plan/contract";
 import { buildAdaptPrompt } from "@/features/plan/prompts";
+import { PROVIDER_SINGLE_CALL_TIMEOUT_MS } from "@/lib/constants";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -51,7 +52,7 @@ export async function POST(req: NextRequest) {
     const model = safeStr(obj.ollamaModel, "", 100) || undefined;
 
     const kind = adaptProviderKind(obj.provider);
-    if (!isProviderAvailable(kind)) {
+    if (!(await isProviderAvailable(kind))) {
       return failureResponse(providerFailure("provider_not_configured"));
     }
 
@@ -66,7 +67,11 @@ export async function POST(req: NextRequest) {
     }
 
     const prompt = buildAdaptPrompt(meta, phases, remainingDays, startDayNumber, newAvailabilityMinutes, effortHistory);
-    const raw = await provider.converse([], { scenario: prompt, targetLang: "en" });
+    const raw = await provider.converse(
+      [],
+      { scenario: prompt, targetLang: "en" },
+      { signal: req.signal, timeoutMs: PROVIDER_SINGLE_CALL_TIMEOUT_MS },
+    );
 
     let parsed: unknown;
     try {

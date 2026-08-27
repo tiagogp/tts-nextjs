@@ -42,6 +42,7 @@ export async function POST(req: NextRequest) {
       detail?: string;
       error?: string;
       code?: string;
+      model?: string;
       downloading?: boolean;
       progress?: number;
     }>();
@@ -52,6 +53,7 @@ export async function POST(req: NextRequest) {
         {
           error: data.error ?? PUBLIC_TRANSCRIBE_ERROR,
           code: data.code,
+          model: data.model,
           downloading: data.downloading,
           progress: data.progress,
         },

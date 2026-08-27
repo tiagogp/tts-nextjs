@@ -14,6 +14,8 @@ export const ERROR_TYPE_LABELS: Record<ErrorType, string> = {
   idiom: "idiom",
   vocabulary: "vocabulary",
   register: "register",
+  "missing-information": "missing information",
+  pronunciation: "pronunciation",
   other: "other",
 };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { type MouseEvent, useSyncExternalStore } from "react";
+import { type KeyboardEvent, type MouseEvent, useRef, useSyncExternalStore } from "react";
 import { m } from "motion/react";
 import { springSnappy } from "@/lib/motion";
 import { useTheme } from "@/components/app/ThemeProvider";
@@ -27,6 +27,7 @@ interface AppHeaderProps {
   /** The tabs to render; defaults to the full app nav. The landing preview passes
    *  a subset (it has no "Hoje" home surface). */
   tabs?: readonly { id: HomeTab; label: string }[];
+  badges?: Partial<Record<HomeTab, number>>;
 }
 
 export default function AppHeader({
@@ -35,11 +36,13 @@ export default function AppHeader({
   settingsOpen,
   onSettingsOpen,
   tabs = HOME_TABS,
+  badges,
 }: AppHeaderProps) {
   const { resolvedTheme, setTheme } = useTheme();
   const { t } = useT();
   const isClient = useIsClient();
   const isDark = isClient && resolvedTheme === "dark";
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   const toggleDark = () => setTheme(isDark ? "light" : "dark");
 
@@ -56,6 +59,24 @@ export default function AppHeader({
     toggleElectronFullscreen();
   };
 
+  const selectTab = (index: number) => {
+    const next = tabs[index];
+    if (!next) return;
+    onTabChange(next.id);
+    tabRefs.current[index]?.focus();
+  };
+
+  const onTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    let next: number | null = null;
+    if (event.key === "ArrowRight" || event.key === "ArrowDown") next = (index + 1) % tabs.length;
+    if (event.key === "ArrowLeft" || event.key === "ArrowUp") next = (index - 1 + tabs.length) % tabs.length;
+    if (event.key === "Home") next = 0;
+    if (event.key === "End") next = tabs.length - 1;
+    if (next === null) return;
+    event.preventDefault();
+    selectTab(next);
+  };
+
   return (
     <header
       className="sticky top-0 z-20 border-b border-line bg-card shadow-lg"
@@ -64,12 +85,12 @@ export default function AppHeader({
       <div className="app-header-inner max-w-5xl mx-auto px-4">
         <div className="min-w-0" data-no-window-drag="true">
           <div className="flex items-center min-w-0">
-            <h1 className="brand-wordmark text-[1.35rem] font-normal leading-none text-ink">
+            <span className="brand-wordmark text-[1.35rem] font-normal leading-none text-ink">
               PhraseLoop
-            </h1>
-            <h1 className="brand-wordmark text-[1.35rem] font-normal leading-none text-fin">
+            </span>
+            <span className="brand-wordmark text-[1.35rem] font-normal leading-none text-fin">
               .
-            </h1>
+            </span>
           </div>
         </div>
 
@@ -81,21 +102,33 @@ export default function AppHeader({
           data-no-window-drag="true"
           data-ignore-window-double-click="true"
         >
-          {tabs.map((tab) => {
+          {tabs.map((tab, index) => {
             const active = activeTab === tab.id;
+            const badge = badges?.[tab.id] ?? 0;
             return (
               <button
                 key={tab.id}
+                ref={(element) => {
+                  tabRefs.current[index] = element;
+                }}
                 id={`tab-${tab.id}`}
                 onClick={() => onTabChange(tab.id)}
-                className="app-tab relative py-4 text-sm font-medium transition-colors duration-200"
+                onKeyDown={(event) => onTabKeyDown(event, index)}
+                className="app-tab relative flex min-h-12 min-w-0 items-center justify-center gap-1.5 px-1 py-3 text-sm font-medium transition-colors duration-200"
                 data-active={active}
                 role="tab"
                 aria-selected={active && !settingsOpen}
                 aria-controls={`panel-${tab.id}`}
+                aria-label={badge > 0 ? t("{label}, {count} due", { label: t(tab.label), count: badge }) : t(tab.label)}
+                tabIndex={active ? 0 : -1}
                 type="button"
               >
-                {t(tab.label)}
+                <span className="truncate">{t(tab.label)}</span>
+                {badge > 0 && (
+                  <span className="min-w-5 rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white tabular-nums" aria-hidden="true">
+                    {badge > 99 ? "99+" : badge}
+                  </span>
+                )}
                 {active && (
                   <m.span
                     layoutId="tab-underline"

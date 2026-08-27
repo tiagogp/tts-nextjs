@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { isStoreAvailable } from "@/lib/store/db";
 import {
   getCards,
@@ -11,17 +12,31 @@ import {
   getCounts,
   getDueCards,
   getErrorEvents,
-  getPronunciationAttempts,
-  getReviews,
-  type ReviewRecord,
 } from "@/lib/store/repository";
-import { getActivityLog } from "@/lib/store/activityLog";
-import { returnMomentFor, type ReturnMoment } from "@/features/home/returnMoment";
-import { computePerformance } from "@/lib/srs/analytics";
-import { deriveMethodPlan, type MethodPlan, type MethodRoute } from "@/features/method/learningLoop";
+import { getActivityLog, type ActivityEvent } from "@/lib/store/activityLog";
+import {
+  returnMomentFor,
+  type ReturnMoment,
+} from "@/features/home/returnMoment";
+import {
+  deriveMethodPlan,
+  type MethodPlan,
+  type MethodRoute,
+} from "@/features/method/learningLoop";
 import { useT } from "@/i18n/I18nProvider";
-import { completedLessonIdsFromCardIds, firstLesson, nextLessonFor, type Lesson } from "@/features/learn/lessonDeck";
+import {
+  lessonProgressFromCardIds,
+  firstLesson,
+  nextLessonFor,
+  type Lesson,
+} from "@/features/learn/lessonDeck";
 import { getLearningProfile } from "@/features/settings/learningProfile";
+import { TodayPlanCard } from "@/features/plan/components/TodayPlanCard";
+import type { TaskItem } from "@/features/plan/schema";
+import {
+  buildTransferActivities,
+  type TransferActivity,
+} from "@/features/study/transfer";
 
 interface HojeHomeProps {
   onStudy: () => void;
@@ -29,6 +44,10 @@ interface HojeHomeProps {
   onCorrect: () => void;
   onFirstLesson: () => void;
   onLesson: (lessonId?: string) => void;
+  onSpeak: () => void;
+  onOpenPlanTask: (task: TaskItem) => void;
+  onCreatePlan: () => void;
+  onInstallDefaultPlan: () => void;
 }
 
 interface NextAction {
@@ -39,40 +58,81 @@ interface NextAction {
   onClick: () => void;
 }
 
+interface WeeklyTransferSuggestion {
+  prompt: string;
+  promptVars?: Record<string, string>;
+}
+
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
+function isProductionAttemptEvent(
+  event: ActivityEvent,
+): event is ActivityEvent<"production_attempt"> {
+  return event.type === "production_attempt";
+}
+
 /**
  * "Hoje" — the app's front door. It answers a single question for the learner:
  * what is the one next thing to do right now? Resolution order: (a) today's first
  * due phrases → Study, mistakes → Correct, practice → next phrase, or a
  * brand-new user with no saved phrases → bundled first lesson. One CTA, never a dashboard.
  */
-export function HojeHome({ onStudy, onDiscover, onCorrect, onFirstLesson, onLesson }: HojeHomeProps) {
+export function HojeHome({
+  onStudy,
+  onDiscover,
+  onCorrect,
+  onFirstLesson,
+  onLesson,
+  onSpeak,
+  onOpenPlanTask,
+  onCreatePlan,
+  onInstallDefaultPlan,
+}: HojeHomeProps) {
   const { t } = useT();
-  const [counts, setCounts] = useState({ cards: 0, reviews: 0, due: 0, errors: 0 });
-  const [streakDays, setStreakDays] = useState(0);
-  const [nextLesson, setNextLesson] = useState<Lesson>(() => nextLessonFor(getLearningProfile(), []) ?? firstLesson());
+  const [counts, setCounts] = useState({
+    cards: 0,
+    reviews: 0,
+    due: 0,
+    errors: 0,
+  });
+  const [nextLesson, setNextLesson] = useState<Lesson>(
+    () => nextLessonFor(getLearningProfile(), lessonProgressFromCardIds([])) ?? firstLesson(),
+  );
   const [returnMoment, setReturnMoment] = useState<ReturnMoment | null>(null);
   const [methodPlan, setMethodPlan] = useState<MethodPlan | null>(null);
-  const [countsLoaded, setCountsLoaded] = useState(() => !isStoreAvailable());
+  const [weeklyTransfer, setWeeklyTransfer] =
+    useState<WeeklyTransferSuggestion | null>(null);
+  // Start "loading" on both server and client so the first render matches during
+  // hydration. isStoreAvailable() is false during SSR and true in the browser, so
+  // seeding this from it directly rendered the loaded state on the server and the
+  // spinner on the client — a hydration mismatch on the first screen. load()'s
+  // finally flips it once the read settles (even if the store is unavailable).
+  const [countsLoaded, setCountsLoaded] = useState(false);
 
-  useEffect(() => {
-    if (!isStoreAvailable()) return;
-    let cancelled = false;
-    const load = async () => {
-      const [nextCounts, reviews, cards, errors, activity, dueCards, conversations, pronunciationAttempts] = await Promise.all([
+  const load = useCallback(async () => {
+    try {
+      const [
+        nextCounts,
+        cards,
+        errors,
+        conversations,
+        activity,
+        dueCards,
+      ] = await Promise.all([
         getCounts(),
-        getReviews(),
         getCards(),
         getErrorEvents(),
+        getConversations(),
         getActivityLog(),
         getDueCards(),
-        getConversations(),
-        getPronunciationAttempts(),
       ]);
-      if (cancelled) return;
       setCounts({ ...nextCounts, errors: errors.length });
-      setStreakDays(computePerformance(reviews as ReviewRecord[], Date.now()).streakDays);
       setReturnMoment(
-        returnMomentFor({ dueCards: dueCards.map((item) => item.card), activity, errors }),
+        returnMomentFor({
+          dueCards: dueCards.map((item) => item.card),
+          activity,
+          errors,
+        }),
       );
       setMethodPlan(
         deriveMethodPlan({
@@ -81,28 +141,46 @@ export function HojeHome({ onStudy, onDiscover, onCorrect, onFirstLesson, onLess
           snapshot: {
             cards: nextCounts.cards,
             due: nextCounts.due,
-            reviews,
             errorEvents: errors,
-            conversations,
-            pronunciationAttempts,
           },
         }),
       );
       setNextLesson(
         nextLessonFor(
           getLearningProfile(),
-          completedLessonIdsFromCardIds(cards.map((card) => card.id)),
+          lessonProgressFromCardIds(cards.map((card) => card.id)),
         ) ?? firstLesson(),
       );
+      setWeeklyTransfer(
+        weeklyTransferSuggestion(
+          buildTransferActivities(cards, errors, conversations, 1)[0],
+          activity,
+        ),
+      );
+    } finally {
       setCountsLoaded(true);
-    };
-    void load().catch(() => {
-      if (!cancelled) setCountsLoaded(true);
-    });
-    return () => {
-      cancelled = true;
-    };
+    }
   }, []);
+
+  useEffect(() => {
+    void load().catch(() => undefined);
+  }, [load]);
+
+  // Keep the next-action card fresh if a method_stage (or any activity) event
+  // fires while the learner is sitting on Hoje — e.g. a Discover tab kept
+  // open in another pane — rather than only refreshing on remount.
+  useEffect(() => {
+    if (!isStoreAvailable()) return;
+    const handle = () => {
+      void load().catch(() => undefined);
+    };
+    window.addEventListener("phraseloop:activity", handle);
+    window.addEventListener("phraseloop:lesson-saved", handle);
+    return () => {
+      window.removeEventListener("phraseloop:activity", handle);
+      window.removeEventListener("phraseloop:lesson-saved", handle);
+    };
+  }, [load]);
 
   const hasProgress = counts.cards > 0 || counts.reviews > 0;
   const loading = !countsLoaded;
@@ -115,6 +193,7 @@ export function HojeHome({ onStudy, onDiscover, onCorrect, onFirstLesson, onLess
     onFirstLesson,
     onCorrect,
     onLesson,
+    onSpeak,
     nextLesson,
     returnMoment,
     methodPlan,
@@ -122,36 +201,111 @@ export function HojeHome({ onStudy, onDiscover, onCorrect, onFirstLesson, onLess
 
   return (
     <div className="space-y-5">
-      <Card className="surface-grid-glow space-y-4 p-5">
-        {loading ? (
-          <div className="flex items-center gap-2 py-2 text-sm text-ink-muted">
-            <Spinner className="h-4 w-4" />
-            {t("Loading your day…")}
-          </div>
-        ) : (
-          <>
-            <div className="space-y-1.5">
-              <p className="text-xs uppercase tracking-[0.7px] text-accent">{action.eyebrow}</p>
-              <p className="text-lg font-semibold tracking-[-0.01em] text-ink">{action.title}</p>
-              <p className="text-sm text-ink-soft">{action.detail}</p>
+      <PageHeader
+        eyebrow={t("Your day")}
+        title={t("Today")}
+        description={t(
+          "Start with the next useful action. Your plan and saved work stay within reach.",
+        )}
+        aside={
+          !loading && hasProgress ? (
+            <div className="grid grid-cols-2 gap-2" aria-live="polite">
+              <Stat value={`${counts.due}`} label={t("to review")} />
+              <Stat value={`${counts.cards}`} label={t("Saved")} />
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Button variant="primary" size="lg" className="min-h-10" onClick={action.onClick}>
+          ) : undefined
+        }
+      />
+
+      <div className="flex flex-col gap-4">
+        <Card className="surface-grid-glow space-y-4 p-5 sm:p-6">
+          {loading ? (
+            <div className="flex items-center gap-2 py-2 text-sm text-ink-muted">
+              <Spinner className="h-4 w-4" />
+              {t("Loading your day…")}
+            </div>
+          ) : (
+            <>
+              <div className="space-y-1.5">
+                <p className="text-xs font-medium uppercase tracking-[0.7px] text-accent">
+                  {action.eyebrow}
+                </p>
+                <h2 className="text-xl font-semibold tracking-[-0.02em] text-ink">
+                  {action.title}
+                </h2>
+                <p className="max-w-xl text-sm leading-relaxed text-ink-soft">
+                  {action.detail}
+                </p>
+              </div>
+              <Button
+                variant="primary"
+                size="lg"
+                className="min-h-11 sm:w-auto"
+                onClick={action.onClick}
+              >
                 {action.cta}
               </Button>
-            </div>
-          </>
-        )}
-      </Card>
+            </>
+          )}
+        </Card>
 
-      {!loading && hasProgress && (
-        <div className="grid grid-cols-3 gap-3">
-          <Stat value={`${streakDays}`} label={t("day streak")} />
-          <Stat value={`${counts.due}`} label={t("to review")} />
-          <Stat value={`${counts.cards}`} label={t("practice phrases")} />
-        </div>
-      )}
+        {!loading && (
+          <TodayPlanCard
+            onOpenTask={onOpenPlanTask}
+            onCreatePlan={onCreatePlan}
+            onInstallDefault={onInstallDefaultPlan}
+            nextRoute={methodPlan?.action.route}
+          />
+        )}
+        {!loading && weeklyTransfer && (
+          <WeeklyTransferCard suggestion={weeklyTransfer} onStart={onStudy} />
+        )}
+      </div>
     </div>
+  );
+}
+
+function weeklyTransferSuggestion(
+  activity: TransferActivity | undefined,
+  events: Awaited<ReturnType<typeof getActivityLog>>,
+): WeeklyTransferSuggestion | null {
+  if (!activity) return null;
+  const cutoff = Date.now() - WEEK_MS;
+  const hasRecentTransfer = events.some((event) => {
+    if (event.ts < cutoff || !isProductionAttemptEvent(event)) return false;
+    return Boolean(event.payload.transferKind);
+  });
+  if (hasRecentTransfer) return null;
+  return { prompt: activity.prompt, promptVars: activity.promptVars };
+}
+
+function WeeklyTransferCard({
+  suggestion,
+  onStart,
+}: {
+  suggestion: WeeklyTransferSuggestion;
+  onStart: () => void;
+}) {
+  const { t } = useT();
+  return (
+    <Card className="border-accent/25 bg-accent/5 p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs font-medium uppercase tracking-[0.7px] text-accent">
+            {t("Weekly transfer")}
+          </p>
+          <p className="mt-1 text-sm font-semibold text-ink">
+            {t("Use one saved phrase somewhere new")}
+          </p>
+          <p className="mt-1 max-w-xl text-sm leading-relaxed text-ink-soft">
+            {t(suggestion.prompt, suggestion.promptVars)}
+          </p>
+        </div>
+        <Button variant="secondary" size="sm" onClick={onStart}>
+          {t("Practice transfer")}
+        </Button>
+      </div>
+    </Card>
   );
 }
 
@@ -163,6 +317,7 @@ function resolveNextAction({
   onFirstLesson,
   onCorrect,
   onLesson,
+  onSpeak,
   nextLesson,
   returnMoment,
   methodPlan,
@@ -174,6 +329,7 @@ function resolveNextAction({
   onFirstLesson: () => void;
   onCorrect: () => void;
   onLesson: (lessonId?: string) => void;
+  onSpeak: () => void;
   nextLesson: Lesson;
   returnMoment: ReturnMoment | null;
   methodPlan: MethodPlan | null;
@@ -185,14 +341,21 @@ function resolveNextAction({
     const { due, mistakeCards, fromYesterday } = returnMoment;
     const title = fromYesterday
       ? mistakeCards === 1
-        ? t("{count} cards for today — 1 came from your mistake yesterday", { count: due })
-        : t("{count} cards for today — {mistakes} came from your mistakes yesterday", {
+        ? t("{count} phrases for today — 1 came from your mistake yesterday", {
             count: due,
-            mistakes: mistakeCards,
           })
+        : t(
+            "{count} phrases for today — {mistakes} came from your mistakes yesterday",
+            {
+              count: due,
+              mistakes: mistakeCards,
+            },
+          )
       : mistakeCards === 1
-        ? t("{count} cards for today — 1 came from your mistake", { count: due })
-        : t("{count} cards for today — {mistakes} came from your mistakes", {
+        ? t("{count} phrases for today — 1 came from your mistake", {
+            count: due,
+          })
+        : t("{count} phrases for today — {mistakes} came from your mistakes", {
             count: due,
             mistakes: mistakeCards,
           });
@@ -219,6 +382,7 @@ function resolveNextAction({
         onFirstLesson,
         onCorrect,
         onLesson,
+        onSpeak,
         nextLesson,
       }),
     };
@@ -240,7 +404,9 @@ function resolveNextAction({
     return {
       eyebrow: t("Correct mistakes"),
       title: t("Save your mistakes for study"),
-      detail: t("Turn recent corrections into phrases you can review tomorrow."),
+      detail: t(
+        "Turn recent corrections into phrases you can review tomorrow.",
+      ),
       cta: t("Save to study"),
       onClick: onCorrect,
     };
@@ -250,8 +416,13 @@ function resolveNextAction({
   if (counts.cards > 0) {
     return {
       eyebrow: t("You're caught up"),
-      title: t("{lesson} ({level})", { lesson: t(nextLesson.title), level: nextLesson.level }),
-      detail: t("Tomorrow you review these phrases. Today you can practice one more."),
+      title: t("{lesson} ({level})", {
+        lesson: t(nextLesson.title),
+        level: nextLesson.level,
+      }),
+      detail: t(
+        "Tomorrow you review these phrases. Today you can practice one more.",
+      ),
       cta: t("Practice a phrase"),
       onClick: () => onLesson(nextLesson.id),
     };
@@ -261,7 +432,9 @@ function resolveNextAction({
   return {
     eyebrow: t("Start here"),
     title: t("Start with one short lesson"),
-    detail: t("Listen, save one useful phrase, and use it in a sentence of your own."),
+    detail: t(
+      "Listen, save one useful phrase, and use it in a sentence of your own.",
+    ),
     cta: t("Start first lesson"),
     onClick: onFirstLesson,
   };
@@ -275,22 +448,25 @@ function routeHandler(
     onFirstLesson: () => void;
     onCorrect: () => void;
     onLesson: (lessonId?: string) => void;
+    onSpeak: () => void;
     nextLesson: Lesson;
   },
 ): () => void {
   if (route === "review") return handlers.onStudy;
   if (route === "correct") return handlers.onCorrect;
   if (route === "discover") return handlers.onDiscover;
+  if (route === "speak") return handlers.onSpeak;
   if (route === "lesson") return handlers.onFirstLesson;
-  if (route === "conversation") return handlers.onCorrect;
   return () => handlers.onLesson(handlers.nextLesson.id);
 }
 
 function Stat({ value, label }: { value: string; label: string }) {
   return (
-    <Card className="px-3 py-3 text-center">
-      <p className="text-xl font-semibold tabular-nums text-ink">{value}</p>
-      <p className="mt-0.5 text-[11px] uppercase tracking-[0.5px] text-ink-muted">{label}</p>
+    <Card variant="flat" className="min-w-20 px-3 py-2 text-center">
+      <p className="text-lg font-semibold tabular-nums text-ink">{value}</p>
+      <p className="mt-0.5 text-[11px] uppercase tracking-[0.5px] text-ink-muted">
+        {label}
+      </p>
     </Card>
   );
 }

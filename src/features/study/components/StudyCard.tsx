@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { GradeButtons } from "./GradeButtons";
 import type { Grade, SrsRecord } from "@/lib/srs/fsrs";
 import type { Card as CardModel } from "@/lib/cards/schema";
+import { targetTextOfCard } from "@/lib/cards/orientation";
 import type { ReviewRecord } from "@/lib/store/repository";
 import { PronunciationCoach } from "@/features/pronunciation/components/PronunciationCoach";
 import { SessionSummary, type SessionResult, type TomorrowPreview } from "./SessionSummary";
@@ -18,6 +19,15 @@ import {
   recentFailureCount,
   shouldOfferModalityFallback,
 } from "../scaffold";
+import {
+  evaluateRecall,
+  isVetoable,
+  recordedCorrectness,
+  type RecallEvaluation,
+  type RecallQuality,
+} from "../responseEvaluation";
+import { Rating } from "@/lib/srs/fsrs";
+import { LOCAL_JUDGE, type JudgeStamp } from "@/lib/evaluation/judge";
 
 export interface DueCard {
   card: CardModel;
@@ -28,6 +38,11 @@ export interface DueCard {
 export interface ScaffoldTelemetry {
   hintUsed: boolean;
   scaffoldLevel: number;
+  responseText?: string;
+  responseQuality?: RecallQuality;
+  responseCorrect?: boolean;
+  /** Which checker produced `responseCorrect`, when one did. */
+  judge?: JudgeStamp;
 }
 
 interface StudyCardProps {
@@ -38,9 +53,10 @@ interface StudyCardProps {
   grading: boolean;
   sessionResults: SessionResult[];
   tomorrow: TomorrowPreview | null;
-  streakDays: number;
   reviews: ReviewRecord[];
-  onFlip: () => void;
+  transferRequired?: boolean;
+  transferComplete?: boolean;
+  onFlip: (responseText?: string, responseQuality?: RecallQuality) => void;
   onGrade: (grade: Grade, scaffold: ScaffoldTelemetry) => void;
   onDiscover: () => void;
 }
@@ -53,8 +69,9 @@ export function StudyCard({
   grading,
   sessionResults,
   tomorrow,
-  streakDays,
   reviews,
+  transferRequired = false,
+  transferComplete = false,
   onFlip,
   onGrade,
   onDiscover,
@@ -62,6 +79,9 @@ export function StudyCard({
   const { t } = useT();
   // Highest scaffold tier used on the current card — reported up on grade.
   const [scaffoldLevel, setScaffoldLevel] = useState<number>(SCAFFOLD.none);
+  const [responseText, setResponseText] = useState("");
+  const [evaluation, setEvaluation] = useState<RecallEvaluation | undefined>();
+  const responseQuality: RecallQuality | undefined = evaluation?.quality;
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const cardId = current?.card.id;
@@ -70,10 +90,23 @@ export function StudyCard({
   if (cardId !== prevCardId) {
     setPrevCardId(cardId);
     setScaffoldLevel(SCAFFOLD.none);
+    setResponseText("");
+    setEvaluation(undefined);
   }
+
+  // The card's own accepted wordings and target frame. Without them the check can only
+  // compare strings, and it says so (`literalOnly`) rather than calling good English wrong.
+  const recallOptions = {
+    acceptedAnswers: current?.card.acceptedAnswers,
+    frame: current?.card.patternFrame,
+  };
 
   const nativeClip =
     current?.card.audioClipPath?.startsWith("/") ? current.card.audioClipPath : undefined;
+  // On a production card the clip *is* the answer. Playing it pre-flip would turn "produce
+  // the English" into "repeat what you just heard", so audio waits for the reveal and the
+  // pre-flip scaffold controls that replay it are withheld.
+  const producing = current?.card.direction === "production";
   const failures = useMemo(
     () => (cardId ? recentFailureCount(cardId, reviews) : 0),
     [cardId, reviews],
@@ -83,9 +116,12 @@ export function StudyCard({
 
   const markScaffold = (level: number) => setScaffoldLevel((prev) => Math.max(prev, level));
 
+  // Autoplay side: the prompt for a recognition card, the reveal for a production one.
+  const autoplayNow = !!nativeClip && (producing ? flipped : !flipped);
+
   useEffect(() => {
     const el = audioRef.current;
-    if (!el || !nativeClip || flipped) return;
+    if (!el || !autoplayNow) return;
 
     el.pause();
     el.playbackRate = 1;
@@ -95,7 +131,7 @@ export function StudyCard({
     return () => {
       el.pause();
     };
-  }, [cardId, nativeClip, flipped]);
+  }, [cardId, autoplayNow]);
 
   const playClip = (rate: number, level: number) => {
     const el = audioRef.current;
@@ -109,7 +145,15 @@ export function StudyCard({
   // When a queue finishes after real work, the honest session summary replaces the
   // bare "all caught up" note — it carries its own card chrome.
   if (totalCards > 0 && !current && sessionResults.length > 0) {
-    return <SessionSummary results={sessionResults} streakDays={streakDays} tomorrow={tomorrow} />;
+    if (transferRequired && !transferComplete) {
+      return (
+        <Card className="p-6 text-center">
+          <p className="text-sm font-medium text-ink">{t("Reviews complete")}</p>
+          <p className="mt-1 text-xs text-ink-muted">{t("Complete the evaluated transfer check below to finish this session.")}</p>
+        </Card>
+      );
+    }
+    return <SessionSummary results={sessionResults} tomorrow={tomorrow} />;
   }
 
   return (
@@ -147,6 +191,27 @@ export function StudyCard({
 
           <div className="flex min-h-24 flex-col items-center justify-center gap-3 text-center">
             <p className="text-lg leading-relaxed text-ink">{current.card.front}</p>
+            {producing && !flipped && (
+              <div className="w-full space-y-2">
+                <p className="text-xs text-ink-muted">{t("Produce it in English before checking.")}</p>
+                <label className="sr-only" htmlFor={`recall-${cardId}`}>{t("Your answer")}</label>
+                <input
+                  id={`recall-${cardId}`}
+                  value={responseText}
+                  onChange={(event) => setResponseText(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && responseText.trim()) {
+                      const result = evaluateRecall(current.card.back, responseText, recallOptions);
+                      setEvaluation(result);
+                      onFlip(responseText.trim(), result.quality);
+                    }
+                  }}
+                  autoComplete="off"
+                  placeholder={t("Type what you would say in English")}
+                  className="w-full rounded-lg border border-line bg-input px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent/40"
+                />
+              </div>
+            )}
 
             {!flipped && scaffoldLevel >= SCAFFOLD.partial && (
               <p className="font-mono text-sm tracking-wide text-ink-soft transition-opacity">
@@ -158,6 +223,28 @@ export function StudyCard({
               <>
                 <div className="w-full border-t border-line" />
                 <p className="text-base leading-relaxed text-ink-soft">{current.card.back}</p>
+                {producing && evaluation && (
+                  <p className={
+                    evaluation.quality === "correct"
+                      ? "text-xs text-success"
+                      : evaluation.formIssues.length > 0 || evaluation.patternUsed === false
+                        ? "text-xs text-danger"
+                        : "text-xs text-ink-muted"
+                  }>
+                    {/* Named errors first: a specific correction teaches more than a score. */}
+                    {evaluation.formIssues.length > 0
+                      ? t(evaluation.formIssues[0].note)
+                      : evaluation.quality === "correct"
+                        ? t("That works. Your wording does not have to match the example.")
+                        : evaluation.patternUsed === false
+                          ? t("Correct English, but this card practises “{frame}”. Try it with that structure.", {
+                              frame: current.card.patternFrame ?? "",
+                            })
+                          // No frame and no named error: the app genuinely cannot tell a good
+                          // paraphrase from a wrong answer, so it must not pretend to.
+                          : t("Compare your answer with the example and grade yourself honestly.")}
+                  </p>
+                )}
                 {current.card.errorType && (
                   <span className="text-xs text-ink-muted">{t(errorTypeLabel(current.card.errorType))}</span>
                 )}
@@ -165,7 +252,7 @@ export function StudyCard({
                   <PronunciationCoach
                     source="study"
                     cardId={current.card.id}
-                    targetText={current.card.front}
+                    targetText={targetTextOfCard(current.card)}
                     referenceAudioUrl={nativeClip}
                     compact
                   />
@@ -178,7 +265,11 @@ export function StudyCard({
             <ScaffoldControls
               stable={stable}
               hasHint={scaffoldLevel < SCAFFOLD.partial}
-              nativeClip={nativeClip}
+              // Replaying the clip before the reveal is only a nudge when the clip is the
+              // prompt. On a production card it hands over the answer, so the light control
+              // is withheld and only the post-failure fallback (recorded at its true
+              // scaffold level) can reach the audio.
+              nativeClip={producing ? undefined : nativeClip}
               offerModality={offerModality}
               onHint={() => markScaffold(SCAFFOLD.partial)}
               onSlowAudio={() => playClip(0.75, SCAFFOLD.hint)}
@@ -192,14 +283,42 @@ export function StudyCard({
           )}
 
           {!flipped ? (
-            <Button variant="primary" size="lg" className="py-2.5" onClick={onFlip}>
+            <Button
+              variant="primary"
+              size="lg"
+              className="py-2.5"
+              disabled={producing && !responseText.trim()}
+              onClick={() => {
+                const result = producing
+                  ? evaluateRecall(current.card.back, responseText, recallOptions)
+                  : undefined;
+                setEvaluation(result);
+                onFlip(responseText.trim() || undefined, result?.quality);
+              }}
+            >
               {t("Show answer")}
             </Button>
           ) : (
             <GradeButtons
               srs={current.srs}
               disabled={grading}
-              onGrade={(g) => onGrade(g, { hintUsed: scaffoldLevel > SCAFFOLD.none, scaffoldLevel })}
+              // Restrict the grade only on observed evidence — a named transfer error, a
+              // missing target frame, an empty answer. Vetoing on string distance alone
+              // punished correct English and taught the learner to reproduce the authored
+              // wording, which is the opposite of what a production card is for.
+              allowedGrades={evaluation && isVetoable(evaluation)
+                ? (evaluation.quality === "close" ? [Rating.Again, Rating.Hard] : [Rating.Again])
+                : undefined}
+              onGrade={(g) => onGrade(g, {
+                hintUsed: scaffoldLevel > SCAFFOLD.none,
+                scaffoldLevel,
+                responseText: responseText.trim() || undefined,
+                responseQuality,
+                responseCorrect: recordedCorrectness(evaluation),
+                // Stamped only when there is a verdict to attribute: an unjudged answer
+                // must not look like one a local check passed.
+                judge: evaluation ? LOCAL_JUDGE : undefined,
+              })}
             />
           )}
         </div>

@@ -1,5 +1,19 @@
 import type { Card, CardSource } from "@/lib/cards/schema";
 
+/**
+ * The English side of a card, whichever side it is on. Anything that speaks, scores
+ * pronunciation, or synthesizes audio must go through this rather than assuming `front`:
+ * production cards deliberately keep English on the back.
+ */
+export function targetTextOfCard(card: Pick<Card, "front" | "back" | "direction">): string {
+  return card.direction === "production" ? card.back : card.front;
+}
+
+/** The learner-language meaning/cue, whichever side it is on. */
+export function meaningTextOfCard(card: Pick<Card, "front" | "back" | "direction">): string {
+  return card.direction === "production" ? card.front : card.back;
+}
+
 const ENGLISH_MARKERS = new Set([
   "a",
   "an",
@@ -115,6 +129,10 @@ function isLikelyPortuguese(value: string): boolean {
   return pt >= 2 && pt > en;
 }
 
+export function isLikelyPortugueseText(value: string): boolean {
+  return isLikelyPortuguese(value);
+}
+
 function sourceTargetText(source: CardSource | undefined): string {
   if (!source) return "";
   return source.kind === "phrase" ? source.candidate.text : source.event.corrected;
@@ -136,6 +154,9 @@ function sameOrContainedInTarget(value: string, target: string): boolean {
 
 function shouldSwapForEnglishFront(card: Card, source: CardSource | undefined): boolean {
   if (!card.front || !card.back) return false;
+  // An explicit direction is a decision, not a guess: never re-orient it. Production cards
+  // are Portuguese-front on purpose, and this heuristic would silently undo that.
+  if (card.direction) return false;
   const target = sourceTargetText(source);
   if (
     target &&

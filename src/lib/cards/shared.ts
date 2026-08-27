@@ -22,6 +22,7 @@ import type {
   RefinementEvent,
   TranscriptSegment,
 } from "./schema";
+import type { CorrectionResult, TaskAssessment, TaskCompletionStatus } from "./provider";
 import type { ConversationTurn, ConverseOptions } from "./provider";
 
 /** Default learner (L1) language for translation glosses when none is supplied. */
@@ -39,6 +40,8 @@ const ERROR_TYPES: ErrorType[] = [
   "idiom",
   "vocabulary",
   "register",
+  "missing-information",
+  "pronunciation",
   "other",
 ];
 
@@ -155,6 +158,45 @@ export function buildMineRequest(
   return { system, user, schema };
 }
 
+/** Strip case/accents/punctuation so minor LLM reformatting doesn't fail the grounding check. */
+export function normalizeForGrounding(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * Textual grounding (A6 hardening) — text a model claims came from some material must
+ * actually be traceable to it, not just point at a structurally valid index. Cheap
+ * substring + word-overlap check; no second LLM round-trip.
+ *
+ * `minOverlap` is the share of the candidate's words that must appear in the material.
+ * Callers set it from how much rewriting the step legitimately allows: mining quotes the
+ * transcript (strict), card fronts may rephrase it (looser).
+ */
+export function isTextGrounded(
+  candidateText: string,
+  materialText: string,
+  minOverlap: number,
+): boolean {
+  const candidate = normalizeForGrounding(candidateText);
+  const material = normalizeForGrounding(materialText);
+  if (!candidate || !material) return false;
+  if (material.includes(candidate) || candidate.includes(material)) return true;
+  const candidateWords = candidate.split(" ").filter(Boolean);
+  if (candidateWords.length === 0) return false;
+  const materialWords = new Set(material.split(" ").filter(Boolean));
+  const matched = candidateWords.filter((word) => materialWords.has(word)).length;
+  return matched / candidateWords.length >= minOverlap;
+}
+
+/** A mined phrase quotes its transcript segment, so it has to match it closely. */
+const MINED_PHRASE_MIN_OVERLAP = 0.7;
+
 export function normalizeMined(
   raw: MineResult,
   transcript: TranscriptSegment[],
@@ -169,6 +211,8 @@ export function normalizeMined(
       Number.isInteger(p.segmentIndex) && transcript[p.segmentIndex]
         ? transcript[p.segmentIndex]
         : undefined;
+    // Drop phrases that claim a valid segment but whose text isn't actually grounded in it.
+    if (seg && !isTextGrounded(text, seg.text, MINED_PHRASE_MIN_OVERLAP)) continue;
     out.push({
       id: crypto.randomUUID(),
       sourceId: request.source.id,
@@ -438,6 +482,13 @@ export interface CorrectedError {
 interface CorrectResult {
   /** Empty when the learner's text was already native-correct. */
   errors: CorrectedError[];
+  /** Present only when the caller supplied a communicative task to evaluate. */
+  task?: RawTaskAssessment | null;
+}
+
+interface RawTaskAssessment {
+  status: string;
+  feedback: string;
 }
 
 export interface RawRefinement {
@@ -469,11 +520,16 @@ export function buildCorrectRequest(
   learnerLang: string,
   targetLang: string,
   level?: string,
+  task?: string,
 ): JsonRequest<CorrectResult> {
   const rationaleLang = rationaleLanguage(learnerLang, targetLang, level);
+  const normalizedTask = task?.trim();
   const system = [
     `You are a meticulous ${targetLang} tutor for a learner whose first language is ${learnerLang}.`,
-    `The learner gives you something they wrote or said in ${targetLang}. Find each spot where a native speaker would phrase it differently and return one correction per distinct mistake.`,
+    `The learner gives you something they wrote or said in ${targetLang}. Find the highest-signal mistakes first: communication-blocking meaning, missing information, recurring grammar, word order, or vocabulary problems. Return at most 3 corrections; do not enumerate minor polish that does not affect understanding.`,
+    normalizedTask
+      ? `A communicative task is supplied. Assess task completion independently before judging language. A grammatical response that does not answer the task is not successful. Put that judgment in task, never fabricate a language correction or turn an off-task response into an ErrorEvent.`
+      : `No communicative task is supplied. Return task as null.`,
     `Isolate mistakes: if a sentence has a wrong preposition AND a wrong tense, that's two corrections, each scoped to the smallest fragment that carries the error — never the whole passage.`,
     `Only flag real errors (grammar, collocation, naturalness, register) — not style preferences. If the text is already natural and correct, return an empty list.`,
     `The corrected field must be written only in ${targetLang}; never translate it into ${learnerLang}.`,
@@ -481,6 +537,15 @@ export function buildCorrectRequest(
   ].join(" ");
 
   const user = [
+    ...(normalizedTask
+      ? [
+          `Communicative task:`,
+          `"""`,
+          normalizedTask,
+          `"""`,
+          ``,
+        ]
+      : []),
     `Learner's ${targetLang}:`,
     `"""`,
     text,
@@ -491,6 +556,9 @@ export function buildCorrectRequest(
     `- corrected: the native-correct ${targetLang} version of just that fragment; do not translate it into ${learnerLang}.`,
     `- errorTypes: one or more of: ${ERROR_TYPES.join(", ")}.`,
     `- rationale: one short line, in ${rationaleLang}, on why it was wrong / how to say it.`,
+    normalizedTask
+      ? `- task: { status: met | partial | not_met, feedback: one short explanation in ${rationaleLang} of whether the learner completed the task and, if not, what information is still needed }. Do not judge grammar in task; use errors for that.`
+      : `- task: null.`,
   ].join("\n");
 
   const schema = objectSchema(
@@ -510,8 +578,20 @@ export function buildCorrectRequest(
           ["original", "corrected", "errorTypes", "rationale"],
         ),
       },
+      task: {
+        anyOf: [
+          objectSchema(
+            {
+              status: { type: "string", enum: ["met", "partial", "not_met"] },
+              feedback: { type: "string" },
+            },
+            ["status", "feedback"],
+          ),
+          { type: "null" },
+        ],
+      },
     },
-    ["errors"],
+    ["errors", "task"],
   );
 
   return { system, user, schema };
@@ -536,7 +616,7 @@ export function buildAdvancedReviewRequest(
     `You are a senior ${targetLang} language coach for a learner whose first language is ${learnerLang}.`,
     `Review what the learner wrote or said in ${targetLang}. Separate real errors from optional refinements.`,
     `Errors are objectively wrong or misleading fragments. Refinements are correct-but-less-native fragments where a native speaker would likely choose a stronger option.`,
-    `Do not rewrite the whole passage. Return only high-signal items a motivated advanced learner can act on.`,
+    `Do not rewrite the whole passage. Return only the highest-signal items a motivated advanced learner can act on: at most 3 real errors and at most 3 optional refinements. Minor polish must never crowd out communication problems.`,
     `The corrected and suggested fields must be written only in ${targetLang}; never translate them into ${learnerLang}.`,
     `Never invent a topic, claim, or intent the learner did not express.`,
   ].join(" ");
@@ -550,8 +630,8 @@ export function buildAdvancedReviewRequest(
     `"""`,
     ``,
     `Return:`,
-    `- errors: one item per real mistake. Use the same rules as correction: smallest exact original fragment, native-correct replacement, one or more errorTypes from ${ERROR_TYPES.join(", ")}, and a short rationale in ${rationaleLang}. Empty array if there are no real mistakes.`,
-    `- refinements: 0 to 7 optional upgrades. Each original must be an exact fragment from the learner. suggested must preserve the learner's meaning while sounding more native, better registered, more precise, more idiomatic, or better connected. Do not include trivial preferences.`,
+    `- errors: up to 3 real mistakes, prioritized by communication impact. Use the same rules as correction: smallest exact original fragment, native-correct replacement, one or more errorTypes from ${ERROR_TYPES.join(", ")}, and a short rationale in ${rationaleLang}. Empty array if there are no real mistakes.`,
+    `- refinements: 0 to 3 optional upgrades. Each original must be an exact fragment from the learner. suggested must preserve the learner's meaning while sounding more native, better registered, more precise, more idiomatic, or better connected. Do not include trivial preferences.`,
     `- overall: short strengths and the single nextFocus, or null if the text is too short to summarize.`,
   ].join("\n");
 
@@ -633,9 +713,58 @@ export const CEFR_LANGUAGE_PROFILE: Record<string, string> = {
   A2: `CEFR A2 (elementary): short, clear sentences. Present and past simple, "going to" future, basic connectors (and, but, because). Common everyday vocabulary; avoid idioms and abstract words.`,
   B1: `CEFR B1 (intermediate): noticeably richer than A2 — vary sentence length and use subordinate clauses (when, if, although, that). Mix present, past, present perfect, future, and conditionals. Express opinions, give reasons, and use common phrasal verbs and everyday collocations. Do NOT keep it to short beginner sentences.`,
   B2: `CEFR B2 (upper-intermediate): natural, fluent register with complex sentences, a full range of tenses, passive voice, and connected discourse. Use idiomatic expressions, nuance, and precise vocabulary; argue and qualify points naturally.`,
-  C1: `CEFR C1 (advanced): sophisticated, idiomatic, near-native language. Flexible structure, subtle register shifts, and precise, less common vocabulary.`,
-  C2: `CEFR C2 (mastery): fully native-like — idiomatic, nuanced, stylistically varied. No simplification of any kind.`,
+  C1: `CEFR C1 (advanced): sophisticated, idiomatic, near-native language. Reach past the common synonym for the precise one (not "very big" but "sweeping", "outsized"). Use established collocations, less common phrasal verbs, and idioms where a native speaker would. Hedge and qualify naturally (tend to, arguably, by and large, more often than not). Vary register deliberately — a wry aside, a formal turn of phrase — and structure longer arguments with discourse markers (that said, granted, insofar as). Do NOT settle for correct-but-plain B2 English; the learner already has that.`,
+  C2: `CEFR C2 (mastery): fully native-like — idiomatic, nuanced, stylistically varied. No simplification of any kind. Use low-frequency precise vocabulary, fixed expressions, understatement, irony, and allusion as a well-read native speaker would. Shift register mid-conversation when the content calls for it, and let sentence rhythm vary from clipped to elaborate. Avoid the flattened, uniformly neutral register that reads as textbook English.`,
 };
+
+/**
+ * Whether to run the conversation in repertoire mode. At C1-C2 the learner can already sustain
+ * a conversation, so the practice is worth little unless it keeps supplying language they don't
+ * already own. Mirrors the level thresholds used by `isMonolingualLevel`.
+ */
+export function isRepertoireLevel(level?: string): boolean {
+  const cefr = level?.trim().toUpperCase();
+  return cefr === "C1" || cefr === "C2";
+}
+
+/**
+ * Asks for 2-3 richer expressions per turn, marked inline and repeated in a trailer the client
+ * strips before display and before speaking the reply aloud.
+ *
+ * A trailer rather than structured JSON: `converse()` returns a plain string across four
+ * providers, so a typed return would mean changing all of them, the route, and the schema — at
+ * the cost of latency and of the conversational feel. The client parser tolerates a missing or
+ * malformed trailer, so a model that ignores this instruction just yields an ordinary conversation.
+ */
+/** Cap the do-not-repeat list so a long session can't crowd out the rest of the system prompt. */
+const MAX_TAUGHT_EXPRESSIONS = 24;
+
+export function repertoireInstruction(taught: string[] = [], toElicit: string[] = []): string {
+  const recent = taught.slice(-MAX_TAUGHT_EXPRESSIONS);
+  return [
+    `The learner is advanced, so your job is to feed them language they do not already have.`,
+    `In every turn, work in 2 to 3 expressions worth stealing — a precise collocation, a less common phrasal verb, an idiom, or a vivid single word — chosen fresh for what you are actually saying.`,
+    `Wrap each one in double asterisks where it occurs inside your own sentences, e.g. "that turned out to be **a false economy** in the end".`,
+    `Never write the expressions as a list, a definition, or a summary line inside your reply — they must appear only as part of natural conversational sentences.`,
+    // Without this the model re-teaches the same handful of high-frequency idioms every session:
+    // it has no memory of what it already gave, and "chosen fresh" alone does not supply one.
+    recent.length > 0
+      ? `You have already given this learner these expressions — do not mark any of them again, and choose different ones: ${recent.join("; ")}.`
+      : "",
+    // Exposure is only half the loop. An advanced learner who never has to reach for the new
+    // phrase keeps performing sophisticated functions with the vocabulary they already own,
+    // which is exactly the plateau. So the prompt has to make room for them to produce it.
+    toElicit.length > 0
+      ? `Separately, steer this turn so that one of these expressions the learner has heard but never used becomes the natural thing for them to say next — ask about the situation it belongs to, or use it yourself and invite them to respond in kind: ${toElicit.join("; ")}. Never tell them to use it, never quote these instructions, and never break character to teach.`
+      : "",
+    `After your reply, add exactly one final line in this form and write nothing after it:`,
+    `[[repertoire: EXPRESSION — short definition; EXPRESSION — short definition]]`,
+    `Replace each EXPRESSION with an expression you actually marked above. Do not reuse the wording of these instructions.`,
+    `Write the definition in the target language (the learner is past needing translations at this level) and keep it under 8 words.`,
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
 
 /**
  * A concrete instruction telling a model how to pitch its language for a CEFR level.
@@ -664,14 +793,28 @@ export const CONVERSATION_KICKOFF =
 export function buildConverseSystem(opts: ConverseOptions): string {
   const sourceLang = opts.sourceLang || DEFAULT_LEARNER_LANG;
   const levelLine = cefrLanguageLine(opts.level);
-  const depthLine = opts.challenge
-    ? `Use an advanced, open conversation style: ask follow-up questions, request examples, introduce a mild counterpoint, and push the learner to clarify tradeoffs or defend a view. Keep it supportive, but do not let the exchange become a script.`
-    : `Keep every one of your turns short — 1 to 3 sentences — and end with a question or prompt that invites them to respond, so they do most of the talking.`;
+  const depthLine = opts.followUpDepth === "counterpoint" || opts.challenge
+    ? `Use an advanced, open conversation style: ask layered follow-up questions, request examples, introduce a mild counterpoint, and push the learner to clarify tradeoffs or defend a view. Keep it supportive, but do not let the exchange become a script.`
+    : opts.followUpDepth === "layered"
+      ? `Ask one clear follow-up after each answer. Invite one extra detail or reason, but do not introduce debate yet.`
+      : `Keep every one of your turns short — 1 to 3 sentences — and end with one concrete question or prompt that invites them to respond, so they do most of the talking.`;
+  const supportLine = opts.promptStyle
+    ? `The learner's current speaking support is ${opts.conversationStage ?? "guided"}: ${opts.promptStyle}`
+    : "Use a concrete, familiar prompt before increasing abstraction.";
+  const speakerLine = opts.speakerFamiliarity === "unfamiliar"
+    ? "Use natural but clearly articulated speech and occasional connected phrasing, as an unfamiliar real-world speaker would."
+    : opts.speakerFamiliarity === "mixed"
+      ? "Vary sentence length and use a few natural connectors while remaining easy to follow."
+      : "Use familiar vocabulary and clearly signposted questions.";
   return [
     `You are a warm, encouraging conversation partner helping someone practice ${opts.targetLang} by speaking.`,
     `Role-play this scenario with them: "${opts.scenario}". Stay in character and speak only ${opts.targetLang}.`,
     levelLine,
     depthLine,
+    supportLine,
+    speakerLine,
+    isRepertoireLevel(opts.level) ? repertoireInstruction(opts.taughtExpressions, opts.elicitExpressions) : "",
+    opts.maxTurns ? `This practice is limited to about ${opts.maxTurns} learner turns; make each follow-up purposeful.` : "",
     opts.challenge
       ? `Your turns may be 2 to 4 sentences when needed, but always end with a concrete prompt that makes the learner produce a longer answer.`
       : `Avoid turning this into an interview; vary your prompts naturally.`,
@@ -700,7 +843,7 @@ export function normalizeCorrected(
 ): ErrorEvent[] {
   const now = Date.now();
   const out: ErrorEvent[] = [];
-  for (const e of raw.errors ?? []) {
+  for (const e of (raw.errors ?? []).slice(0, 3)) {
     const original = (e.original ?? "").trim();
     const corrected = (e.corrected ?? "").trim();
     // Drop non-corrections: no change means there was nothing to learn.
@@ -723,6 +866,31 @@ export function normalizeCorrected(
   return out;
 }
 
+function normalizeTaskAssessment(
+  raw: RawTaskAssessment | null | undefined,
+  task?: string,
+): TaskAssessment | undefined {
+  if (!task?.trim() || !raw) return undefined;
+  const status = raw.status as TaskCompletionStatus;
+  const feedback = raw.feedback?.trim();
+  if (!(["met", "partial", "not_met"] as const).includes(status) || !feedback) return undefined;
+  return { status, feedback };
+}
+
+/** Normalize corrections and the independent task-completion judgment together. */
+export function normalizeCorrection(
+  raw: CorrectResult,
+  sourceLang: string,
+  targetLang: string,
+  context?: string,
+  task?: string,
+): CorrectionResult {
+  return {
+    events: normalizeCorrected(raw, sourceLang, targetLang, context),
+    task: normalizeTaskAssessment(raw.task, task),
+  };
+}
+
 export function normalizeAdvancedReview(
   raw: AdvancedReviewResult,
   sourceLang: string,
@@ -734,7 +902,7 @@ export function normalizeAdvancedReview(
   const refinements: RefinementEvent[] = [];
   const seen = new Set<string>();
 
-  for (const r of raw.refinements ?? []) {
+  for (const r of (raw.refinements ?? []).slice(0, 3)) {
     const original = (r.original ?? "").trim();
     const suggested = (r.suggested ?? "").trim();
     if (!original || !suggested || original === suggested) continue;

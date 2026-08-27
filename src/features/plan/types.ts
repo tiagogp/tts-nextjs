@@ -1,6 +1,7 @@
 import type { DailyTask, TaskItem, TaskType } from "./schema";
 
-export type PlanOnboardingStep = "goal" | "availability" | "generating";
+/** Generation itself has no step: it runs in the background once the modal closes. */
+export type PlanOnboardingStep = "goal" | "availability";
 
 export interface PlanNavigationHandlers {
   onDiscover?: () => void;
@@ -17,6 +18,8 @@ export interface PlanTaskRowProps {
   onComplete: () => void;
   onGo?: () => void;
   hideGoAction?: boolean;
+  /** Marks the task the method recommends doing next — at most one per list. */
+  highlight?: boolean;
   completeButtonLabel?: {
     done: string;
     pending: string;

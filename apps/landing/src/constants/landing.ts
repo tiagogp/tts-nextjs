@@ -94,7 +94,7 @@ export const flowSteps = [
 export const features = [
   {
     title: "Áudio original do conteúdo",
-    body: "Quando a fonte tem áudio, cada card mantém o trecho exato em que a frase foi dita.",
+    body: "Quando a fonte tem áudio, cada card mantém o trecho exato em que a frase foi dita. As lições que já vêm no app usam áudio gerado no seu Mac.",
   },
   {
     title: "Dados locais por padrão",
@@ -171,5 +171,6 @@ export const landingNavItems: ReadonlyArray<{
   { id: "waitlist", label: "Lista de espera" },
 ];
 
-// The landing preview has no "Hoje" home surface; it opens straight on Discover.
-export const LANDING_TABS = HOME_TABS.filter((item) => item.id !== "hoje");
+// The landing preview has no "Hoje" home surface and no microphone, so the
+// speaking tab is also left out; it opens straight on Discover.
+export const LANDING_TABS = HOME_TABS.filter((item) => item.id !== "hoje" && item.id !== "speak");

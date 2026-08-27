@@ -7,8 +7,8 @@
  */
 
 const DB_NAME = "tts-cards";
-// v8: adds level-up test attempts (level advancement).
-const DB_VERSION = 8;
+// v12: adds the proof queue, whose attempts must never live in `reviews`.
+const DB_VERSION = 12;
 
 export const STORES = {
   errorEvents: "errorEvents",
@@ -24,6 +24,17 @@ export const STORES = {
   progressAssessments: "progressAssessments",
   c1Diagnoses: "c1Diagnoses",
   levelTests: "levelTests",
+  listeningAttempts: "listeningAttempts",
+  productionAttempts: "productionAttempts",
+  retryOutcomes: "retryOutcomes",
+  audioRecordings: "audioRecordings",
+  methodProgression: "methodProgression",
+  /**
+   * Queue C. Separate from `reviews` on purpose: a proof that lands in the review store
+   * would be picked up by the scheduler and by the review-derived metrics, which is exactly
+   * the contamination the queue exists to avoid.
+   */
+  proofAttempts: "proofAttempts",
 } as const;
 
 export type StoreName = (typeof STORES)[keyof typeof STORES];
@@ -94,6 +105,34 @@ export function openDb(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains(STORES.levelTests)) {
         const s = db.createObjectStore(STORES.levelTests, { keyPath: "id" });
         s.createIndex("createdAt", "createdAt");
+      }
+      if (!db.objectStoreNames.contains(STORES.listeningAttempts)) {
+        const s = db.createObjectStore(STORES.listeningAttempts, { keyPath: "id" });
+        s.createIndex("lessonId", "lessonId");
+        s.createIndex("completedAt", "completedAt");
+      }
+      if (!db.objectStoreNames.contains(STORES.productionAttempts)) {
+        const s = db.createObjectStore(STORES.productionAttempts, { keyPath: "id" });
+        s.createIndex("lessonId", "lessonId");
+        s.createIndex("createdAt", "createdAt");
+      }
+      if (!db.objectStoreNames.contains(STORES.retryOutcomes)) {
+        const s = db.createObjectStore(STORES.retryOutcomes, { keyPath: "id" });
+        s.createIndex("retryOf", "retryOf");
+        s.createIndex("createdAt", "createdAt");
+      }
+      if (!db.objectStoreNames.contains(STORES.audioRecordings)) {
+        const s = db.createObjectStore(STORES.audioRecordings, { keyPath: "id" });
+        s.createIndex("createdAt", "createdAt");
+      }
+      if (!db.objectStoreNames.contains(STORES.proofAttempts)) {
+        const s = db.createObjectStore(STORES.proofAttempts, { keyPath: "id" });
+        s.createIndex("cardId", "cardId");
+        s.createIndex("answeredAt", "answeredAt");
+      }
+      if (!db.objectStoreNames.contains(STORES.methodProgression)) {
+        const s = db.createObjectStore(STORES.methodProgression, { keyPath: "id" });
+        s.createIndex("updatedAt", "updatedAt");
       }
     };
     req.onsuccess = () => resolve(req.result);

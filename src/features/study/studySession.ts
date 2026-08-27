@@ -13,6 +13,7 @@ import {
   getErrorEvents,
   getPronunciationAttempts,
   getReviews,
+  ensureProductiveCardPairs,
   type Conversation,
   type ReviewRecord,
 } from "@/lib/store/repository";
@@ -46,6 +47,7 @@ export interface StudySnapshot extends OrderedDueQueue {
 
 /** Everything the study tab reads, fetched in one parallel round trip. */
 export async function loadStudySnapshot(): Promise<StudySnapshot> {
+  await ensureProductiveCardPairs();
   const [
     due,
     reviews,
@@ -89,6 +91,7 @@ export async function loadStudySnapshot(): Promise<StudySnapshot> {
  * reflects the review just recorded. Light and reinforcement queues bypass this by design.
  */
 export async function loadOrderedDueQueue(): Promise<OrderedDueQueue> {
+  await ensureProductiveCardPairs();
   const [due, reviews, cardsWithSrs, pronAttempts, errorEvents] = await Promise.all([
     getDueCards(),
     getReviews(),

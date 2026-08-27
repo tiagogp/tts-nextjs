@@ -5,7 +5,7 @@ export type { LandingLanguage } from "@landing/types/landing";
 export const LANDING_LANGUAGE_KEY = "phraseloop.landing.language";
 const LANDING_LANGUAGE_EVENT = "phraseloop:landing-language";
 
-let memoryLanguage: LandingLanguage = "en";
+let memoryLanguage: LandingLanguage = "pt";
 
 const ENGLISH_COPY: Record<string, string> = {
   "Como funciona": "How it works",
@@ -36,8 +36,8 @@ const ENGLISH_COPY: Record<string, string> = {
   "Obrigado. Nesta rodada, os primeiros convites vão para quem usa Mac com Apple Silicon.":
     "Thanks. This round prioritizes people using Apple Silicon Macs.",
   "Navegação da página": "Page navigation",
-  "Inglês real. Áudio original. Pronto para revisar.":
-    "Real English. Original audio. Ready to review.",
+  "Inglês real. O áudio da sua fonte. Pronto para revisar.":
+    "Real English. Your source's own audio. Ready to review.",
   "Cole um vídeo do YouTube. Em 2 minutos, as melhores frases viram cards de revisão com o áudio original — e os seus próprios erros viram o treino de amanhã.":
     "Paste a YouTube video. In 2 minutes, the best phrases become review cards with the original audio — and your own mistakes become tomorrow's practice.",
   "Ver como funciona": "See how it works",
@@ -83,8 +83,8 @@ const ENGLISH_COPY: Record<string, string> = {
   "O que continua ligado à frase": "What stays connected to the phrase",
   "As partes importantes ficam juntas.": "The important pieces stay together.",
   "Áudio original do conteúdo": "Original audio from real content",
-  "Quando a fonte tem áudio, cada card mantém o trecho exato em que a frase foi dita.":
-    "When a source has audio, each card keeps the exact clip where the phrase was spoken.",
+  "Quando a fonte tem áudio, cada card mantém o trecho exato em que a frase foi dita. As lições que já vêm no app usam áudio gerado no seu Mac.":
+    "When a source has audio, each card keeps the exact clip where the phrase was spoken. The lessons bundled with the app use audio generated on your Mac.",
   "Dados locais por padrão": "Local data by default",
   "Transcrição, áudio gerado, revisões e cards ficam no seu computador. Serviços externos só entram quando você escolhe.":
     "Transcription, generated audio, reviews, and cards stay on your computer. External services are used only when you choose them.",
@@ -141,8 +141,8 @@ const ENGLISH_COPY: Record<string, string> = {
     "Ollama support keeps assisted card creation on your Mac.",
   "Quer testar com os seus vídeos e os seus erros?":
     "Want to test it with your videos and your mistakes?",
-  "A rodada W5 procura pessoas com Mac Apple Silicon que já tentam transformar inglês real em prática. Responda às três perguntas para receber um convite quando sua vaga estiver pronta.":
-    "The W5 round is looking for people with Apple Silicon Macs who already try to turn real English into practice. Answer all three questions to receive an invite when a spot is ready.",
+  "A próxima rodada procura pessoas com Mac Apple Silicon que já tentam transformar inglês real em prática. Responda às três perguntas para receber um convite quando sua vaga estiver pronta.":
+    "The next round is looking for people with Apple Silicon Macs who already try to turn real English into practice. Answer all three questions to receive an invite when a spot is ready.",
   "Próxima rodada": "Next round",
   "Teste o PhraseLoop antes do lançamento.":
     "Test PhraseLoop before launch.",
@@ -161,11 +161,11 @@ const ENGLISH_COPY: Record<string, string> = {
 };
 
 export function normalizeLandingLanguage(value: unknown): LandingLanguage {
-  return value === "pt" ? "pt" : "en";
+  return value === "en" ? "en" : "pt";
 }
 
 export function readLandingLanguage(): LandingLanguage {
-  if (typeof window === "undefined") return "en";
+  if (typeof window === "undefined") return "pt";
   try {
     memoryLanguage = normalizeLandingLanguage(
       localStorage.getItem(LANDING_LANGUAGE_KEY),

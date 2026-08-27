@@ -9,6 +9,7 @@ export const PLAN_TASK_TYPES: PlanGenerationResult["days"][number]["tasks"][numb
   "study",
   "converse",
   "correct",
+  "readWrite",
 ];
 
 export const PLAN_METRIC_ACTIONS: NonNullable<
@@ -19,7 +20,18 @@ export const PLAN_METRIC_ACTIONS: NonNullable<
   "conversation_turns",
   "cards_created",
   "progress_checkin",
+  "reading_writing_attempt",
+  "reading_comprehension",
+  "writing_production",
+  "retry_resolution",
 ];
+
+/**
+ * Days authored per generation call. Two whole weeks, so the weekly quotas in the
+ * prompt (study 5-6x, discover 2-3x) and the 14-day check-in all resolve inside a
+ * single answer instead of straddling two blocks.
+ */
+export const PLAN_CHUNK_DAYS = 14;
 
 export const PLAN_DAYS_OPTIONS = [
   { value: "30", label: "30 days" },
@@ -45,6 +57,7 @@ export const TASK_LABELS: Record<TaskType, string> = {
   study: "Study",
   converse: "Speak",
   correct: "Correct",
+  readWrite: "Read + write",
 };
 
 export const TASK_COLORS: Record<TaskType, string> = {
@@ -53,6 +66,7 @@ export const TASK_COLORS: Record<TaskType, string> = {
   study: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
   converse: "bg-violet-500/10 text-violet-700 dark:text-violet-400",
   correct: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
+  readWrite: "bg-cyan-500/10 text-cyan-700 dark:text-cyan-400",
 };
 
 export const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];

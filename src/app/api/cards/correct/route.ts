@@ -18,10 +18,11 @@ import {
   failureResponse,
   providerFailure,
 } from "@/server/http/providerFailure";
-import { MAX_CORRECTION_JSON_BYTES } from "@/lib/constants";
+import { MAX_CORRECTION_JSON_BYTES, PROVIDER_SINGLE_CALL_TIMEOUT_MS } from "@/lib/constants";
 import { logger } from "@/lib/logger";
 import { MAX_CORRECTION_TEXT_CHARS } from "@/app/api/cards/_lib/constants";
 import { cardProviderKind } from "@/app/api/cards/_lib/utils";
+import { CORRECTION_PROMPT_VERSION } from "@/lib/evaluation/judge";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -41,7 +42,7 @@ export async function POST(req: NextRequest) {
     }
 
     const kind = cardProviderKind(obj.provider);
-    if (!isProviderAvailable(kind)) {
+    if (!(await isProviderAvailable(kind))) {
       return failureResponse(providerFailure("provider_not_configured"));
     }
 
@@ -49,6 +50,9 @@ export async function POST(req: NextRequest) {
     const targetLang = safeStr(obj.targetLang, "en", 16);
     const level = safeStr(obj.level, "", 8) || undefined;
     const context = normalizeContext(safeStr(obj.context, "", 100));
+    // A task is deliberately separate from the stored context: it tells the tutor what
+    // the learner was trying to communicate, not the situation/error label to persist.
+    const task = safeStr(obj.task, "", 500) || undefined;
     const model = safeStr(obj.ollamaModel, "", 100) || undefined;
 
     const provider = resolveProvider(kind, { learnerLang: sourceLang, targetLang, model });
@@ -61,9 +65,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const events = await provider.correct(text, { sourceLang, targetLang, level, context });
+    const correction = await provider.correct(
+      text,
+      { sourceLang, targetLang, level, context, task },
+      { signal: req.signal, timeoutMs: PROVIDER_SINGLE_CALL_TIMEOUT_MS },
+    );
     // No errors found is a success — the learner's text was already native-correct.
-    return NextResponse.json({ events, count: events.length });
+    // The judge stamp travels with the verdict: which model, which rubric version. A
+    // metric that cannot say who judged it cannot claim to have measured anything.
+    return NextResponse.json({
+      events: correction.events,
+      task: correction.task ?? null,
+      count: correction.events.length,
+      judge: { by: "model", provider: kind, model: provider.modelId, promptVersion: CORRECTION_PROMPT_VERSION },
+    });
   } catch (err: unknown) {
     if (isHttpError(err)) {
       return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });

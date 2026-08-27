@@ -30,4 +30,10 @@ export interface PronunciationAttempt extends PronunciationAssessment {
   cardId?: string;
   lessonId?: string;
   source: "study" | "lesson" | "c1";
+  /** Connects the recording to the method stage that produced it. */
+  stage?: "repeat" | "production" | "retry";
+  /** The noticed lesson phrase this repeat was based on. */
+  noticedPhraseId?: string;
+  /** ID of the bounded local audio blob, when the browser supplied one. */
+  recordingId?: string;
 }

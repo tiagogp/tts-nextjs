@@ -49,7 +49,7 @@ describe("generateVettedCards", () => {
     const critique = vi.fn<(card: Card, source: CardSource) => Promise<Critique>>();
     const provider = makeProvider({
       skipCritique: true,
-      generate: vi.fn().mockResolvedValue([card("a"), card("b")]),
+      generate: vi.fn().mockResolvedValue([card("I am 25"), card("25 years old")]),
       critique,
     });
 
@@ -62,7 +62,12 @@ describe("generateVettedCards", () => {
   it("caps kept cards per source", async () => {
     const provider = makeProvider({
       skipCritique: true,
-      generate: vi.fn().mockResolvedValue([card("a"), card("b"), card("c"), card("d")]),
+      generate: vi.fn().mockResolvedValue([
+        card("I am 25"),
+        card("25 years old"),
+        card("am 25 years"),
+        card("I am old"),
+      ]),
     });
 
     const kept = await generateVettedCards(provider, source);
@@ -75,13 +80,31 @@ describe("generateVettedCards", () => {
     stray.source = { kind: "error", id: "someone-else" };
     const provider = makeProvider({
       skipCritique: true,
-      generate: vi.fn().mockResolvedValue([stray, card("ok")]),
+      generate: vi.fn().mockResolvedValue([stray, card("I am 25")]),
     });
 
     const kept = await generateVettedCards(provider, source);
 
     expect(kept).toHaveLength(1);
-    expect(kept[0].front).toBe("ok");
+    expect(kept[0].front).toBe("I am 25");
+  });
+
+  it("runs a deterministic local critique when provider critique is skipped", async () => {
+    const identical = card("I am 25 years old");
+    const unsupported = card("totally unrelated phrase");
+    const provider = makeProvider({
+      skipCritique: true,
+      generate: vi.fn().mockResolvedValue([
+        identical,
+        unsupported,
+        card("I am 25"),
+      ]),
+    });
+
+    const kept = await generateVettedCards(provider, source);
+
+    expect(kept).toHaveLength(1);
+    expect(kept[0].front).toBe("I am 25");
   });
 
   it("still runs the critique gate for providers that keep it", async () => {
@@ -134,14 +157,14 @@ describe("generateVettedCards", () => {
   });
 
   it("reuses cached embeddings for the same provider model and card fingerprints", async () => {
-    const cards = [card("first prompt"), card("second prompt")];
+    const cards = [card("I have 25"), card("I am 25")];
     const embed = vi.fn(async () => [
       [1, 0],
       [0, 1],
     ]);
     const provider = makeProvider({
       skipCritique: true,
-      embeddingCacheKey: "test-embed-model",
+      embeddingCacheKey: `test-embed-model-${crypto.randomUUID()}`,
       generate: vi.fn().mockResolvedValue(cards),
       embed,
     });

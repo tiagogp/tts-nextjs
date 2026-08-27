@@ -52,7 +52,7 @@ describe("POST /api/waitlist", () => {
       email: "learner@example.com",
       platform: "Mac Apple Silicon",
       workflow: validEntry.workflow,
-      source: "landing-w5",
+      source: "landing",
     });
   });
 

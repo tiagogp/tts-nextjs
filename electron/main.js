@@ -3,7 +3,7 @@
 //
 // Boot sequence: native-capable Next server -> BrowserWindow.
 
-const { app, BrowserWindow, ipcMain, Menu, shell, utilityProcess } = require("electron");
+const { app, BrowserWindow, ipcMain, Menu, shell, utilityProcess, safeStorage } = require("electron");
 const { spawn, spawnSync } = require("node:child_process");
 const crypto = require("node:crypto");
 const http = require("node:http");
@@ -47,24 +47,62 @@ function cleanSetting(value, maxLength) {
     : undefined;
 }
 
+// API keys are the only genuinely sensitive fields here; base URL/model picks aren't secrets.
+const SECRET_SETTINGS_FIELDS = ["anthropicApiKey", "openaiApiKey", "openrouterApiKey"];
+const SAFE_STORAGE_PREFIX = "safeStorage:v1:";
+
+// OS keychain (Keychain on macOS) when available; falls back to the 0o600 plaintext file
+// on platforms/setups without one (e.g. a Linux box with no secret-service daemon running).
+function secureStorageMode() {
+  return safeStorage.isEncryptionAvailable() ? "system" : "local-file";
+}
+
+function encryptSecret(value) {
+  if (!safeStorage.isEncryptionAvailable()) return value;
+  return SAFE_STORAGE_PREFIX + safeStorage.encryptString(value).toString("base64");
+}
+
+// Returns undefined (dropping the field) for a value that was encrypted under a keychain
+// this process can no longer decrypt with, rather than surfacing ciphertext as an API key.
+function decryptSecret(value) {
+  if (typeof value !== "string" || !value.startsWith(SAFE_STORAGE_PREFIX)) return value;
+  if (!safeStorage.isEncryptionAvailable()) return undefined;
+  try {
+    const encrypted = Buffer.from(value.slice(SAFE_STORAGE_PREFIX.length), "base64");
+    return safeStorage.decryptString(encrypted);
+  } catch {
+    return undefined;
+  }
+}
+
 function loadSecureAiSettings() {
   if (!fs.existsSync(AI_SETTINGS_FALLBACK_FILE)) return {};
   try {
     const parsed = JSON.parse(fs.readFileSync(AI_SETTINGS_FALLBACK_FILE, "utf8"));
-    return parsed && typeof parsed === "object" ? parsed : {};
+    if (!parsed || typeof parsed !== "object") return {};
+    const settings = { ...parsed };
+    for (const field of SECRET_SETTINGS_FIELDS) {
+      if (!(field in settings)) continue;
+      const decrypted = decryptSecret(settings[field]);
+      if (decrypted === undefined) delete settings[field];
+      else settings[field] = decrypted;
+    }
+    return settings;
   } catch {
     return {};
   }
 }
 
 function saveSecureAiSettings(settings) {
+  const toWrite = { ...settings };
+  for (const field of SECRET_SETTINGS_FIELDS) {
+    if (typeof toWrite[field] === "string" && toWrite[field]) {
+      toWrite[field] = encryptSecret(toWrite[field]);
+    }
+  }
   fs.mkdirSync(path.dirname(AI_SETTINGS_FALLBACK_FILE), { recursive: true });
-  fs.writeFileSync(AI_SETTINGS_FALLBACK_FILE, `${JSON.stringify(settings, null, 2)}\n`, { mode: 0o600 });
+  fs.writeFileSync(AI_SETTINGS_FALLBACK_FILE, `${JSON.stringify(toWrite, null, 2)}\n`, { mode: 0o600 });
   fs.chmodSync(AI_SETTINGS_FALLBACK_FILE, 0o600);
-}
-
-function secureStorageMode() {
-  return "local-file";
 }
 
 function prependPathValue(current, value) {
@@ -326,6 +364,7 @@ async function waitFor(url, label, timeoutMs = 120000) {
 
 function createWindow() {
   const isMac = process.platform === "darwin";
+  const isWindows = process.platform === "win32";
 
   mainWindow = new BrowserWindow({
     width: 1200,
@@ -335,8 +374,11 @@ function createWindow() {
     title: "PhraseLoop",
     icon: APP_ICON_PNG,
     backgroundColor: "#0a0a0a",
-    titleBarStyle: isMac ? "hiddenInset" : "default",
+    titleBarStyle: isMac ? "hiddenInset" : isWindows ? "hidden" : "default",
     trafficLightPosition: isMac ? { x: 18, y: 18 } : undefined,
+    titleBarOverlay: isWindows
+      ? { color: "#0a0a0a", symbolColor: "#e5e5e5", height: 40 }
+      : undefined,
     webPreferences: { contextIsolation: true, preload: PRELOAD_JS },
   });
 

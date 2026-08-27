@@ -32,6 +32,7 @@ const profile: LearningProfile = {
   nativeLang: "pt",
   targetLang: "en",
   track: "beginner",
+  objective: "conversation",
   focus: "",
   goal: 3,
   createdAt: 1,

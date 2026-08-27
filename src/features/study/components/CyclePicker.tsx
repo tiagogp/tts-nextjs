@@ -22,7 +22,7 @@ export function CyclePicker({ plan, onStart }: { plan: CyclePlan; onStart: (path
           <p className="mt-1 text-xs text-ink-muted">{t("Start with the recommended path.")}</p>
         </div>
         <Button size="sm" onClick={() => onStart(plan.recommended)}>
-          {t("Start · {load}", { load: rec.load })}
+          {t("Start · {load}", { load: t(rec.load, rec.loadVars) })}
         </Button>
       </div>
       <div className="grid gap-2 sm:grid-cols-3">
@@ -41,13 +41,13 @@ export function CyclePicker({ plan, onStart }: { plan: CyclePlan; onStart: (path
             )}
           >
             <div className="flex items-center justify-between gap-2">
-              <span className="text-sm font-semibold text-ink">{option.title}</span>
+              <span className="text-sm font-semibold text-ink">{t(option.title)}</span>
               {option.recommended && (
                 <span className="text-[10px] uppercase tracking-wide text-accent">{t("Recommended")}</span>
               )}
             </div>
-            <p className="mt-1 text-xs text-ink-muted">{option.description}</p>
-            <p className="mt-1.5 text-[11px] text-ink-soft">{option.load}</p>
+            <p className="mt-1 text-xs text-ink-muted">{t(option.description, option.descriptionVars)}</p>
+            <p className="mt-1.5 text-[11px] text-ink-soft">{t(option.load, option.loadVars)}</p>
           </button>
         ))}
       </div>

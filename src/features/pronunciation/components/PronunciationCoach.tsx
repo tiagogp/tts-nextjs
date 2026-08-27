@@ -6,9 +6,15 @@ import { Spinner } from "@/components/ui/Spinner";
 import { cn } from "@/lib/cn";
 import { assessPronunciation } from "@/features/pronunciation/api";
 import { synthesizeSpeech } from "@/features/converse/api";
-import { savePronunciationAttempt } from "@/lib/store/repository";
+import { getPronunciationAttempts, saveAudioRecording, savePronunciationAttempt, saveProductionAttempt } from "@/lib/store/repository";
+import type { ProductionAttempt } from "@/lib/performance/types";
+import { RecordingComparison } from "@/features/pronunciation/components/RecordingComparison";
+import LocalModelNotice from "@/features/speech/components/LocalModelNotice";
+import { useWhisperModel } from "@/features/speech/hooks/useLocalModel";
 import { emitActivity } from "@/lib/store/activityLog";
+import { useStageTimer } from "@/features/method/useStageTimer";
 import { useT } from "@/i18n/I18nProvider";
+import { micFallbackAvailable } from "@/features/correct/micFallback";
 import type {
   PronunciationAssessment,
   PronunciationAttempt,
@@ -22,6 +28,11 @@ interface PronunciationCoachProps {
   lessonId?: string;
   referenceAudioUrl?: string;
   source: "study" | "lesson" | "c1";
+  stage?: "repeat" | "production" | "retry";
+  noticedPhraseId?: string;
+  onAttemptComplete?: (attempt: { spoken: boolean; text: string }) => void;
+  /** Let a learner continue explicitly when the browser denies microphone access. */
+  allowTypedFallback?: boolean;
   compact?: boolean;
 }
 
@@ -45,14 +56,27 @@ export function PronunciationCoach({
   lessonId,
   referenceAudioUrl,
   source,
+  stage,
+  noticedPhraseId,
+  onAttemptComplete,
+  allowTypedFallback = false,
   compact = false,
 }: PronunciationCoachProps) {
   const { t } = useT();
+  const repeatTimer = useStageTimer("repeat", 3);
+  // Checking a repeat means transcribing it, so this surface waits on Whisper
+  // exactly the way the audio surfaces wait on Kokoro. Showing the install here
+  // beats letting Record answer with "model not ready".
+  const whisper = useWhisperModel();
   const [recording, setRecording] = useState(false);
   const [assessing, setAssessing] = useState(false);
   const [playingReference, setPlayingReference] = useState(false);
   const [assessment, setAssessment] = useState<PronunciationAssessment | null>(null);
   const [note, setNote] = useState<string | null>(null);
+  const [micDenied, setMicDenied] = useState(false);
+  const [fallbackText, setFallbackText] = useState("");
+  const [fallbackUsed, setFallbackUsed] = useState(false);
+  const [history, setHistory] = useState<PronunciationAttempt[]>([]);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const referenceRef = useRef<HTMLAudioElement | null>(null);
@@ -125,13 +149,49 @@ export function PronunciationCoach({
           cardId,
           lessonId,
           source,
+          stage,
+          noticedPhraseId,
         };
+        const recordingId = crypto.randomUUID();
+        attempt.recordingId = recordingId;
+        await saveAudioRecording({
+          id: recordingId,
+          blob,
+          mimeType: blob.type || "audio/webm",
+          sizeBytes: blob.size,
+          createdAt: attempt.createdAt,
+        }).catch(() => undefined);
         void savePronunciationAttempt(attempt).catch(() => {});
+        const production: ProductionAttempt = {
+          id: attempt.id,
+          lessonId,
+          source: source === "lesson" ? "lesson" : "correct",
+          stage,
+          noticedPhraseId,
+          recordingId,
+          prompt: targetText,
+          text: result.transcript,
+          spoken: true,
+          wordCount: result.transcript.split(/\s+/).filter(Boolean).length,
+          finished: true,
+          issueCount: result.scores.completeness < 80 ? 1 : 0,
+          durationMs: result.durationMs,
+          createdAt: attempt.createdAt,
+        };
+        if (stage) void saveProductionAttempt(production).catch(() => {});
+        setHistory((current) => [...current, attempt]);
+        onAttemptComplete?.({ spoken: true, text: result.transcript });
+        // One window per attempt: commit this one, then reopen for the next take.
+        // The coach is reused by Repeat, original production, and retry; do not
+        // flatten those distinct method stages into repeat in the ledger.
+        const methodStage = stage === "production" ? "speak" : stage ?? "repeat";
+        const repeatMinutes = repeatTimer.commit();
+        repeatTimer.start();
         void emitActivity("method_stage", {
-          stage: "repeat",
+          stage: methodStage,
           area: "speaking",
           source: "pronunciation",
-          minutes: 3,
+          minutes: repeatMinutes,
           subjectId: cardId ?? lessonId,
         }).catch(() => {});
       } catch (err: unknown) {
@@ -140,12 +200,14 @@ export function PronunciationCoach({
         setAssessing(false);
       }
     },
-    [cardId, lessonId, source, targetLang, targetText, t],
+    [cardId, lessonId, noticedPhraseId, onAttemptComplete, source, stage, targetLang, targetText, t, repeatTimer],
   );
 
   const startRecording = useCallback(async () => {
     setAssessment(null);
     setNote(null);
+    setMicDenied(false);
+    setFallbackUsed(false);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const recorder = new MediaRecorder(stream);
@@ -162,9 +224,53 @@ export function PronunciationCoach({
       recorder.start();
       setRecording(true);
     } catch {
+      setMicDenied(true);
       setNote(t("Couldn't access the microphone. Check the browser's permission."));
     }
   }, [assessBlob, t]);
+
+  const completeTypedFallback = () => {
+    if (!fallbackText.trim() || fallbackUsed) return;
+    setFallbackUsed(true);
+    setNote(null);
+    const now = Date.now();
+    const id = crypto.randomUUID();
+    const text = fallbackText.trim();
+    const production: ProductionAttempt = {
+      id,
+      lessonId,
+      source: source === "lesson" ? "lesson" : "correct",
+      stage,
+      noticedPhraseId,
+      prompt: targetText,
+      text,
+      spoken: false,
+      wordCount: text.split(/\s+/).filter(Boolean).length,
+      finished: true,
+      issueCount: 0,
+      createdAt: now,
+    };
+    if (stage) void saveProductionAttempt(production).catch(() => {});
+    onAttemptComplete?.({ spoken: false, text });
+    const methodStage = stage === "production" ? "speak" : stage ?? "repeat";
+    const repeatMinutes = repeatTimer.commit();
+    void emitActivity("method_stage", {
+      stage: methodStage,
+      area: "speaking",
+      source: "pronunciation",
+      minutes: repeatMinutes,
+      subjectId: cardId ?? lessonId,
+    }).catch(() => {});
+  };
+
+  useEffect(() => {
+    if (!cardId && !lessonId) return;
+    void getPronunciationAttempts().then((attempts) => {
+      setHistory(attempts.filter((attempt) =>
+        attempt.targetText === targetText && attempt.lessonId === lessonId && attempt.cardId === cardId,
+      ));
+    }).catch(() => {});
+  }, [cardId, lessonId, targetText]);
 
   const stopRecording = useCallback(() => {
     recorderRef.current?.stop();
@@ -180,6 +286,11 @@ export function PronunciationCoach({
           {!compact && (
             <p className="mt-0.5 text-sm text-ink-soft">{t("Listen, repeat, then check what was heard.")}</p>
           )}
+          {!compact && (
+            <p className="mt-0.5 text-xs text-ink-muted">
+              {t("This is a transcript-alignment signal, not phonemic pronunciation scoring.")}
+            </p>
+          )}
         </div>
         {assessment && (
           <span className={cn("text-sm font-semibold tabular-nums", scoreTone(assessment.scores.overall))}>
@@ -187,6 +298,8 @@ export function PronunciationCoach({
           </span>
         )}
       </div>
+
+      <LocalModelNotice model={whisper} />
 
       <div className="flex flex-wrap gap-2">
         <Button
@@ -220,6 +333,30 @@ export function PronunciationCoach({
         </Button>
       </div>
 
+      {micFallbackAvailable({ allowTypedFallback, micDenied }) && !fallbackUsed && (
+        <div className="space-y-2 rounded border border-accent/30 bg-accent/5 p-3">
+          <p className="text-xs text-ink-soft">
+            {t("Microphone access was denied. Type the phrase back once to continue with an accessibility fallback.")}
+          </p>
+          <input
+            value={fallbackText}
+            onChange={(event) => setFallbackText(event.target.value)}
+            aria-label={t("Typed repeat fallback")}
+            className="w-full rounded border border-line bg-surface px-3 py-2 text-sm text-ink"
+            placeholder={targetText}
+          />
+          <Button type="button" variant="secondary" size="sm" onClick={completeTypedFallback}>
+            {t("Continue with typed repeat")}
+          </Button>
+        </div>
+      )}
+
+      {fallbackUsed && (
+        <p className="text-xs text-ink-muted">
+          {t("Typed fallback completed. You can continue to your own sentence.")}
+        </p>
+      )}
+
       {assessment && (
         <div className="space-y-2">
           <div className="grid grid-cols-3 gap-2 text-xs">
@@ -241,6 +378,9 @@ export function PronunciationCoach({
           {assessment.transcript && (
             <p className="text-xs text-ink-muted">{t("Heard: {transcript}", { transcript: assessment.transcript })}</p>
           )}
+          <p className="text-xs text-ink-muted">
+            {t("Use the score to compare your own attempts over time; it does not judge individual sounds or accent.")}
+          </p>
           <ul className="space-y-1 text-xs text-ink-soft">
             {assessment.tips.map((tip) => (
               <li key={tip}>{tip}</li>
@@ -248,6 +388,8 @@ export function PronunciationCoach({
           </ul>
         </div>
       )}
+
+      <RecordingComparison attempts={history} />
 
       {note && <p className="text-xs text-danger">{note}</p>}
     </div>

@@ -1,0 +1,1111 @@
+{
+  "b1-job-interviews": {
+    "I've been working in logistics for six years.": [
+      "perfect-continuous-for",
+      "I've been ___ for ___",
+      "activity + duration",
+      [
+        "I've been working in logistics for six years.",
+        "I've been studying design for two years.",
+        "I've been leading the team for six months."
+      ],
+      "I work in logistics for six years.",
+      []
+    ],
+    "My background is mainly in customer support.": [
+      "background-in",
+      "My background is mainly in ___",
+      "the field",
+      [
+        "My background is mainly in customer support.",
+        "My background is mainly in finance.",
+        "My background is mainly in teaching."
+      ],
+      "My background is mainly of customer support.",
+      []
+    ],
+    "One thing I'm good at is spotting problems early.": [
+      "cleft-good-at",
+      "One thing I'm good at is ___",
+      "-ing verb phrase",
+      [
+        "One thing I'm good at is spotting problems early.",
+        "One thing I'm good at is keeping people calm.",
+        "One thing I'm good at is explaining technical work simply."
+      ],
+      "One thing I'm good at is spot problems early.",
+      []
+    ],
+    "In my last role, I was responsible for the schedule.": [
+      "responsible-for",
+      "responsible for ___",
+      "the duty",
+      [
+        "In my last role, I was responsible for the schedule.",
+        "I'm responsible for the shopping.",
+        "Which department is responsible for this?"
+      ],
+      "In my last role, I was responsible of the schedule.",
+      []
+    ],
+    "I'm looking for a role with more responsibility.": [
+      "looking-for-noun",
+      "I'm looking for ___",
+      "what you want",
+      [
+        "I'm looking for a role with more responsibility.",
+        "I'm looking for a smaller team.",
+        "I'm looking for work I can do remotely."
+      ],
+      "I'm looking for to a role with more responsibility.",
+      []
+    ]
+  },
+  "b1-work-meetings": {
+    "We're on track to finish by Friday.": [
+      "on-track-to",
+      "We're on track to ___",
+      "base verb",
+      [
+        "We're on track to finish by Friday.",
+        "We're on track to hit the target.",
+        "We're on track to launch next month."
+      ],
+      "We're on track for finish by Friday.",
+      []
+    ],
+    "We're a bit behind, but it's under control.": [
+      "concession-but",
+      "___, but ___",
+      "problem + reassurance",
+      [
+        "We're a bit behind, but it's under control.",
+        "It's a big change, but the team is ready.",
+        "The budget is tight, but we have a plan."
+      ],
+      "We're a bit behind, but however it's under control.",
+      []
+    ],
+    "Sorry, can I just come back to that point?": [
+      "come-back-to",
+      "come back to ___",
+      "the topic",
+      [
+        "Sorry, can I just come back to that point?",
+        "Can I come back to the budget question?",
+        "Can I come back to what you said earlier?"
+      ],
+      "Can I come back in that point?",
+      []
+    ],
+    "I'm not sure I follow. Could you clarify?": [
+      "not-sure-i-verb",
+      "I'm not sure I ___",
+      "base verb",
+      [
+        "I'm not sure I follow. Could you clarify?",
+        "I'm not sure I agree with that.",
+        "I'm not sure I understand the timeline."
+      ],
+      "I'm not sure that I am follow.",
+      []
+    ],
+    "Just to confirm, I'll send the report by Wednesday.": [
+      "just-to-confirm",
+      "Just to confirm, ___",
+      "the commitment",
+      [
+        "Just to confirm, I'll send the report by Wednesday.",
+        "Just to confirm, we meet at ten.",
+        "Just to confirm, you need it in English."
+      ],
+      "Just for confirm, I'll send the report.",
+      []
+    ]
+  },
+  "b1-email-messages": {
+    "I'm writing to ask about the invoice.": [
+      "writing-to-verb",
+      "I'm writing to ___",
+      "base verb",
+      [
+        "I'm writing to ask about the invoice.",
+        "I'm writing to confirm our meeting.",
+        "I'm writing to follow up on my application."
+      ],
+      "I'm writing for ask about the invoice.",
+      []
+    ],
+    "Just following up on my last message.": [
+      "following-up-on",
+      "Just following up on ___",
+      "the earlier thing",
+      [
+        "Just following up on my last message.",
+        "Just following up on the quote.",
+        "Just following up on our call yesterday."
+      ],
+      "Just following up my last message.",
+      []
+    ],
+    "Could you send it over when you get a chance?": [
+      "when-you-get-a-chance",
+      "Could you ___ when you get a chance?",
+      "base verb",
+      [
+        "Could you send it over when you get a chance?",
+        "Could you review it when you get a chance?",
+        "Could you sign it when you get a chance?"
+      ],
+      "Could you send it over when you will get a chance?",
+      []
+    ],
+    "Apologies for the delay in replying.": [
+      "apologies-for",
+      "Apologies for ___",
+      "what you are apologising for",
+      [
+        "Apologies for the delay in replying.",
+        "Apologies for the confusion.",
+        "Apologies for the short notice."
+      ],
+      "Apologies for to delay in replying.",
+      []
+    ],
+    "Would it be possible to move the call?": [
+      "would-it-be-possible-to",
+      "Would it be possible to ___?",
+      "base verb",
+      [
+        "Would it be possible to move the call?",
+        "Would it be possible to extend the deadline?",
+        "Would it be possible to join remotely?"
+      ],
+      "Would it be possible moving the call?",
+      []
+    ]
+  },
+  "b1-travel-problems": {
+    "I've missed my connection to Lisbon.": [
+      "perfect-consequence",
+      "I've ___ my ___",
+      "past participle + thing",
+      [
+        "I've missed my connection to Lisbon.",
+        "I've lost my boarding pass.",
+        "I've left my jacket on the train."
+      ],
+      "I have miss my connection to Lisbon.",
+      []
+    ],
+    "My suitcase didn't arrive with the flight.": [
+      "didnt-past-simple",
+      "My ___ didn't ___",
+      "thing + base verb",
+      [
+        "My suitcase didn't arrive with the flight.",
+        "My card didn't work at the machine.",
+        "My booking didn't go through."
+      ],
+      "My suitcase didn't arrived with the flight.",
+      []
+    ],
+    "Is there any way to get there tonight?": [
+      "is-there-any-way-to",
+      "Is there any way to ___?",
+      "base verb",
+      [
+        "Is there any way to get there tonight?",
+        "Is there any way to change the ticket?",
+        "Is there any way to speak to a manager?"
+      ],
+      "Is there any way for get there tonight?",
+      []
+    ],
+    "I'd rather wait than pay for a new ticket.": [
+      "would-rather-than",
+      "I'd rather ___ than ___",
+      "base verb + base verb",
+      [
+        "I'd rather wait than pay for a new ticket.",
+        "I'd rather walk than take a taxi.",
+        "I'd rather ask than guess."
+      ],
+      "I'd rather to wait than to pay.",
+      []
+    ],
+    "Could you put that in writing for me?": [
+      "put-in-writing",
+      "Could you put ___ in writing?",
+      "the thing to be confirmed",
+      [
+        "Could you put that in writing for me?",
+        "Could you put the offer in writing?",
+        "Could you put the agreement in writing?"
+      ],
+      "Could you put that on writing for me?",
+      []
+    ]
+  },
+  "b1-personal-finance": {
+    "I'm trying to stick to a budget.": [
+      "trying-to-verb",
+      "I'm trying to ___",
+      "base verb",
+      [
+        "I'm trying to stick to a budget.",
+        "I'm trying to spend less on food.",
+        "I'm trying to pay off my card."
+      ],
+      "I'm trying stick to a budget.",
+      []
+    ],
+    "Rent takes up most of my salary.": [
+      "takes-up",
+      "___ takes up ___",
+      "thing + share",
+      [
+        "Rent takes up most of my salary.",
+        "Travel takes up a big part of the budget.",
+        "Childcare takes up half my income."
+      ],
+      "Rent takes most of my salary up.",
+      []
+    ],
+    "It's not worth it for the price.": [
+      "worth-it",
+      "It's not worth it for ___",
+      "the cost or effort",
+      [
+        "It's not worth it for the price.",
+        "It's not worth it for one weekend.",
+        "It's not worth it for the small saving."
+      ],
+      "It doesn't worth it for the price.",
+      []
+    ],
+    "I can't afford that at the moment.": [
+      "cant-afford",
+      "I can't afford ___",
+      "the thing or action",
+      [
+        "I can't afford that at the moment.",
+        "I can't afford a new car this year.",
+        "I can't afford to take unpaid leave."
+      ],
+      "I can't afford of that at the moment.",
+      []
+    ],
+    "The bill is higher than I expected.": [
+      "than-i-expected",
+      "___ is ___ than I expected",
+      "thing + comparative",
+      [
+        "The bill is higher than I expected.",
+        "The process is slower than I expected.",
+        "The room is smaller than I expected."
+      ],
+      "The bill is more high than I expected.",
+      []
+    ],
+    "I'd rather save up than borrow.": [
+      "would-rather-than",
+      "I'd rather ___ than ___",
+      "base verb + base verb",
+      [
+        "I'd rather save up than borrow.",
+        "I'd rather wait than pay for a new ticket.",
+        "I'd rather ask than guess."
+      ],
+      "I'd rather to save up than to borrow.",
+      []
+    ]
+  },
+  "b1-storytelling": {
+    "This happened a couple of years ago.": [
+      "happened-when",
+      "This happened ___",
+      "past time expression",
+      [
+        "This happened a couple of years ago.",
+        "This happened last winter.",
+        "This happened when I was still at university."
+      ],
+      "This happen a couple of years ago.",
+      []
+    ],
+    "I was waiting for the bus when I saw her.": [
+      "past-continuous-when",
+      "I was ___ when ___",
+      "background action + event",
+      [
+        "I was waiting for the bus when I saw her.",
+        "I was cooking when the power went off.",
+        "I was walking home when it started to rain."
+      ],
+      "I waited for the bus when I saw her.",
+      []
+    ],
+    "At first, I didn't realise what was going on.": [
+      "at-first",
+      "At first, ___",
+      "your initial reaction",
+      [
+        "At first, I didn't realise what was going on.",
+        "At first, I thought it was a joke.",
+        "At first, nobody said anything."
+      ],
+      "In the first, I didn't realise what was going on.",
+      []
+    ],
+    "The funny thing is, she said the same to me.": [
+      "the-x-thing-is",
+      "The ___ thing is, ___",
+      "adjective + the twist",
+      [
+        "The funny thing is, she said the same to me.",
+        "The strange thing is, nobody noticed.",
+        "The good thing is, we still made it on time."
+      ],
+      "The funny thing is that, she said the same.",
+      []
+    ],
+    "In the end, we both laughed about it.": [
+      "in-the-end",
+      "In the end, ___",
+      "how it resolved",
+      [
+        "In the end, we both laughed about it.",
+        "In the end, we took the train.",
+        "In the end, it cost less than I thought."
+      ],
+      "In the final, we both laughed about it.",
+      []
+    ]
+  },
+  "b1-recommendations": {
+    "You should definitely give it a try.": [
+      "should-definitely",
+      "You should definitely ___",
+      "base verb",
+      [
+        "You should definitely give it a try.",
+        "You should definitely book ahead.",
+        "You should definitely see it at night."
+      ],
+      "You should definitely to give it a try.",
+      []
+    ],
+    "It's worth going early to avoid the queue.": [
+      "worth-gerund",
+      "It's worth ___",
+      "-ing verb phrase",
+      [
+        "It's worth going early to avoid the queue.",
+        "It's worth checking the reviews first.",
+        "It's worth paying a bit more for the direct flight."
+      ],
+      "It's worth to go early.",
+      []
+    ],
+    "What I liked most was the service.": [
+      "what-cleft",
+      "What I liked most was ___",
+      "the thing you liked",
+      [
+        "What I liked most was the service.",
+        "What I liked most was how quiet it was.",
+        "What I liked most was the price."
+      ],
+      "What I liked most it was the service.",
+      []
+    ],
+    "It's not as good as everyone says.": [
+      "not-as-as-b1",
+      "It's not as ___ as ___",
+      "adjective + comparison",
+      [
+        "It's not as good as everyone says.",
+        "It's not as expensive as it looks.",
+        "It's not as far as I thought."
+      ],
+      "It's not so good than everyone says.",
+      []
+    ],
+    "If you like quiet places, you'll love it.": [
+      "first-conditional",
+      "If you ___, you'll ___",
+      "condition + result",
+      [
+        "If you like quiet places, you'll love it.",
+        "If you go on a weekday, you'll avoid the crowds.",
+        "If you book early, you'll get a better price."
+      ],
+      "If you will like quiet places, you'll love it.",
+      []
+    ],
+    "It depends on what you're looking for.": [
+      "it-depends-on",
+      "It depends on ___",
+      "the deciding factor",
+      [
+        "It depends on what you're looking for.",
+        "It depends on the person and the situation.",
+        "It depends on how much time you have."
+      ],
+      "It depends of what you're looking for.",
+      [
+        "It depends."
+      ]
+    ]
+  },
+  "b1-apologies": {
+    "I should have told you sooner.": [
+      "should-have-participle",
+      "I should have ___",
+      "past participle",
+      [
+        "I should have told you sooner.",
+        "I should have checked the details.",
+        "I should have asked before deciding."
+      ],
+      "I should have tell you sooner.",
+      []
+    ],
+    "I take full responsibility for this.": [
+      "take-responsibility-for",
+      "I take full responsibility for ___",
+      "the problem",
+      [
+        "I take full responsibility for this.",
+        "I take full responsibility for the delay.",
+        "I take full responsibility for the mistake in the report."
+      ],
+      "I take full responsibility of this.",
+      []
+    ],
+    "Here's what I'm going to do about it.": [
+      "heres-what-im-going-to",
+      "Here's what I'm going to ___",
+      "base verb",
+      [
+        "Here's what I'm going to do about it.",
+        "Here's what I'm going to change.",
+        "Here's what I'm going to check next."
+      ],
+      "Here's what I'm going do about it.",
+      []
+    ],
+    "I understand why you're frustrated.": [
+      "understand-why",
+      "I understand why ___",
+      "the other person's reason",
+      [
+        "I understand why you're frustrated.",
+        "I understand why this looks careless.",
+        "I understand why you didn't reply."
+      ],
+      "I understand why are you frustrated.",
+      []
+    ],
+    "How can I make it up to you?": [
+      "make-it-up-to",
+      "How can I make it up to ___?",
+      "the person",
+      [
+        "How can I make it up to you?",
+        "How can I make it up to the team?",
+        "How can I make it up to your colleague?"
+      ],
+      "How can I make it up for you?",
+      []
+    ]
+  },
+  "b1-reasons-examples": {
+    "The main reason is that it saves time.": [
+      "main-reason-is-that",
+      "The main reason is that ___",
+      "your reason as a clause",
+      [
+        "The main reason is that it saves time.",
+        "The main reason is that the office is far.",
+        "The main reason is that nobody was told."
+      ],
+      "The main reason is because it saves time.",
+      []
+    ],
+    "For example, I can work from home twice a week.": [
+      "for-example",
+      "For example, ___",
+      "a concrete case",
+      [
+        "For example, I can work from home twice a week.",
+        "For example, the last order arrived a week late.",
+        "For example, my sister learned it in six months."
+      ],
+      "For example of, I can work from home.",
+      []
+    ],
+    "Another point is that it costs less.": [
+      "another-point-is-that",
+      "Another point is that ___",
+      "a second reason",
+      [
+        "Another point is that it costs less.",
+        "Another point is that the team is smaller.",
+        "Another point is that we already have the tools."
+      ],
+      "Another point is because it costs less.",
+      []
+    ],
+    "In my experience, shorter meetings are more productive.": [
+      "in-my-experience",
+      "In my experience, ___",
+      "what you have observed",
+      [
+        "In my experience, shorter meetings are more productive.",
+        "In my experience, people reply faster on chat.",
+        "In my experience, the first week is the hardest."
+      ],
+      "In my experience of, shorter meetings are better.",
+      []
+    ],
+    "That doesn't mean it works for everyone.": [
+      "that-doesnt-mean",
+      "That doesn't mean ___",
+      "the overreach you are blocking",
+      [
+        "That doesn't mean it works for everyone.",
+        "That doesn't mean the plan was wrong.",
+        "That doesn't mean we should stop testing."
+      ],
+      "That doesn't mean that it works for everyone always.",
+      []
+    ]
+  },
+  "b1-news-media": {
+    "According to the report, the council is considering the change.": [
+      "according-to",
+      "According to ___, ___",
+      "source + claim",
+      [
+        "According to the report, the council is considering the change.",
+        "According to the mayor, the work starts in June.",
+        "According to the study, the effect is small."
+      ],
+      "According with the report, the council is considering it.",
+      []
+    ],
+    "The article says that no decision has been made.": [
+      "reporting-verb-that",
+      "The ___ says that ___",
+      "source + reported claim",
+      [
+        "The article says that no decision has been made.",
+        "The statement says that nothing will change.",
+        "The email says that the deadline has moved."
+      ],
+      "The article says us that no decision has been made.",
+      []
+    ],
+    "It has not been confirmed yet.": [
+      "not-been-participle-yet",
+      "It has not been ___ yet",
+      "past participle",
+      [
+        "It has not been confirmed yet.",
+        "It has not been published yet.",
+        "It has not been decided yet."
+      ],
+      "It has not confirmed yet.",
+      []
+    ],
+    "This is an opinion rather than a fact.": [
+      "rather-than",
+      "___ rather than ___",
+      "the thing + the alternative",
+      [
+        "This is an opinion rather than a fact.",
+        "I'd call it a delay rather than a cancellation.",
+        "It's a summary rather than a full report."
+      ],
+      "This is an opinion instead than a fact.",
+      []
+    ],
+    "I would check another source before sharing it.": [
+      "would-verb-before-gerund",
+      "I would ___ before ___",
+      "base verb + -ing verb",
+      [
+        "I would check another source before sharing it.",
+        "I would read the whole piece before commenting.",
+        "I would ask them before assuming."
+      ],
+      "I would to check another source before to share it.",
+      []
+    ]
+  },
+  "b1-health-fitness": {
+    "I've started exercising three times a week.": [
+      "started-gerund-b1",
+      "I've started ___",
+      "-ing verb phrase",
+      [
+        "I've started exercising three times a week.",
+        "I've started cycling to work.",
+        "I've started cooking at home more."
+      ],
+      "I've started to exercising three times a week.",
+      [
+        "I've started to exercise three times a week."
+      ]
+    ],
+    "I'm trying to build up my stamina.": [
+      "build-up",
+      "I'm trying to build up ___",
+      "the thing you are increasing",
+      [
+        "I'm trying to build up my stamina.",
+        "I'm trying to build up my savings.",
+        "I'm trying to build up my vocabulary."
+      ],
+      "I'm trying to build my stamina up more.",
+      []
+    ],
+    "I tend to skip workouts when I'm busy.": [
+      "tend-to-verb",
+      "I tend to ___",
+      "base verb",
+      [
+        "I tend to skip workouts when I'm busy.",
+        "I tend to leave things until the last minute.",
+        "I tend to forget names."
+      ],
+      "I tend to skipping workouts.",
+      []
+    ],
+    "You should increase the intensity gradually.": [
+      "should-verb-adverb",
+      "You should ___ ___",
+      "base verb + adverb",
+      [
+        "You should increase the intensity gradually.",
+        "You should start slowly.",
+        "You should rest properly."
+      ],
+      "You should to increase the intensity.",
+      []
+    ],
+    "I've noticed that I sleep better.": [
+      "noticed-that",
+      "I've noticed that ___",
+      "the change you observed",
+      [
+        "I've noticed that I sleep better.",
+        "I've noticed that I get tired later.",
+        "I've noticed that my focus lasts longer."
+      ],
+      "I've noticed that I am sleep better.",
+      []
+    ]
+  },
+  "b1-habits-change": {
+    "I used to check my phone as soon as I woke up.": [
+      "used-to-as-soon-as",
+      "I used to ___ as soon as ___",
+      "old habit + trigger",
+      [
+        "I used to check my phone as soon as I woke up.",
+        "I used to open my email as soon as I sat down.",
+        "I used to snack as soon as I got home."
+      ],
+      "I used to checking my phone as soon as I wake up.",
+      []
+    ],
+    "I've managed to reduce my screen time.": [
+      "managed-to-verb",
+      "I've managed to ___",
+      "base verb",
+      [
+        "I've managed to reduce my screen time.",
+        "I've managed to keep the routine for a month.",
+        "I've managed to stop checking it at night."
+      ],
+      "I've managed reduce my screen time.",
+      []
+    ],
+    "I'm still working on my evening routine.": [
+      "working-on",
+      "I'm still working on ___",
+      "what you are improving",
+      [
+        "I'm still working on my evening routine.",
+        "I'm still working on my pronunciation.",
+        "I'm still working on saying no."
+      ],
+      "I'm still working in my evening routine.",
+      []
+    ],
+    "I keep forgetting to turn off notifications.": [
+      "keep-gerund",
+      "I keep ___",
+      "-ing verb phrase",
+      [
+        "I keep forgetting to turn off notifications.",
+        "I keep losing my keys.",
+        "I keep putting it off."
+      ],
+      "I keep to forget to turn off notifications.",
+      []
+    ],
+    "I'm getting better at noticing the trigger.": [
+      "getting-better-at",
+      "I'm getting better at ___",
+      "-ing verb phrase",
+      [
+        "I'm getting better at noticing the trigger.",
+        "I'm getting better at planning the week.",
+        "I'm getting better at asking for help."
+      ],
+      "I'm getting better in noticing the trigger.",
+      []
+    ]
+  },
+  "b1-processes": {
+    "Before you start, make sure you have the receipt.": [
+      "make-sure-clause",
+      "Make sure ___",
+      "the condition as a clause",
+      [
+        "Before you start, make sure you have the receipt.",
+        "Make sure the file is saved.",
+        "Make sure everyone has the link."
+      ],
+      "Make sure to have sure the receipt.",
+      []
+    ],
+    "The first step is to open the returns page.": [
+      "first-step-is-to",
+      "The first step is to ___",
+      "base verb",
+      [
+        "The first step is to open the returns page.",
+        "The first step is to create an account.",
+        "The first step is to gather the documents."
+      ],
+      "The first step is open the returns page.",
+      []
+    ],
+    "Once you've selected the item, choose a reason.": [
+      "once-perfect",
+      "Once you've ___, ___",
+      "past participle + next action",
+      [
+        "Once you've selected the item, choose a reason.",
+        "Once you've paid, you'll get a confirmation.",
+        "Once you've filled it in, send it back."
+      ],
+      "Once you will have selected the item, choose a reason.",
+      []
+    ],
+    "If something goes wrong, contact customer support.": [
+      "if-present-imperative",
+      "If ___, ___",
+      "condition + instruction",
+      [
+        "If something goes wrong, contact customer support.",
+        "If the link expires, request a new one.",
+        "If you don't hear back, call them."
+      ],
+      "If something will go wrong, contact support.",
+      []
+    ],
+    "The whole process usually takes about ten minutes.": [
+      "process-takes-time",
+      "___ usually takes about ___",
+      "process + duration",
+      [
+        "The whole process usually takes about ten minutes.",
+        "The review usually takes about two days.",
+        "The setup usually takes about an hour."
+      ],
+      "The whole process usually takes about ten minutes of time.",
+      []
+    ]
+  },
+  "b1-goals-progress": {
+    "I want to achieve this goal by the end of June.": [
+      "achieve-by-deadline",
+      "I want to ___ by ___",
+      "base verb + deadline",
+      [
+        "I want to achieve this goal by the end of June.",
+        "I want to finish the draft by Friday.",
+        "I want to move out by the summer."
+      ],
+      "I want to achieve this goal until the end of June.",
+      []
+    ],
+    "I've broken the goal down into smaller steps.": [
+      "broken-down-into",
+      "I've broken ___ down into ___",
+      "thing + smaller parts",
+      [
+        "I've broken the goal down into smaller steps.",
+        "I've broken the project down into three phases.",
+        "I've broken the reading down into daily chunks."
+      ],
+      "I've broken down the goal in smaller steps.",
+      []
+    ],
+    "I'm on track with the research.": [
+      "on-track-with",
+      "I'm on track with ___",
+      "the workstream",
+      [
+        "I'm on track with the research.",
+        "I'm on track with the budget.",
+        "I'm on track with my savings plan."
+      ],
+      "I'm on track in the research.",
+      []
+    ],
+    "I've fallen behind with the writing.": [
+      "fallen-behind-with",
+      "I've fallen behind with ___",
+      "the workstream",
+      [
+        "I've fallen behind with the writing.",
+        "I've fallen behind with my emails.",
+        "I've fallen behind with the reading."
+      ],
+      "I've fallen behind of the writing.",
+      []
+    ],
+    "My next step is to finish the introduction.": [
+      "next-step-is-to",
+      "My next step is to ___",
+      "base verb",
+      [
+        "My next step is to finish the introduction.",
+        "My next step is to book the exam.",
+        "My next step is to talk to my manager."
+      ],
+      "My next step is finish the introduction.",
+      []
+    ],
+    "I need to adjust my plan.": [
+      "need-to-verb",
+      "need to ___",
+      "base verb",
+      [
+        "I need to adjust my plan.",
+        "I need to cancel my appointment.",
+        "You need to update the app."
+      ],
+      "I need adjust my plan.",
+      []
+    ]
+  },
+  "b1-cultural-differences": {
+    "In my experience, people usually arrive a little later.": [
+      "in-my-experience",
+      "In my experience, ___",
+      "what you have observed",
+      [
+        "In my experience, people usually arrive a little later.",
+        "In my experience, meetings start on time here.",
+        "In my experience, nobody minds if you ask."
+      ],
+      "In my experience of, people arrive later.",
+      []
+    ],
+    "Some people tend to keep work and family life separate.": [
+      "some-people-tend-to",
+      "Some people tend to ___",
+      "base verb",
+      [
+        "Some people tend to keep work and family life separate.",
+        "Some people tend to answer messages late at night.",
+        "Some people tend to arrive early."
+      ],
+      "Some people tend to keeping work separate.",
+      []
+    ],
+    "I wasn't used to eating dinner that early.": [
+      "be-used-to-gerund",
+      "I wasn't used to ___",
+      "-ing verb phrase",
+      [
+        "I wasn't used to eating dinner that early.",
+        "I wasn't used to working from home.",
+        "I wasn't used to being called by my first name."
+      ],
+      "I wasn't used to eat dinner that early.",
+      []
+    ],
+    "There are more similarities than I expected.": [
+      "more-than-i-expected",
+      "There are more ___ than I expected",
+      "the thing you found more of",
+      [
+        "There are more similarities than I expected.",
+        "There are more options than I expected.",
+        "There are more rules than I expected."
+      ],
+      "There are more similarities that I expected.",
+      []
+    ],
+    "It depends on the person and the situation.": [
+      "it-depends-on",
+      "It depends on ___",
+      "the deciding factor",
+      [
+        "It depends on the person and the situation.",
+        "It depends on how much time you have.",
+        "It depends on who you ask."
+      ],
+      "It depends of the situation.",
+      [
+        "It depends.",
+        "That depends on the person and the situation."
+      ]
+    ]
+  },
+  "b1-community-services": {
+    "I'm calling to report a problem in my neighbourhood.": [
+      "calling-to-verb",
+      "I'm calling to ___",
+      "base verb",
+      [
+        "I'm calling to report a problem in my neighbourhood.",
+        "I'm calling to ask about my application.",
+        "I'm calling to confirm an appointment."
+      ],
+      "I'm calling for report a problem.",
+      []
+    ],
+    "The streetlight has been out for three nights.": [
+      "has-been-for",
+      "The ___ has been ___ for ___",
+      "thing + state + duration",
+      [
+        "The streetlight has been out for three nights.",
+        "The lift has been broken for a week.",
+        "The road has been closed for two days."
+      ],
+      "The streetlight is out since three nights.",
+      []
+    ],
+    "It makes the crossing difficult to see at night.": [
+      "makes-adjective-to-verb",
+      "It makes ___ difficult to ___",
+      "thing + base verb",
+      [
+        "It makes the crossing difficult to see at night.",
+        "It makes the form difficult to complete.",
+        "It makes the entrance difficult to reach."
+      ],
+      "It makes the crossing difficult for see.",
+      []
+    ],
+    "Could you give me a reference number?": [
+      "give-me-noun",
+      "Could you give me ___?",
+      "what you need from them",
+      [
+        "Could you give me a reference number?",
+        "Could you give me a date for the repair.",
+        "Could you give me the name of the department?"
+      ],
+      "Could you give to me a reference number?",
+      []
+    ],
+    "I'll follow up if the problem continues.": [
+      "ill-verb-if",
+      "I'll ___ if ___",
+      "base verb + condition",
+      [
+        "I'll follow up if the problem continues.",
+        "I'll call back if I don't hear anything.",
+        "I'll escalate it if nothing changes."
+      ],
+      "I'll follow up if the problem will continue.",
+      []
+    ],
+    "Which department is responsible for this?": [
+      "responsible-for",
+      "responsible for ___",
+      "the duty or area",
+      [
+        "Which department is responsible for this?",
+        "I'm responsible for the shopping.",
+        "In my last role, I was responsible for the schedule."
+      ],
+      "Which department is responsible of this?",
+      []
+    ]
+  },
+  "b1-relationships-boundaries": {
+    "I'd like to talk about something that's been bothering me.": [
+      "would-like-to-talk-about",
+      "I'd like to talk about ___",
+      "the topic",
+      [
+        "I'd like to talk about something that's been bothering me.",
+        "I'd like to talk about how we split the chores.",
+        "I'd like to talk about last weekend."
+      ],
+      "I'd like to talk about of something.",
+      []
+    ],
+    "I understand that you need time to relax.": [
+      "i-understand-that",
+      "I understand that ___",
+      "the other person's position",
+      [
+        "I understand that you need time to relax.",
+        "I understand that the week was hard.",
+        "I understand that you didn't mean it that way."
+      ],
+      "I understand that you needing time to relax.",
+      []
+    ],
+    "I'm not comfortable sharing that information.": [
+      "not-comfortable-gerund",
+      "I'm not comfortable ___",
+      "-ing verb phrase",
+      [
+        "I'm not comfortable sharing that information.",
+        "I'm not comfortable speaking for the whole team.",
+        "I'm not comfortable lending money."
+      ],
+      "I'm not comfortable to share that information.",
+      []
+    ],
+    "Could we agree to check first?": [
+      "could-we-agree-to",
+      "Could we agree to ___?",
+      "base verb",
+      [
+        "Could we agree to check first?",
+        "Could we agree to decide together?",
+        "Could we agree to keep Sundays free?"
+      ],
+      "Could we agree checking first?",
+      []
+    ],
+    "That would work for me as long as we plan ahead.": [
+      "as-long-as",
+      "___ as long as ___",
+      "acceptance + condition",
+      [
+        "That would work for me as long as we plan ahead.",
+        "I can stay late as long as I know in advance.",
+        "I'm happy to host as long as we split the cost."
+      ],
+      "That would work for me as long as we will plan ahead.",
+      []
+    ]
+  }
+}

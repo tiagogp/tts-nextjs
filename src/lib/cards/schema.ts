@@ -22,6 +22,8 @@ export type ErrorType =
   | "idiom"
   | "vocabulary"
   | "register"
+  | "missing-information"
+  | "pronunciation"
   | "other";
 
 /** One captured mistake: what the learner said vs. how a native would say it. */
@@ -173,6 +175,22 @@ export type CardSource =
   | { kind: "error"; event: ErrorEvent }
   | { kind: "phrase"; candidate: PhraseCandidate };
 
+/**
+ * Which way round the card is retrieved. The distinction is not cosmetic: recall direction
+ * decides what the card actually trains.
+ *
+ *   "production"  — front is the L1 (pt) prompt, back is the English. The learner has to
+ *                   produce the target language from meaning. Audio is withheld until after
+ *                   the answer, so the clip confirms production instead of cueing it.
+ *   "recognition" — front is the English (with its clip), back is the L1 meaning. Cheaper,
+ *                   transfers to production only weakly, and clears from acoustic
+ *                   familiarity alone; kept as the receptive half of a pair, never alone.
+ *
+ * Undefined on cards generated before the field existed, where `orientation.ts` infers the
+ * side languages heuristically instead.
+ */
+export type CardDirection = "production" | "recognition";
+
 /** A generated flashcard, ready to be serialized to CSV/JSON for apkg_from_csv.py. */
 export interface Card {
   id: string;
@@ -180,6 +198,40 @@ export interface Card {
   front: string;
   /** The native-correct answer. Audio (TTS, or a native clip for discovery) is added downstream. */
   back: string;
+  /**
+   * Recall direction. When set it is authoritative — read-time orientation leaves the card
+   * alone, and Study uses it to decide audio placement and what the pronunciation target is.
+   */
+  direction?: CardDirection;
+  /** Stable family id shared by recognition/production variants of one language pattern. */
+  patternId?: string;
+  /**
+   * The invariant part of the pattern with `___` marking the slot: "I ended up ___".
+   *
+   * This is the field that separates "I remember this sentence" from "I can use this
+   * structure". Without it the app can only ask the learner to reproduce the sentence it
+   * taught, every transfer claim is unverifiable, and interleaving by `patternId` has
+   * nothing to interleave. See `src/lib/language/pattern.ts`.
+   */
+  patternFrame?: string;
+  /** What fills the slot, in learner-facing words: "-ing verb phrase". */
+  patternSlot?: string;
+  /** A near neighbour that is wrong, for minimal-pair discrimination. */
+  patternContrast?: string;
+  /**
+   * Other grounded examples of the same pattern, used for interleaving, variation drills
+   * and the novelty check on a learner's own filling. A family of one is not a pattern:
+   * anything that drills variation requires at least two.
+   */
+  examples?: string[];
+  /**
+   * Wordings that are also correct for this prompt. A production card whose author wrote
+   * one long sentence must not fail a learner who produced a shorter correct one — that is
+   * how an app trains recitation while reporting production.
+   */
+  acceptedAnswers?: string[];
+  /** Situations in which this pattern has already appeared. */
+  contexts?: string[];
   /** The single concept this card isolates, e.g. "preposition after a motion verb". */
   concept: string;
   /** Set for correction-path cards; undefined for discovery-path cards. */

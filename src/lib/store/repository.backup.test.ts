@@ -87,7 +87,7 @@ describe("local backup round-trip (W6)", () => {
     const backup = await exportLocalBackup();
     expect(backup.app).toBe("PhraseLoop");
     expect(backup.schemaVersion).toBe(1);
-    expect(backup.stores.cards).toHaveLength(2);
+    expect(backup.stores.cards).toHaveLength(4);
     expect(backup.stores.reviews).toHaveLength(1);
 
     // Simulate catastrophic local data loss / a reinstall on a new app version.
@@ -99,7 +99,9 @@ describe("local backup round-trip (W6)", () => {
     expect(result.ok).toBe(true);
 
     const restoredCards = await getCards();
-    expect(restoredCards.map((c) => c.id).sort()).toEqual(["card-1", "card-2"]);
+    expect(restoredCards.map((c) => c.id).sort()).toEqual([
+      "card-1", "card-1--production", "card-2", "card-2--production",
+    ]);
     expect(await getReviews()).toHaveLength(1);
     const restoredSrs = await getSrs("card-1");
     expect(restoredSrs?.cardId).toBe("card-1");
@@ -119,7 +121,9 @@ describe("local backup round-trip (W6)", () => {
 
     const cards = await getCards();
     // card-2 (newer than the backup) must NOT be deleted by a merge restore.
-    expect(cards.map((c) => c.id).sort()).toEqual(["card-1", "card-2"]);
+    expect(cards.map((c) => c.id).sort()).toEqual([
+      "card-1", "card-1--production", "card-2", "card-2--production",
+    ]);
     // card-1 is overwritten by the backup copy (merge-by-id).
     expect(cards.find((c) => c.id === "card-1")?.back).toBe("original");
   });
@@ -128,8 +132,7 @@ describe("local backup round-trip (W6)", () => {
 /**
  * Phase 4 "Trust & Proof" — zero-loss backup on weeks-scale organic data.
  *
- * The moderated [backup-restore protocol](../../../docs/w5/backup-restore-validation.md)
- * proves zero loss on ONE real participant. This test proves the same property
+ * A moderated restore run proves zero loss on ONE real participant. This test proves the same property
  * automatically, across ALL 12 stores, through the exact real path a user hits:
  * export → serialize to a JSON file → parse the file back → dry-run validate →
  * restore. It fills every store with weeks of data (not the handful the high-level
@@ -157,6 +160,12 @@ describe("local backup round-trip — weeks-scale zero-loss proof (Phase 4)", ()
     [STORES.progressAssessments]: "id",
     [STORES.c1Diagnoses]: "id",
     [STORES.levelTests]: "id",
+    [STORES.listeningAttempts]: "id",
+    [STORES.productionAttempts]: "id",
+    [STORES.retryOutcomes]: "id",
+    [STORES.audioRecordings]: "id",
+    [STORES.methodProgression]: "id",
+    [STORES.proofAttempts]: "id",
   };
 
   function buildSeed(): Record<StoreName, Record<string, unknown>[]> {
@@ -258,6 +267,77 @@ describe("local backup round-trip — weeks-scale zero-loss proof (Phase 4)", ()
         createdAt: START + i * 5 * DAY,
         passed: i === 2,
       })),
+      [STORES.listeningAttempts]: Array.from({ length: 4 }, (_, i) => ({
+        id: `listening-${i}`,
+        lessonId: `lesson-${i}`,
+        sourceId: `lesson-lesson-${i}`,
+        questionCount: 3,
+        answeredCount: 3,
+        correctCount: i,
+        mainIdeaCorrect: i > 0,
+        detailCorrect: Math.max(0, i - 1),
+        detailTotal: 2,
+        playCounts: [1, 2],
+        transcriptVisible: i > 0,
+        playbackRate: 1,
+        speakerIds: [`speaker-${i}`],
+        questions: [],
+        answers: [],
+        startedAt: START + i * DAY,
+        completedAt: START + i * DAY + 1_000,
+      })),
+      [STORES.productionAttempts]: Array.from({ length: 5 }, (_, i) => ({
+        id: `production-${i}`,
+        lessonId: `lesson-${i % 3}`,
+        source: "lesson",
+        text: `sentence ${i}`,
+        spoken: i % 2 === 0,
+        wordCount: 2,
+        finished: true,
+        issueCount: i % 3,
+        createdAt: START + i * DAY,
+      })),
+      [STORES.retryOutcomes]: Array.from({ length: 5 }, (_, i) => ({
+        id: `retry-${i}`,
+        retryOf: `production-${i}`,
+        source: "lesson",
+        text: `retry ${i}`,
+        spoken: false,
+        wordCount: 2,
+        resolved: i % 2 === 0,
+        issueCount: i % 2,
+        createdAt: START + i * DAY + 2_000,
+      })),
+      [STORES.audioRecordings]: Array.from({ length: 3 }, (_, i) => ({
+        id: `recording-${i}`,
+        mimeType: "audio/webm",
+        sizeBytes: 4,
+        blob: new Blob([`audio-${i}`], { type: "audio/webm" }),
+        createdAt: START + i * DAY,
+      })),
+      [STORES.methodProgression]: [{
+        id: "current",
+        listeningStage: "main_idea",
+        speakingStage: "variation",
+        listeningScore: 82,
+        speakingScore: 79,
+        listeningSamples: 4,
+        speakingSamples: 5,
+        updatedAt: START + 20 * DAY,
+      }],
+      // Queue C never reaches the scheduler, but it is still the learner's measured history
+      // and a backup that drops it loses the only unbiased retention record they have.
+      [STORES.proofAttempts]: Array.from({ length: 12 }, (_, i) => ({
+        id: `proof-${i}`,
+        cardId: `card-${i}`,
+        targetDays: [7, 30, 60][i % 3],
+        ageDays: [7, 30, 60][i % 3],
+        response: `answer ${i}`,
+        correct: i % 4 !== 0,
+        evaluatedBy: "local",
+        askedAt: START + i * DAY,
+        answeredAt: START + i * DAY + 60_000,
+      })),
     };
   }
 
@@ -266,7 +346,7 @@ describe("local backup round-trip — weeks-scale zero-loss proof (Phase 4)", ()
       String(a[KEY_FIELD[store]]).localeCompare(String(b[KEY_FIELD[store]])),
     );
 
-  it("loses nothing across all 11 stores through export → JSON file → restore", async () => {
+  it("loses nothing across all 12 stores through export → JSON file → restore", async () => {
     const seed = buildSeed();
     const storeNames = Object.values(STORES) as StoreName[];
 
@@ -332,7 +412,7 @@ describe("delete all local data (launch checklist item 8)", () => {
     });
 
     await saveCards([makeCard("card-1")]);
-    expect(await getCards()).toHaveLength(1);
+    expect(await getCards()).toHaveLength(2);
     expect(await getSrs("card-1")).toBeDefined();
 
     await wipeLocalData();

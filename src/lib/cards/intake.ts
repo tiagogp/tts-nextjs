@@ -20,6 +20,8 @@ export const ERROR_TYPES = new Set<ErrorType>([
   "idiom",
   "vocabulary",
   "register",
+  "missing-information",
+  "pronunciation",
   "other",
 ]);
 

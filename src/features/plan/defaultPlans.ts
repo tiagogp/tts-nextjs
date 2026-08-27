@@ -51,6 +51,7 @@ export function buildDefaultPlanMeta(profile: LearningProfile, id: DefaultPlanId
     availabilityMinutes: representativeMinutes(result),
     planDays: result.days.length,
     language: languageLabel(profile.targetLang),
+    objective: profile.objective,
   };
 }
 

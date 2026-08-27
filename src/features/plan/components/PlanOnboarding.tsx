@@ -5,15 +5,13 @@ import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Field, Textarea } from "@/components/ui/Field";
 import Select from "@/components/ui/Select";
-import { Spinner } from "@/components/ui/Spinner";
 import { Notice } from "@/components/ui/Notice";
 import { ENGLISH_LEVELS } from "@/features/discover/constants";
 import type { EnglishLevel } from "@/features/discover/types";
 import { getLearningProfile } from "@/features/settings/learningProfile";
 import { languageLabel } from "@/features/settings/languages";
 import { useProviderSelection } from "@/features/cards/hooks/useProviderSelection";
-import { generateAndSavePlan } from "@/features/plan/generator";
-import type { LearningPlan } from "@/features/plan/schema";
+import { isPlanGenerationRunning, startPlanGeneration } from "@/features/plan/generationJob";
 import {
   AVAILABILITY_OPTIONS,
   PLAN_DAYS_OPTIONS,
@@ -25,7 +23,6 @@ import { useT } from "@/i18n/I18nProvider";
 interface PlanOnboardingProps {
   open: boolean;
   onClose: () => void;
-  onPlanCreated: (plan: LearningPlan) => void;
   onOpenSettings?: () => void;
 }
 
@@ -41,7 +38,6 @@ function defaultTargetLevel(currentLevel: EnglishLevel): EnglishLevel {
 export function PlanOnboarding({
   open,
   onClose,
-  onPlanCreated,
   onOpenSettings,
 }: PlanOnboardingProps) {
   const { t } = useT();
@@ -70,61 +66,51 @@ export function PlanOnboarding({
     );
   };
 
-  const generate = async () => {
+  /**
+   * Hands the work to the background job and gets out of the way: generation is a
+   * chain of provider calls, and the learner has no reason to watch a spinner for
+   * it. The toast takes over from here.
+   */
+  const generate = () => {
     if (!canGenerate) return;
-    setStep("generating");
-    setError(null);
-    try {
-      const plan = await generateAndSavePlan({
-        meta: {
-          goal: goalTrimmed,
-          currentLevel,
-          targetLevel,
-          availabilityMinutes,
-          planDays,
-          language: languageLabel(profile.targetLang),
-        },
-        provider,
-        ollamaModel: selectedModel,
-      });
-      onPlanCreated(plan);
-      onClose();
-    } catch (err: unknown) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : t("Couldn't generate the plan. Try again."),
-      );
-      setStep("availability");
+    if (isPlanGenerationRunning()) {
+      setError(t("A plan is already being generated. Wait for it to finish."));
+      return;
     }
-  };
-
-  const handleClose = () => {
-    if (step === "generating") return;
+    setError(null);
+    startPlanGeneration({
+      meta: {
+        goal: goalTrimmed,
+        currentLevel,
+        targetLevel,
+        availabilityMinutes,
+        planDays,
+        language: languageLabel(profile.targetLang),
+        objective: profile.objective,
+      },
+      provider,
+      ollamaModel: selectedModel,
+    });
     onClose();
   };
 
   return (
     <Modal
       open={open}
-      onClose={handleClose}
+      onClose={onClose}
       labelledBy="plan-onboarding-title"
       className="w-[min(100%,36rem)]"
     >
-      {step !== "generating" && (
-        <div className="mb-5 flex gap-1.5" aria-hidden="true">
-          {(["goal", "availability"] as const).map((s) => (
-            <span
-              key={s}
-              className={`h-1.5 flex-1 rounded-full ${
-                s === "goal" || step === "availability"
-                  ? "bg-accent"
-                  : "bg-line"
-              }`}
-            />
-          ))}
-        </div>
-      )}
+      <div className="mb-5 flex gap-1.5" aria-hidden="true">
+        {(["goal", "availability"] as const).map((s) => (
+          <span
+            key={s}
+            className={`h-1.5 flex-1 rounded-full ${
+              s === "goal" || step === "availability" ? "bg-accent" : "bg-line"
+            }`}
+          />
+        ))}
+      </div>
 
       {step === "goal" && (
         <div className="space-y-5">
@@ -258,27 +244,9 @@ export function PlanOnboarding({
             <Button variant="ghost" onClick={() => setStep("goal")}>
               {t("Back")}
             </Button>
-            <Button
-              variant="primary"
-              onClick={() => void generate()}
-              disabled={!canGenerate}
-            >
+            <Button variant="primary" onClick={generate} disabled={!canGenerate}>
               {t("Generate my plan")}
             </Button>
-          </div>
-        </div>
-      )}
-
-      {step === "generating" && (
-        <div className="flex flex-col items-center gap-4 py-8 text-center">
-          <Spinner className="h-8 w-8 text-accent" />
-          <div>
-            <p className="text-sm font-semibold text-ink">
-              {t("Building your {days}-day plan…", { days: planDays })}
-            </p>
-            <p className="mt-1 text-xs text-ink-muted">
-              {t("{provider} is designing your phases and daily tasks.", { provider: activeProvider?.label ?? t("The AI") })}
-            </p>
           </div>
         </div>
       )}

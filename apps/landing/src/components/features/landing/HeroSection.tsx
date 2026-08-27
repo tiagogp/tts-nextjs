@@ -38,7 +38,7 @@ export function HeroSection({ language, onSectionLinkClick }: HeroSectionProps) 
               className="mb-4 text-sm font-semibold text-accent"
               variants={listItem}
             >
-              {t("Inglês real. Áudio original. Pronto para revisar.")}
+              {t("Inglês real. O áudio da sua fonte. Pronto para revisar.")}
             </motion.p>
             <motion.h1
               className="brand-wordmark text-6xl font-normal leading-[0.9] text-ink sm:text-7xl lg:text-8xl"

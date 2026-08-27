@@ -16,10 +16,15 @@ export type CyclePath = "challenge" | "review" | "light";
 export interface CycleOption {
   path: CyclePath;
   title: string;
-  /** One honest line on when this path is the right call. */
+  /**
+   * One honest line on when this path is the right call, as a message template.
+   * Counts arrive in `descriptionVars` so the picker can translate the sentence first.
+   */
   description: string;
-  /** Approximate cost, e.g. "~8 min focused" / "~4 min light". */
+  descriptionVars?: Record<string, string | number>;
+  /** Approximate cost as a template, e.g. "~{minutes} min focused". */
   load: string;
+  loadVars: Record<string, string | number>;
   /** Pre-highlighted default — exactly one option in a plan carries this. */
   recommended: boolean;
   /** Whether the path can actually start right now (review needs due cards, light needs stable ones). */
@@ -64,8 +69,11 @@ function weighted(states: Record<string, SkillState>, pick: (s: SkillState) => n
   return weight > 0 ? sum / weight : 0;
 }
 
-function minutesLabel(minutes: number, tone: "focused" | "light"): string {
-  return `~${Math.max(1, Math.round(minutes))} min ${tone}`;
+function minutesLabel(minutes: number, tone: "focused" | "light"): { load: string; loadVars: Record<string, number> } {
+  return {
+    load: tone === "light" ? "~{minutes} min light" : "~{minutes} min focused",
+    loadVars: { minutes: Math.max(1, Math.round(minutes)) },
+  };
 }
 
 /**
@@ -92,22 +100,25 @@ export function deriveCyclePlan(
     recommended = "challenge";
   }
 
-  const dueLabel = due === 1 ? "1 phrase due" : `${due} phrases due`;
-
   const options: CycleOption[] = [
     {
       path: "challenge",
       title: "Challenge",
       description: "Stretch into fresh material and produce language while you're sharp.",
-      load: minutesLabel(CHALLENGE_MINUTES, "focused"),
+      ...minutesLabel(CHALLENGE_MINUTES, "focused"),
       recommended: recommended === "challenge",
       available: true,
     },
     {
       path: "review",
       title: "Review",
-      description: due > 0 ? `${dueLabel} — lock them in at the right time.` : "Nothing due right now.",
-      load: minutesLabel(due * MIN_PER_CARD, "focused"),
+      description: due === 0
+        ? "Nothing due right now."
+        : due === 1
+          ? "1 phrase due — lock it in at the right time."
+          : "{count} phrases due — lock them in at the right time.",
+      descriptionVars: { count: due },
+      ...minutesLabel(due * MIN_PER_CARD, "focused"),
       recommended: recommended === "review",
       available: due > 0,
     },
@@ -115,7 +126,7 @@ export function deriveCyclePlan(
       path: "light",
       title: "Light session",
       description: "A short, easy round to keep the rhythm without the load.",
-      load: minutesLabel(LIGHT_MINUTES, "light"),
+      ...minutesLabel(LIGHT_MINUTES, "light"),
       recommended: recommended === "light",
       available: lightAvailable,
     },

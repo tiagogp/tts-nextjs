@@ -30,11 +30,23 @@ function snapshot(overrides: {
       delta: 0,
       detail: "",
     })),
+    // Readiness never reads this; the fixture only has to satisfy the snapshot shape.
+    unaidedProduction: { windowDays: 30, minRestDays: 7, attempts: 0, correct: 0, rate: null, cards: 0, heldCardIds: [] },
     strengths: [],
     nextFocus: "",
     milestones: [],
     nextCheckpointAt: NOW,
     checkpointDue: false,
+    confidenceIndicators: {
+      spokenAttempts: 0,
+      averageRecordingSeconds: 0,
+      recordingGrowthPercent: 0,
+      resolvedRetryRate: 0,
+      unresolvedRetries: 0,
+      readingWritingAttempts: 0,
+      transferAttempts: 0,
+      uniqueTransferSources: 0,
+    },
   };
 }
 

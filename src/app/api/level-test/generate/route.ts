@@ -23,6 +23,7 @@ import { buildLevelTestPrompt } from "@/features/levelup/prompts";
 import { validateLevelTest, type LevelTest } from "@/features/levelup/testModel";
 import { nextLevelOf } from "@/features/levelup/model";
 import { cardProviderKind } from "@/app/api/cards/_lib/utils";
+import { PROVIDER_SINGLE_CALL_TIMEOUT_MS } from "@/lib/constants";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -61,7 +62,7 @@ export async function POST(req: NextRequest) {
     const model = safeStr(obj.ollamaModel, "", 100) || undefined;
 
     const kind = cardProviderKind(obj.provider);
-    if (!isProviderAvailable(kind)) {
+    if (!(await isProviderAvailable(kind))) {
       return failureResponse(providerFailure("provider_not_configured"));
     }
 
@@ -76,7 +77,10 @@ export async function POST(req: NextRequest) {
     }
 
     const prompt = buildLevelTestPrompt({ currentLevel, targetLevel, targetLang, nativeLang, focusGaps });
-    const raw = await provider.complete(prompt);
+    const raw = await provider.complete(prompt, {
+      signal: req.signal,
+      timeoutMs: PROVIDER_SINGLE_CALL_TIMEOUT_MS,
+    });
 
     let parsed: unknown;
     try {

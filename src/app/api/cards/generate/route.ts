@@ -15,7 +15,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { contentDispositionAttachment } from "@/server/anki";
 import { localJson } from "@/server/localRuntime";
 import { generateDeck } from "@/lib/cards/provider";
-import { orientCardsForTargetFront } from "@/lib/cards/orientation";
+import { orientCardsForTargetFront, targetTextOfCard } from "@/lib/cards/orientation";
+import { buildProductiveCardPairs } from "@/lib/cards/pairs";
 import { isProviderAvailable, resolveProvider } from "@/lib/cards/registry";
 import type { ProviderKind } from "@/lib/cards/provider";
 import type { CardSource, ErrorEvent, PhraseCandidate } from "@/lib/cards/schema";
@@ -62,7 +63,7 @@ export async function POST(req: NextRequest) {
     }
 
     const kind: ProviderKind = isProviderKind(obj.provider) ? obj.provider : getDefaultProvider();
-    if (!isProviderAvailable(kind)) {
+    if (!(await isProviderAvailable(kind))) {
       return failureResponse(providerFailure("provider_not_configured"), { debugId, debugLog });
     }
 
@@ -136,7 +137,10 @@ export async function POST(req: NextRequest) {
         timeoutMs: PROVIDER_CALL_TIMEOUT_MS,
         debug: (event, details = {}) => writeApkgDebug(debugId, event, details),
       });
-      const cards = orientCardsForTargetFront(generatedCards, sources, targetLang);
+      const cards = buildProductiveCardPairs(
+        orientCardsForTargetFront(generatedCards, sources, targetLang),
+        sources,
+      );
       writeApkgDebug(debugId, "cards-api-provider-finished", {
         cards: cards.length,
         failures,
@@ -173,10 +177,12 @@ export async function POST(req: NextRequest) {
         concept: card.concept,
         errorType: card.errorType,
         source: card.source,
+        // Always the English side: `targetTextOfCard` covers the fallback for a production
+        // card, whose English sits on the back.
         audioText:
           card.source.kind === "phrase"
-            ? (candidateById.get(card.source.id)?.text ?? card.back)
-            : card.front,
+            ? (candidateById.get(card.source.id)?.text ?? targetTextOfCard(card))
+            : targetTextOfCard(card),
         clip:
           card.source.kind === "phrase"
             ? clipByPhraseId.get(card.source.id) ?? undefined

@@ -8,6 +8,7 @@ import {
   DEFAULT_LEARNING_PROFILE,
   getLearningProfile,
   saveLearningProfile,
+  subscribeToProfile,
 } from "@/features/settings/learningProfile";
 import { useAiSettings } from "@/features/settings/context/AiSettingsContext";
 import type { ProviderKind } from "@/lib/cards/provider";
@@ -16,7 +17,7 @@ import Disclosure from "@/components/ui/Disclosure";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, Input } from "@/components/ui/Field";
-import { IconButton } from "@/components/ui/IconButton";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { Notice } from "@/components/ui/Notice";
 import { StatusPill, type StatusPillProps } from "@/components/ui/StatusPill";
 import {
@@ -27,7 +28,6 @@ import {
   type BackupValidationResult,
 } from "@/lib/store/repository";
 import type { StoreName } from "@/lib/store/db";
-import W5ValidationCard from "@/features/settings/components/W5ValidationCard";
 import { useT } from "@/i18n/I18nProvider";
 
 type StatusTone = NonNullable<StatusPillProps["tone"]>;
@@ -57,10 +57,24 @@ function statusTone(provider: ProviderStatus): StatusTone {
   return "default";
 }
 
-function subscribeToProfile(onChange: () => void): () => void {
-  if (typeof window === "undefined") return () => {};
-  window.addEventListener("phraseloop:profile-updated", onChange);
-  return () => window.removeEventListener("phraseloop:profile-updated", onChange);
+// A single confirmation the first time any cloud key is saved, not a per-call modal —
+// once acknowledged (or once any cloud provider is already configured), never ask again.
+const CLOUD_CONSENT_KEY = "phraseloop:cloud-consent-ack";
+
+function hasCloudConsent(): boolean {
+  try {
+    return typeof localStorage !== "undefined" && localStorage.getItem(CLOUD_CONSENT_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function recordCloudConsent(): void {
+  try {
+    if (typeof localStorage !== "undefined") localStorage.setItem(CLOUD_CONSENT_KEY, "1");
+  } catch {
+    // best-effort only; worst case the confirmation is shown again next time
+  }
 }
 
 export default function SettingsScreen({
@@ -304,15 +318,31 @@ export default function SettingsScreen({
           <Button
             variant="secondary"
             disabled={!settings.writable || !key.trim() || busy !== null}
-            onClick={() =>
-              run(`save-${kind}`, async () => {
+            onClick={() => {
+              const anyCloudConfigured = settings.providers.some(
+                (item) => item.kind !== "ollama" && item.configured,
+              );
+              if (!anyCloudConfigured && !hasCloudConsent()) {
+                if (
+                  !window.confirm(
+                    t(
+                      "Connecting a cloud AI sends your practice content — phrases, mistakes, conversations — to {provider}. Continue?",
+                      { provider: provider?.label ?? kind },
+                    ),
+                  )
+                ) {
+                  return;
+                }
+                recordCloudConsent();
+              }
+              void run(`save-${kind}`, async () => {
                 const result = await save({
                   [keyField]: key,
                 } as AiSettingsPatch);
                 if (result.ok) setKey("");
                 return result;
-              })
-            }
+              });
+            }}
           >
             {t("Save key")}
           </Button>
@@ -358,18 +388,17 @@ export default function SettingsScreen({
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-6 sm:py-8">
-      <div className="mb-6 flex items-center gap-3">
-        <IconButton onClick={onBack} aria-label={t("Back to PhraseLoop")}>
-          ←
-        </IconButton>
-        <div>
-          <h2 className="text-xl font-semibold text-ink">{t("Settings")}</h2>
-          <p className="text-sm text-ink-muted">
-            {showAdvancedAi
-              ? t("Manage local data, advanced AI, and export tools.")
-              : t("Manage your local PhraseLoop data.")}
-          </p>
-        </div>
+      <div className="mb-6 space-y-4 border-b border-line pb-5">
+        <Button variant="ghost" size="sm" onClick={onBack} className="-ml-2 min-h-9">
+          <span aria-hidden="true">←</span>
+          {t("Back to PhraseLoop")}
+        </Button>
+        <PageHeader
+          title={t("Settings")}
+          description={showAdvancedAi
+            ? t("Manage local data, advanced AI, and export tools.")
+            : t("Manage your local PhraseLoop data.")}
+        />
       </div>
 
       {notice && (
@@ -388,7 +417,21 @@ export default function SettingsScreen({
         </Notice>
       )}
 
-      <Card className="mb-4 p-5">
+      <nav aria-label={t("Settings sections")} className="mb-5 flex flex-wrap gap-2">
+        <a href="#settings-data" className="inline-flex min-h-10 items-center rounded-md border border-line bg-card px-3 text-sm font-medium text-ink-soft transition-colors hover:border-line-strong hover:text-ink">
+          {t("Data and privacy")}
+        </a>
+        {(showAdvancedAi || onOpenTools || onOpenC1) && (
+          <a href="#settings-advanced" className="inline-flex min-h-10 items-center rounded-md border border-line bg-card px-3 text-sm font-medium text-ink-soft transition-colors hover:border-line-strong hover:text-ink">
+            {t("AI and tools")}
+          </a>
+        )}
+        <a href="#settings-profile" className="inline-flex min-h-10 items-center rounded-md border border-line bg-card px-3 text-sm font-medium text-ink-soft transition-colors hover:border-line-strong hover:text-ink">
+          {t("Learner profile")}
+        </a>
+      </nav>
+
+      <Card id="settings-data" className="mb-4 scroll-mt-4 p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="font-medium text-ink">{t("Local data")}</h3>
@@ -497,6 +540,7 @@ export default function SettingsScreen({
         </div>
       </Card>
 
+      <section id="settings-advanced" className="scroll-mt-4">
       {showAdvancedAi && (
         <Disclosure
           title={t("Advanced AI for custom content")}
@@ -637,8 +681,9 @@ export default function SettingsScreen({
           </div>
         </Card>
       )}
+      </section>
 
-      <Card className="mt-4 p-5">
+      <Card id="settings-profile" className="mt-4 scroll-mt-4 p-5">
         <div>
           <h3 className="font-medium text-ink">{t("Learner profile")}</h3>
           <p className="mt-1 text-sm text-ink-muted">
@@ -652,8 +697,6 @@ export default function SettingsScreen({
           {t("From B1 the interface switches to English.")}
         </p>
       </Card>
-
-      <W5ValidationCard />
     </div>
   );
 }

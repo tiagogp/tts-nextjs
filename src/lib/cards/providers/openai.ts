@@ -10,6 +10,7 @@
 import OpenAI from "openai";
 import type {
   CardGenerationProvider,
+  CorrectionResult,
   ConversationTurn,
   ConverseOptions,
   CorrectOptions,
@@ -22,7 +23,6 @@ import type {
   CardSource,
   Critique,
   DiscoveryRequest,
-  ErrorEvent,
   PhraseCandidate,
   TranscriptSegment,
 } from "../schema";
@@ -37,13 +37,13 @@ import {
   buildMineRequest,
   conversationMessages,
   normalizeAdvancedReview,
-  normalizeCorrected,
+  normalizeCorrection,
   normalizeCritique,
   normalizeGenerated,
   normalizeMined,
   type JsonRequest,
 } from "../shared";
-import { requestOptions } from "./util";
+import { logUsage, requestOptions } from "./util";
 
 export interface OpenAIProviderOptions {
   apiKey?: string;
@@ -67,6 +67,10 @@ export class OpenAIProvider implements CardGenerationProvider {
 
   private readonly client: OpenAI;
   private readonly model: string;
+  /** Public mirror of `model`, so a verdict can record which model produced it. */
+  get modelId(): string {
+    return this.model;
+  }
   private readonly embedModel: string;
   private readonly learnerLang: string;
   private readonly targetLang: string;
@@ -101,6 +105,7 @@ export class OpenAIProvider implements CardGenerationProvider {
       },
       requestOptions(options),
     );
+    logUsage(this.kind, "json", res.usage);
     const choice = res.choices[0];
     // A length finish means the JSON was cut off; a refusal means no usable content. Both
     // surface as a clean per-card drop upstream rather than a malformed-parse crash.
@@ -159,14 +164,14 @@ export class OpenAIProvider implements CardGenerationProvider {
     text: string,
     opts: CorrectOptions = {},
     options?: GenerationRunOptions,
-  ): Promise<ErrorEvent[]> {
+  ): Promise<CorrectionResult> {
     const sourceLang = opts.sourceLang ?? this.learnerLang;
     const targetLang = opts.targetLang ?? "en";
     const raw = await this.json(
-      buildCorrectRequest(text, sourceLang, targetLang, opts.level),
+      buildCorrectRequest(text, sourceLang, targetLang, opts.level, opts.task),
       options,
     );
-    return normalizeCorrected(raw, sourceLang, targetLang, opts.context);
+    return normalizeCorrection(raw, sourceLang, targetLang, opts.context, opts.task);
   }
 
   async review(
@@ -205,6 +210,7 @@ export class OpenAIProvider implements CardGenerationProvider {
       },
       requestOptions(options),
     );
+    logUsage(this.kind, "converse", res.usage);
     const choice = res.choices[0];
     if (choice?.message?.refusal) {
       throw new Error(
@@ -230,6 +236,7 @@ export class OpenAIProvider implements CardGenerationProvider {
       },
       requestOptions(options),
     );
+    logUsage(this.kind, "complete", res.usage);
     const choice = res.choices[0];
     if (choice?.message?.refusal) {
       throw new Error(`OpenAI declined the request: ${choice.message.refusal}`);
@@ -257,6 +264,7 @@ export class OpenAIProvider implements CardGenerationProvider {
       },
       requestOptions(options),
     );
+    logUsage(this.kind, "embed", res.usage);
     return res.data.map((d) => d.embedding);
   }
 }

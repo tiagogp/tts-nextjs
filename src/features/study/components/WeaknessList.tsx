@@ -2,7 +2,7 @@
 
 import { motion } from "motion/react";
 import { Card } from "@/components/ui/Card";
-import { Chip } from "@/components/ui/Chip";
+import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
 import { listItem, staggerContainer } from "@/lib/motion";
 import type { Weakness, WeaknessTrend } from "@/lib/srs/analytics";
@@ -26,12 +26,19 @@ export function WeaknessList({ weaknesses, genError, generatingKey, onPractice, 
   const { t } = useT();
   return (
     <Card className="p-5">
-      <p className="mb-1 text-sm font-semibold tracking-[-0.01em] text-ink">{t("Weak spots to reinforce")}</p>
-      <p className="mb-4 text-xs text-ink-muted">
-        {t(
-          "The app ranks concepts, error types, and situations from your reviews. Practice saved phrases, or create fresh variants from the same sources.",
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold tracking-[-0.01em] text-ink">{t("Needs attention")}</p>
+          <p className="mt-1 max-w-2xl text-xs leading-relaxed text-ink-muted">
+            {t("Recurring patterns from your reviews, ordered by how often they cause difficulty.")}
+          </p>
+        </div>
+        {weaknesses.length > 0 && (
+          <span className="rounded-full bg-danger/10 px-2 py-1 text-xs font-medium tabular-nums text-danger">
+            {t("{count} patterns", { count: weaknesses.length })}
+          </span>
         )}
-      </p>
+      </div>
       {genError && <p className="mb-3 text-xs text-danger">{genError}</p>}
       {weaknesses.length === 0 && (
         <div className="rounded border border-line bg-surface px-3 py-3 text-xs text-ink-soft">
@@ -46,39 +53,38 @@ export function WeaknessList({ weaknesses, genError, generatingKey, onPractice, 
               key={key}
               layout
               variants={listItem}
-              className="group flex flex-wrap items-center gap-2 py-1 sm:flex-nowrap sm:gap-3"
+              className="group grid gap-3 border-t border-line py-3 first:border-t-0 first:pt-0 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center"
             >
-              <div className="min-w-0 flex-1 basis-40">
+              <div className="min-w-0">
                 <p className="truncate text-sm text-ink">{weakness.label}</p>
                 <p className="text-xs text-ink-muted">
                   {t(WEAKNESS_KIND_LABEL[weakness.kind])} ·{" "}
                   {t("{count} reviews", { count: weakness.reviews })}
                 </p>
               </div>
-              <div className="hidden w-24 shrink-0 sm:block">
-                <div className="h-1.5 overflow-hidden rounded-full bg-line">
-                  <div
-                    className="h-full rounded-full bg-danger"
-                    style={{ width: `${Math.round(weakness.struggleRate * 100)}%` }}
-                  />
+              <div className="flex items-center gap-2 sm:justify-end">
+                <div className="h-1.5 w-20 overflow-hidden rounded-full bg-line">
+                  <div className="h-full rounded-full bg-danger" style={{ width: `${Math.round(weakness.struggleRate * 100)}%` }} />
                 </div>
+                <span className="w-9 text-right text-xs tabular-nums text-ink-soft">
+                  {Math.round(weakness.struggleRate * 100)}%
+                </span>
+                <TrendBadge trend={weakness.trend} delta={weakness.trendDelta} />
               </div>
-              <span className="w-9 text-right text-xs tabular-nums text-ink-soft">
-                {Math.round(weakness.struggleRate * 100)}%
-              </span>
-              <TrendBadge trend={weakness.trend} delta={weakness.trendDelta} />
-              <Chip tone="danger" className="shrink-0" onClick={() => onPractice(weakness)}>
-                {t("Drill")}
-              </Chip>
-              <button
-                type="button"
-                onClick={() => onGenerate(weakness)}
-                disabled={generatingKey !== null}
-                className="shrink-0 cursor-pointer rounded-sm px-2 py-1 text-xs font-medium text-ink-muted opacity-60 transition-opacity hover:opacity-100 focus-visible:opacity-100 group-hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-50"
-                title={t("Create new practice phrases for this weak spot from existing sources")}
-              >
-                {generatingKey === key ? t("Creating…") : t("New phrases")}
-              </button>
+              <div className="flex gap-2 sm:justify-end">
+                <Button variant="secondary" size="sm" onClick={() => onPractice(weakness)}>
+                  {t("Practice")}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onGenerate(weakness)}
+                  disabled={generatingKey !== null}
+                  title={t("Create new practice phrases for this weak spot from existing sources")}
+                >
+                  {generatingKey === key ? t("Creating…") : t("Create variants")}
+                </Button>
+              </div>
             </motion.li>
           );
         })}

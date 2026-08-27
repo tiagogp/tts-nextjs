@@ -32,7 +32,7 @@ export function BandGateNote({ gate }: { gate: BandGateResult }) {
           {status.label}
         </span>
       </div>
-      <p className="text-xs text-ink-muted">{gate.note}</p>
+      <p className="text-xs text-ink-muted">{t(gate.note, gate.noteVars)}</p>
       {gate.verdict === "adopt" && (
         <p className="text-[11px] text-ink-soft">
           {t("Due phrases are ordered toward the best recall zone first.")}

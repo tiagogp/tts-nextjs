@@ -5,8 +5,8 @@
  * gamified apps blur together:
  *   • "Now" — how you performed in this session (accuracy). Feels good, but recognition.
  *   • "Tomorrow" — how many of those cards FSRS predicts are actually *stable* in 24h.
- * The second number is the honest one, and it's usually smaller. Streak is framed as
- * consistency (rhythm), never loss-aversion.
+ * The second number is the honest one, and it's usually smaller. No streaks: the pull
+ * back is tomorrowLine's concrete preview, never loss-aversion.
  */
 
 import { Card } from "@/components/ui/Card";
@@ -27,6 +27,8 @@ export interface TomorrowPreview {
   mistakeCards: number;
   /** True when at least one mistake card's source error was made today. */
   fromToday: boolean;
+  /** Part of `due` that FSRS brings back within today's short learning steps. */
+  laterToday?: number;
 }
 
 /**
@@ -74,11 +76,9 @@ export function summarize(results: SessionResult[]): { reviewed: number; passed:
 
 export function SessionSummary({
   results,
-  streakDays,
   tomorrow,
 }: {
   results: SessionResult[];
-  streakDays: number;
   tomorrow?: TomorrowPreview | null;
 }) {
   const { t } = useT();
@@ -97,7 +97,7 @@ export function SessionSummary({
       <div className="grid grid-cols-2 gap-4">
         <div>
           <p className="text-2xl font-semibold tabular-nums text-ink">{reviewed}</p>
-          <p className="mt-0.5 text-xs text-ink-muted">{t("cards reviewed")}</p>
+          <p className="mt-0.5 text-xs text-ink-muted">{t("phrases reviewed")}</p>
         </div>
         <div>
           <p className="text-2xl font-semibold tabular-nums text-ink">{accuracy}%</p>
@@ -105,15 +105,22 @@ export function SessionSummary({
         </div>
       </div>
 
-      {streakDays > 1 && (
-        <p className="text-xs text-ink-soft">
-          {tomorrow
-            ? t("{count} days in a row.", { count: streakDays })
-            : t("{count} days in a row. Tomorrow you review the next phrases.", { count: streakDays })}
-        </p>
+      {tomorrow && (
+        <>
+          <p className="text-xs text-ink-soft">{tomorrowLine(tomorrow, t)}</p>
+          {/* Saying "tomorrow" while the first repetitions return in minutes would set the
+              wrong expectation for the rest of today. */}
+          {(tomorrow.laterToday ?? 0) > 0 && (
+            <p className="text-xs text-ink-muted">
+              {tomorrow.laterToday === 1
+                ? t("1 of them comes back later today — the first repetition is spaced in minutes.")
+                : t("{count} of them come back later today — the first repetitions are spaced in minutes.", {
+                    count: tomorrow.laterToday ?? 0,
+                  })}
+            </p>
+          )}
+        </>
       )}
-
-      {tomorrow && <p className="text-xs text-ink-soft">{tomorrowLine(tomorrow, t)}</p>}
     </Card>
   );
 }

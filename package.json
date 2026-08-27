@@ -14,12 +14,12 @@
     "build": "next build",
     "learn:audio": "node scripts/generate-learn-audio.mjs",
     "learn:audio:verify": "node scripts/generate-learn-audio.mjs --verify",
+    "learn:audio:ci": "node scripts/generate-learn-audio.mjs --verify --strict-coverage",
     "learn:content:validate": "node scripts/validate-lesson-content.mjs",
     "learn:content:report": "node scripts/validate-lesson-content.mjs --json",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "w5:score": "node scripts/score-w5-decision-gate.mjs",
     "app": "env -u ELECTRON_RUN_AS_NODE electron electron/main.js",
     "app:dist": "bash electron/build-app.sh",
     "app:linux": "bash electron/build-linux.sh",
@@ -59,6 +59,7 @@
       ]
     },
     "win": {
+      "icon": "electron/assets/icon.png",
       "target": [
         "nsis"
       ]

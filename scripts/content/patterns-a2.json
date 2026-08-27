@@ -1,0 +1,1412 @@
+{
+  "a2-food": {
+    "I'd like a coffee, please.": [
+      "would-like-noun",
+      "I'd like ___",
+      "the thing you want",
+      [
+        "I'd like a coffee, please.",
+        "I'd like the chicken, please.",
+        "I'd like a table for two."
+      ],
+      "I would like to a coffee.",
+      [
+        "I would like a coffee, please."
+      ]
+    ],
+    "Can I have the menu?": [
+      "can-i-have",
+      "Can I have ___?",
+      "the thing you are asking for",
+      [
+        "Can I have the menu?",
+        "Can I have some water?",
+        "Can I have the bill?"
+      ],
+      "Can I have to the menu?",
+      []
+    ],
+    "I don't eat meat.": [
+      "dont-habit",
+      "I don't ___",
+      "the habit you do not have",
+      [
+        "I don't eat meat.",
+        "I don't drink coffee.",
+        "I don't work on Sundays."
+      ],
+      "I no eat meat.",
+      []
+    ],
+    "Could we pay, please?": [
+      "could-we-verb",
+      "Could we ___, please?",
+      "base verb",
+      [
+        "Could we pay, please?",
+        "Could we order, please?",
+        "Could we sit outside, please?"
+      ],
+      "Could we to pay, please?",
+      []
+    ],
+    "The food is very good.": [
+      "very-adjective",
+      "___ is very ___",
+      "thing + adjective",
+      [
+        "The food is very good.",
+        "The coffee is very strong.",
+        "The room is very small."
+      ],
+      "The food is very much good.",
+      []
+    ]
+  },
+  "a2-directions": {
+    "Excuse me, where is the bank?": [
+      "where-is",
+      "Where is ___?",
+      "the place you are looking for",
+      [
+        "Excuse me, where is the bank?",
+        "Where is the station?",
+        "Where is the nearest pharmacy?"
+      ],
+      "Where is have the bank?",
+      []
+    ],
+    "Turn left at the corner.": [
+      "turn-at",
+      "Turn ___ at ___",
+      "direction + landmark",
+      [
+        "Turn left at the corner.",
+        "Turn right at the lights.",
+        "Turn left at the church."
+      ],
+      "Turn to left at the corner.",
+      []
+    ],
+    "It's next to the pharmacy.": [
+      "next-to",
+      "It's next to ___",
+      "the neighbouring place",
+      [
+        "It's next to the pharmacy.",
+        "It's next to the school.",
+        "It's next to my office."
+      ],
+      "It's next of the pharmacy.",
+      []
+    ],
+    "How long does it take?": [
+      "how-long-take",
+      "How long does ___ take?",
+      "the journey or task",
+      [
+        "How long does it take?",
+        "How long does the bus take?",
+        "How long does the walk take?"
+      ],
+      "How long time does it take?",
+      []
+    ],
+    "It takes about ten minutes.": [
+      "it-takes-time",
+      "It takes about ___",
+      "an amount of time",
+      [
+        "It takes about ten minutes.",
+        "It takes about half an hour.",
+        "It takes about two days."
+      ],
+      "It takes about ten minutes of time.",
+      []
+    ]
+  },
+  "a2-shopping": {
+    "How much is this?": [
+      "how-much-is",
+      "How much is ___?",
+      "the thing being priced",
+      [
+        "How much is this?",
+        "How much is the jacket?",
+        "How much is delivery?"
+      ],
+      "How much cost this?",
+      []
+    ],
+    "Do you have this in blue?": [
+      "do-you-have-in",
+      "Do you have this in ___?",
+      "colour or size",
+      [
+        "Do you have this in blue?",
+        "Do you have this in a medium?",
+        "Do you have this in leather?"
+      ],
+      "Do you have this in the blue?",
+      []
+    ],
+    "Can I try it on?": [
+      "can-i-verb",
+      "Can I ___?",
+      "base verb",
+      [
+        "Can I try it on?",
+        "Can I pay by card?",
+        "Can I look around?"
+      ],
+      "Can I to try it on?",
+      []
+    ],
+    "It's a bit too expensive.": [
+      "a-bit-too",
+      "It's a bit too ___",
+      "adjective",
+      [
+        "It's a bit too expensive.",
+        "It's a bit too small.",
+        "It's a bit too heavy."
+      ],
+      "It's a bit too much expensive.",
+      []
+    ],
+    "Can I get a receipt?": [
+      "can-i-get",
+      "Can I get ___?",
+      "the thing you want handed to you",
+      [
+        "Can I get a receipt?",
+        "Can I get a bag?",
+        "Can I get a discount?"
+      ],
+      "Can I get to a receipt?",
+      []
+    ]
+  },
+  "a2-past": {
+    "I went to the beach last weekend.": [
+      "went-to-when",
+      "I went to ___ ___",
+      "place + past time",
+      [
+        "I went to the beach last weekend.",
+        "I went to my parents' house on Sunday.",
+        "I went to a concert last night."
+      ],
+      "I go to the beach last weekend.",
+      []
+    ],
+    "We had a great time.": [
+      "had-a-time",
+      "We had ___",
+      "the experience you had",
+      [
+        "We had a great time.",
+        "We had a long conversation.",
+        "We had a quiet evening."
+      ],
+      "We have a great time yesterday.",
+      []
+    ],
+    "I saw an old friend.": [
+      "saw-object",
+      "I saw ___",
+      "who or what you saw",
+      [
+        "I saw an old friend.",
+        "I saw a great film.",
+        "I saw my neighbour at the market."
+      ],
+      "I seen an old friend.",
+      []
+    ],
+    "I didn't do much on Saturday.": [
+      "didnt-verb",
+      "I didn't ___",
+      "base verb",
+      [
+        "I didn't do much on Saturday.",
+        "I didn't sleep well.",
+        "I didn't finish the book."
+      ],
+      "I didn't did much on Saturday.",
+      []
+    ],
+    "Did you go out last night?": [
+      "did-you-verb",
+      "Did you ___?",
+      "base verb",
+      [
+        "Did you go out last night?",
+        "Did you like the food?",
+        "Did you find the place?"
+      ],
+      "Did you went out last night?",
+      []
+    ]
+  },
+  "a2-plans": {
+    "Would you like to grab a coffee?": [
+      "would-you-like-to",
+      "Would you like to ___?",
+      "base verb",
+      [
+        "Would you like to grab a coffee?",
+        "Would you like to join us?",
+        "Would you like to see the photos?"
+      ],
+      "Would you like grab a coffee?",
+      []
+    ],
+    "How about Saturday afternoon?": [
+      "how-about",
+      "How about ___?",
+      "a time or an idea",
+      [
+        "How about Saturday afternoon?",
+        "How about next week?",
+        "How about meeting halfway?"
+      ],
+      "How about to Saturday afternoon?",
+      []
+    ],
+    "Let's meet at seven.": [
+      "lets-verb",
+      "Let's ___",
+      "base verb",
+      [
+        "Let's meet at seven.",
+        "Let's take the bus.",
+        "Let's try the new place."
+      ],
+      "Let's to meet at seven.",
+      []
+    ],
+    "I'd love to, but I'm busy.": [
+      "soft-refusal",
+      "I'd love to, but ___",
+      "your reason",
+      [
+        "I'd love to, but I'm busy.",
+        "I'd love to, but I have to work.",
+        "I'd love to, but I'm away that week."
+      ],
+      "I'd love, but I'm busy.",
+      []
+    ],
+    "Can we make it a bit later?": [
+      "make-it-time",
+      "Can we make it ___?",
+      "a new time",
+      [
+        "Can we make it a bit later?",
+        "Can we make it Thursday?",
+        "Can we make it after lunch?"
+      ],
+      "Can we make it to a bit later?",
+      []
+    ]
+  },
+  "a2-travel": {
+    "How do I get to the airport?": [
+      "how-do-i-get-to",
+      "How do I get to ___?",
+      "the destination",
+      [
+        "How do I get to the airport?",
+        "How do I get to the old town?",
+        "How do I get to your office?"
+      ],
+      "How I get to the airport?",
+      []
+    ],
+    "Is this the right bus for downtown?": [
+      "right-x-for",
+      "Is this the right ___ for ___?",
+      "transport + destination",
+      [
+        "Is this the right bus for downtown?",
+        "Is this the right train for Porto?",
+        "Is this the right platform for the airport?"
+      ],
+      "Is this the right bus to downtown?",
+      []
+    ],
+    "What time does the next train leave?": [
+      "what-time-does",
+      "What time does ___ ___?",
+      "thing + base verb",
+      [
+        "What time does the next train leave?",
+        "What time does the museum open?",
+        "What time does the tour start?"
+      ],
+      "What time the next train leaves?",
+      []
+    ],
+    "Could you call me a taxi?": [
+      "could-you-verb",
+      "Could you ___?",
+      "base verb",
+      [
+        "Could you call me a taxi?",
+        "Could you write it down?",
+        "Could you wait a moment?"
+      ],
+      "Could you to call me a taxi?",
+      []
+    ],
+    "I think I missed my stop.": [
+      "i-think-i-past",
+      "I think I ___",
+      "past verb",
+      [
+        "I think I missed my stop.",
+        "I think I took the wrong train.",
+        "I think I left my bag on the bus."
+      ],
+      "I think I miss my stop.",
+      []
+    ]
+  },
+  "a2-health": {
+    "I have a headache.": [
+      "i-have-symptom",
+      "I have ___",
+      "the symptom",
+      [
+        "I have a headache.",
+        "I have a sore throat.",
+        "I have a bad cough."
+      ],
+      "I have headache.",
+      []
+    ],
+    "It hurts here.": [
+      "it-hurts-where",
+      "It hurts ___",
+      "where it hurts",
+      [
+        "It hurts here.",
+        "It hurts when I walk.",
+        "It hurts on this side."
+      ],
+      "It is hurt here.",
+      []
+    ],
+    "I'd like to see a doctor.": [
+      "would-like-to-verb",
+      "I'd like to ___",
+      "base verb",
+      [
+        "I'd like to see a doctor.",
+        "I'd like to book a test.",
+        "I'd like to change my appointment."
+      ],
+      "I'd like see a doctor.",
+      [
+        "I would like to see a doctor."
+      ]
+    ],
+    "I'm allergic to penicillin.": [
+      "allergic-to",
+      "I'm allergic to ___",
+      "the substance",
+      [
+        "I'm allergic to penicillin.",
+        "I'm allergic to nuts.",
+        "I'm allergic to dust."
+      ],
+      "I have allergy to penicillin.",
+      []
+    ],
+    "How often should I take this?": [
+      "how-often-should",
+      "How often should I ___?",
+      "base verb",
+      [
+        "How often should I take this?",
+        "How often should I come back?",
+        "How often should I check it?"
+      ],
+      "How much often should I take this?",
+      []
+    ]
+  },
+  "a2-neighborhood": {
+    "I live in a quiet neighborhood.": [
+      "live-in-place",
+      "I live in ___",
+      "the kind of place",
+      [
+        "I live in a quiet neighborhood.",
+        "I live in a small flat.",
+        "I live in the city centre."
+      ],
+      "I live in quiet neighborhood.",
+      []
+    ],
+    "There is a market near my house.": [
+      "there-is-near",
+      "There is ___ near ___",
+      "thing + landmark",
+      [
+        "There is a market near my house.",
+        "There is a park near the school.",
+        "There is a pharmacy near the station."
+      ],
+      "Have a market near my house.",
+      []
+    ],
+    "My apartment has two bedrooms.": [
+      "place-has",
+      "My ___ has ___",
+      "place + feature",
+      [
+        "My apartment has two bedrooms.",
+        "My house has a small garden.",
+        "My building has a lift."
+      ],
+      "My apartment have two bedrooms.",
+      []
+    ],
+    "It takes ten minutes to walk downtown.": [
+      "takes-time-to-verb",
+      "It takes ___ to ___",
+      "time + base verb",
+      [
+        "It takes ten minutes to walk downtown.",
+        "It takes an hour to get there.",
+        "It takes five minutes to warm up."
+      ],
+      "It takes ten minutes for walk downtown.",
+      []
+    ],
+    "I moved here last year.": [
+      "moved-when",
+      "I moved here ___",
+      "past time expression",
+      [
+        "I moved here last year.",
+        "I moved here in March.",
+        "I moved here three months ago."
+      ],
+      "I move here last year.",
+      []
+    ]
+  },
+  "a2-cooking": {
+    "Can you pass me the salt?": [
+      "can-you-pass",
+      "Can you pass me ___?",
+      "the thing at the table",
+      [
+        "Can you pass me the salt?",
+        "Can you pass me the bread?",
+        "Can you pass me a spoon?"
+      ],
+      "Can you pass me to the salt?",
+      []
+    ],
+    "Add a little oil to the pan.": [
+      "a-little-uncountable",
+      "Add a little ___",
+      "uncountable ingredient",
+      [
+        "Add a little oil to the pan.",
+        "Add a little sugar.",
+        "Add a little water if it is dry."
+      ],
+      "Add a few oil to the pan.",
+      []
+    ],
+    "How many eggs do we need?": [
+      "how-many-countable",
+      "How many ___ do we need?",
+      "countable ingredient",
+      [
+        "How many eggs do we need?",
+        "How many potatoes do we need?",
+        "How many plates do we need?"
+      ],
+      "How much eggs do we need?",
+      []
+    ],
+    "Let it cook for ten minutes.": [
+      "let-object-verb",
+      "Let ___ ___",
+      "thing + base verb",
+      [
+        "Let it cook for ten minutes.",
+        "Let the dough rest.",
+        "Let the sauce reduce."
+      ],
+      "Let it to cook for ten minutes.",
+      []
+    ],
+    "It tastes a bit salty.": [
+      "tastes-adjective",
+      "It tastes ___",
+      "adjective",
+      [
+        "It tastes a bit salty.",
+        "It tastes sweet.",
+        "It tastes better cold."
+      ],
+      "It tastes as salty.",
+      []
+    ],
+    "We don't have enough flour.": [
+      "enough-noun",
+      "We don't have enough ___",
+      "the ingredient",
+      [
+        "We don't have enough flour.",
+        "We don't have enough eggs.",
+        "We don't have enough time."
+      ],
+      "We don't have flour enough.",
+      []
+    ]
+  },
+  "a2-hobbies": {
+    "I usually play football on Sundays.": [
+      "frequency-adverb",
+      "I usually ___",
+      "the routine activity",
+      [
+        "I usually play football on Sundays.",
+        "I usually cook at home.",
+        "I usually read before bed."
+      ],
+      "I play usually football on Sundays.",
+      []
+    ],
+    "I go to the gym twice a week.": [
+      "times-a-period",
+      "I ___ ___ a week",
+      "activity + frequency",
+      [
+        "I go to the gym twice a week.",
+        "I run three times a week.",
+        "I study once a week."
+      ],
+      "I go to the gym two times for week.",
+      []
+    ],
+    "I'm really into photography.": [
+      "into-hobby",
+      "I'm really into ___",
+      "the hobby",
+      [
+        "I'm really into photography.",
+        "I'm really into cooking.",
+        "I'm really into old films."
+      ],
+      "I'm really into to photography.",
+      []
+    ],
+    "I started learning guitar last year.": [
+      "started-gerund",
+      "I started ___",
+      "-ing verb",
+      [
+        "I started learning guitar last year.",
+        "I started running in January.",
+        "I started painting again."
+      ],
+      "I started to learning guitar.",
+      [
+        "I started to learn guitar last year."
+      ]
+    ],
+    "It helps me relax after work.": [
+      "helps-me-verb",
+      "It helps me ___",
+      "base verb",
+      [
+        "It helps me relax after work.",
+        "It helps me focus.",
+        "It helps me sleep better."
+      ],
+      "It helps me to relaxing.",
+      [
+        "It helps me to relax after work."
+      ]
+    ],
+    "I'm not very good at drawing.": [
+      "good-at-gerund",
+      "I'm not very good at ___",
+      "-ing verb",
+      [
+        "I'm not very good at drawing.",
+        "I'm not very good at cooking.",
+        "I'm not very good at remembering names."
+      ],
+      "I'm not very good in drawing.",
+      []
+    ]
+  },
+  "a2-hotel": {
+    "Could I have an extra towel, please?": [
+      "could-i-have",
+      "Could I have ___, please?",
+      "the thing you need",
+      [
+        "Could I have an extra towel, please?",
+        "Could I have a later check-out, please?",
+        "Could I have the Wi-Fi password, please?"
+      ],
+      "Could I have to an extra towel?",
+      []
+    ],
+    "The air conditioning isn't working.": [
+      "isnt-working",
+      "The ___ isn't working",
+      "the broken thing",
+      [
+        "The air conditioning isn't working.",
+        "The shower isn't working.",
+        "The key card isn't working."
+      ],
+      "The air conditioning don't work.",
+      []
+    ],
+    "Could you move me to a quieter room?": [
+      "comparative-noun",
+      "a ___ ___",
+      "comparative + noun",
+      [
+        "Could you move me to a quieter room?",
+        "Could you give me a bigger table?",
+        "I'd prefer a cheaper option."
+      ],
+      "a more quiet room",
+      []
+    ],
+    "There's no hot water in the bathroom.": [
+      "theres-no",
+      "There's no ___",
+      "the missing thing",
+      [
+        "There's no hot water in the bathroom.",
+        "There's no soap in the room.",
+        "There's no signal here."
+      ],
+      "There isn't no hot water.",
+      []
+    ],
+    "Can you send someone to fix it?": [
+      "send-someone-to",
+      "send someone to ___",
+      "base verb",
+      [
+        "Can you send someone to fix it?",
+        "Can you send someone to collect the bags?",
+        "Can you send someone to check the heating?"
+      ],
+      "Can you send someone for fix it?",
+      []
+    ]
+  },
+  "a2-airport": {
+    "I only have carry-on luggage.": [
+      "only-have",
+      "I only have ___",
+      "what you are carrying",
+      [
+        "I only have carry-on luggage.",
+        "I only have a backpack.",
+        "I only have this bag."
+      ],
+      "I have only carry-on luggages.",
+      []
+    ],
+    "The flight has been delayed.": [
+      "has-been-participle",
+      "The ___ has been ___",
+      "thing + past participle",
+      [
+        "The flight has been delayed.",
+        "The gate has been changed.",
+        "The booking has been confirmed."
+      ],
+      "The flight has delayed.",
+      []
+    ],
+    "Do I need to take out my laptop?": [
+      "do-i-need-to",
+      "Do I need to ___?",
+      "base verb",
+      [
+        "Do I need to take out my laptop?",
+        "Do I need to check in online?",
+        "Do I need to print the ticket?"
+      ],
+      "Do I need take out my laptop?",
+      []
+    ],
+    "Boarding starts in twenty minutes.": [
+      "in-future-time",
+      "___ starts in ___",
+      "event + time from now",
+      [
+        "Boarding starts in twenty minutes.",
+        "The meeting starts in an hour.",
+        "The film starts in ten minutes."
+      ],
+      "Boarding starts on twenty minutes.",
+      []
+    ],
+    "Where can I pick up my bags?": [
+      "where-can-i",
+      "Where can I ___?",
+      "base verb",
+      [
+        "Where can I pick up my bags?",
+        "Where can I change money?",
+        "Where can I leave my luggage?"
+      ],
+      "Where I can pick up my bags?",
+      []
+    ]
+  },
+  "a2-appointments": {
+    "I'd like to book an appointment.": [
+      "would-like-to-book",
+      "I'd like to book ___",
+      "the thing you are booking",
+      [
+        "I'd like to book an appointment.",
+        "I'd like to book a table for two.",
+        "I'd like to book a room for Friday."
+      ],
+      "I'd like book an appointment.",
+      []
+    ],
+    "Are you free on Thursday morning?": [
+      "free-on-day",
+      "Are you free on ___?",
+      "a day or time",
+      [
+        "Are you free on Thursday morning?",
+        "Are you free on Monday?",
+        "Are you free on the weekend?"
+      ],
+      "Are you free in Thursday morning?",
+      []
+    ],
+    "I'm afraid I can't make it.": [
+      "afraid-i-cant",
+      "I'm afraid I can't ___",
+      "base verb",
+      [
+        "I'm afraid I can't make it.",
+        "I'm afraid I can't stay long.",
+        "I'm afraid I can't help with that."
+      ],
+      "I'm afraid I can't to make it.",
+      []
+    ],
+    "Could we move it to next week?": [
+      "move-it-to",
+      "Could we move it to ___?",
+      "a new time",
+      [
+        "Could we move it to next week?",
+        "Could we move it to Friday?",
+        "Could we move it to the afternoon?"
+      ],
+      "Could we move it for next week?",
+      []
+    ],
+    "I need to cancel my appointment.": [
+      "need-to-verb",
+      "need to ___",
+      "base verb",
+      [
+        "I need to cancel my appointment.",
+        "I need to reschedule the call.",
+        "I need to leave early today."
+      ],
+      "I need cancel my appointment.",
+      []
+    ]
+  },
+  "a2-clarification": {
+    "Sorry, could you say that again?": [
+      "could-you-verb",
+      "Could you ___?",
+      "base verb",
+      [
+        "Sorry, could you say that again?",
+        "Could you repeat the last part?",
+        "Could you write it down?"
+      ],
+      "Could you saying that again?",
+      []
+    ],
+    "Could you speak a bit more slowly?": [
+      "a-bit-more-adverb",
+      "Could you ___ a bit more ___?",
+      "verb + adverb",
+      [
+        "Could you speak a bit more slowly?",
+        "Could you explain it a bit more clearly?",
+        "Could you talk a bit more quietly?"
+      ],
+      "Could you speak a bit more slow?",
+      []
+    ],
+    "What does that word mean?": [
+      "what-does-mean",
+      "What does ___ mean?",
+      "the word or phrase",
+      [
+        "What does that word mean?",
+        "What does 'deadline' mean?",
+        "What does this sign mean?"
+      ],
+      "What means that word?",
+      []
+    ],
+    "I didn't catch the last part.": [
+      "didnt-catch",
+      "I didn't catch ___",
+      "what you missed",
+      [
+        "I didn't catch the last part.",
+        "I didn't catch your name.",
+        "I didn't catch the address."
+      ],
+      "I didn't caught the last part.",
+      []
+    ],
+    "Could you give me an example?": [
+      "give-me-noun",
+      "Could you give me ___?",
+      "what you are asking for",
+      [
+        "Could you give me an example?",
+        "Could you give me a minute?",
+        "Could you give me the details?"
+      ],
+      "Could you give to me an example?",
+      []
+    ]
+  },
+  "a2-responsibilities": {
+    "I have to clean the kitchen.": [
+      "have-to-verb",
+      "I have to ___",
+      "base verb",
+      [
+        "I have to clean the kitchen.",
+        "I have to pick up my sister.",
+        "I have to finish this tonight."
+      ],
+      "I have to cleaning the kitchen.",
+      []
+    ],
+    "I'm responsible for the shopping.": [
+      "responsible-for",
+      "responsible for ___",
+      "the duty",
+      [
+        "I'm responsible for the shopping.",
+        "I'm responsible for the schedule.",
+        "Which department is responsible for this?"
+      ],
+      "I'm responsible of the shopping.",
+      []
+    ],
+    "It's my turn to wash the dishes.": [
+      "my-turn-to",
+      "It's my turn to ___",
+      "base verb",
+      [
+        "It's my turn to wash the dishes.",
+        "It's my turn to cook.",
+        "It's my turn to drive."
+      ],
+      "It's my turn for wash the dishes.",
+      []
+    ],
+    "Could you take care of the laundry?": [
+      "take-care-of",
+      "Could you take care of ___?",
+      "the task",
+      [
+        "Could you take care of the laundry?",
+        "Could you take care of the booking?",
+        "Could you take care of dinner?"
+      ],
+      "Could you take care the laundry?",
+      []
+    ],
+    "I forgot to feed the cat.": [
+      "forgot-to-verb",
+      "I forgot to ___",
+      "base verb",
+      [
+        "I forgot to feed the cat.",
+        "I forgot to lock the door.",
+        "I forgot to reply to her message."
+      ],
+      "I forgot feeding the cat.",
+      []
+    ],
+    "I need to take the rubbish out.": [
+      "need-to-verb",
+      "need to ___",
+      "base verb",
+      [
+        "I need to take the rubbish out.",
+        "I need to cancel my appointment.",
+        "You need to update the app."
+      ],
+      "I need take the rubbish out.",
+      []
+    ]
+  },
+  "a2-technology": {
+    "My phone won't turn on.": [
+      "wont-verb",
+      "___ won't ___",
+      "thing + base verb",
+      [
+        "My phone won't turn on.",
+        "My laptop won't start.",
+        "The door won't close."
+      ],
+      "My phone don't want turn on.",
+      []
+    ],
+    "I can't connect to the Wi-Fi.": [
+      "cant-connect-to",
+      "I can't connect to ___",
+      "the network or service",
+      [
+        "I can't connect to the Wi-Fi.",
+        "I can't connect to the printer.",
+        "I can't connect to the server."
+      ],
+      "I can't connect in the Wi-Fi.",
+      []
+    ],
+    "I forgot my password.": [
+      "forgot-noun",
+      "I forgot ___",
+      "the thing you forgot",
+      [
+        "I forgot my password.",
+        "I forgot my charger.",
+        "I forgot the meeting."
+      ],
+      "I forgot of my password.",
+      []
+    ],
+    "Try restarting the device.": [
+      "try-gerund",
+      "Try ___",
+      "-ing verb",
+      [
+        "Try restarting the device.",
+        "Try clearing the cache.",
+        "Try using another browser."
+      ],
+      "Try to restarting the device.",
+      [
+        "Try to restart the device."
+      ]
+    ],
+    "You need to update the app.": [
+      "need-to-verb",
+      "need to ___",
+      "base verb",
+      [
+        "You need to update the app.",
+        "You need to sign in again.",
+        "You need to allow notifications."
+      ],
+      "You need update the app.",
+      []
+    ]
+  },
+  "a2-comparisons": {
+    "This one is cheaper than that one.": [
+      "comparative-than",
+      "___ is ___ than ___",
+      "thing + comparative adjective + thing",
+      [
+        "This one is cheaper than that one.",
+        "The train is faster than the bus.",
+        "This route is shorter than the other one."
+      ],
+      "This one is more cheap than that one.",
+      []
+    ],
+    "The blue one is more comfortable.": [
+      "more-long-adjective",
+      "___ is more ___",
+      "thing + long adjective",
+      [
+        "The blue one is more comfortable.",
+        "This route is more direct.",
+        "The second option is more expensive."
+      ],
+      "The blue one is more comfortabler.",
+      []
+    ],
+    "Which one is better for travel?": [
+      "better-for",
+      "Which one is better for ___?",
+      "the purpose",
+      [
+        "Which one is better for travel?",
+        "Which one is better for beginners?",
+        "Which one is better for everyday use?"
+      ],
+      "Which one is more good for travel?",
+      []
+    ],
+    "This model isn't as heavy as the other one.": [
+      "not-as-as",
+      "___ isn't as ___ as ___",
+      "thing + adjective + thing",
+      [
+        "This model isn't as heavy as the other one.",
+        "The film isn't as long as I thought.",
+        "This café isn't as busy as the other one."
+      ],
+      "This model isn't so heavy than the other one.",
+      []
+    ],
+    "The cheaper one is good enough for me.": [
+      "adjective-enough",
+      "___ is ___ enough",
+      "thing + adjective",
+      [
+        "The cheaper one is good enough for me.",
+        "The room is big enough.",
+        "This bag is strong enough."
+      ],
+      "The cheaper one is enough good.",
+      []
+    ]
+  },
+  "a2-childhood": {
+    "I grew up in a small town.": [
+      "grew-up-in",
+      "I grew up in ___",
+      "the place",
+      [
+        "I grew up in a small town.",
+        "I grew up in the countryside.",
+        "I grew up in my grandmother's house."
+      ],
+      "I grow up in a small town.",
+      []
+    ],
+    "I used to play outside every day.": [
+      "used-to-verb",
+      "I used to ___",
+      "base verb",
+      [
+        "I used to play outside every day.",
+        "I used to walk to school.",
+        "I used to hate vegetables."
+      ],
+      "I used to playing outside.",
+      []
+    ],
+    "I started school when I was six.": [
+      "when-i-was-age",
+      "___ when I was ___",
+      "event + age",
+      [
+        "I started school when I was six.",
+        "I moved away when I was eighteen.",
+        "I learned to swim when I was five."
+      ],
+      "I started school when I had six years.",
+      []
+    ],
+    "I didn't have a mobile phone.": [
+      "didnt-have",
+      "I didn't have ___",
+      "the thing you lacked",
+      [
+        "I didn't have a mobile phone.",
+        "I didn't have my own room.",
+        "I didn't have much free time."
+      ],
+      "I didn't had a mobile phone.",
+      []
+    ],
+    "Did you use to walk to school?": [
+      "did-you-use-to",
+      "Did you use to ___?",
+      "base verb",
+      [
+        "Did you use to walk to school?",
+        "Did you use to play an instrument?",
+        "Did you use to live nearby?"
+      ],
+      "Did you used to walk to school?",
+      []
+    ]
+  },
+  "a2-obligations": {
+    "You must show your ID at the entrance.": [
+      "must-verb",
+      "You must ___",
+      "base verb",
+      [
+        "You must show your ID at the entrance.",
+        "You must wear a badge.",
+        "You must sign the form first."
+      ],
+      "You must to show your ID.",
+      []
+    ],
+    "You can't park here.": [
+      "cant-prohibition",
+      "You can't ___ here",
+      "base verb",
+      [
+        "You can't park here.",
+        "You can't smoke here.",
+        "You can't eat here."
+      ],
+      "You don't can park here.",
+      []
+    ],
+    "You don't have to book in advance.": [
+      "dont-have-to",
+      "You don't have to ___",
+      "base verb",
+      [
+        "You don't have to book in advance.",
+        "You don't have to pay today.",
+        "You don't have to stay until the end."
+      ],
+      "You haven't to book in advance.",
+      []
+    ],
+    "Are we allowed to take photos?": [
+      "allowed-to",
+      "Are we allowed to ___?",
+      "base verb",
+      [
+        "Are we allowed to take photos?",
+        "Are we allowed to bring food?",
+        "Are we allowed to park outside?"
+      ],
+      "Are we allowed take photos?",
+      []
+    ],
+    "Visitors must leave by six.": [
+      "by-deadline",
+      "___ by ___",
+      "action + deadline",
+      [
+        "Visitors must leave by six.",
+        "Send the form by Friday.",
+        "We should arrive by nine."
+      ],
+      "Visitors must leave until six.",
+      []
+    ]
+  },
+  "a2-home-problems": {
+    "The kitchen tap is leaking.": [
+      "is-continuous-problem",
+      "The ___ is ___",
+      "thing + ongoing problem",
+      [
+        "The kitchen tap is leaking.",
+        "The ceiling is dripping.",
+        "The fridge is making a strange noise."
+      ],
+      "The kitchen tap leaks now.",
+      []
+    ],
+    "The power keeps going off.": [
+      "keeps-gerund",
+      "The ___ keeps ___",
+      "thing + repeated problem",
+      [
+        "The power keeps going off.",
+        "The door keeps sticking.",
+        "The app keeps crashing."
+      ],
+      "The power keeps to go off.",
+      []
+    ],
+    "There's a strange noise in the wall.": [
+      "theres-a-problem",
+      "There's ___ in ___",
+      "problem + location",
+      [
+        "There's a strange noise in the wall.",
+        "There's a leak in the bathroom.",
+        "There's a crack in the window."
+      ],
+      "It has a strange noise in the wall.",
+      []
+    ],
+    "Could you send someone to look at it?": [
+      "send-someone-to",
+      "send someone to ___",
+      "base verb",
+      [
+        "Could you send someone to look at it?",
+        "Could you send someone to repair it?",
+        "Could you send someone to measure the room?"
+      ],
+      "Could you send someone for look at it?",
+      []
+    ],
+    "The problem has got worse.": [
+      "has-got-comparative",
+      "___ has got ___",
+      "thing + comparative",
+      [
+        "The problem has got worse.",
+        "The noise has got louder.",
+        "The queue has got longer."
+      ],
+      "The problem has get worse.",
+      []
+    ]
+  },
+  "a2-celebrations": {
+    "We're having a birthday dinner on Friday.": [
+      "arrangement-continuous",
+      "We're having ___ on ___",
+      "event + day",
+      [
+        "We're having a birthday dinner on Friday.",
+        "We're having a small party on Saturday.",
+        "We're having lunch together on Sunday."
+      ],
+      "We will have a birthday dinner in Friday.",
+      []
+    ],
+    "What time should I arrive?": [
+      "what-time-should-i",
+      "What time should I ___?",
+      "base verb",
+      [
+        "What time should I arrive?",
+        "What time should I call?",
+        "What time should I be there?"
+      ],
+      "What time I should arrive?",
+      []
+    ],
+    "Can I bring anything?": [
+      "can-i-bring",
+      "Can I bring ___?",
+      "what you offer to bring",
+      [
+        "Can I bring anything?",
+        "Can I bring a dessert?",
+        "Can I bring a friend?"
+      ],
+      "Can I to bring anything?",
+      []
+    ],
+    "Thanks for inviting me.": [
+      "thanks-for-gerund",
+      "Thanks for ___",
+      "-ing verb",
+      [
+        "Thanks for inviting me.",
+        "Thanks for helping me.",
+        "Thanks for waiting."
+      ],
+      "Thanks for invite me.",
+      []
+    ],
+    "Congratulations on your graduation!": [
+      "congratulations-on",
+      "Congratulations on ___",
+      "the achievement",
+      [
+        "Congratulations on your graduation!",
+        "Congratulations on the new job!",
+        "Congratulations on the baby!"
+      ],
+      "Congratulations for your graduation!",
+      []
+    ]
+  },
+  "a2-social-plans": {
+    "Are we still on for Saturday?": [
+      "still-on-for",
+      "Are we still on for ___?",
+      "the day or plan",
+      [
+        "Are we still on for Saturday?",
+        "Are we still on for dinner?",
+        "Are we still on for the nine o'clock call?"
+      ],
+      "Are we still on to Saturday?",
+      []
+    ],
+    "What do you feel like doing?": [
+      "feel-like-gerund",
+      "feel like ___",
+      "-ing verb phrase",
+      [
+        "What do you feel like doing?",
+        "I feel like staying in.",
+        "I feel like going for a walk."
+      ],
+      "I feel like to stay in.",
+      []
+    ],
+    "Why don't we meet at seven?": [
+      "why-dont-we",
+      "Why don't we ___?",
+      "base verb",
+      [
+        "Why don't we meet at seven?",
+        "Why don't we split the bill?",
+        "Why don't we try somewhere new?"
+      ],
+      "Why we don't meet at seven?",
+      []
+    ],
+    "I'll let you know by lunchtime.": [
+      "let-you-know-by",
+      "I'll let you know by ___",
+      "a deadline",
+      [
+        "I'll let you know by lunchtime.",
+        "I'll let you know by tomorrow.",
+        "I'll let you know by the end of the week."
+      ],
+      "I'll let you know until lunchtime.",
+      []
+    ],
+    "Let's do it another day.": [
+      "lets-do-when",
+      "Let's do it ___",
+      "another time",
+      [
+        "Let's do it another day.",
+        "Let's do it next month.",
+        "Let's do it after the holidays."
+      ],
+      "Let's to do it another day.",
+      []
+    ]
+  }
+}

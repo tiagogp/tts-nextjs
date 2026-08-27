@@ -93,6 +93,9 @@ async function requireKokoro(): Promise<LocalResponse | null> {
   return response(409, {
     error: kokoroNotReadyMessage(status),
     code: "model_not_ready",
+    // Which model is missing, so the client can watch the right download
+    // instead of guessing from the message.
+    model: "kokoro",
     downloading: status.downloading_kokoro || status.loading_kokoro,
     progress: status.download_progress ?? 0,
     modelError: status.error,
@@ -117,6 +120,7 @@ async function requireWhisper(): Promise<LocalResponse | null> {
         ? `Failed to download the speech-recognition model: ${status.error}. Check your connection and try again.`
         : WHISPER_NOT_READY_MESSAGE,
     code: "model_not_ready",
+    model: "whisper",
     downloading: status.downloading_whisper || status.loading_whisper,
     progress: status.download_progress ?? 0,
     modelError: status.error,

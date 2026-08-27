@@ -17,7 +17,7 @@ export async function POST(request: Request) {
 
   const entry = {
     ...fields,
-    source: "landing-w5",
+    source: "landing",
     createdAt: new Date().toISOString(),
   };
 

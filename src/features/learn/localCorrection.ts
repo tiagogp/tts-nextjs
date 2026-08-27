@@ -1,15 +1,23 @@
 import type { ErrorEvent, ErrorType } from "@/lib/cards/schema";
+import type { TaskAssessment } from "@/lib/cards/provider";
+import { applyTransferRules } from "./transferErrors";
 
 /**
  * Deterministic, on-device correction for the guided first lesson's "write one
- * sentence" step. It only fixes what can be verified without a model — spelling
- * of the lesson phrase, capitalization of "I", sentence casing and terminal
- * punctuation — so the first loop never depends on an AI provider.
+ * sentence" step. It fixes what can be verified without a model — spelling of
+ * the lesson phrase, capitalization of "I", sentence casing, terminal
+ * punctuation, and the high-frequency PT→EN transfer errors in
+ * `transferErrors.ts` — so the first loop never depends on an AI provider.
+ *
+ * It is not a grammar checker and does not pretend to be one. What it guarantees
+ * is narrower and more important: a sentence carrying one of the predictable
+ * Portuguese-transfer errors is not declared correct and then saved as a review
+ * card, because a scheduled error is an error being learned.
  */
 
 export interface LocalCorrectionIssue {
   type: ErrorType;
-  category: "messageClarity" | "lessonLanguage" | "mechanics";
+  category: "messageClarity" | "lessonLanguage" | "mechanics" | "grammar";
   priority: "blocking" | "important" | "polish";
   /** English source string for the learner-facing note; render through t(). */
   note: string;
@@ -21,6 +29,14 @@ export interface LocalCorrectionResult {
   issues: LocalCorrectionIssue[];
   /** Whether the lesson phrase was found (exactly or with small typos). */
   usedPhrase: boolean;
+  /**
+   * How far the check reached. `local` means only the built-in transfer patterns ran, so
+   * `corrected` fixes the mistakes we recognize and leaves anything else untouched —
+   * the surface must say so rather than present it as a full correction.
+   */
+  scope: "local" | "evaluated";
+  /** Present only when a configured evaluator received the lesson's communicative task. */
+  task?: TaskAssessment;
 }
 
 export const PHRASE_SPELLING_NOTE = "Check the spelling of the lesson phrase.";
@@ -183,7 +199,7 @@ export function correctSentenceLocally(
 ): LocalCorrectionResult {
   const issues: LocalCorrectionIssue[] = [];
   const sentence = input.trim().replace(/\s+/g, " ");
-  if (!sentence) return { corrected: "", issues: [], usedPhrase: false };
+  if (!sentence) return { corrected: "", issues: [], usedPhrase: false, scope: "local" };
 
   const phrase = targetPhrase.trim();
   const phraseTerminal = /[.!?]+$/.exec(phrase)?.[0] ?? "";
@@ -243,6 +259,16 @@ export function correctSentenceLocally(
 
   let corrected = tokens.join(" ");
 
+  // PT→EN transfer errors, before the casing/punctuation passes so their rewrites are
+  // capitalized and punctuated like the rest of the sentence. Blocking priority: unlike
+  // mechanics, these change what the sentence says, and the retry step should not accept a
+  // sentence that still carries one.
+  const transfer = applyTransferRules(corrected);
+  corrected = transfer.corrected;
+  for (const hit of transfer.hits) {
+    issues.push(feedbackIssue(hit.type, "grammar", "blocking", hit.note));
+  }
+
   // Sentence starts with a capital letter.
   const firstLetter = /\p{L}/u.exec(corrected);
   if (firstLetter && firstLetter[0] !== firstLetter[0].toUpperCase()) {
@@ -268,7 +294,7 @@ export function correctSentenceLocally(
     issues.push(feedbackIssue("other", "messageClarity", "blocking", OWN_DETAIL_NOTE));
   }
 
-  return { corrected, issues: uniqueSortedIssues(issues), usedPhrase };
+  return { corrected, issues: uniqueSortedIssues(issues), usedPhrase, scope: "local" };
 }
 
 /**
@@ -282,6 +308,7 @@ export function mergeEvaluatedCorrection(
   targetPhrase: string,
   targetPattern: string | undefined,
   events: ErrorEvent[],
+  task?: TaskAssessment,
 ): LocalCorrectionResult {
   const local = correctSentenceLocally(input, targetPhrase, targetPattern);
   let evaluated = input.trim().replace(/\s+/g, " ");
@@ -312,5 +339,7 @@ export function mergeEvaluatedCorrection(
     corrected: final.corrected,
     issues: uniqueSortedIssues([...modelIssues, ...local.issues, ...final.issues]),
     usedPhrase: final.usedPhrase,
+    scope: "evaluated",
+    task,
   };
 }

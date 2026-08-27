@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ErrorEvent } from "@/lib/cards/schema";
 import type { PronunciationAttempt } from "@/lib/pronunciation/types";
+import type { ListeningAttempt, ProductionAttempt, RetryOutcome } from "@/lib/performance/types";
 import type { Conversation, ReviewRecord } from "@/lib/store/repository";
 import { Rating, State, type Grade } from "@/lib/srs/fsrs";
 import { computeProgressSnapshot, type StoredProgressAssessment } from "./model";
@@ -8,16 +9,30 @@ import { computeProgressSnapshot, type StoredProgressAssessment } from "./model"
 const NOW = Date.UTC(2026, 5, 28);
 const DAY = 86_400_000;
 
-function review(daysAgo: number, grade: Grade = Rating.Good): ReviewRecord {
+function review(daysAgo: number, grade: Grade = Rating.Good, overrides: Partial<ReviewRecord> = {}): ReviewRecord {
   return {
-    id: `r-${daysAgo}-${grade}`,
+    id: `r-${daysAgo}-${grade}-${overrides.cardId ?? ""}`,
     cardId: `c-${daysAgo}`,
     grade,
     reviewedAt: NOW - daysAgo * DAY,
     previousState: State.Review,
     scheduledDays: 2,
     concept: "articles",
+    ...overrides,
   };
+}
+
+function unaidedProductionPair(cardId: string, daysAgo: number, grade: Grade = Rating.Good): ReviewRecord[] {
+  return [
+    review(daysAgo + 30, Rating.Good, { cardId, direction: "production" }),
+    review(daysAgo, grade, {
+      cardId,
+      direction: "production",
+      scaffoldLevel: 0,
+      hintUsed: false,
+      responseCorrect: grade === Rating.Good || grade === Rating.Easy,
+    }),
+  ];
 }
 
 function error(daysAgo: number, id = `e-${daysAgo}`): ErrorEvent {
@@ -86,7 +101,12 @@ describe("computeProgressSnapshot", () => {
   it("turns local learning signals into achieved milestones", () => {
     const snapshot = computeProgressSnapshot({
       profileLevel: "A2",
-      reviews: Array.from({ length: 15 }, (_, index) => review(index, Rating.Good)),
+      reviews: [
+        ...Array.from({ length: 15 }, (_, index) => review(index, Rating.Good)),
+        ...unaidedProductionPair("p1", 1),
+        ...unaidedProductionPair("p2", 2),
+        ...unaidedProductionPair("p3", 3),
+      ],
       errorEvents: [error(24), error(20), error(3, "recent")],
       conversations: [conversation(2, 14), conversation(4, 12)],
       pronunciationAttempts: [attempt(1, 86), attempt(3, 82), attempt(6, 84)],
@@ -94,10 +114,84 @@ describe("computeProgressSnapshot", () => {
       now: NOW,
     });
 
-    expect(snapshot.confidence).toBe("high");
-    expect(snapshot.estimatedBand).not.toBe("A2 baseline");
+    expect(snapshot.confidence).toBe("low");
+    expect(snapshot.estimatedBand).toBe("A2 baseline");
     expect(snapshot.milestones.find((item) => item.id === "recall-control")?.achieved).toBe(true);
     expect(snapshot.milestones.find((item) => item.id === "clear-pronunciation")?.achieved).toBe(true);
+  });
+
+  it("labels pronunciation as a coarse transcript-alignment signal", () => {
+    const snapshot = computeProgressSnapshot({
+      profileLevel: "B1",
+      reviews: [],
+      errorEvents: [],
+      conversations: [],
+      pronunciationAttempts: [attempt(1, 74)],
+      assessments: [],
+      now: NOW,
+    });
+
+    expect(snapshot.skills.find((skill) => skill.key === "pronunciation")).toMatchObject({
+      label: "Pronunciation signal",
+      detail: "1 transcript-alignment attempt in 30 days; not phonemic scoring",
+    });
+  });
+
+  it("keeps observed D30 production separate from ordinary review activity", () => {
+    const snapshot = computeProgressSnapshot({
+      profileLevel: "B1",
+      reviews: [
+        review(1, Rating.Good),
+        review(2, Rating.Good),
+        ...unaidedProductionPair("p1", 1, Rating.Easy),
+        ...unaidedProductionPair("p2", 2, Rating.Again),
+      ],
+      errorEvents: [],
+      conversations: [],
+      pronunciationAttempts: [],
+      assessments: [],
+      now: NOW,
+    });
+
+    expect(snapshot.unaidedProduction).toMatchObject({
+      attempts: 2,
+      correct: 1,
+      cards: 2,
+      rate: 0.5,
+    });
+  });
+
+  it("does not report a learner self-check as validated transfer success", () => {
+    const selfCheckedTransfer: ProductionAttempt = {
+      id: "self-transfer",
+      source: "study",
+      stage: "production",
+      transferKind: "phrase_to_situation",
+      transferOutcome: "clear",
+      newContext: true,
+      text: "I ended up staying home because it rained.",
+      spoken: false,
+      wordCount: 8,
+      finished: true,
+      issueCount: 0,
+      evaluated: false,
+      createdAt: NOW - DAY,
+    };
+    const snapshot = computeProgressSnapshot({
+      profileLevel: "B1",
+      reviews: [],
+      errorEvents: [],
+      conversations: [],
+      pronunciationAttempts: [],
+      productionAttempts: [selfCheckedTransfer],
+      assessments: [],
+      now: NOW,
+    });
+
+    expect(snapshot.confidenceIndicators).toMatchObject({
+      transferAttempts: 1,
+      transferSuccessRate: 0,
+    });
   });
 
   it("schedules the next check-in from the latest saved check-in", () => {
@@ -127,5 +221,267 @@ describe("computeProgressSnapshot", () => {
 
     expect(snapshot.checkpointDue).toBe(false);
     expect(snapshot.nextCheckpointAt).toBe(latest.createdAt + 14 * DAY);
+  });
+
+  it("uses listening and production evidence instead of minutes as performance", () => {
+    const listening: ListeningAttempt = {
+      id: "listen-1",
+      lessonId: "lesson-1",
+      sourceId: "lesson-lesson-1",
+      questions: [],
+      answers: [],
+      questionCount: 3,
+      answeredCount: 3,
+      correctCount: 2,
+      mainIdeaCorrect: true,
+      detailCorrect: 1,
+      detailTotal: 2,
+      playCounts: [2, 1],
+      transcriptVisible: true,
+      playbackRate: 1,
+      speakerIds: [],
+      startedAt: NOW - DAY,
+      completedAt: NOW - DAY,
+    };
+    const production: ProductionAttempt = {
+      id: "production-1",
+      source: "lesson",
+      text: "I am ready.",
+      spoken: true,
+      wordCount: 3,
+      finished: true,
+      issueCount: 1,
+      createdAt: NOW - DAY,
+    };
+    const retry: RetryOutcome = {
+      id: "retry-1",
+      retryOf: production.id,
+      source: "lesson",
+      text: "I am ready for work.",
+      spoken: true,
+      wordCount: 5,
+      resolved: true,
+      issueCount: 0,
+      createdAt: NOW,
+    };
+
+    const snapshot = computeProgressSnapshot({
+      profileLevel: "B1",
+      reviews: [],
+      errorEvents: [],
+      conversations: [],
+      pronunciationAttempts: [],
+      listeningAttempts: [listening],
+      productionAttempts: [production],
+      retryOutcomes: [retry],
+      assessments: [],
+      now: NOW,
+    });
+
+    expect(snapshot.skills.find((skill) => skill.key === "comprehension")).toMatchObject({
+      samples: 1,
+      score: 80,
+    });
+    expect(snapshot.skills.find((skill) => skill.key === "fluency")?.samples).toBe(1);
+    expect(snapshot.confidenceIndicators).toMatchObject({
+      spokenAttempts: 1,
+      resolvedRetryRate: 100,
+      unresolvedRetries: 0,
+    });
+  });
+
+  it("reports recording growth only when both comparison windows have audio duration", () => {
+    const snapshot = computeProgressSnapshot({
+      profileLevel: "B1",
+      reviews: [],
+      errorEvents: [],
+      conversations: [],
+      pronunciationAttempts: [],
+      productionAttempts: [
+        { id: "old", source: "lesson", stage: "production", text: "old", spoken: true, wordCount: 1, finished: true, issueCount: 0, durationMs: 10_000, createdAt: NOW - 45 * DAY },
+        { id: "new", source: "lesson", stage: "production", text: "new", spoken: true, wordCount: 1, finished: true, issueCount: 0, durationMs: 20_000, createdAt: NOW - DAY },
+      ],
+      assessments: [],
+      now: NOW,
+    });
+    expect(snapshot.confidenceIndicators.recordingGrowthPercent).toBe(100);
+  });
+
+  it("does not turn unevaluated transfer practice into fluency evidence", () => {
+    const snapshot = computeProgressSnapshot({
+      profileLevel: "B1",
+      reviews: [],
+      errorEvents: [],
+      conversations: [],
+      pronunciationAttempts: [],
+      productionAttempts: [
+        { id: "transfer", source: "study", stage: "production", transferKind: "phrase_to_situation", transferSourceId: "card-1", text: "A new sentence", spoken: false, wordCount: 3, finished: true, issueCount: 0, evaluated: false, durationMs: 60_000, createdAt: NOW - DAY },
+      ],
+      assessments: [],
+      now: NOW,
+    });
+
+    expect(snapshot.skills.find((skill) => skill.key === "fluency")).toMatchObject({ samples: 0, score: 0 });
+    expect(snapshot.confidenceIndicators.transferAttempts).toBe(1);
+  });
+
+  it("does not read a typed sentence as a speaking rate", () => {
+    const snapshot = computeProgressSnapshot({
+      profileLevel: "A1",
+      reviews: [],
+      errorEvents: [],
+      conversations: [],
+      pronunciationAttempts: [],
+      productionAttempts: [
+        // Pasted in one keystroke: the composition clock says 12 ms, which as words per
+        // minute would read as tens of thousands of spoken words.
+        { id: "typed", source: "lesson", stage: "production", text: "My name is Pedro and I live in Sao Paulo.", spoken: false, wordCount: 10, finished: true, issueCount: 0, durationMs: 12, createdAt: NOW - DAY },
+      ],
+      assessments: [],
+      now: NOW,
+    });
+
+    expect(snapshot.confidenceIndicators.averageWordsPerMinute).toBe(0);
+    expect(snapshot.confidenceIndicators.fluencySamples).toBe(0);
+  });
+
+  it("floors a spoken attempt's duration before deriving its rate", () => {
+    const snapshot = computeProgressSnapshot({
+      profileLevel: "A1",
+      reviews: [],
+      errorEvents: [],
+      conversations: [],
+      pronunciationAttempts: [],
+      productionAttempts: [
+        { id: "blip", source: "lesson", stage: "production", text: "Good morning.", spoken: true, wordCount: 2, finished: true, issueCount: 0, durationMs: 40, createdAt: NOW - DAY },
+      ],
+      assessments: [],
+      now: NOW,
+    });
+
+    // 2 words over the 1s floor, not over the 40 ms the recorder reported.
+    expect(snapshot.confidenceIndicators.averageWordsPerMinute).toBe(120);
+  });
+
+  it("reports independent transfer and avoided-error evidence separately", () => {
+    const snapshot = computeProgressSnapshot({
+      profileLevel: "B1",
+      reviews: [],
+      errorEvents: [],
+      conversations: [],
+      pronunciationAttempts: [],
+      productionAttempts: [{
+        id: "transfer-clear",
+        source: "study",
+        stage: "production",
+        transferKind: "correction_recall",
+        transferOutcome: "clear",
+        newContext: true,
+        transferVerified: true,
+        avoidedErrorIds: ["error-1"],
+        text: "I have time in a new situation.",
+        spoken: false,
+        wordCount: 7,
+        finished: true,
+        issueCount: 0,
+        evaluated: true,
+        createdAt: NOW - DAY,
+      }],
+      assessments: [],
+      now: NOW,
+    });
+
+    expect(snapshot.confidenceIndicators).toMatchObject({
+      transferAttempts: 1,
+      transferSuccessRate: 100,
+      cardRecallAttempts: 0,
+      openProductionAttempts: 1,
+      crossContextAttempts: 1,
+      crossContextVerified: 1,
+      crossContextTransferred: 1,
+      crossContextRate: 100,
+      correctionRecallAttempts: 1,
+      avoidedErrorCount: 1,
+      independentAttempts: 1,
+    });
+  });
+
+  it("surfaces preparation and skipped attempts as confidence evidence", () => {
+    const snapshot = computeProgressSnapshot({
+      profileLevel: "B1",
+      reviews: [],
+      errorEvents: [],
+      conversations: [],
+      pronunciationAttempts: [],
+      productionAttempts: [
+        {
+          id: "prepared",
+          source: "study",
+          stage: "production",
+          text: "I can explain this.",
+          spoken: true,
+          wordCount: 4,
+          finished: true,
+          issueCount: 0,
+          preparationMs: 4_000,
+          createdAt: NOW - DAY,
+        },
+        {
+          id: "skipped",
+          source: "study",
+          stage: "production",
+          text: "",
+          spoken: false,
+          wordCount: 0,
+          finished: false,
+          skipped: true,
+          issueCount: 0,
+          createdAt: NOW - DAY,
+        },
+      ],
+      assessments: [],
+      now: NOW,
+    });
+
+    expect(snapshot.confidenceIndicators).toMatchObject({
+      averagePreparationSeconds: 4,
+      preparationSamples: 1,
+      skippedAttempts: 1,
+    });
+  });
+});
+
+describe("cross-context reporting", () => {
+  it("never reports a transfer rate the app could not verify", () => {
+    // A prompt asked for a new situation; the item had no authored pattern, so nothing was
+    // checkable. The panel must show an attempt with no rate, not a 0% or a 100%.
+    const snapshot = computeProgressSnapshot({
+      profileLevel: "B1",
+      reviews: [],
+      errorEvents: [],
+      conversations: [],
+      pronunciationAttempts: [],
+      productionAttempts: [{
+        id: "unverifiable",
+        source: "study",
+        stage: "production",
+        transferKind: "phrase_to_situation",
+        transferOutcome: "clear",
+        transferVerified: false,
+        text: "I ended up somewhere else entirely.",
+        spoken: false,
+        wordCount: 6,
+        finished: true,
+        issueCount: 0,
+        evaluated: true,
+        createdAt: NOW - DAY,
+      }],
+      assessments: [],
+      now: NOW,
+    });
+
+    expect(snapshot.confidenceIndicators.crossContextAttempts).toBe(1);
+    expect(snapshot.confidenceIndicators.crossContextVerified).toBe(0);
+    expect(snapshot.confidenceIndicators.crossContextRate).toBeNull();
   });
 });

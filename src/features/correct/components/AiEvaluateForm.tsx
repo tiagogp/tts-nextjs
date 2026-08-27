@@ -6,6 +6,8 @@ import { Textarea } from "@/components/ui/Field";
 import { Spinner } from "@/components/ui/Spinner";
 import { cn } from "@/lib/cn";
 import { useT } from "@/i18n/I18nProvider";
+import LocalModelNotice from "@/features/speech/components/LocalModelNotice";
+import type { LocalModelState } from "@/features/speech/hooks/useLocalModel";
 
 interface AiEvaluateFormProps {
   value: string;
@@ -13,6 +15,8 @@ interface AiEvaluateFormProps {
   evaluating: boolean;
   transcribing: boolean;
   recording: boolean;
+  /** Speech recognition — recording and uploaded audio both go through it. */
+  whisper: LocalModelState;
   note: string | null;
   evaluatorHint: string | null;
   ollamaOffline: boolean;
@@ -29,6 +33,7 @@ export function AiEvaluateForm({
   evaluating,
   transcribing,
   recording,
+  whisper,
   note,
   evaluatorHint,
   ollamaOffline,
@@ -58,6 +63,7 @@ export function AiEvaluateForm({
           {note}
         </p>
       )}
+      <LocalModelNotice model={whisper} />
       <div className="flex flex-wrap items-center gap-2">
         <Button
           variant="secondary"

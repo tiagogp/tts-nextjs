@@ -4,11 +4,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Select from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { WorkflowSteps } from "@/components/ui/WorkflowSteps";
 import { Field, Input } from "@/components/ui/Field";
 import { Notice } from "@/components/ui/Notice";
 import { Spinner } from "@/components/ui/Spinner";
 import Disclosure from "@/components/ui/Disclosure";
-import { YOUTUBE_IMPORT_MAX_DURATION_MINUTES } from "@/lib/constants";
+import { discoverFailureMessage } from "@/lib/discoverImport";
 import { getCounts, saveGeneratedDeck } from "@/lib/store/repository";
 import { useAiSettings } from "@/features/settings/context/AiSettingsContext";
 import type { Card as CardModel, PhraseCandidate } from "@/lib/cards/schema";
@@ -19,12 +21,16 @@ import { ProviderPicker } from "@/features/cards/components/ProviderPicker";
 import { DeckPreview } from "@/features/cards/components/DeckPreview";
 import { SourcePicker } from "@/features/discover/components/SourcePicker";
 import { TranscriptReview } from "@/features/discover/components/TranscriptReview";
+import { ImportedListeningProbe } from "@/features/listening/components/ImportedListeningProbe";
 import { ENGLISH_LEVELS, GENERATION_TIMEOUT_MS } from "@/features/discover/constants";
 import type { DiscoverResult, DiscoverSourceKind, EnglishLevel, TranscriptSegment } from "@/features/discover/types";
-import { curateDiscoverSegments, extractDiscoverSource, generateDiscoverDeck } from "@/features/discover/api";
+import { curateDiscoverSegments, extractDiscoverSource, generateDiscoverDeck, isAuthoredSourceError } from "@/features/discover/api";
 import { DEFAULT_LEARNING_PROFILE, getLearningProfile } from "@/features/settings/learningProfile";
 import { markFirstRunPhrasesSaved, startFirstRunActivation } from "@/features/activation/firstRun";
+import LocalModelNotice from "@/features/speech/components/LocalModelNotice";
+import { useWhisperModel } from "@/features/speech/hooks/useLocalModel";
 import { emitActivity } from "@/lib/store/activityLog";
+import { useStageTimer } from "@/features/method/useStageTimer";
 import { useT } from "@/i18n/I18nProvider";
 
 /**
@@ -85,8 +91,12 @@ export default function DiscoverTab({
   const [targetLevel, setTargetLevel] = useState<EnglishLevel>(DEFAULT_LEARNING_PROFILE.level);
   const [loading, setLoading] = useState(false);
   const [curating, setCurating] = useState(false);
-  const [downloadingModel, setDownloadingModel] = useState(false);
+  // Transcribing a video needs Whisper. The shared store owns that install (one
+  // poller, live percentage) — this tab used to run a second poller of its own
+  // that could only say "downloading" with no idea how far along it was.
+  const whisper = useWhisperModel();
   const [transcribeProgress, setTranscribeProgress] = useState<{ percent: number; stage: string } | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [curationNote, setCurationNote] = useState<string | null>(initialCurationNote);
   const [result, setResult] = useState<DiscoverResult | null>(null);
@@ -96,6 +106,9 @@ export default function DiscoverTab({
   } | null>(null);
   const [productionPrompt, setProductionPrompt] = useState<string | null>(null);
   const [kept, setKept] = useState<Set<number>>(new Set());
+  // Per-import, and never remembered: the probe is offered once for this result, and a
+  // learner who skips it is not asked again for the same source.
+  const [probeDone, setProbeDone] = useState(false);
   const [playing, setPlaying] = useState<number | null>(null);
   const selection = useProviderSelection();
   const { provider, providerReady, selectedModel } = selection;
@@ -126,10 +139,14 @@ export default function DiscoverTab({
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const stopAtRef = useRef<number | null>(null);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Listening is credited for the seconds actually played, and banked once — not a flat
+  // minute every time the learner presses play on the same segment.
+  const listenTimer = useStageTimer("listen", 1, { autoStart: false });
+  const noticeTimer = useStageTimer("notice", 3);
+  const listenedRef = useRef(false);
   const playRequestRef = useRef(0);
   const sourceInputRef = useRef<HTMLInputElement | null>(null);
-  const resultSourceId = result?.sourceId;
 
   useEffect(() => {
     if (!prefill) return;
@@ -149,11 +166,44 @@ export default function DiscoverTab({
 
   useEffect(
     () => () => {
-      if (pollRef.current) window.clearInterval(pollRef.current);
       audioRef.current?.pause();
     },
     [],
   );
+
+  // Importing can run for minutes with no percentage to show (download, PDF parse,
+  // curation). A ticking counter is the cheapest proof the app is still working.
+  useEffect(() => {
+    if (!loading) return;
+    const startedAt = Date.now();
+    const timer = window.setInterval(() => {
+      setElapsedSeconds(Math.round((Date.now() - startedAt) / 1000));
+    }, 1000);
+    // Reset on teardown rather than on entry, so the next import starts from 0
+    // without writing state during the effect body.
+    return () => {
+      window.clearInterval(timer);
+      setElapsedSeconds(0);
+    };
+  }, [loading]);
+
+  const commitListen = useCallback(
+    (subjectId?: string) => {
+      if (!listenedRef.current) return;
+      listenedRef.current = false;
+      void emitActivity("method_stage", {
+        stage: "listen",
+        area: "listening",
+        source: "discover",
+        minutes: listenTimer.commit(),
+        subjectId,
+      });
+    },
+    [listenTimer],
+  );
+
+  // A learner who leaves Discover mid-clip still listened. Bank it on the way out.
+  useEffect(() => () => commitListen(), [commitListen]);
 
   // Stop clip playback at the segment boundary.
   useEffect(() => {
@@ -162,22 +212,35 @@ export default function DiscoverTab({
     const onTimeUpdate = () => {
       if (stopAtRef.current != null && audio.currentTime >= stopAtRef.current) {
         audio.pause();
+        listenTimer.pause();
         stopAtRef.current = null;
         setPlaying(null);
+        return;
       }
+      // Audio playing is itself attention — keep the idle window from closing on a
+      // learner who is listening rather than clicking.
+      listenTimer.touch();
+    };
+    const onPause = () => {
+      listenTimer.pause();
+      stopAtRef.current = null;
+      setPlaying(null);
     };
     // Bundled clips (demo) play to their natural end rather than to a timestamp.
     const onEnded = () => {
+      listenTimer.pause();
       stopAtRef.current = null;
       setPlaying(null);
     };
     audio.addEventListener("timeupdate", onTimeUpdate);
+    audio.addEventListener("pause", onPause);
     audio.addEventListener("ended", onEnded);
     return () => {
       audio.removeEventListener("timeupdate", onTimeUpdate);
+      audio.removeEventListener("pause", onPause);
       audio.removeEventListener("ended", onEnded);
     };
-  }, [result]);
+  }, [result, listenTimer]);
 
   const playClip = useCallback(
     async (index: number, seg: TranscriptSegment) => {
@@ -188,6 +251,7 @@ export default function DiscoverTab({
 
       if (playing === index) {
         audio.pause();
+        listenTimer.pause();
         stopAtRef.current = null;
         setPlaying(null);
         return;
@@ -196,6 +260,7 @@ export default function DiscoverTab({
       // Bundled per-segment clip (demo): swap the source and play it whole.
       if (seg.clipUrl) {
         audio.pause();
+        listenTimer.pause();
         stopAtRef.current = null;
         setPlaying(null);
         if (audio.src !== new URL(seg.clipUrl, window.location.href).href) {
@@ -209,13 +274,8 @@ export default function DiscoverTab({
           await audio.play();
           if (playRequestRef.current === requestId) {
             setPlaying(index);
-            void emitActivity("method_stage", {
-              stage: "listen",
-              area: "listening",
-              source: "discover",
-              minutes: 1,
-              subjectId: resultSourceId,
-            });
+            listenedRef.current = true;
+            listenTimer.start();
           }
         } catch {
           if (playRequestRef.current === requestId) setPlaying(null);
@@ -227,6 +287,7 @@ export default function DiscoverTab({
       const end = Math.max(start + 0.25, seg.endMs / 1000);
 
       audio.pause();
+      listenTimer.pause();
       stopAtRef.current = null;
       setPlaying(null);
 
@@ -247,13 +308,8 @@ export default function DiscoverTab({
         await audio.play();
         if (playRequestRef.current === requestId) {
           setPlaying(index);
-          void emitActivity("method_stage", {
-            stage: "listen",
-            area: "listening",
-            source: "discover",
-            minutes: 1,
-            subjectId: resultSourceId,
-          });
+          listenedRef.current = true;
+          listenTimer.start();
         }
       } catch {
         if (playRequestRef.current === requestId) {
@@ -262,8 +318,19 @@ export default function DiscoverTab({
         }
       }
     },
-    [playing, resultSourceId],
+    [playing, listenTimer],
   );
+
+  // One label for both the button and the loading panel, so they never disagree.
+  const stageLabel = curating
+    ? t("Selecting…")
+    : transcribeProgress?.stage === "transcribe"
+      ? t("Transcribing… {percent}%", { percent: transcribeProgress.percent })
+      : transcribeProgress?.stage === "download"
+        ? t("Downloading audio…")
+        : sourceKind === "youtube"
+          ? t("Starting…")
+          : t("Extracting…");
 
   const hasSource = sourceKind === "pdf" ? file !== null : url.trim().length > 0;
   // Importing/transcribing a source never needs the AI provider — only curation
@@ -275,6 +342,7 @@ export default function DiscoverTab({
     setLoading(true);
     setError(null);
     setResult(null);
+    setProbeDone(false);
     setKept(new Set());
     setPlaying(null);
     setCurationNote(null);
@@ -303,17 +371,10 @@ export default function DiscoverTab({
       sourceId: (sourceKind === "pdf" ? file?.name : url.trim()) || undefined,
     });
 
-    // Only the YouTube path may download the one-time Whisper model.
-    if (sourceKind === "youtube") {
-      const poll = async () => {
-        try {
-          const res = await fetch("/api/status");
-          const data = await res.json();
-          if (data.downloading_whisper) setDownloadingModel(true);
-        } catch {}
-      };
-      pollRef.current = setInterval(poll, 2000);
-    }
+    // Only the YouTube path may download the one-time Whisper model. Asking for
+    // it here is what puts the install on screen: the runtime would start it
+    // anyway mid-import, and the server hands both requests the same download.
+    if (sourceKind === "youtube" && whisper.ready !== true) void whisper.ensure();
 
     try {
       const data = await extractDiscoverSource({
@@ -364,20 +425,19 @@ export default function DiscoverTab({
     } catch (err: unknown) {
       const fallback =
         sourceKind === "youtube"
-          ? `Não consegui importar esse vídeo. Tente um vídeo público com menos de ${YOUTUBE_IMPORT_MAX_DURATION_MINUTES} minutos ou continue pela lição inicial e Estudar.`
+          ? discoverFailureMessage("unknown")
           : sourceKind === "article"
             ? "Não consegui abrir esse artigo. Tente outro link ou continue pela lição inicial e Estudar."
             : "Não consegui ler esse PDF. Tente um arquivo menor ou continue pela lição inicial e Estudar.";
-      const message = err instanceof Error ? err.message : "";
-      setError(message.startsWith("Não ") || message.startsWith("O processamento") ? message : fallback);
+      // Server copy already names the real cause — don't overwrite it with a guess.
+      const message = err instanceof Error && isAuthoredSourceError(err) ? err.message : "";
+      setError(message || fallback);
     } finally {
-      if (pollRef.current) clearInterval(pollRef.current);
       setLoading(false);
       setCurating(false);
-      setDownloadingModel(false);
       setTranscribeProgress(null);
     }
-  }, [sourceKind, url, file, provider, providerReady, selectedModel, focus, targetLevel, setGenError, setGenDone, t]);
+  }, [sourceKind, url, file, provider, providerReady, selectedModel, focus, targetLevel, setGenError, setGenDone, whisper, t]);
 
   const toggleKeep = (index: number) => {
     setKept((prev) => {
@@ -433,13 +493,15 @@ export default function DiscoverTab({
       }));
       const saved = await saveGeneratedDeck(cards, candidates);
       const activation = markFirstRunPhrasesSaved({ sourceId: result.sourceId });
-      void emitActivity("cards_created", { count: cards.length, source: "discover", activation });
-      void emitActivity("own_source_completed", { cardsCreated: cards.length });
+      void emitActivity("cards_created", { count: saved.added, source: "discover", activation });
+      void emitActivity("own_source_completed", { cardsCreated: saved.added });
+      // Keeping phrases is the end of the listening pass that produced them.
+      commitListen(result.sourceId);
       void emitActivity("method_stage", {
         stage: "notice",
         area: "structured",
         source: "discover",
-        minutes: 3,
+        minutes: noticeTimer.commit(),
         subjectId: result.sourceId,
       });
       setProductionPrompt(candidates[0]?.text ?? null);
@@ -451,7 +513,7 @@ export default function DiscoverTab({
     } catch (err: unknown) {
       setGenError(err instanceof Error ? err.message : t("Could not save these phrases."));
     }
-  }, [result, kept, buildCandidates, setGenError, setGenDone, t]);
+  }, [result, kept, buildCandidates, setGenError, setGenDone, t, commitListen, noticeTimer]);
 
   const generateCards = useCallback(async () => {
     if (!result || kept.size === 0) return;
@@ -473,12 +535,43 @@ export default function DiscoverTab({
 
   return (
     <div className="space-y-5">
-      <Card className="space-y-4 p-5">
-        <div className="space-y-1">
-          <p className="text-sm font-semibold tracking-[-0.01em] text-ink">{t("Turn useful phrases into daily practice")}</p>
-          <p className="text-xs text-ink-muted">
-            {t("Bring one video, article, or PDF when you want practice from your own material.")}
-          </p>
+      <PageHeader
+        eyebrow={t("Build your phrase library")}
+        title={t("Phrases")}
+        description={t("Bring in useful English, choose what matters, and turn it into focused daily practice.")}
+      />
+
+      <WorkflowSteps
+        label={t("Phrase workflow")}
+        steps={[t("Choose source"), t("Pick phrases"), t("Use one now")]}
+        current={productionPrompt ? 3 : result ? 2 : 1}
+      />
+
+      {(!result || loading) && <Card className="space-y-4 p-5 sm:p-6">
+        <div className="space-y-1" aria-live="polite">
+          {loading ? (
+            <>
+              <h2 className="flex items-center gap-2 text-lg font-semibold tracking-[-0.015em] text-ink">
+                <Spinner className="h-4 w-4 shrink-0" />
+                {stageLabel}
+              </h2>
+              <p className="text-xs text-ink-muted">
+                {sourceKind === "youtube"
+                  ? t("Downloading and transcribing your video. Longer videos take a few minutes — you can leave this open.")
+                  : t("Reading your source and pulling out the phrases. This usually takes a few seconds.")}
+              </p>
+              <p className="text-xs tabular-nums text-ink-muted opacity-70">
+                {t("{seconds}s elapsed", { seconds: elapsedSeconds })}
+              </p>
+            </>
+          ) : (
+            <>
+              <h2 className="text-lg font-semibold tracking-[-0.015em] text-ink">{t("Choose a source")}</h2>
+              <p className="text-xs text-ink-muted">
+                {t("Bring one video, article, or PDF when you want practice from your own material.")}
+              </p>
+            </>
+          )}
         </div>
 
         {!result && !loading && (
@@ -574,24 +667,16 @@ export default function DiscoverTab({
               )}
 
               <Button
-                variant="secondary"
+                variant="primary"
                 size="lg"
-                className="flex min-h-10 items-center justify-center gap-2"
+                className="flex min-h-11 items-center justify-center gap-2 sm:w-auto"
                 onClick={extract}
                 disabled={loading || !canRun}
               >
                 {loading ? (
                   <>
                     <Spinner className="h-3.5 w-3.5" />
-                    {curating
-                      ? t("Selecting…")
-                      : transcribeProgress?.stage === "transcribe"
-                        ? t("Transcribing… {percent}%", { percent: transcribeProgress.percent })
-                        : transcribeProgress?.stage === "download"
-                          ? t("Downloading audio…")
-                          : sourceKind === "youtube"
-                            ? t("Starting…")
-                            : t("Extracting…")}
+                    {stageLabel}
                   </>
                 ) : (
                   t("Find phrases to learn")
@@ -601,21 +686,21 @@ export default function DiscoverTab({
           </Disclosure>
         )}
 
-        {loading && transcribeProgress?.stage === "transcribe" && (
+        {loading && (
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-line">
-            <div
-              className="h-full rounded-full bg-accent transition-all duration-300 ease-linear"
-              style={{ width: `${transcribeProgress.percent}%` }}
-            />
+            {transcribeProgress?.stage === "transcribe" ? (
+              <div
+                className="h-full rounded-full bg-accent transition-all duration-300 ease-linear"
+                style={{ width: `${transcribeProgress.percent}%` }}
+              />
+            ) : (
+              // No percentage available yet — a pulsing track still reads as "running".
+              <div className="h-full w-full rounded-full bg-accent/40 motion-safe:animate-pulse" />
+            )}
           </div>
         )}
 
-        {downloadingModel && (
-          <div className="flex items-center gap-2 rounded border border-line bg-surface px-3 py-2.5 text-xs text-ink-soft">
-            <Spinner className="h-3 w-3 shrink-0" />
-            {t("Preparing audio discovery for the first time. This can take a minute.")}
-          </div>
-        )}
+        {sourceKind === "youtube" && <LocalModelNotice model={whisper} />}
 
         {error && (
           <Notice tone="error" className="text-xs">
@@ -626,7 +711,15 @@ export default function DiscoverTab({
           </Notice>
         )}
 
-      </Card>
+      </Card>}
+
+      {/* Offered above the transcript and before it, because that ordering is the
+          measurement: after the text is on screen the voice is no longer unfamiliar.
+          It renders nothing when the source has no usable audio, no provider is
+          configured, or this source was already heard. */}
+      {result && !probeDone && (
+        <ImportedListeningProbe result={result} onDone={() => setProbeDone(true)} />
+      )}
 
       {result && (
         <TranscriptReview
@@ -658,11 +751,12 @@ export default function DiscoverTab({
             const activation = markFirstRunPhrasesSaved({ sourceId: result?.sourceId });
             void emitActivity("cards_created", { count: cards.length, source: "discover", activation });
             void emitActivity("own_source_completed", { cardsCreated: cards.length });
+            commitListen(result?.sourceId);
             void emitActivity("method_stage", {
               stage: "notice",
               area: "structured",
               source: "discover",
-              minutes: 3,
+              minutes: noticeTimer.commit(),
               subjectId: result?.sourceId,
             });
             setProductionPrompt(deckPreview.candidates[0]?.text ?? null);

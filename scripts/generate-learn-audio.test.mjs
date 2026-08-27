@@ -9,10 +9,15 @@ import {
   installNativeRecordings,
   isRiffWave,
   lessonAudioItems,
+  lessonClipMap,
   nativeInstallState,
   readNativeManifest,
   synthesisTargets,
   validateNativeLibrary,
+  validateAudioMetadata,
+  audioMetadataForClip,
+  curriculumCoverage,
+  validateDialogueVoices,
 } from "./generate-learn-audio.mjs";
 
 const tempDirs = [];
@@ -103,6 +108,27 @@ describe("lessonAudioItems", () => {
     const lessons = [{ id: "evil", level: "A1", phrases: [{ en: "Nope.", clip: "/../outside.wav" }] }];
     expect(() => lessonAudioItems(lessons, publicDir)).toThrow(/Invalid lesson audio path/);
   });
+
+  it("collects dialogue clips, which roadmap lessons declare alongside phrases", () => {
+    const publicDir = path.join(os.tmpdir(), "pl-public");
+    const lessons = [
+      {
+        id: "a2-hotel",
+        level: "A2",
+        phrases: [{ en: "I have a reservation.", clip: "/learn/audio/a2-hotel/01.wav" }],
+        dialogue: [
+          { speaker: "Clerk", en: "Do you have a reservation?", clip: "/learn/audio/a2-hotel/d01.wav" },
+          { speaker: "Guest", en: "Yes, under Silva.", clip: "/learn/audio/a2-hotel/d02.wav" },
+        ],
+      },
+    ];
+    expect(lessonAudioItems(lessons, publicDir).map((item) => item.clip)).toEqual([
+      "/learn/audio/a2-hotel/01.wav",
+      "/learn/audio/a2-hotel/d01.wav",
+      "/learn/audio/a2-hotel/d02.wav",
+    ]);
+    expect(lessonClipMap(lessons).get("a2-hotel")).toHaveLength(3);
+  });
 });
 
 describe("native library validation", () => {
@@ -141,11 +167,64 @@ describe("native library validation", () => {
       recordings,
       strayFiles: [],
       manifestEntries: [
-        { clip: "/learn/audio/a1-greetings/01.wav", speaker: "Jane (US native)", license: "own recording" },
+        {
+          clip: "/learn/audio/a1-greetings/01.wav", recordingKind: "native", speaker: "Jane (US native)", speakerId: "jane", accent: "US",
+          delivery: "natural", speedWpm: 110, connectedSpeechFeatures: [], provenance: "speaker consent", license: "own recording",
+        },
       ],
       declaredClips: new Set(["/learn/audio/a1-greetings/01.wav"]),
     });
     expect(errors).toEqual([]);
+  });
+});
+
+describe("audio evidence metadata", () => {
+  it("does not let synthetic fallback claim native provenance", () => {
+    const metadata = audioMetadataForClip("/clip.wav", null, "hello there");
+    expect(metadata.recordingKind).toBe("synthetic");
+    expect(validateAudioMetadata([metadata])).toEqual([]);
+    expect(validateAudioMetadata([{ ...metadata, recordingKind: "native" }])).toContain(
+      "/clip.wav needs a license for native audio.",
+    );
+  });
+
+  it("requires real-audio coverage in every CEFR five-lesson batch", () => {
+    const lessons = Array.from({ length: 5 }, (_, index) => ({
+      id: `a1-${index}`,
+      level: "A1",
+      phrases: [{ en: "A short phrase", clip: `/a1-${index}.wav` }],
+    }));
+    const metadata = lessons.map((lesson, index) => ({
+      clip: lesson.phrases[0].clip,
+      recordingKind: "native",
+      speakerId: `speaker-${index}`,
+      accent: index % 2 ? "US" : "UK",
+      delivery: "natural",
+      speedWpm: 110,
+      connectedSpeechFeatures: [],
+      provenance: "consented recording",
+      license: "own recording",
+    }));
+    expect(curriculumCoverage(lessons, metadata).find((row) => row.level === "A1")?.passes).toBe(true);
+    expect(curriculumCoverage(lessons, metadata.map((item) => ({ ...item, recordingKind: "synthetic" }))).find((row) => row.level === "A1")?.passes).toBe(false);
+  });
+
+  it("assigns different synthetic voices to different dialogue roles", () => {
+    const lessons = [{
+      id: "a1-dialogue",
+      level: "A1",
+      phrases: [],
+      dialogue: [
+        { speaker: "Host", en: "Hello", clip: "/host.wav" },
+        { speaker: "Guest", en: "Hi", clip: "/guest.wav" },
+      ],
+    }];
+    const items = lessonAudioItems(lessons, path.join(os.tmpdir(), "pl-public"));
+    const metadata = items.map((item) => audioMetadataForClip(item.clip, null, item.text, item));
+    expect(validateDialogueVoices(lessons, metadata)).toEqual([]);
+    expect(validateDialogueVoices(lessons, metadata.map((item) => ({ ...item, speakerId: "kokoro:af_heart" })))).toContain(
+      "a1-dialogue dialogue roles Host and Guest use the same voice.",
+    );
   });
 });
 

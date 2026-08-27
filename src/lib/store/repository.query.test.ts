@@ -80,7 +80,7 @@ describe("countDueCards / getCounts", () => {
   it("keeps getCounts().due in agreement with getDueCards()", async () => {
     await saveCards([makeCard("x"), makeCard("y")]);
     const counts = await getCounts();
-    expect(counts.cards).toBe(2);
+    expect(counts.cards).toBe(4);
     expect(counts.due).toBe((await getDueCards()).length);
   });
 });
@@ -137,10 +137,11 @@ describe("saveCards batching", () => {
     expect(advanced!.reps).toBe(before!.reps + 1);
 
     const { added } = await saveCards([makeCard("keep"), makeCard("fresh")]);
-    expect(added).toBe(1);
+    expect(added).toBe(2);
     // The graded card's SRS state must survive the re-save untouched.
     expect((await getSrs("keep"))!.reps).toBe(advanced!.reps);
     expect(await getSrs("fresh")).toBeDefined();
+    expect(await getSrs("fresh--production")).toBeDefined();
   });
 });
 
@@ -159,5 +160,17 @@ describe("getReviewsSince", () => {
     expect(recent).toHaveLength(1);
     expect(recent[0].reviewedAt).toBe(1_700_000_200_000);
     expect(await getReviewsSince(0)).toHaveLength(2);
+  });
+
+  it("keeps the original FSRS due time so on-time review can be measured", async () => {
+    await saveCards([makeCard("scheduled")]);
+    const card = makeCard("scheduled");
+    const srs = await getSrs("scheduled");
+    const reviewedAt = new Date((srs?.due ?? 0) + 60_000);
+
+    const { review: stored } = await recordReview(card, srs!, Rating.Good, undefined, reviewedAt);
+
+    expect(stored.dueAt).toBe(srs!.due);
+    expect(stored.wasDue).toBe(true);
   });
 });

@@ -25,10 +25,12 @@ export function GradeButtons({
   srs,
   disabled,
   onGrade,
+  allowedGrades,
 }: {
   srs: SrsRecord;
   disabled?: boolean;
   onGrade: (grade: Grade) => void;
+  allowedGrades?: Grade[];
 }) {
   const { t } = useT();
   return (
@@ -37,9 +39,9 @@ export function GradeButtons({
         <motion.button
           key={grade}
           type="button"
-          disabled={disabled}
-          whileHover={disabled ? undefined : hoverLift}
-          whileTap={disabled ? undefined : { ...tapPress, y: 0 }}
+          disabled={disabled || (allowedGrades ? !allowedGrades.includes(grade) : false)}
+          whileHover={disabled || (allowedGrades && !allowedGrades.includes(grade)) ? undefined : hoverLift}
+          whileTap={disabled || (allowedGrades && !allowedGrades.includes(grade)) ? undefined : { ...tapPress, y: 0 }}
           transition={springSnappy}
           onClick={() => onGrade(grade)}
           className={cn(

@@ -7,6 +7,18 @@ import { getLearnerLangs } from "@/features/settings/learningProfile";
 const CONNECTION_FALLBACK_ERROR =
   "Não consegui falar com o app agora. Tente de novo em instantes.";
 
+/**
+ * Marks an error whose message is server-authored learner copy, so the UI shows
+ * it verbatim instead of replacing it with a generic guess about the cause.
+ */
+export function isAuthoredSourceError(err: unknown): boolean {
+  return (err as { authored?: unknown } | null)?.authored === true;
+}
+
+function authoredError(message: string): Error {
+  return Object.assign(new Error(message), { authored: true });
+}
+
 export async function extractDiscoverSource(input: {
   sourceKind: DiscoverSourceKind;
   url: string;
@@ -18,7 +30,7 @@ export async function extractDiscoverSource(input: {
     form.append("file", input.file as File);
     const response = await fetch("/api/discover/pdf", { method: "POST", body: form });
     const data = (await response.json()) as DiscoverResult & { error?: string };
-    if (!response.ok) throw new Error(data.error ?? CONNECTION_FALLBACK_ERROR);
+    if (!response.ok) throw authoredError(data.error ?? CONNECTION_FALLBACK_ERROR);
     return data;
   }
 
@@ -29,7 +41,7 @@ export async function extractDiscoverSource(input: {
       body: JSON.stringify({ url: input.url.trim() }),
     });
     const data = (await response.json()) as DiscoverResult & { error?: string };
-    if (!response.ok) throw new Error(data.error ?? CONNECTION_FALLBACK_ERROR);
+    if (!response.ok) throw authoredError(data.error ?? CONNECTION_FALLBACK_ERROR);
     return data;
   }
 
@@ -41,7 +53,7 @@ export async function extractDiscoverSource(input: {
   });
   if (!response.ok || !response.body) {
     const data = (await response.json().catch(() => ({}))) as { error?: string };
-    throw new Error(data.error ?? CONNECTION_FALLBACK_ERROR);
+    throw authoredError(data.error ?? CONNECTION_FALLBACK_ERROR);
   }
 
   const reader = response.body.getReader();
@@ -69,7 +81,7 @@ export async function extractDiscoverSource(input: {
       } else if (event.type === "done" && event.result) {
         return event.result;
       } else if (event.type === "error") {
-        throw new Error(event.message ?? CONNECTION_FALLBACK_ERROR);
+        throw authoredError(event.message ?? CONNECTION_FALLBACK_ERROR);
       }
     }
   }

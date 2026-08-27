@@ -5,7 +5,7 @@ import {
 } from "./landingLanguage";
 
 describe("landing language", () => {
-  it("keeps Portuguese as the W5 default", () => {
+  it("keeps Portuguese as the default", () => {
     expect(normalizeLandingLanguage(undefined)).toBe("pt");
     expect(normalizeLandingLanguage("pt")).toBe("pt");
   });

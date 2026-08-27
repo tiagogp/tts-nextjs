@@ -50,13 +50,22 @@ export interface ModelStatus {
   downloading_kokoro: boolean;
   loading_whisper: boolean;
   downloading_whisper: boolean;
+  /** Progress of whichever model is downloading — kept for older callers. */
   download_progress?: number;
+  kokoro_progress?: number;
+  whisper_progress?: number;
   error: string | null;
 }
 
 const active = new Map<ModelId, Promise<string>>();
 const downloading = new Set<ModelId>();
-let progress = 0;
+/**
+ * Per-model byte progress (0..1). Kokoro and Whisper can be downloading at the
+ * same time — the voice model auto-starts after onboarding while the first
+ * lesson prefetches speech recognition — so one shared counter made each
+ * progress bar show the other model's number.
+ */
+const progressById = new Map<ModelId, number>();
 let lastError: string | null = null;
 
 async function exists(file: string): Promise<boolean> {
@@ -83,7 +92,7 @@ async function download(spec: ModelSpec, target: string): Promise<void> {
   const meter = new Transform({
     transform(chunk, _encoding, callback) {
       received += chunk.length;
-      progress = Math.min(1, received / spec.size);
+      progressById.set(spec.id, Math.min(1, received / spec.size));
       callback(null, chunk);
     },
   });
@@ -140,7 +149,7 @@ async function ensure(spec: ModelSpec): Promise<string> {
   await rm(archive, { force: true });
   await mkdir(tempDir, { recursive: true });
   downloading.add(spec.id);
-  progress = 0;
+  progressById.set(spec.id, 0);
   try {
     await download(spec, archive);
     if (spec.archive) {
@@ -199,6 +208,12 @@ export async function modelStatus(): Promise<ModelStatus> {
     kokoroInstalled(),
     whisperInstalled(),
   ]);
+  const activeId = downloading.has("kokoro-1.0")
+    ? "kokoro-1.0"
+    : downloading.has("whisper-small")
+      ? "whisper-small"
+      : null;
+  const progress = activeId ? progressById.get(activeId) ?? 0 : 0;
   return {
     // `ready` reflects whether the TTS model needed for audio is on disk — the
     // gate every apkg export depends on — not just "the runtime is up".
@@ -212,6 +227,12 @@ export async function modelStatus(): Promise<ModelStatus> {
     loading_whisper: whisper,
     downloading_whisper: downloading.has("whisper-small"),
     download_progress: downloading.size || whisper || kokoro ? progress : undefined,
+    kokoro_progress: kokoro || downloading.has("kokoro-1.0")
+      ? progressById.get("kokoro-1.0") ?? 0
+      : undefined,
+    whisper_progress: whisper || downloading.has("whisper-small")
+      ? progressById.get("whisper-small") ?? 0
+      : undefined,
     error: lastError,
   };
 }

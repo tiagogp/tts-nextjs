@@ -61,13 +61,58 @@ export function parseRoadmap(markdown) {
 export function extractMessageKeys(source) {
   const keys = new Set();
   for (const line of source.split("\n")) {
-    const match = line.match(/^\s*"((?:\\.|[^"\\])*)"\s*:/);
-    if (!match) continue;
-    try {
-      keys.add(JSON.parse(`"${match[1]}"`));
-    } catch {
-      // TypeScript parsing will report malformed source; this extractor only gates lesson keys.
+    const quoted = line.match(/^\s*"((?:\\.|[^"\\])*)"\s*:/);
+    if (quoted) {
+      try {
+        keys.add(JSON.parse(`"${quoted[1]}"`));
+      } catch {
+        // TypeScript parsing will report malformed source; this extractor only gates lesson keys.
+      }
+      continue;
     }
+    // Keys that are valid identifiers are written unquoted (Travel, Study, Continue).
+    // They translate at runtime like any other, so the validator has to see them or it
+    // reports a missing PT-BR message for a string that is in fact translated. Entries
+    // open a brace, which keeps the inner language lines (pt: "...") out of the set.
+    const bare = line.match(/^ {2}([A-Za-z_$][\w$]*)\s*:\s*\{/);
+    if (bare) keys.add(bare[1]);
+  }
+  return keys;
+}
+
+/**
+ * Keys that carry a non-empty pt value. extractMessageKeys only proves a key
+ * exists, so `"Foo": {}` would satisfy the gate while rendering English to a
+ * Portuguese learner. Lesson copy is gated on this set instead.
+ */
+export function extractTranslatedMessageKeys(source) {
+  const keys = new Set();
+  let current = null;
+  const hasPt = (line) => {
+    const match = line.match(/(?:^|[{,\s])pt\s*:\s*"((?:\\.|[^"\\])*)"/);
+    return Boolean(match) && match[1].trim() !== "";
+  };
+  for (const line of source.split("\n")) {
+    const quoted = line.match(/^\s*"((?:\\.|[^"\\])*)"\s*:/);
+    const bare = line.match(/^ {2}([A-Za-z_$][\w$]*)\s*:\s*\{/);
+    if (quoted || bare) {
+      current = null;
+      if (quoted) {
+        try {
+          current = JSON.parse(`"${quoted[1]}"`);
+        } catch {
+          // TypeScript parsing reports malformed source; this extractor only gates lesson keys.
+        }
+      } else {
+        current = bare[1];
+      }
+      // Single-line entries carry their pt value on the same line as the key.
+      if (current && hasPt(line)) keys.add(current);
+      continue;
+    }
+    if (!current) continue;
+    if (hasPt(line)) keys.add(current);
+    if (/^\s*\},?\s*$/.test(line)) current = null;
   }
   return keys;
 }
@@ -92,6 +137,195 @@ function lessonAudio(lesson) {
       ? lesson.dialogue.map((line) => ({ clip: line.clip, text: line.en, kind: "dialogue" }))
       : []),
   ];
+}
+
+const SLOT = /_{3,}/;
+
+/** Mirror of `expandContraction` in src/lib/language/pattern.ts. */
+const NEGATIVE_STEMS = { wo: "will", ca: "can", sha: "shall" };
+const CLITICS = { m: "am", re: "are", ve: "have", ll: "will" };
+const expandContraction = (token) => {
+  if (token === "cannot") return ["can", "not"];
+  if (token === "let's") return ["let", "us"];
+  if (token.endsWith("n't")) {
+    const stem = token.slice(0, -3);
+    return [NEGATIVE_STEMS[stem] ?? stem, "not"];
+  }
+  const [stem, clitic] = token.split("'");
+  if (stem && clitic && CLITICS[clitic]) return [stem, CLITICS[clitic]];
+  return [token];
+};
+
+/** Mirror of `tokenize` in src/lib/language/pattern.ts. Kept in step by the tests below. */
+const patternTokens = (value) => value.normalize("NFKD").replace(/[\u0300-\u036f]/g, "")
+  .replace(/[\u2018\u2019\u02bc]/g, "'").toLowerCase()
+  .replace(/[^a-z0-9']+/g, " ").trim().split(/\s+/).filter(Boolean).flatMap(expandContraction);
+
+/** Mirror of `usesFrame` in src/lib/language/pattern.ts. Kept in step by the tests below. */
+function frameMatches(frame, sentence) {
+  const parts = frame.split(SLOT).map(patternTokens);
+  const source = parts
+    .map((part) => part.map((token) => token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("\\s+"))
+    .join("\\s+\\S[\\s\\S]*?\\s*");
+  return new RegExp(`(?:^|\\s)${source}(?:\\s|$)`).test(` ${patternTokens(sentence).join(" ")} `);
+}
+
+/**
+ * Pattern data is what makes the variation drill and the offline transfer check possible,
+ * so a malformed frame does not degrade the feature — it silently disables it and, worse,
+ * makes every transfer attempt on that item unverifiable. These are errors, not warnings.
+ */
+export function validatePatterns(lessons) {
+  const errors = [];
+  const warnings = [];
+  const familyFrames = new Map();
+
+  for (const lesson of lessons) {
+    for (const phrase of lesson.phrases ?? []) {
+      // Accepted alternatives are what stop the app calling correct English wrong, so a
+      // duplicate or a stray copy of the phrase itself is not harmless clutter — it is a
+      // wording somebody believed was covered and is not.
+      if (phrase.accept !== undefined) {
+        const where = `${lesson.id}/${JSON.stringify(phrase.en)}`;
+        if (!Array.isArray(phrase.accept) || phrase.accept.length === 0) {
+          errors.push(`${where}: accept must be a non-empty array when present.`);
+        } else {
+          if (phrase.accept.some((value) => typeof value !== "string" || !value.trim())) {
+            errors.push(`${where}: accept holds an empty alternative.`);
+          }
+          if (phrase.accept.includes(phrase.en)) {
+            errors.push(`${where}: accept repeats the phrase itself.`);
+          }
+          if (new Set(phrase.accept).size !== phrase.accept.length) {
+            errors.push(`${where}: accept lists the same alternative twice.`);
+          }
+        }
+      }
+
+      const pattern = phrase.pattern;
+      if (!pattern) continue;
+      const where = `${lesson.id}/${pattern.id ?? "?"}`;
+      if (!pattern.id || !pattern.frame || !pattern.slot) {
+        errors.push(`${where}: pattern needs id, frame and slot.`);
+        continue;
+      }
+      if (!SLOT.test(pattern.frame)) errors.push(`${where}: frame has no ___ slot.`);
+      // A suffix slot tokenizes as its own word and can never match anything.
+      if (/_{3,}[a-z]/i.test(pattern.frame)) errors.push(`${where}: frame glues the slot to a suffix.`);
+      if (!Array.isArray(pattern.examples) || pattern.examples.length < 2) {
+        errors.push(`${where}: a pattern family needs at least two examples.`);
+        continue;
+      }
+      if (!pattern.examples.includes(phrase.en)) {
+        errors.push(`${where}: examples must include the lesson phrase itself.`);
+      }
+      for (const example of pattern.examples) {
+        if (!frameMatches(pattern.frame, example)) {
+          errors.push(`${where}: frame does not match its own example ${JSON.stringify(example)}.`);
+        }
+      }
+      if (pattern.contrast && pattern.examples.includes(pattern.contrast)) {
+        errors.push(`${where}: contrast is also listed as a correct example.`);
+      }
+      // One id, one frame. Two frames sharing an id would interleave unrelated structures.
+      const known = familyFrames.get(pattern.id);
+      if (known && known !== pattern.frame) {
+        errors.push(`${where}: pattern id also used with a different frame ${JSON.stringify(known)}.`);
+      }
+      familyFrames.set(pattern.id, pattern.frame);
+    }
+  }
+
+  for (const lesson of lessons) {
+    if (!["A2", "B1"].includes(lesson.level)) continue;
+    // Only lessons that actually ship. The legacy B1 phrase lists are filtered out of
+    // LESSONS by `hasCompleteGuidedMaterial`, so warning about them is noise — they offer
+    // no drill because they offer no lesson.
+    const shipped = Boolean(
+      lesson.objective?.trim() && lesson.pronunciationFocus?.trim() &&
+      (lesson.dialogue?.length ?? 0) >= 2 && (lesson.comprehension?.length ?? 0) >= 3 &&
+      lesson.productionPrompt?.trim() && lesson.retryHint?.trim(),
+    );
+    if (!shipped) continue;
+    const withPattern = (lesson.phrases ?? []).filter((phrase) => phrase.pattern).length;
+    if (withPattern === 0) {
+      warnings.push(`${lesson.id}: no phrase carries a pattern, so it offers no variation drill.`);
+    }
+  }
+
+  return { errors, warnings };
+}
+
+/**
+ * The cold-listening probe bank.
+ *
+ * Every rule here exists to keep one property true: a probe is speech the learner has never
+ * heard, from a real speaker, heard once. A synthetic probe measures the Kokoro voice; a
+ * probe that is also a lesson clip measures a sentence the learner studied; a probe with
+ * two plausible answers measures nothing. The bank ships empty, and empty is valid — an
+ * absent probe is honest, a fake one is not.
+ */
+export function validateColdProbes(bank, { lessons, manifestEntries }) {
+  const errors = [];
+  const warnings = [];
+  const probes = Array.isArray(bank?.probes) ? bank.probes : null;
+  if (!probes) return { errors: ["src/features/listening/coldProbes.json needs a probes array."], warnings, clips: [] };
+
+  const lessonClips = new Set(lessons.flatMap(lessonAudio).map((item) => item.clip));
+  const nativeByClip = new Map(
+    (Array.isArray(manifestEntries) ? manifestEntries : [])
+      .filter((entry) => nonEmptyString(entry?.clip))
+      .map((entry) => [entry.clip, entry]),
+  );
+  const ids = [];
+  const clips = [];
+  const accents = new Set();
+
+  for (const [index, probe] of probes.entries()) {
+    const owner = `cold probe ${probe?.id ?? index + 1}`;
+    for (const field of ["id", "clip", "accent", "speakerId", "topic"]) {
+      if (!nonEmptyString(probe?.[field])) errors.push(`${owner} is missing ${field}.`);
+    }
+    if (!nonEmptyString(probe?.clip)) continue;
+    ids.push({ value: probe.id, owner });
+    clips.push(probe.clip);
+    accents.add(probe.accent);
+
+    if (!probe.clip.startsWith("/") || !probe.clip.endsWith(".wav")) errors.push(`${owner} needs a valid clip path.`);
+    if (lessonClips.has(probe.clip)) errors.push(`${owner} uses ${probe.clip}, which is lesson audio. A probe the learner studies is not a cold probe.`);
+
+    const native = nativeByClip.get(probe.clip);
+    if (!native) errors.push(`${owner} has no native-audio manifest entry. A probe must be a licensed recording, never synthesis.`);
+    else if (native.recordingKind !== "native") errors.push(`${owner} resolves to ${native.recordingKind} audio.`);
+
+    // 10-25s: long enough to carry a main idea, short enough to hold on one listen.
+    if (!Number.isFinite(probe.durationSec) || probe.durationSec < 10 || probe.durationSec > 25) {
+      errors.push(`${owner} needs durationSec between 10 and 25.`);
+    }
+
+    const questions = Array.isArray(probe.questions) ? probe.questions : [];
+    const mainIdea = questions.filter((question) => question?.kind === "mainIdea");
+    if (mainIdea.length !== 1) errors.push(`${owner} needs exactly one mainIdea question.`);
+    for (const [position, question] of questions.entries()) {
+      const label = `${owner} question ${position + 1}`;
+      if (!["mainIdea", "detail"].includes(question?.kind)) errors.push(`${label} needs kind mainIdea or detail.`);
+      if (!nonEmptyString(question?.prompt)) errors.push(`${label} needs a prompt.`);
+      const options = Array.isArray(question?.options) ? question.options : [];
+      if (options.length < 3) errors.push(`${label} needs at least three options.`);
+      if (new Set(options).size !== options.length) errors.push(`${label} repeats an option.`);
+      if (!options.includes(question?.answer)) errors.push(`${label} has an answer that is not one of its options.`);
+    }
+  }
+
+  addDuplicateErrors(ids, "cold probe id", errors);
+  addDuplicateErrors(clips.map((clip, index) => ({ value: clip, owner: `cold probe ${index + 1}` })), "cold probe clip", errors);
+
+  // Targets from the audit, as warnings: a thin bank still measures something real, and
+  // blocking the build over content the project has not licensed yet helps nobody.
+  if (probes.length > 0 && probes.length < 15) warnings.push(`Cold probe bank has ${probes.length} clips; 15-25 gives a fortnightly probe for a year.`);
+  if (probes.length > 0 && accents.size < 3) warnings.push(`Cold probe bank covers ${accents.size} accent(s); unfamiliar speech means varied speech.`);
+
+  return { errors, warnings, clips };
 }
 
 export function validateLessonModel(lessons, roadmap, translatedStrings) {
@@ -143,6 +377,27 @@ export function validateLessonModel(lessons, roadmap, translatedStrings) {
       }
     }
 
+    // Every lesson needs PT-BR copy, not just roadmap ones: nextLessonFor can serve a
+    // lesson above the learner's level while their profile — and so the Portuguese UI —
+    // stays put, and translate() falls back to the English source on a missing key.
+    if (translatedStrings) {
+      const localized = [
+        lesson.title,
+        lesson.topic,
+        lesson.objective,
+        lesson.pronunciationFocus,
+        lesson.productionPrompt,
+        lesson.retryHint,
+        ...(lesson.comprehension ?? []).flatMap((question) => [
+          question?.prompt,
+          ...(question?.options ?? []),
+        ]),
+      ].filter(nonEmptyString);
+      for (const value of localized) {
+        if (!translatedStrings.has(value)) errors.push(`${owner} is missing a PT-BR message for "${value}".`);
+      }
+    }
+
     if (!roadmapEntry) continue;
     for (const field of REQUIRED_MATERIAL_FIELDS) {
       const value = lesson[field];
@@ -185,23 +440,6 @@ export function validateLessonModel(lessons, roadmap, translatedStrings) {
       }
     }
 
-    if (translatedStrings) {
-      const localized = [
-        lesson.title,
-        lesson.topic,
-        lesson.objective,
-        lesson.pronunciationFocus,
-        lesson.productionPrompt,
-        lesson.retryHint,
-        ...(lesson.comprehension ?? []).flatMap((question) => [
-          question?.prompt,
-          ...(question?.options ?? []),
-        ]),
-      ].filter(nonEmptyString);
-      for (const value of localized) {
-        if (!translatedStrings.has(value)) errors.push(`${owner} is missing a PT-BR message for "${value}".`);
-      }
-    }
   }
 
   addDuplicateErrors(lessonIds, "Lesson id", errors);
@@ -301,14 +539,16 @@ async function exists(file) {
   }
 }
 
-export async function validateAudio(lessons, { publicDir, nativeDir, manifestEntries }) {
+export async function validateAudio(lessons, { publicDir, nativeDir, manifestEntries, probeClips = [] }) {
   const errors = [];
   const warnings = [];
   if (!Array.isArray(manifestEntries)) {
     errors.push("native-audio/manifest.json must contain an array.");
     manifestEntries = [];
   }
-  const declaredClips = new Set(lessons.flatMap(lessonAudio).map((item) => item.clip));
+  // Probe clips are declared by the cold-listening bank rather than by a lesson, and are
+  // deliberately absent from lessons.json so nothing can ever synthesize or teach them.
+  const declaredClips = new Set([...lessons.flatMap(lessonAudio).map((item) => item.clip), ...probeClips]);
   const seenManifestClips = new Set();
   for (const [index, entry] of manifestEntries.entries()) {
     const owner = `native-audio manifest entry ${index + 1}`;
@@ -318,9 +558,14 @@ export async function validateAudio(lessons, { publicDir, nativeDir, manifestEnt
     }
     if (seenManifestClips.has(entry.clip)) errors.push(`${owner} duplicates ${entry.clip}.`);
     seenManifestClips.add(entry.clip);
-    for (const field of ["speaker", "license", "recordedAt", "normalizationStatus"]) {
+    for (const field of ["recordingKind", "speaker", "speakerId", "accent", "delivery", "provenance", "license", "recordedAt", "normalizationStatus"]) {
       if (!nonEmptyString(entry?.[field])) errors.push(`${owner} for ${entry.clip} is missing ${field}.`);
     }
+    if (entry?.recordingKind !== "native") errors.push(`${owner} for ${entry.clip} must use recordingKind native.`);
+    if (!["supported", "natural", "connected"].includes(entry?.delivery)) errors.push(`${owner} for ${entry.clip} has invalid delivery.`);
+    if (!Number.isFinite(entry?.speedWpm) || entry.speedWpm <= 0) errors.push(`${owner} for ${entry.clip} needs a positive speedWpm.`);
+    if (!Array.isArray(entry?.connectedSpeechFeatures)) errors.push(`${owner} for ${entry.clip} needs connectedSpeechFeatures (use [] when none apply).`);
+    if (entry?.delivery === "connected" && entry.connectedSpeechFeatures.length === 0) errors.push(`${owner} for ${entry.clip} needs connected-speech evidence.`);
     if (!declaredClips.has(entry.clip)) errors.push(`${owner} references undeclared clip ${entry.clip}.`);
     const nativeSource = path.join(nativeDir, entry.clip.slice(1));
     if (!(await exists(nativeSource))) {
@@ -328,6 +573,27 @@ export async function validateAudio(lessons, { publicDir, nativeDir, manifestEnt
     }
   }
   const nativeByClip = new Map(manifestEntries.map((entry) => [entry.clip, entry]));
+  for (const clip of probeClips) {
+    if (!nonEmptyString(clip) || !clip.startsWith("/") || !clip.endsWith(".wav")) continue;
+    const publicFile = path.resolve(publicDir, clip.slice(1));
+    if (!publicFile.startsWith(`${path.resolve(publicDir)}${path.sep}`)) {
+      errors.push(`cold probe: invalid audio path ${clip}.`);
+      continue;
+    }
+    if (!(await exists(publicFile))) {
+      errors.push(`cold probe: missing ${clip} — run yarn learn:audio to install it from native-audio/.`);
+      continue;
+    }
+    try {
+      const quality = await inspectWav(publicFile);
+      if (quality.isSilent) errors.push(`cold probe: ${clip} contains no audible signal.`);
+      if (quality.durationSeconds < 5 || quality.durationSeconds > 40) {
+        errors.push(`cold probe: ${clip} duration ${quality.durationSeconds.toFixed(2)}s is outside 5-40s.`);
+      }
+    } catch (error) {
+      errors.push(`cold probe: ${clip} cannot be decoded (${error.message}).`);
+    }
+  }
   const rows = [];
 
   for (const lesson of lessons) {
@@ -416,21 +682,29 @@ async function main() {
   const args = new Set(process.argv.slice(2));
   const [lessons, roadmapMarkdown, manifestEntries, messagesSource] = await Promise.all([
     readFile(path.join(rootDir, "src/features/learn/lessons.json"), "utf8").then(JSON.parse),
-    readFile(path.join(rootDir, "docs/100-lesson-roadmap.md"), "utf8"),
+    readFile(path.join(rootDir, "docs/product.md"), "utf8"),
     readFile(path.join(rootDir, "native-audio/manifest.json"), "utf8").then(JSON.parse),
     readFile(path.join(rootDir, "src/i18n/messages.ts"), "utf8"),
   ]);
+  const probeBank = await readFile(path.join(rootDir, "src/features/listening/coldProbes.json"), "utf8").then(JSON.parse);
   const roadmap = parseRoadmap(roadmapMarkdown);
-  const model = validateLessonModel(lessons, roadmap, extractMessageKeys(messagesSource));
+  const model = validateLessonModel(lessons, roadmap, extractTranslatedMessageKeys(messagesSource));
+  const patterns = validatePatterns(lessons);
+  const probes = validateColdProbes(probeBank, { lessons, manifestEntries });
   const audio = await validateAudio(lessons, {
     publicDir: path.join(rootDir, "public"),
     nativeDir: path.join(rootDir, "native-audio"),
     manifestEntries,
+    probeClips: probes.clips,
   });
   const report = buildCoverageReport(lessons, roadmap, audio.rows);
 
   if (args.has("--json")) {
-    console.log(JSON.stringify({ ...report, errors: [...model.errors, ...audio.errors], warnings: [...model.warnings, ...audio.warnings] }, null, 2));
+    console.log(JSON.stringify({
+      ...report,
+      errors: [...model.errors, ...patterns.errors, ...probes.errors, ...audio.errors],
+      warnings: [...model.warnings, ...patterns.warnings, ...probes.warnings, ...audio.warnings],
+    }, null, 2));
   } else {
     console.log(`Lesson content: ${report.totals.lessons} lessons / ${report.totals.phrases} phrases`);
     for (const level of LEVELS) {
@@ -438,11 +712,15 @@ async function main() {
       console.log(`  ${level}: ${row.lessons}/${row.target} lessons, ${row.phrases} phrases, ${row.remaining} remaining`);
     }
     console.log(`Roadmap backlog: ${report.totals.roadmapLessonsPresent} present / ${report.totals.roadmapLessonsRemaining} remaining`);
-    for (const warning of [...model.warnings, ...audio.warnings]) console.warn(`WARN: ${warning}`);
-    for (const error of [...model.errors, ...audio.errors]) console.error(`ERROR: ${error}`);
+    const patterned = lessons.reduce((sum, lesson) => sum + (lesson.phrases ?? []).filter((p) => p.pattern).length, 0);
+    const families = new Set(lessons.flatMap((l) => (l.phrases ?? []).flatMap((p) => (p.pattern ? [p.pattern.id] : []))));
+    console.log(`Patterns: ${patterned} phrases across ${families.size} families`);
+    console.log(`Cold-listening probes: ${probes.clips.length} authentic clip(s)${probes.clips.length === 0 ? " — unfamiliar-speech comprehension stays unmeasured" : ""}`);
+    for (const warning of [...model.warnings, ...patterns.warnings, ...probes.warnings, ...audio.warnings]) console.warn(`WARN: ${warning}`);
+    for (const error of [...model.errors, ...patterns.errors, ...probes.errors, ...audio.errors]) console.error(`ERROR: ${error}`);
   }
 
-  if (model.errors.length + audio.errors.length > 0) process.exitCode = 1;
+  if (model.errors.length + patterns.errors.length + probes.errors.length + audio.errors.length > 0) process.exitCode = 1;
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === currentPath) {

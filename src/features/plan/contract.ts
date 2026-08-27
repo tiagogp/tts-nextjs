@@ -1,4 +1,4 @@
-import { PLAN_TASK_TYPES } from "./constants";
+import { PLAN_METRIC_ACTIONS, PLAN_TASK_TYPES } from "./constants";
 import type { PlanGenerationResult } from "./schema";
 
 type GeneratedTask = PlanGenerationResult["days"][number]["tasks"][number];
@@ -22,7 +22,7 @@ function validateTask(raw: unknown): GeneratedTask | null {
   let targetMetric: GeneratedTask["targetMetric"];
   if (task.targetMetric && typeof task.targetMetric === "object") {
     const metric = task.targetMetric as Record<string, unknown>;
-    if (typeof metric.action === "string" && metric.action.length > 0 && typeof metric.quantity === "number") {
+    if (typeof metric.action === "string" && PLAN_METRIC_ACTIONS.includes(metric.action as typeof PLAN_METRIC_ACTIONS[number]) && typeof metric.quantity === "number" && Number.isFinite(metric.quantity) && metric.quantity > 0) {
       targetMetric = {
         action: metric.action,
         quantity: metric.quantity,
@@ -68,13 +68,10 @@ export function validateGeneratedDays(raw: unknown): GeneratedDay[] | null {
   return days as GeneratedDay[];
 }
 
-export function validatePlanResult(raw: unknown): PlanGenerationResult | null {
-  if (!raw || typeof raw !== "object") return null;
-  const obj = raw as Record<string, unknown>;
+export function validatePhases(raw: unknown): PlanGenerationResult["phases"] | null {
+  if (!Array.isArray(raw) || raw.length === 0) return null;
 
-  if (!Array.isArray(obj.phases)) return null;
-
-  const phases = obj.phases.map((p: unknown) => {
+  const phases = raw.map((p: unknown) => {
     if (!p || typeof p !== "object") return null;
     const phase = p as Record<string, unknown>;
     if (
@@ -95,12 +92,18 @@ export function validatePlanResult(raw: unknown): PlanGenerationResult | null {
     };
   });
   if (phases.some((phase) => phase === null)) return null;
+  return phases as PlanGenerationResult["phases"];
+}
+
+export function validatePlanResult(raw: unknown): PlanGenerationResult | null {
+  if (!raw || typeof raw !== "object") return null;
+  const obj = raw as Record<string, unknown>;
+
+  const phases = validatePhases(obj.phases);
+  if (!phases) return null;
 
   const days = validateGeneratedDays(obj.days);
   if (!days) return null;
 
-  return {
-    phases: phases as PlanGenerationResult["phases"],
-    days,
-  };
+  return { phases, days };
 }

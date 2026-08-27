@@ -19,7 +19,7 @@ import {
   failureResponse,
   providerFailure,
 } from "@/server/http/providerFailure";
-import { MAX_CORRECTION_JSON_BYTES } from "@/lib/constants";
+import { MAX_CORRECTION_JSON_BYTES, PROVIDER_SINGLE_CALL_TIMEOUT_MS } from "@/lib/constants";
 import { logger } from "@/lib/logger";
 
 export const runtime = "nodejs";
@@ -29,6 +29,19 @@ export const maxDuration = 120;
 const MAX_TURNS = 60;
 const MAX_TURN_CHARS = 2000;
 const MAX_SCENARIO_CHARS = 300;
+/** Repertoire lists are short phrases; bound both so a crafted body can't pad the system prompt. */
+const MAX_EXPRESSIONS = 30;
+const MAX_EXPRESSION_CHARS = 60;
+
+function parseExpressions(raw: unknown): string[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const out: string[] = [];
+  for (const item of raw.slice(0, MAX_EXPRESSIONS)) {
+    const text = safeStr(item, "", MAX_EXPRESSION_CHARS);
+    if (text) out.push(text);
+  }
+  return out.length > 0 ? out : undefined;
+}
 
 function conversationProviderKind(raw: unknown): ProviderKind {
   return isProviderKind(raw) ? raw : getDefaultProvider();
@@ -67,11 +80,22 @@ export async function POST(req: NextRequest) {
     const sourceLang = safeStr(obj.sourceLang, "pt", 16);
     const level = safeStr(obj.level, "", 8) || undefined;
     const challenge = obj.challenge === true;
+    const conversationStage = safeStr(obj.conversationStage, "", 40) || undefined;
+    const maxTurns = typeof obj.maxTurns === "number" ? Math.max(2, Math.min(20, Math.round(obj.maxTurns))) : undefined;
+    const followUpDepth = obj.followUpDepth === "single" || obj.followUpDepth === "layered" || obj.followUpDepth === "counterpoint"
+      ? obj.followUpDepth
+      : undefined;
+    const promptStyle = safeStr(obj.promptStyle, "", 240) || undefined;
+    const speakerFamiliarity = obj.speakerFamiliarity === "familiar" || obj.speakerFamiliarity === "mixed" || obj.speakerFamiliarity === "unfamiliar"
+      ? obj.speakerFamiliarity
+      : undefined;
+    const taughtExpressions = parseExpressions(obj.taughtExpressions);
+    const elicitExpressions = parseExpressions(obj.elicitExpressions);
     const history = parseTurns(obj.history);
     const model = safeStr(obj.ollamaModel, "", 100) || undefined;
 
     const kind = conversationProviderKind(obj.provider);
-    if (!isProviderAvailable(kind)) {
+    if (!(await isProviderAvailable(kind))) {
       return failureResponse(providerFailure("provider_not_configured"));
     }
 
@@ -85,7 +109,24 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const reply = await provider.converse(history, { scenario, targetLang, sourceLang, level, challenge });
+    const reply = await provider.converse(
+      history,
+      {
+        scenario,
+        targetLang,
+        sourceLang,
+        level,
+        challenge,
+        conversationStage,
+        maxTurns,
+        followUpDepth,
+        promptStyle,
+        speakerFamiliarity,
+        taughtExpressions,
+        elicitExpressions,
+      },
+      { signal: req.signal, timeoutMs: PROVIDER_SINGLE_CALL_TIMEOUT_MS },
+    );
     return NextResponse.json({ reply });
   } catch (err: unknown) {
     if (isHttpError(err)) {

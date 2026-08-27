@@ -6,17 +6,30 @@
 import type {
   AdvancedReview,
   Card,
+  CardDirection,
   CardSource,
   ErrorEvent,
   ErrorType,
   PhraseCandidate,
 } from "@/lib/cards/schema";
+import type { JudgeStamp } from "@/lib/evaluation/judge";
 import { orientCardsForTargetFront } from "@/lib/cards/orientation";
+import { buildProductiveCardPairs } from "@/lib/cards/pairs";
 import type { PronunciationAttempt } from "@/lib/pronunciation/types";
 import type { StoredProgressAssessment } from "@/features/progress/model";
 import type { C1Diagnosis } from "@/features/c1/types";
 import type { StoredLevelTestAttempt } from "@/features/levelup/testModel";
 import type { ConversationTurn } from "@/lib/cards/provider";
+import type { RepertoireItem } from "@/features/converse/repertoire";
+import type {
+  AudioRecording,
+  ListeningAttempt,
+  ProductionAttempt,
+  ProofAttempt,
+  RetryOutcome,
+} from "@/lib/performance/types";
+import type { MethodProgressionState } from "@/features/method/progression";
+import type { RecallQuality } from "@/features/study/responseEvaluation";
 import {
   STORES,
   clearAll,
@@ -41,6 +54,14 @@ export interface ReviewRecord {
   /** ts-fsrs Rating: 1 Again / 2 Hard / 3 Good / 4 Easy. */
   grade: Grade;
   reviewedAt: number;
+  /**
+   * When FSRS originally scheduled this review. Optional for records written before
+   * due-rhythm tracking existed. Keeping the original timestamp makes "on time"
+   * measurable without reconstructing overwritten SRS state.
+   */
+  dueAt?: number;
+  /** Whether the card was actually due when graded (focused/light practice can be early). */
+  wasDue?: boolean;
   /** Card state *before* this review — lets us distinguish lapses from first passes. */
   previousState: State;
   scheduledDays: number;
@@ -49,12 +70,29 @@ export interface ReviewRecord {
   errorType?: ErrorType;
   /** Denormalized situational context (see `Card.context`) for context-grouped weakness. */
   context?: string;
-  /** ms from card-shown (flip) to grade. Overload/fatigue signal. */
+  /**
+   * Denormalized recall direction (see `Card.direction`), so the unaided-production rate
+   * survives card deletion. Absent on reviews recorded before directions existed — those
+   * are all receptive and must not be counted as production attempts.
+   */
+  direction?: CardDirection;
+  /** ms from prompt presentation to the learner revealing an answer. */
   latencyMs?: number;
   /** true if any scaffold (hint/slow audio/modality) was used this review. */
   hintUsed?: boolean;
   /** 0 = none, 1 = hint, 2 = partial reveal, 3 = modality fallback. */
   scaffoldLevel?: number;
+  /** What the learner produced before the answer was revealed (production cards only). */
+  responseText?: string;
+  /** Conservative local comparison with the fixed expected phrase. */
+  responseQuality?: RecallQuality;
+  responseCorrect?: boolean;
+  /**
+   * Which checker produced `responseCorrect`. Always local today, and versioned anyway:
+   * `evaluateRecall` was rewritten the day the audit landed, so a D60 window can straddle
+   * two different instruments. See `src/lib/evaluation/judge.ts`.
+   */
+  judge?: JudgeStamp;
 }
 
 /** Per-review scaffolding/latency telemetry. All optional — captured now, analyzed later. */
@@ -62,6 +100,10 @@ export interface ReviewTelemetry {
   latencyMs?: number;
   hintUsed?: boolean;
   scaffoldLevel?: number;
+  responseText?: string;
+  responseQuality?: RecallQuality;
+  responseCorrect?: boolean;
+  judge?: JudgeStamp;
 }
 
 /* ──────────────────────────── sources ──────────────────────────── */
@@ -111,6 +153,21 @@ async function orientStoredCards(cards: Card[]): Promise<Card[]> {
   return orientCardsForTargetFront(cards, await getSourcesForCards(cards), "en");
 }
 
+/** One-time/idempotent upgrade for decks saved before explicit production siblings existed. */
+export async function ensureProductiveCardPairs(): Promise<{ added: number }> {
+  const raw = await getAll<Card>(STORES.cards);
+  if (raw.length === 0) return { added: 0 };
+  const sources = await getSourcesForCards(raw);
+  const oriented = orientCardsForTargetFront(raw, sources, "en");
+  const paired = buildProductiveCardPairs(oriented, sources);
+  const changed = paired.length !== raw.length || paired.some((card, index) =>
+    card.direction !== raw[index]?.direction ||
+    card.front !== raw[index]?.front ||
+    card.patternId !== raw[index]?.patternId,
+  );
+  return changed ? persistCardsWithSrs(paired) : { added: 0 };
+}
+
 export function getCards(): Promise<Card[]> {
   return getAll<Card>(STORES.cards).then(orientStoredCards);
 }
@@ -152,7 +209,10 @@ export async function saveGeneratedDeck(
   candidates: PhraseCandidate[] = [],
 ): Promise<{ added: number }> {
   if (candidates.length > 0) await savePhraseCandidates(candidates);
-  return persistCardsWithSrs(cards);
+  const sources: CardSource[] = candidates.map((candidate) => ({ kind: "phrase", candidate }));
+  return persistCardsWithSrs(
+    buildProductiveCardPairs(orientCardsForTargetFront(cards, sources, "en"), sources),
+  );
 }
 
 /**
@@ -166,7 +226,10 @@ export async function saveCorrectionDeck(
   events: ErrorEvent[] = [],
 ): Promise<{ added: number }> {
   if (events.length > 0) await saveErrorEvents(events);
-  return persistCardsWithSrs(cards);
+  const sources: CardSource[] = events.map((event) => ({ kind: "error", event }));
+  return persistCardsWithSrs(
+    buildProductiveCardPairs(orientCardsForTargetFront(cards, sources, "en"), sources),
+  );
 }
 
 /* ──────────────────────────── study session ──────────────────────────── */
@@ -237,14 +300,20 @@ export async function recordReview(
     cardId: card.id,
     grade,
     reviewedAt: now.getTime(),
+    dueAt: srs.due,
+    wasDue: srs.due <= now.getTime(),
     previousState,
     scheduledDays,
     concept: card.concept,
     errorType: card.errorType,
     context: card.context,
+    direction: card.direction,
     latencyMs: telemetry?.latencyMs,
     hintUsed: telemetry?.hintUsed,
     scaffoldLevel: telemetry?.scaffoldLevel,
+    responseText: telemetry?.responseText,
+    responseQuality: telemetry?.responseQuality,
+    responseCorrect: telemetry?.responseCorrect,
   };
   await put(STORES.reviews, review);
   return { next, review };
@@ -327,7 +396,7 @@ export async function getReinforcementSources(
 
 /** Persist freshly generated cards (e.g. reinforcement variants) with fresh SRS state. */
 export function saveCards(cards: Card[]): Promise<{ added: number }> {
-  return persistCardsWithSrs(cards);
+  return persistCardsWithSrs(buildProductiveCardPairs(cards));
 }
 
 /* ──────────────────────────── pronunciation attempts ──────────────────────────── */
@@ -355,7 +424,7 @@ export async function getProgressAssessments(): Promise<StoredProgressAssessment
   return assessments.sort((a, b) => b.createdAt - a.createdAt);
 }
 
-/* ──────────────────────────── C1 diagnosis (experimental, pre-W5 exception) ──────────────────────────── */
+/* ──────────────────────────── C1 diagnosis (experimental) ──────────────────────────── */
 
 export function saveC1Diagnosis(diagnosis: C1Diagnosis): Promise<void> {
   return put(STORES.c1Diagnoses, diagnosis);
@@ -377,6 +446,104 @@ export async function getLevelTestAttempts(): Promise<StoredLevelTestAttempt[]> 
   return attempts.sort((a, b) => b.createdAt - a.createdAt);
 }
 
+/* ──────────────────────────── method performance evidence ──────────────────────────── */
+
+function notifyPerformanceEvidenceSaved(): void {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("phraseloop:performance-evidence"));
+  }
+}
+
+export async function saveListeningAttempt(attempt: ListeningAttempt): Promise<void> {
+  await put(STORES.listeningAttempts, attempt);
+  notifyPerformanceEvidenceSaved();
+}
+
+export function getListeningAttempts(): Promise<ListeningAttempt[]> {
+  return getAll<ListeningAttempt>(STORES.listeningAttempts);
+}
+
+export function getListeningAttemptsForLesson(lessonId: string): Promise<ListeningAttempt[]> {
+  return getAllFromIndex<ListeningAttempt>(STORES.listeningAttempts, "lessonId", lessonId);
+}
+
+export async function saveProductionAttempt(attempt: ProductionAttempt): Promise<void> {
+  await put(STORES.productionAttempts, attempt);
+  notifyPerformanceEvidenceSaved();
+}
+
+export function getProductionAttempts(): Promise<ProductionAttempt[]> {
+  return getAll<ProductionAttempt>(STORES.productionAttempts);
+}
+
+export function getProductionAttemptsForLesson(lessonId: string): Promise<ProductionAttempt[]> {
+  return getAllFromIndex<ProductionAttempt>(STORES.productionAttempts, "lessonId", lessonId);
+}
+
+/**
+ * Queue C writes land here and nowhere else. There is deliberately no path from a proof to
+ * `saveReview` or to SRS state: the whole value of the measurement is that answering it
+ * does not reschedule the card. If a caller ever needs a proof to also count as study, the
+ * answer is to add a separate review, not to widen this.
+ */
+export async function saveProofAttempt(attempt: ProofAttempt): Promise<void> {
+  await put(STORES.proofAttempts, attempt);
+  notifyPerformanceEvidenceSaved();
+}
+
+export function getProofAttempts(): Promise<ProofAttempt[]> {
+  return getAll<ProofAttempt>(STORES.proofAttempts);
+}
+
+export async function saveRetryOutcome(outcome: RetryOutcome): Promise<void> {
+  await put(STORES.retryOutcomes, outcome);
+  notifyPerformanceEvidenceSaved();
+}
+
+export function getRetryOutcomes(): Promise<RetryOutcome[]> {
+  return getAll<RetryOutcome>(STORES.retryOutcomes);
+}
+
+export function getRetryOutcomesForAttempt(retryOf: string): Promise<RetryOutcome[]> {
+  return getAllFromIndex<RetryOutcome>(STORES.retryOutcomes, "retryOf", retryOf);
+}
+
+export function saveMethodProgression(state: MethodProgressionState): Promise<void> {
+  return put(STORES.methodProgression, state);
+}
+
+export function getMethodProgression(): Promise<MethodProgressionState | undefined> {
+  return get<MethodProgressionState>(STORES.methodProgression, "current");
+}
+
+/* ──────────────────────────── bounded local recordings ──────────────────────────── */
+
+const MAX_RECORDING_COUNT = 80;
+const MAX_RECORDING_BYTES = 80 * 1024 * 1024;
+
+export async function saveAudioRecording(recording: AudioRecording): Promise<void> {
+  await put(STORES.audioRecordings, recording);
+  const all = (await getAll<AudioRecording>(STORES.audioRecordings)).sort(
+    (a, b) => b.createdAt - a.createdAt,
+  );
+  let bytes = 0;
+  const keep = new Set<string>();
+  for (const item of all) {
+    if (keep.size >= MAX_RECORDING_COUNT || bytes + item.sizeBytes > MAX_RECORDING_BYTES) continue;
+    keep.add(item.id);
+    bytes += item.sizeBytes;
+  }
+  await Promise.all(all.filter((item) => !keep.has(item.id)).map((item) => del(STORES.audioRecordings, item.id)));
+}
+
+export function getAudioRecording(id: string): Promise<AudioRecording | undefined> {
+  return get<AudioRecording>(STORES.audioRecordings, id);
+}
+
+export function deleteAudioRecording(id: string): Promise<void> {
+  return del(STORES.audioRecordings, id);
+}
+
 /* ──────────────────────────── conversations (Phase 1) ──────────────────────────── */
 
 /**
@@ -393,6 +560,9 @@ export interface Conversation {
   sourceLang: string;
   level?: string;
   challenge?: boolean;
+  progressionStage?: string;
+  /** Familiar personal topics are deliberately rotated and revisited over time. */
+  topicId?: string;
   turns: ConversationTurn[];
   startedAt: number;
   endedAt?: number;
@@ -405,6 +575,12 @@ export interface Conversation {
    */
   errors?: ErrorEvent[];
   advancedReview?: AdvancedReview;
+  /**
+   * Repertoire mode (C1-C2): the expressions the partner introduced, and which ones the learner
+   * said back. Persisted rather than re-derived because the glosses live in a trailer that is
+   * stripped before a turn is stored, and because the review reports uptake after the fact.
+   */
+  repertoire?: RepertoireItem[];
 }
 
 export function saveConversation(conversation: Conversation): Promise<void> {
@@ -449,6 +625,48 @@ export interface LocalBackup {
   dbName: string;
   exportedAt: string;
   stores: Record<StoreName, unknown[]>;
+}
+
+interface SerializedAudioRecording {
+  id: string;
+  mimeType: string;
+  sizeBytes: number;
+  createdAt: number;
+  /** Data URL keeps local recordings portable without exposing a filesystem path. */
+  blobDataUrl: string;
+}
+
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = "";
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary);
+}
+
+function base64ToBytes(value: string): Uint8Array {
+  const binary = atob(value);
+  return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+}
+
+async function serializeAudioRecording(recording: AudioRecording): Promise<SerializedAudioRecording> {
+  const bytes = new Uint8Array(await recording.blob.arrayBuffer());
+  return {
+    id: recording.id,
+    mimeType: recording.mimeType,
+    sizeBytes: recording.sizeBytes,
+    createdAt: recording.createdAt,
+    blobDataUrl: `data:${recording.mimeType};base64,${bytesToBase64(bytes)}`,
+  };
+}
+
+function restoreAudioRecording(row: SerializedAudioRecording): AudioRecording {
+  const [, base64 = ""] = row.blobDataUrl.split(",", 2);
+  return {
+    id: row.id,
+    mimeType: row.mimeType,
+    sizeBytes: row.sizeBytes,
+    createdAt: row.createdAt,
+    blob: new Blob([base64ToBytes(base64).buffer as ArrayBuffer], { type: row.mimeType }),
+  };
 }
 
 export interface BackupValidationResult {
@@ -536,7 +754,13 @@ export function validateLocalBackup(raw: unknown): BackupValidationResult {
 export async function exportLocalBackup(): Promise<LocalBackup> {
   const storeNames = Object.values(STORES) as StoreName[];
   const entries = await Promise.all(
-    storeNames.map(async (store) => [store, await getAll<unknown>(store)] as const),
+    storeNames.map(async (store) => {
+      const rows = await getAll<unknown>(store);
+      const exported = store === STORES.audioRecordings
+        ? await Promise.all((rows as AudioRecording[]).map(serializeAudioRecording))
+        : rows;
+      return [store, exported] as const;
+    }),
   );
   return {
     app: "PhraseLoop",
@@ -553,7 +777,11 @@ export async function restoreLocalBackup(raw: unknown): Promise<BackupValidation
 
   for (const store of Object.values(STORES) as StoreName[]) {
     const rows = raw.stores[store];
-    if (Array.isArray(rows) && rows.length > 0) await putMany(store, rows);
+    if (!Array.isArray(rows) || rows.length === 0) continue;
+    const restored = store === STORES.audioRecordings
+      ? rows.map((row) => restoreAudioRecording(row as SerializedAudioRecording))
+      : rows;
+    await putMany(store, restored);
   }
 
   if (typeof window !== "undefined") {

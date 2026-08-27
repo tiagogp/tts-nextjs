@@ -1,46 +1,56 @@
 # PhraseLoop
 
-PhraseLoop helps Brazilian A2-B1 self-study learners who already use real English and find Anki/card creation too manual turn that material and their mistakes into native-audio review cards on Mac.
+PhraseLoop is a local-first app for Brazilian A2-B1 self-study learners who want to turn real English and their own mistakes into daily production practice: listen, save one useful phrase, produce English without help, get feedback, retry, and review at the right time.
 
-PhraseLoop starts with one Home-led loop: hear a curated native clip, save one useful phrase, review it immediately, correct your own sentence, and turn that correction into tomorrow's practice. Speech generation, Anki export, Speak, custom plans, and AI provider setup are still built in, but they stay behind the core loop rather than defining the first experience.
+PhraseLoop starts with one Home-led loop: hear a curated clip, save one useful phrase, review it immediately, correct your own sentence, and turn that correction into tomorrow's practice. Speech generation, Anki export, Speak, custom plans, and AI provider setup are still built in, but they stay behind the core loop rather than defining the first experience.
+
+It is research-aligned, not a substitute for a class, teacher, or immersion, and not yet a proven learning-effectiveness claim. Launch validation is tracking retention, transfer, retry resolution, and unaided production rather than streaks or volume.
 
 ## Why PhraseLoop (vs. Anki or a chatbot)
 
-Five-second promise: **turn real English and your mistakes into native-audio review cards in 2 minutes.**
+Five-second promise: **turn real English and your mistakes into review cards that keep your source's audio, in 2 minutes.**
 
 Two things a manual flashcard app and a generic chatbot don't do for you:
 
-- **Native source audio** — phrases come from real English you chose (a YouTube
-  clip, an article, a PDF) and review cards keep that native audio, not a robotic
-  re-read. _Native clip → saved phrase → next-day review card._
+- **Your source's own audio** — phrases come from real English you chose (a
+  YouTube clip, an article, a PDF) and review cards keep that source's audio, not a
+  robotic re-read. _Source clip → saved phrase → next-day review card._ The lessons
+  bundled with the app are the exception: their 292 clips are generated on-device by
+  Kokoro TTS (`scripts/generate-learn-audio.mjs`), and `native-audio/manifest.json`
+  is still empty, so nothing shipped in the box is native-source audio.
 - **Your mistakes become drills** — a correction isn't a dead-end note. Each fix
   turns into a review card, and your weak spots feed back into more practice.
-  _Writing/speech mistake → corrected phrase → weak-spot reinforcement._
+  _Writing/speech mistake → corrected phrase → weak-spot reinforcement._ With no AI
+  provider configured, the check is deterministic and on-device: spelling of the
+  lesson phrase, mechanics, and the high-frequency PT→EN transfer errors in
+  `src/features/learn/transferErrors.ts` (article omission, _I have 30 years_,
+  _depend of_, _people is_, present-with-_since_, …). Full-coverage feedback still
+  needs a provider.
 
 Everything else — local spaced repetition, zero-setup first lesson, Anki export,
-local-first storage — exists to keep that loop calm and daily. Launch validation is gated by
-W5: users must complete the first loop quickly, explain it without jargon, notice native
-audio or mistake drills, and name a repeated paid pain before billing moves forward.
+local-first storage — exists to keep that loop calm and daily. Launch validation asks whether
+users complete the first loop quickly, explain it without jargon, notice the audio or mistake
+drills, and name a repeated paid pain before billing moves forward.
 
 ### Head to head
 
 | What you need | Manual Anki | Generic chatbot | PhraseLoop |
 | --- | --- | --- | --- |
-| Get from native material to a review card | Find audio, trim it, build the note, type both sides | Paste text, copy the answer, build the card yourself elsewhere | Keep a phrase from the clip you chose — card is made for you |
-| Audio on the card | Whatever you can source and attach by hand | None, or a robotic re-read | The native clip you heard, kept on the card |
+| Get from real material to a review card | Find audio, trim it, build the note, type both sides | Paste text, copy the answer, build the card yourself elsewhere | Keep a phrase from the clip you chose — card is made for you |
+| Audio on the card | Whatever you can source and attach by hand | None, or a robotic re-read | The clip you heard, kept on the card — the original when you brought the source |
 | Your own mistakes | A note you have to turn into a card yourself | Lost when the chat scrolls away | Become review cards and feed your weak spots |
 | Knowing what to study tomorrow | You schedule it | The model has no memory of your reviews | Local spaced repetition picks the due cards |
 | Where your history lives | Local (with sync add-ons) | On someone else's server | Local-first, with JSON backup and validated restore |
 
 The switching bet is speed: PhraseLoop must make the path from source material to a reviewed
-native-audio card take under 2 minutes with less friction than doing the same work by hand in Anki,
+audio card take under 2 minutes with less friction than doing the same work by hand in Anki,
 Migaku, or LingQ. Speak and ELSA are stronger for speaking confidence and pronunciation.
 PhraseLoop's launch wedge is the combined desktop loop of source audio, local review, and personal
 mistakes becoming tomorrow's practice.
 
 Launch status: this is a research-to-launch candidate. It should not be treated as broadly
-launch-ready until W5 proves activation, explain-back, D+1/D+7 return, differentiation, and one
-repeated paid pain.
+launch-ready until activation, explain-back, D+1/D+7 return, differentiation, and one repeated paid
+pain are observed.
 
 ## Stack
 
@@ -60,9 +70,15 @@ Install dependencies:
 npm install
 ```
 
-Kokoro and Whisper models are downloaded automatically on first use and stored
-under `~/Library/Application Support/PhraseLoop/models/native`. Downloads are
-verified by SHA-256 and installed atomically.
+Kokoro and Whisper models are stored under
+`~/Library/Application Support/PhraseLoop/models/native`. Downloads are verified
+by SHA-256 and installed atomically.
+
+Kokoro (349 MB) starts downloading on its own as soon as onboarding finishes, so
+it is usually in place before the learner first needs generated audio; a bar
+above the tabs reports progress on every screen until it lands. Whisper is still
+fetched on first use. The bundled lessons' 292 audio clips ship with the app, so
+nothing in the core loop waits on either download.
 
 ## Running
 
@@ -163,7 +179,8 @@ on first use and audio decoding uses in-process WebAssembly. YouTube import requ
 
 > Product direction, active priorities, and research-backed roadmap live in
 > [docs/product.md](docs/product.md). Architecture and shipped feature history live in
-> [docs/README.md](docs/README.md).
+> [docs/README.md](docs/README.md). Validation materials live in
+> [docs/validation-log.md](docs/validation-log.md) and [docs/learning-efficacy-experiment.md](docs/learning-efficacy-experiment.md).
 
 ## Advanced AI Providers
 
@@ -210,15 +227,15 @@ to Kokoro audio otherwise. Import the result with Anki's `File → Import`.
 
 ## Project Structure
 
-See [docs/project-structure.md](docs/project-structure.md) for the canonical
-map of app boundaries, module ownership, and where new work should go.
+See [docs/README.md](docs/README.md) for the canonical architecture, app boundaries,
+module ownership, and build record.
 
 ```
 .
 ├── apps/
 │   └── landing/              # Vercel landing page and waitlist
 ├── electron/                 # Electron shell and desktop packaging
-├── native-audio/             # Source recordings for bundled native clips
+├── native-audio/             # Intake for real recordings — manifest is still empty
 ├── src/
 │   ├── app/
 │   │   ├── page.tsx           # Server entry that renders the desktop client shell

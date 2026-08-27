@@ -17,6 +17,7 @@ import type {
   TranscriptSegment,
 } from "./schema";
 import { dedupeCards, type Embedder } from "./dedupe";
+import { isTextGrounded, normalizeForGrounding, sourceText } from "./shared";
 import { logger } from "@/lib/logger";
 
 export interface GenerationRunOptions {
@@ -35,12 +36,35 @@ export interface CorrectOptions {
   level?: string;
   /** Situational context to stamp on every ErrorEvent found (already normalized). */
   context?: string;
+  /**
+   * Communicative task the learner was answering. This is evaluation context only:
+   * it must not be copied into a correction or stored as the error's situation tag.
+   */
+  task?: string;
+}
+
+/** Whether a response fulfilled the communicative task it was given. */
+export type TaskCompletionStatus = "met" | "partial" | "not_met";
+
+/** Separate task success from language corrections so an off-task answer cannot look correct. */
+export interface TaskAssessment {
+  status: TaskCompletionStatus;
+  /** One focused learner-facing explanation, in the rationale language. */
+  feedback: string;
+}
+
+/** Result of a correction pass; task evidence is optional outside guided tasks. */
+export interface CorrectionResult {
+  events: ErrorEvent[];
+  task?: TaskAssessment;
 }
 
 /** One exchanged message in a practice conversation. */
 export interface ConversationTurn {
   role: "user" | "assistant";
   text: string;
+  /** Present for learner turns when the response came from the microphone. */
+  spoken?: boolean;
 }
 
 /** What `converse()` needs to role-play a scenario at the learner's level. */
@@ -55,6 +79,22 @@ export interface ConverseOptions {
   level?: string;
   /** For advanced practice: press the learner with follow-ups and counterpoints. */
   challenge?: boolean;
+  /** Evidence-based support level supplied by the method progression engine. */
+  conversationStage?: string;
+  maxTurns?: number;
+  followUpDepth?: "single" | "layered" | "counterpoint";
+  promptStyle?: string;
+  speakerFamiliarity?: "familiar" | "mixed" | "unfamiliar";
+  /**
+   * Repertoire mode (C1-C2 only). Expressions already introduced in this conversation, so the
+   * partner stops re-teaching the same handful of idioms every session.
+   */
+  taughtExpressions?: string[];
+  /**
+   * Repertoire mode (C1-C2 only). Expressions the learner has heard but never said back; the
+   * partner steers the turn so producing one becomes natural, without breaking character.
+   */
+  elicitExpressions?: string[];
 }
 
 export type ProviderKind = "openrouter" | "ollama" | "claude" | "openai";
@@ -106,7 +146,7 @@ export interface CardGenerationProvider {
     text: string,
     opts?: CorrectOptions,
     options?: GenerationRunOptions,
-  ): Promise<ErrorEvent[]>;
+  ): Promise<CorrectionResult>;
 
   /**
    * Advanced production review. Returns real mistakes plus optional native-sounding
@@ -149,6 +189,12 @@ export interface CardGenerationProvider {
   embed?: Embedder;
   /** Stable provider/model namespace for the in-memory embeddings cache. */
   readonly embeddingCacheKey?: string;
+  /**
+   * The model this instance actually resolved to, for stamping verdict provenance. Not the
+   * model configured in settings — the one that produced the answer. See
+   * `src/lib/evaluation/judge.ts`: a metric that spans two models spans two instruments.
+   */
+  readonly modelId?: string;
 }
 
 /** Registry so the UI can list available providers and resolve the user's choice. */
@@ -168,13 +214,29 @@ function isSourceGrounded(card: Card, source: CardSource): boolean {
 }
 
 /**
- * Run the full generate -> ground -> critique gate for one source (mistake or mined phrase).
- * Provider-agnostic and ingestion-agnostic: identical for local or cloud, error or discovery.
- *
- * `generate()` failing throws (the caller decides whether to drop the whole source); a single
- * card's `critique()` failing only drops *that* card, so one bad round-trip can't waste the
- * other cards we already paid to generate from this source.
+ * A card front may legitimately rephrase its source, so this is looser than the mining
+ * gate — it only has to rule out a front the model invented rather than derived.
  */
+const CARD_FRONT_MIN_OVERLAP = 0.6;
+
+/**
+ * The gate that stands in for `critique()` when a provider opts out of that round-trip.
+ * Catches the failures a slow local model actually produces — an empty side, a front that
+ * merely echoes the back, a front with no basis in the source — without a second call.
+ */
+function deterministicCritique(card: Card, source: CardSource): Critique {
+  const front = card.front.trim();
+  const back = card.back.trim();
+  if (!front || !back) return { verdict: "drop", reason: "empty card side" };
+  if (normalizeForGrounding(front) === normalizeForGrounding(back)) {
+    return { verdict: "drop", reason: "front and back are identical" };
+  }
+  if (!isTextGrounded(front, sourceText(source), CARD_FRONT_MIN_OVERLAP)) {
+    return { verdict: "drop", reason: "front is not supported by the source text" };
+  }
+  return { verdict: "keep", reason: "passed deterministic local critique" };
+}
+
 /**
  * Cap cards kept per source. Bounds both the critique round-trips and the per-card TTS
  * synthesis in the .apkg step, so one verbose source can't blow the request timeout.
@@ -244,6 +306,14 @@ export function throwIfAborted(signal?: AbortSignal): void {
   if (signal?.aborted) throw abortError();
 }
 
+/**
+ * Run the full generate -> ground -> critique gate for one source (mistake or mined phrase).
+ * Provider-agnostic and ingestion-agnostic: identical for local or cloud, error or discovery.
+ *
+ * `generate()` failing throws (the caller decides whether to drop the whole source); a single
+ * card's `critique()` failing only drops *that* card, so one bad round-trip can't waste the
+ * other cards we already paid to generate from this source.
+ */
 export async function generateVettedCards(
   provider: CardGenerationProvider,
   source: CardSource,
@@ -287,6 +357,18 @@ export async function generateVettedCards(
     // Slow local LLMs opt out of the critique round-trip — grounding + the card cap are
     // the only gates that remain (see CardGenerationProvider.skipCritique).
     if (provider.skipCritique) {
+      const critique = deterministicCritique(card, source);
+      if (critique.verdict !== "keep") {
+        debug(options, "cards-candidate-dropped-local-critique", {
+          provider: provider.kind,
+          candidateIndex,
+          cardId: card.id,
+          verdict: critique.verdict,
+          reason: critique.reason,
+          ...sourceInfo,
+        });
+        continue;
+      }
       kept.push(card);
       debug(options, "cards-candidate-kept-skip-critique", {
         provider: provider.kind,

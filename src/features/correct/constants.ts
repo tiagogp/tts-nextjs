@@ -18,5 +18,7 @@ export const CORRECTION_ERROR_TYPES: ErrorType[] = [
   "idiom",
   "vocabulary",
   "register",
+  "missing-information",
+  "pronunciation",
   "other",
 ];
