@@ -11,7 +11,7 @@
  * `deriveMethodPlan` action as Hoje so the app never gives two recommendations.
  */
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card as UiCard } from "@/components/ui/Card";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -29,6 +29,11 @@ import { MethodCoach } from "./MethodCoach";
 import { BandGateNote } from "./BandGateNote";
 import { CyclePicker } from "./CyclePicker";
 import { TransferPracticeCard } from "./TransferPracticeCard";
+import { PatternDrillCard } from "./PatternDrillCard";
+import { RetentionProofCard } from "./RetentionProofCard";
+import { UnpreparedQuestion } from "./UnpreparedQuestion";
+import { ColdListeningProbe } from "@/features/listening/components/ColdListeningProbe";
+import { DEFAULT_LEARNING_PROFILE, getLearningProfile, subscribeToProfile } from "@/features/settings/learningProfile";
 import { ReviewWorkspaceNav, type ReviewView } from "./ReviewWorkspaceNav";
 
 export default function StudyTab({
@@ -62,6 +67,7 @@ export default function StudyTab({
     generatingKey,
     genError,
     stats,
+    reviewRhythm,
     retention,
     activity,
     weaknesses,
@@ -79,6 +85,17 @@ export default function StudyTab({
   } = useStudySession();
   const [activeView, setActiveView] = useState<ReviewView>("review");
   const [showDetailedStats, setShowDetailedStats] = useState(false);
+  const [completedTransferFor, setCompletedTransferFor] = useState<typeof sessionResults | null>(null);
+  const [proofDone, setProofDone] = useState(false);
+  // The profile lives in localStorage, so it is read through the external-store hook: the
+  // server render has no access to it and an effect would flash the wrong level first.
+  const level = useSyncExternalStore(
+    subscribeToProfile,
+    () => getLearningProfile().level,
+    () => DEFAULT_LEARNING_PROFILE.level,
+  );
+  const transferRequired = sessionResults.length > 0 && queue.length === 0 && mode === "standard" && !reinforcing;
+  const transferComplete = completedTransferFor === sessionResults;
 
   /** P2 #5 — dispatch the chosen cycle path: challenge (produce), review, or light. */
   const startPath = useCallback(
@@ -197,6 +214,8 @@ export default function StudyTab({
             sessionResults={sessionResults}
             tomorrow={tomorrow}
             reviews={reviews}
+            transferRequired={transferRequired}
+            transferComplete={transferComplete}
             onFlip={flip}
             onGrade={(g, scaffold) => void grade(g, scaffold)}
             onDiscover={onDiscover ?? (() => {})}
@@ -212,13 +231,57 @@ export default function StudyTab({
           </aside>
         </div>
 
-        {showAdaptiveDepth && counts.cards > 0 && mode === "standard" && !reinforcing && !cooldown && (
+        {sessionResults.length > 0 && queue.length === 0 && mode === "standard" && !reinforcing && !transferComplete && (
+          <div className="space-y-4">
+            {/* The rung between recalling the sentence and using the structure. It comes
+                before open transfer because asking for a new situation from a learner who
+                has never varied the pattern is asking them to skip a step. */}
+            <div className="space-y-2">
+              <p className="text-xs font-medium uppercase tracking-[0.7px] text-ink-muted">
+                {t("Pattern practice")}
+              </p>
+              <p className="text-xs text-ink-muted">{t("Keep the structure, change what you say with it")}</p>
+              <PatternDrillCard />
+            </div>
+            <div className="space-y-2">
+              <p className="text-xs font-medium uppercase tracking-[0.7px] text-ink-muted">
+                {t("Transfer practice")}
+              </p>
+              <p className="text-xs text-ink-muted">{t("Use a saved idea in a new context")}</p>
+              <TransferPracticeCard onCompleted={() => setCompletedTransferFor(sessionResults)} />
+            </div>
+            {level && (
+              <div className="space-y-2">
+                <p className="text-xs font-medium uppercase tracking-[0.7px] text-ink-muted">
+                  {t("Unprepared question")}
+                </p>
+                <UnpreparedQuestion level={level} />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Measurement, not study — kept visually and functionally apart from the queue
+            above. Answering these does not reschedule anything. */}
+        {!proofDone && mode === "standard" && !reinforcing && (
+          <div className="space-y-2">
+            <p className="text-xs font-medium uppercase tracking-[0.7px] text-ink-muted">
+              {t("Retention checks")}
+            </p>
+            <RetentionProofCard onCompleted={() => setProofDone(true)} />
+            {/* Renders only when an authentic clip the learner has never heard is due. With
+                the probe bank empty it is simply absent — the same reason `coldListening`
+                reports null rather than a rate. */}
+            <ColdListeningProbe />
+          </div>
+        )}
+
+        {showAdaptiveDepth && counts.cards > 0 && mode === "standard" && !reinforcing && !cooldown && queue.length > 0 && (
           <div className="space-y-2">
             <p className="text-xs font-medium uppercase tracking-[0.7px] text-ink-muted">
               {t("Other ways to practice")}
             </p>
             <CyclePicker plan={cyclePlan} onStart={startPath} />
-            <TransferPracticeCard />
           </div>
         )}
       </section>
@@ -266,7 +329,12 @@ export default function StudyTab({
         {showDetailedStats && (
           <div className="space-y-5">
             <div className="grid items-start gap-5 md:grid-cols-2">
-              <PerformanceStats cardsCount={counts.cards} stats={stats} retention={retention} />
+              <PerformanceStats
+                cardsCount={counts.cards}
+                stats={stats}
+                retention={retention}
+                rhythm={reviewRhythm}
+              />
               {showAdaptiveDepth && <ExposureMeter activity={activity} />}
             </div>
 
