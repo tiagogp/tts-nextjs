@@ -42,6 +42,21 @@ describe("method progression", () => {
     expect(decision.samples).toBe(0);
   });
 
+  it("does not promote independent transfer from a learner self-check", () => {
+    const attempts = Array.from({ length: 5 }, (_, index) => ({
+      ...production(0, index + 1),
+      spoken: false,
+      evaluated: false,
+      transferKind: "phrase_to_situation" as const,
+      newContext: true,
+      transferOutcome: "clear" as const,
+    }));
+
+    const decision = deriveReadingWritingStage(attempts, "independent_transfer");
+    expect(decision.stage).toBe("independent_transfer");
+    expect(decision.samples).toBe(0);
+  });
+
   it("does not promote from skipped or unfinished evidence", () => {
     const decision = deriveListeningStage([
       { ...listening(100, 1), skipped: true },
@@ -77,7 +92,7 @@ describe("method progression", () => {
 
   it("turns support stages into concrete audio and speaking guidance", () => {
     const support = supportForProgression({ listeningStage: "natural_comprehension", speakingStage: "timed_monologue" });
-    expect(support.listening).toMatchObject({ playbackRate: 1.2, transcriptCondition: "after_replay" });
+    expect(support.listening).toMatchObject({ playbackRate: 1, transcriptCondition: "after_replay" });
     expect(support.speaking.targetSeconds).toBe(120);
     expect(support.speaking.prompt).toContain("timer");
     expect(support.speaking.guidance).toContain("timer");
@@ -165,5 +180,56 @@ describe("method progression", () => {
       speakingSamples: 3,
       updatedAt: 10,
     });
+  });
+
+  it("does not climb a second rung on the evidence that earned the first one", () => {
+    const listeningAttempts = [listening(80, 1), listening(80, 2), listening(80, 3)];
+    const productionAttempts = [production(0, 1), production(0, 2), production(0, 3)];
+
+    let state = deriveProgressionState({ listeningAttempts, productionAttempts, now: 10 });
+    expect(state.speakingStage).toBe("variation");
+
+    // Re-derivation happens on every app mount. With no new attempts, the ladder holds.
+    for (const now of [20, 30, 40]) {
+      state = deriveProgressionState({ listeningAttempts, productionAttempts, previous: state, now });
+    }
+    expect(state.speakingStage).toBe("variation");
+    expect(state.listeningStage).toBe("word_recognition");
+
+    // Fresh evidence recorded at the new stage promotes exactly one rung.
+    const afterPromotion = [production(0, 50), production(0, 51), production(0, 52)];
+    state = deriveProgressionState({
+      listeningAttempts,
+      productionAttempts: [...productionAttempts, ...afterPromotion],
+      previous: state,
+      now: 60,
+    });
+    expect(state.speakingStage).toBe("guided_description");
+  });
+
+  it("withholds promotion for a stored snapshot written before stage entry was stamped", () => {
+    const productionAttempts = [production(0, 1), production(0, 2), production(0, 3)];
+    const legacy = {
+      id: "current" as const,
+      listeningStage: "sound_familiarity" as const,
+      speakingStage: "variation" as const,
+      listeningScore: 0,
+      speakingScore: 100,
+      listeningSamples: 0,
+      speakingSamples: 3,
+      updatedAt: 5,
+    };
+
+    const state = deriveProgressionState({
+      listeningAttempts: [],
+      productionAttempts,
+      previous: legacy,
+      now: 10,
+    });
+
+    expect(state.speakingStage).toBe("variation");
+    expect(state.speakingStageSince).toBe(10);
+    // The displayed signal still reflects the recent window, not the promotion gate.
+    expect(state.speakingSamples).toBe(3);
   });
 });

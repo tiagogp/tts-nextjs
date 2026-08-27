@@ -41,7 +41,9 @@ describe("buildSpeakingDrill", () => {
   });
 
   it("still gives a fallback speaking prompt to lessons that author none", () => {
-    const fallbackLesson = LESSONS.find((item) => !item.productionPrompt) ?? lessonById("a2-shopping") ?? firstLesson();
+    // Every shipped lesson now authors a production prompt; a lesson built from a learner's
+    // own imported source still does not, so the fallback prompt has to hold up here.
+    const { productionPrompt: _productionPrompt, ...fallbackLesson } = lessonById("a2-shopping") ?? firstLesson();
     const steps = buildSpeakingDrill({ lesson: fallbackLesson });
 
     expect(fallbackLesson.productionPrompt).toBeUndefined();

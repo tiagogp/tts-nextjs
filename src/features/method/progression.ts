@@ -1,3 +1,4 @@
+import { interpolate } from "@/i18n/translate";
 import type { ListeningAttempt, ProductionAttempt, RetryOutcome } from "@/lib/performance/types";
 import type { EnglishLevel } from "@/features/discover/types";
 import { LEVEL_RANK } from "@/features/discover/levels";
@@ -19,12 +20,57 @@ export type SpeakingStage =
 
 export type ReadingWritingStage = "guided_reading" | "open_writing" | "revision" | "independent_transfer";
 
+export type ProgressionLadder = "listening" | "speaking" | "readingWriting";
+export type ProgressionReasonKind = "promoted" | "holding" | "regressed";
+
+/**
+ * Coaching sentences for each ladder, as message templates rather than finished prose.
+ *
+ * A sentence built here and stored would arrive at the UI already interpolated, and an
+ * interpolated string can never match an i18n key. Keeping the template and its `evidence`
+ * variable apart lets the snapshot stay language-neutral and the screen translate it.
+ */
+export const PROGRESSION_REASON_MESSAGE: Record<ProgressionLadder, Record<ProgressionReasonKind, string>> = {
+  listening: {
+    promoted: "Repeated listening evidence met the stage requirement: {evidence}.",
+    holding: "Keep the current support until this evidence is available: {evidence}.",
+    regressed: "Recent comprehension is struggling, so transcript and speed support should return.",
+  },
+  speaking: {
+    promoted: "Repeated production met the stage requirement: {evidence}.",
+    holding: "Complete more evaluated production evidence before increasing independence: {evidence}.",
+    regressed: "Recent production is struggling, so prompts and scaffolds should become more supported.",
+  },
+  readingWriting: {
+    promoted: "Repeated reading, writing, and transfer evidence supports the next scaffold.",
+    holding: "Keep building evidence before withdrawing support: {evidence}.",
+    regressed: "Recent reading or writing evidence is struggling, so the next task restores more guidance.",
+  },
+};
+
 export interface ProgressionDecision<T extends string> {
   stage: T;
   score: number;
   samples: number;
+  /** English prose, for callers and stored snapshots that predate `reasonKind`. */
   reason: string;
+  /** Which sentence in `PROGRESSION_REASON_MESSAGE` explains the decision. */
+  reasonKind: ProgressionReasonKind;
+  /** The stage's evidence requirement, translated and interpolated by the UI. */
+  reasonEvidence: string;
   regressed: boolean;
+}
+
+function decisionReason(
+  ladder: ProgressionLadder,
+  kind: ProgressionReasonKind,
+  evidence: string,
+): Pick<ProgressionDecision<string>, "reason" | "reasonKind" | "reasonEvidence"> {
+  return {
+    reason: interpolate(PROGRESSION_REASON_MESSAGE[ladder][kind], { evidence }),
+    reasonKind: kind,
+    reasonEvidence: evidence,
+  };
 }
 
 /** Durable snapshot of the current support level; history remains in attempts. */
@@ -40,9 +86,28 @@ export interface MethodProgressionState {
   listeningReason?: string;
   speakingReason?: string;
   readingWritingReason?: string;
+  /**
+   * Why each ladder holds where it does. The screen pairs this with the stage's own
+   * evidence line, so the coaching sentence is composed — and therefore translated —
+   * where it is rendered instead of being frozen into English here.
+   */
+  listeningReasonKind?: ProgressionReasonKind;
+  speakingReasonKind?: ProgressionReasonKind;
+  readingWritingReasonKind?: ProgressionReasonKind;
   /** Optional for migration compatibility with snapshots written before this stage existed. */
   readingWritingStage?: ReadingWritingStage;
   readingWritingSamples?: number;
+  /**
+   * When each ladder was last entered. Promotion counts only evidence recorded after
+   * this moment, so re-deriving the snapshot (which happens on every app mount) cannot
+   * climb a second rung on evidence that already earned the first one.
+   *
+   * Optional for snapshots written before stage entry was recorded; those are stamped
+   * on the next derivation, which withholds promotion until fresh evidence arrives.
+   */
+  listeningStageSince?: number;
+  speakingStageSince?: number;
+  readingWritingStageSince?: number;
   updatedAt: number;
 }
 
@@ -74,6 +139,60 @@ export interface MethodSupport {
     stage: ReadingWritingStage;
     guidance: string;
   };
+}
+
+/**
+ * Reader-facing names for the ladders and the listening conditions.
+ *
+ * The enum values are stable identifiers and must never reach a learner: rendering
+ * `after_attempt` or `sound_familiarity` leaks internal state into practice copy, and a
+ * value spliced into a sentence can never be translated. These labels are English source
+ * strings, so `t()` resolves them like any other message.
+ */
+export const LISTENING_STAGE_LABEL: Record<ListeningStage, string> = {
+  sound_familiarity: "sound familiarity",
+  word_recognition: "word recognition",
+  main_idea: "main idea",
+  functional_comprehension: "functional comprehension",
+  natural_comprehension: "natural comprehension",
+};
+
+export const SPEAKING_STAGE_LABEL: Record<SpeakingStage, string> = {
+  fixed_phrases: "fixed phrases",
+  variation: "variation",
+  guided_description: "guided description",
+  timed_monologue: "timed monologue",
+  simulated_conversation: "simulated conversation",
+  real_world_production: "real-world production",
+};
+
+export const READING_WRITING_STAGE_LABEL: Record<ReadingWritingStage, string> = {
+  guided_reading: "guided reading",
+  open_writing: "open writing",
+  revision: "revision",
+  independent_transfer: "independent transfer",
+};
+
+export const SPEAKER_FAMILIARITY_LABEL: Record<MethodSupport["listening"]["speakerFamiliarity"], string> = {
+  familiar: "familiar",
+  mixed: "mixed",
+  unfamiliar: "unfamiliar",
+};
+
+export const TRANSCRIPT_CONDITION_LABEL: Record<MethodSupport["listening"]["subtitles"], string> = {
+  hidden: "hidden",
+  after_attempt: "after your attempt",
+  after_replay: "after a replay",
+};
+
+/** Label for a stage read back from storage, where the type has been widened to string. */
+export function stageLabel(stage: string): string {
+  return (
+    LISTENING_STAGE_LABEL[stage as ListeningStage]
+    ?? SPEAKING_STAGE_LABEL[stage as SpeakingStage]
+    ?? READING_WRITING_STAGE_LABEL[stage as ReadingWritingStage]
+    ?? stage.replaceAll("_", " ")
+  );
 }
 
 export interface ProgressionExplanation {
@@ -208,16 +327,30 @@ function productionScore(attempt: ProductionAttempt, retry?: RetryOutcome): numb
   return Math.min(100, base + retryBonus);
 }
 
+/**
+ * Evidence that can promote the *current* stage: recorded after the learner entered it.
+ *
+ * The displayed score and sample count stay on the recent window, so the signal a learner
+ * reads does not reset on promotion. Only the promotion gate narrows — which is what keeps
+ * one rung from being paid for twice.
+ */
+function evidenceAtStage<T>(recent: T[], since: number | undefined, timeOf: (item: T) => number): T[] {
+  return since === undefined ? recent : recent.filter((item) => timeOf(item) >= since);
+}
+
 /** Promotion requires repeated evidence; one lucky answer cannot remove scaffolding. */
 export function deriveListeningStage(
   attempts: ListeningAttempt[],
   current: ListeningStage = "sound_familiarity",
+  stageSince?: number,
 ): ProgressionDecision<ListeningStage> {
   const recent = [...usableListeningAttempts(attempts)].sort((a, b) => b.completedAt - a.completedAt).slice(0, 5);
   const score = Math.round(average(recent.map(listeningScore)));
   const currentIndex = LISTENING_STAGES.indexOf(current);
   const criteria = LISTENING_STAGE_CRITERIA[current];
-  const promotionReady = recent.length >= criteria.minSamples && score >= criteria.minScore;
+  const atStage = evidenceAtStage(recent, stageSince, (attempt) => attempt.completedAt);
+  const promotionReady =
+    recent.length >= criteria.minSamples && score >= criteria.minScore && atStage.length >= criteria.minSamples;
   const next = promotionReady && currentIndex < LISTENING_STAGES.length - 1
     ? LISTENING_STAGES[currentIndex + 1]
     : current;
@@ -228,11 +361,11 @@ export function deriveListeningStage(
     score,
     samples: recent.length,
     regressed,
-    reason: regressed
-      ? "Recent comprehension is struggling, so transcript and speed support should return."
-      : stage !== current
-        ? `Repeated listening evidence met the stage requirement: ${criteria.evidence}.`
-        : `Keep the current support until this evidence is available: ${criteria.evidence}.`,
+    ...decisionReason(
+      "listening",
+      regressed ? "regressed" : stage !== current ? "promoted" : "holding",
+      criteria.evidence,
+    ),
   };
 }
 
@@ -240,6 +373,7 @@ export function deriveSpeakingStage(
   attempts: ProductionAttempt[],
   retries: RetryOutcome[] = [],
   current: SpeakingStage = "fixed_phrases",
+  stageSince?: number,
 ): ProgressionDecision<SpeakingStage> {
   // Open-production transfer attempts prove output practice, but not correctness.
   // They must not promote or regress the support ladder until feedback exists.
@@ -252,10 +386,15 @@ export function deriveSpeakingStage(
   const score = Math.round(average(recent.map((attempt) => productionScore(attempt, retryByAttempt.get(attempt.id)))));
   const currentIndex = SPEAKING_STAGES.indexOf(current);
   const criteria = SPEAKING_STAGE_CRITERIA[current];
-  const durationReady = criteria.minDurationSeconds === undefined || recent.filter((attempt) =>
+  const atStage = evidenceAtStage(recent, stageSince, (attempt) => attempt.createdAt);
+  const durationReady = criteria.minDurationSeconds === undefined || atStage.filter((attempt) =>
     (attempt.durationMs ?? 0) >= criteria.minDurationSeconds! * 1000,
   ).length >= criteria.minSamples;
-  const promotionReady = recent.length >= criteria.minSamples && score >= criteria.minScore && durationReady;
+  const promotionReady =
+    recent.length >= criteria.minSamples
+    && score >= criteria.minScore
+    && durationReady
+    && atStage.length >= criteria.minSamples;
   const next = promotionReady && currentIndex < SPEAKING_STAGES.length - 1
     ? SPEAKING_STAGES[currentIndex + 1]
     : current;
@@ -266,20 +405,24 @@ export function deriveSpeakingStage(
     score,
     samples: recent.length,
     regressed,
-    reason: regressed
-      ? "Recent production is struggling, so prompts and scaffolds should become more supported."
-      : stage !== current
-        ? `Repeated production met the stage requirement: ${criteria.evidence}.`
-        : `Complete more evaluated production evidence before increasing independence: ${criteria.evidence}.`,
+    ...decisionReason(
+      "speaking",
+      regressed ? "regressed" : stage !== current ? "promoted" : "holding",
+      criteria.evidence,
+    ),
   };
 }
 
 export function deriveReadingWritingStage(
   attempts: ProductionAttempt[],
   current: ReadingWritingStage = "guided_reading",
+  stageSince?: number,
 ): ProgressionDecision<ReadingWritingStage> {
   const recent = [...usableProductionAttempts(attempts)]
     .filter((attempt) => !attempt.spoken && attempt.transferKind)
+    // Open transfer is valuable practice, but self-reflection cannot prove the answer was
+    // correct or promote the learner through a scaffold ladder.
+    .filter((attempt) => attempt.evaluated !== false)
     .sort((a, b) => b.createdAt - a.createdAt)
     .slice(0, 8);
   const readingAttempts = recent.filter((attempt) => attempt.transferKind === "reading_to_meaning");
@@ -306,7 +449,11 @@ export function deriveReadingWritingStage(
         : (recent.filter((attempt) => attempt.newContext).length
           ? (transfer / recent.filter((attempt) => attempt.newContext).length) * 100
           : 0);
-  const canPromote = evidenceCount >= criteria.minSamples && stageScore >= criteria.minScore;
+  const atStage = evidenceAtStage(recent, stageSince, (attempt) => attempt.createdAt);
+  const canPromote =
+    evidenceCount >= criteria.minSamples
+    && stageScore >= criteria.minScore
+    && atStage.length >= criteria.minSamples;
   const next = canPromote && currentIndex < 3
     ? READING_WRITING_STAGES[currentIndex + 1]
     : current;
@@ -317,11 +464,11 @@ export function deriveReadingWritingStage(
     score: Math.round(Math.max(score, stageScore)),
     samples: recent.length,
     regressed,
-    reason: regressed
-      ? "Recent reading or writing evidence is struggling, so the next task restores more guidance."
-      : stage !== current
-      ? "Repeated reading, writing, and transfer evidence supports the next scaffold."
-      : `Keep building evidence before withdrawing support: ${criteria.evidence}.`,
+    ...decisionReason(
+      "readingWriting",
+      regressed ? "regressed" : stage !== current ? "promoted" : "holding",
+      criteria.evidence,
+    ),
   };
 }
 
@@ -390,8 +537,11 @@ export function supportForProgression(
     sound_familiarity: { playbackRate: 0.8, guidance: "Start with slower supported input and replay freely." },
     word_recognition: { playbackRate: 0.9, guidance: "Listen for familiar words before checking the main idea." },
     main_idea: { playbackRate: 1, guidance: "Catch the situation first; details can wait." },
-    functional_comprehension: { playbackRate: 1.1, guidance: "Try natural speed and use the transcript after the check." },
-    natural_comprehension: { playbackRate: 1.2, guidance: "Stay with natural speed and unfamiliar connected speech." },
+    functional_comprehension: { playbackRate: 1, guidance: "Try natural speed and use the transcript after the check." },
+        // Said plainly because it is a real limit of the product, not a suggestion: every
+    // built-in lesson clip is the same synthetic voice, so this rung — and the
+    // unfamiliar-speech metric behind it — needs audio the learner brings themselves.
+    natural_comprehension: { playbackRate: 1, guidance: "Every built-in clip uses the same synthetic voice. Import real audio — this stage cannot be measured without it." },
   };
   const speakingSupport: Record<SpeakingStage, { prompt: string; guidance: string }> = {
     fixed_phrases: { prompt: "Use the kept phrase in one clear sentence.", guidance: "Keep the model phrase as your scaffold." },
@@ -457,13 +607,24 @@ export function deriveProgressionState(input: {
   previous?: MethodProgressionState;
   now?: number;
 }): MethodProgressionState {
-  const listening = deriveListeningStage(input.listeningAttempts, input.previous?.listeningStage);
+  const now = input.now ?? Date.now();
+  const previous = input.previous;
+  const listening = deriveListeningStage(
+    input.listeningAttempts,
+    previous?.listeningStage,
+    enteredAt(previous, previous?.listeningStageSince, now),
+  );
   const speaking = deriveSpeakingStage(
     input.productionAttempts,
     input.retryOutcomes ?? [],
-    input.previous?.speakingStage,
+    previous?.speakingStage,
+    enteredAt(previous, previous?.speakingStageSince, now),
   );
-  const readingWriting = deriveReadingWritingStage(input.productionAttempts, input.previous?.readingWritingStage);
+  const readingWriting = deriveReadingWritingStage(
+    input.productionAttempts,
+    previous?.readingWritingStage,
+    enteredAt(previous, previous?.readingWritingStageSince, now),
+  );
   return {
     id: "current",
     listeningStage: listening.stage,
@@ -476,8 +637,46 @@ export function deriveProgressionState(input: {
     listeningReason: listening.reason,
     speakingReason: speaking.reason,
     readingWritingReason: readingWriting.reason,
+    listeningReasonKind: listening.reasonKind,
+    speakingReasonKind: speaking.reasonKind,
+    readingWritingReasonKind: readingWriting.reasonKind,
     readingWritingStage: readingWriting.stage,
     readingWritingSamples: readingWriting.samples,
-    updatedAt: input.now ?? Date.now(),
+    listeningStageSince: stayedAt(previous?.listeningStage, listening.stage, previous?.listeningStageSince, now),
+    speakingStageSince: stayedAt(previous?.speakingStage, speaking.stage, previous?.speakingStageSince, now),
+    readingWritingStageSince: stayedAt(
+      previous?.readingWritingStage,
+      readingWriting.stage,
+      previous?.readingWritingStageSince,
+      now,
+    ),
+    updatedAt: now,
   };
+}
+
+/**
+ * The moment the current stage was entered, as the promotion gate should read it.
+ *
+ * `undefined` only on the very first derivation, where the whole history is the evidence
+ * for the opening rung. A stored snapshot that predates stage stamping is treated as
+ * "entered now", so it withholds promotion until fresh evidence exists rather than
+ * spending old evidence a second time.
+ */
+function enteredAt(
+  previous: MethodProgressionState | undefined,
+  since: number | undefined,
+  now: number,
+): number | undefined {
+  if (!previous) return undefined;
+  return since ?? now;
+}
+
+/** Carry the entry timestamp while the stage holds; restart it on any move, up or down. */
+function stayedAt<T extends string>(
+  previousStage: T | undefined,
+  stage: T,
+  since: number | undefined,
+  now: number,
+): number {
+  return previousStage === stage ? since ?? now : now;
 }

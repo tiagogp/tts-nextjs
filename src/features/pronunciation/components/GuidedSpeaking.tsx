@@ -9,7 +9,8 @@ import { PronunciationCoach } from "@/features/pronunciation/components/Pronunci
 import { MistakeStep } from "@/features/learn/components/MistakeStep";
 import { buildSpeakingDrill, selectRecurringError, type SpeakingDrillStep } from "@/features/pronunciation/speakingDrill";
 import {
-  completedLessonIdsFromCardIds,
+  lessonProgressFromCardIds,
+  phraseKey,
   firstLesson,
   nextLessonFor,
   type Lesson,
@@ -18,7 +19,7 @@ import {
 import { getLearningProfile } from "@/features/settings/learningProfile";
 import { getCards, getErrorEvents } from "@/lib/store/repository";
 import { getMethodProgression } from "@/lib/store/repository";
-import { supportForProgression, type MethodProgressionState } from "@/features/method/progression";
+import { SPEAKING_STAGE_LABEL, supportForProgression, type MethodProgressionState } from "@/features/method/progression";
 import { TimedMonologue } from "@/features/pronunciation/components/TimedMonologue";
 import { useT } from "@/i18n/I18nProvider";
 
@@ -52,10 +53,10 @@ export function GuidedSpeaking({ onDone }: { onDone?: () => void }) {
       nextError = selectRecurringError(errors);
     } finally {
       const next: Lesson =
-        nextLessonFor(getLearningProfile(), completedLessonIdsFromCardIds(cardIds)) ??
+        nextLessonFor(getLearningProfile(), lessonProgressFromCardIds(cardIds)) ??
         firstLesson();
       const savedPhrases: LessonPhrase[] = next.phrases.filter((phrase, index) =>
-        cardIds.has(`lesson-${next.id}-card-${phrase.id ?? index}`),
+        cardIds.has(`lesson-${next.id}-card-${phraseKey(phrase, index)}`),
       );
       setLesson(next);
       setSteps(buildSpeakingDrill({ lesson: next, savedPhrases, recurringError: nextError }));
@@ -98,8 +99,8 @@ export function GuidedSpeaking({ onDone }: { onDone?: () => void }) {
         </p>
         <p className="mt-2 text-xs text-ink-muted">
           {t("Current speaking support: {stage}. {guidance}", {
-            stage: support.speaking.stage.replaceAll("_", " "),
-            guidance: support.speaking.guidance,
+            stage: t(SPEAKING_STAGE_LABEL[support.speaking.stage]),
+            guidance: t(support.speaking.guidance),
           })}
         </p>
       </Card>
