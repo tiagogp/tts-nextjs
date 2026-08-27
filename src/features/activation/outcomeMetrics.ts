@@ -2,7 +2,8 @@ import { Rating } from "@/lib/srs/fsrs";
 import type { ReviewRecord } from "@/lib/store/repository";
 
 /**
- * The learning-outcome metric: **D+30 unaided production rate**.
+ * Legacy rolling activity metric. New learning claims use `computeDelayedProduction`,
+ * which tests explicit D7/D30/D60 intervals and observed pre-reveal responses.
  *
  * Everything else the app measures is activity or model output. Cards created, lessons
  * completed and weekly minutes say a learner showed up; FSRS predicted retention is the
@@ -39,6 +40,22 @@ export interface UnaidedProductionStats {
   rate: number | null;
   /** Distinct cards behind `attempts` — a rate over two cards is not a rate. */
   cards: number;
+  /** Cards whose latest qualifying attempt was correct, newest evidence first. */
+  heldCardIds: string[];
+}
+
+export type DelayedProductionTarget = 7 | 30 | 60;
+
+export interface DelayedProductionWindow extends UnaidedProductionStats {
+  targetDays: DelayedProductionTarget;
+  minGapDays: number;
+  maxGapDays: number;
+}
+
+export interface DelayedProductionStats {
+  d7: DelayedProductionWindow;
+  d30: DelayedProductionWindow;
+  d60: DelayedProductionWindow;
 }
 
 function isUnaided(review: ReviewRecord): boolean {
@@ -66,6 +83,7 @@ export function computeUnaidedProduction(
   let attempts = 0;
   let correct = 0;
   const cards = new Set<string>();
+  const latestQualifying = new Map<string, ReviewRecord>();
 
   for (const history of byCard.values()) {
     for (const [index, review] of history.entries()) {
@@ -82,6 +100,7 @@ export function computeUnaidedProduction(
 
       attempts += 1;
       cards.add(review.cardId);
+      latestQualifying.set(review.cardId, review);
       if (review.grade === Rating.Good || review.grade === Rating.Easy) correct += 1;
     }
   }
@@ -93,5 +112,72 @@ export function computeUnaidedProduction(
     correct,
     rate: attempts === 0 ? null : correct / attempts,
     cards: cards.size,
+    heldCardIds: [...latestQualifying.values()]
+      .filter((review) => review.grade === Rating.Good || review.grade === Rating.Easy)
+      .sort((a, b) => b.reviewedAt - a.reviewedAt)
+      .map((review) => review.cardId),
+  };
+}
+
+const DELAYED_WINDOWS: Record<DelayedProductionTarget, { min: number; max: number }> = {
+  7: { min: 5, max: 10 },
+  30: { min: 24, max: 38 },
+  60: { min: 50, max: 75 },
+};
+
+function delayedWindow(
+  reviews: ReviewRecord[],
+  targetDays: DelayedProductionTarget,
+  now: number,
+): DelayedProductionWindow {
+  const { min, max } = DELAYED_WINDOWS[targetDays];
+  const byCard = new Map<string, ReviewRecord[]>();
+  for (const review of [...reviews].sort((a, b) => a.reviewedAt - b.reviewedAt)) {
+    const history = byCard.get(review.cardId) ?? [];
+    history.push(review);
+    byCard.set(review.cardId, history);
+  }
+
+  const qualifying: ReviewRecord[] = [];
+  for (const history of byCard.values()) {
+    for (let index = 1; index < history.length; index += 1) {
+      const current = history[index];
+      const previous = history[index - 1];
+      const gap = (current.reviewedAt - previous.reviewedAt) / DAY_MS;
+      if (current.reviewedAt > now || current.direction !== "production") continue;
+      if (!isUnaided(current) || current.responseCorrect === undefined) continue;
+      if (gap < min || gap > max) continue;
+      qualifying.push(current);
+    }
+  }
+  const latest = new Map<string, ReviewRecord>();
+  for (const review of qualifying) latest.set(review.cardId, review);
+  const correct = qualifying.filter((review) => review.responseCorrect === true).length;
+  return {
+    targetDays,
+    minGapDays: min,
+    maxGapDays: max,
+    windowDays: targetDays,
+    minRestDays: min,
+    attempts: qualifying.length,
+    correct,
+    rate: qualifying.length ? correct / qualifying.length : null,
+    cards: new Set(qualifying.map((review) => review.cardId)).size,
+    heldCardIds: [...latest.values()]
+      .filter((review) => review.responseCorrect === true)
+      .sort((left, right) => right.reviewedAt - left.reviewedAt)
+      .map((review) => review.cardId),
+  };
+}
+
+/** Strict observed production checks at the three delayed-learning horizons. */
+export function computeDelayedProduction(
+  reviews: ReviewRecord[],
+  now: number = Date.now(),
+): DelayedProductionStats {
+  return {
+    d7: delayedWindow(reviews, 7, now),
+    d30: delayedWindow(reviews, 30, now),
+    d60: delayedWindow(reviews, 60, now),
   };
 }

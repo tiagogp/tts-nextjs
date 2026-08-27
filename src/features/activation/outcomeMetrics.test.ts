@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { Rating, State } from "@/lib/srs/fsrs";
 import type { ReviewRecord } from "@/lib/store/repository";
 import type { CardDirection } from "@/lib/cards/schema";
-import { computeUnaidedProduction } from "./outcomeMetrics";
+import { computeDelayedProduction, computeUnaidedProduction } from "./outcomeMetrics";
 
 const DAY = 24 * 60 * 60 * 1000;
 const NOW = Date.UTC(2026, 6, 25);
@@ -35,7 +35,7 @@ describe("computeUnaidedProduction", () => {
     const stats = computeUnaidedProduction([], NOW);
 
     // "Not measured" must not read as 0%.
-    expect(stats).toMatchObject({ attempts: 0, correct: 0, rate: null, cards: 0 });
+    expect(stats).toMatchObject({ attempts: 0, correct: 0, rate: null, cards: 0, heldCardIds: [] });
   });
 
   it("counts unaided production reviews after a week of rest", () => {
@@ -48,6 +48,7 @@ describe("computeUnaidedProduction", () => {
     expect(stats.correct).toBe(1);
     expect(stats.rate).toBe(0.5);
     expect(stats.cards).toBe(2);
+    expect(stats.heldCardIds).toEqual(["a"]);
   });
 
   it("ignores recognition reviews", () => {
@@ -94,5 +95,40 @@ describe("computeUnaidedProduction", () => {
     ];
     expect(computeUnaidedProduction(old, NOW).attempts).toBe(0);
     expect(computeUnaidedProduction(old, NOW, { windowDays: 90 }).attempts).toBe(1);
+  });
+
+  it("only lists a card when its latest qualifying attempt is still held", () => {
+    const history = [
+      review({ cardId: "a", reviewedAt: NOW - 20 * DAY }),
+      review({ cardId: "a", reviewedAt: NOW - 10 * DAY, grade: Rating.Good }),
+      review({ cardId: "a", reviewedAt: NOW - DAY, grade: Rating.Again }),
+    ];
+
+    expect(computeUnaidedProduction(history, NOW).heldCardIds).toEqual([]);
+  });
+});
+
+describe("computeDelayedProduction", () => {
+  it("separates D7, D30 and D60 and requires observed correctness", () => {
+    const observed = (cardId: string, gap: number, responseCorrect: boolean | undefined) => {
+      const at = NOW - DAY;
+      return [
+        review({ cardId, reviewedAt: at - gap * DAY }),
+        review({ cardId, reviewedAt: at, responseCorrect }),
+      ];
+    };
+    const stats = computeDelayedProduction([
+      ...observed("d7", 7, true),
+      ...observed("d30", 30, false),
+      ...observed("d60", 60, true),
+      ...observed("legacy", 30, undefined),
+    ], NOW);
+    expect(stats.d7).toMatchObject({ attempts: 1, correct: 1, rate: 1 });
+    expect(stats.d30).toMatchObject({ attempts: 1, correct: 0, rate: 0 });
+    expect(stats.d60).toMatchObject({ attempts: 1, correct: 1, rate: 1 });
+  });
+
+  it("does not turn a self grade into observed evidence", () => {
+    expect(computeDelayedProduction(pair("legacy", 30), NOW).d30.attempts).toBe(0);
   });
 });

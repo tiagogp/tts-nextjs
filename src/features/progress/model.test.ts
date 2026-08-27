@@ -24,8 +24,14 @@ function review(daysAgo: number, grade: Grade = Rating.Good, overrides: Partial<
 
 function unaidedProductionPair(cardId: string, daysAgo: number, grade: Grade = Rating.Good): ReviewRecord[] {
   return [
-    review(daysAgo + 8, Rating.Good, { cardId, direction: "production" }),
-    review(daysAgo, grade, { cardId, direction: "production", scaffoldLevel: 0, hintUsed: false }),
+    review(daysAgo + 30, Rating.Good, { cardId, direction: "production" }),
+    review(daysAgo, grade, {
+      cardId,
+      direction: "production",
+      scaffoldLevel: 0,
+      hintUsed: false,
+      responseCorrect: grade === Rating.Good || grade === Rating.Easy,
+    }),
   ];
 }
 
@@ -108,8 +114,8 @@ describe("computeProgressSnapshot", () => {
       now: NOW,
     });
 
-    expect(snapshot.confidence).toBe("high");
-    expect(snapshot.estimatedBand).not.toBe("A2 baseline");
+    expect(snapshot.confidence).toBe("low");
+    expect(snapshot.estimatedBand).toBe("A2 baseline");
     expect(snapshot.milestones.find((item) => item.id === "recall-control")?.achieved).toBe(true);
     expect(snapshot.milestones.find((item) => item.id === "clear-pronunciation")?.achieved).toBe(true);
   });
@@ -131,7 +137,7 @@ describe("computeProgressSnapshot", () => {
     });
   });
 
-  it("keeps D+30 unaided production separate from ordinary review activity", () => {
+  it("keeps observed D30 production separate from ordinary review activity", () => {
     const snapshot = computeProgressSnapshot({
       profileLevel: "B1",
       reviews: [
@@ -152,6 +158,39 @@ describe("computeProgressSnapshot", () => {
       correct: 1,
       cards: 2,
       rate: 0.5,
+    });
+  });
+
+  it("does not report a learner self-check as validated transfer success", () => {
+    const selfCheckedTransfer: ProductionAttempt = {
+      id: "self-transfer",
+      source: "study",
+      stage: "production",
+      transferKind: "phrase_to_situation",
+      transferOutcome: "clear",
+      newContext: true,
+      text: "I ended up staying home because it rained.",
+      spoken: false,
+      wordCount: 8,
+      finished: true,
+      issueCount: 0,
+      evaluated: false,
+      createdAt: NOW - DAY,
+    };
+    const snapshot = computeProgressSnapshot({
+      profileLevel: "B1",
+      reviews: [],
+      errorEvents: [],
+      conversations: [],
+      pronunciationAttempts: [],
+      productionAttempts: [selfCheckedTransfer],
+      assessments: [],
+      now: NOW,
+    });
+
+    expect(snapshot.confidenceIndicators).toMatchObject({
+      transferAttempts: 1,
+      transferSuccessRate: 0,
     });
   });
 
@@ -286,6 +325,44 @@ describe("computeProgressSnapshot", () => {
     expect(snapshot.confidenceIndicators.transferAttempts).toBe(1);
   });
 
+  it("does not read a typed sentence as a speaking rate", () => {
+    const snapshot = computeProgressSnapshot({
+      profileLevel: "A1",
+      reviews: [],
+      errorEvents: [],
+      conversations: [],
+      pronunciationAttempts: [],
+      productionAttempts: [
+        // Pasted in one keystroke: the composition clock says 12 ms, which as words per
+        // minute would read as tens of thousands of spoken words.
+        { id: "typed", source: "lesson", stage: "production", text: "My name is Pedro and I live in Sao Paulo.", spoken: false, wordCount: 10, finished: true, issueCount: 0, durationMs: 12, createdAt: NOW - DAY },
+      ],
+      assessments: [],
+      now: NOW,
+    });
+
+    expect(snapshot.confidenceIndicators.averageWordsPerMinute).toBe(0);
+    expect(snapshot.confidenceIndicators.fluencySamples).toBe(0);
+  });
+
+  it("floors a spoken attempt's duration before deriving its rate", () => {
+    const snapshot = computeProgressSnapshot({
+      profileLevel: "A1",
+      reviews: [],
+      errorEvents: [],
+      conversations: [],
+      pronunciationAttempts: [],
+      productionAttempts: [
+        { id: "blip", source: "lesson", stage: "production", text: "Good morning.", spoken: true, wordCount: 2, finished: true, issueCount: 0, durationMs: 40, createdAt: NOW - DAY },
+      ],
+      assessments: [],
+      now: NOW,
+    });
+
+    // 2 words over the 1s floor, not over the 40 ms the recorder reported.
+    expect(snapshot.confidenceIndicators.averageWordsPerMinute).toBe(120);
+  });
+
   it("reports independent transfer and avoided-error evidence separately", () => {
     const snapshot = computeProgressSnapshot({
       profileLevel: "B1",
@@ -300,6 +377,7 @@ describe("computeProgressSnapshot", () => {
         transferKind: "correction_recall",
         transferOutcome: "clear",
         newContext: true,
+        transferVerified: true,
         avoidedErrorIds: ["error-1"],
         text: "I have time in a new situation.",
         spoken: false,
@@ -318,7 +396,10 @@ describe("computeProgressSnapshot", () => {
       transferSuccessRate: 100,
       cardRecallAttempts: 0,
       openProductionAttempts: 1,
-      crossContextReuse: 1,
+      crossContextAttempts: 1,
+      crossContextVerified: 1,
+      crossContextTransferred: 1,
+      crossContextRate: 100,
       correctionRecallAttempts: 1,
       avoidedErrorCount: 1,
       independentAttempts: 1,
@@ -367,5 +448,40 @@ describe("computeProgressSnapshot", () => {
       preparationSamples: 1,
       skippedAttempts: 1,
     });
+  });
+});
+
+describe("cross-context reporting", () => {
+  it("never reports a transfer rate the app could not verify", () => {
+    // A prompt asked for a new situation; the item had no authored pattern, so nothing was
+    // checkable. The panel must show an attempt with no rate, not a 0% or a 100%.
+    const snapshot = computeProgressSnapshot({
+      profileLevel: "B1",
+      reviews: [],
+      errorEvents: [],
+      conversations: [],
+      pronunciationAttempts: [],
+      productionAttempts: [{
+        id: "unverifiable",
+        source: "study",
+        stage: "production",
+        transferKind: "phrase_to_situation",
+        transferOutcome: "clear",
+        transferVerified: false,
+        text: "I ended up somewhere else entirely.",
+        spoken: false,
+        wordCount: 6,
+        finished: true,
+        issueCount: 0,
+        evaluated: true,
+        createdAt: NOW - DAY,
+      }],
+      assessments: [],
+      now: NOW,
+    });
+
+    expect(snapshot.confidenceIndicators.crossContextAttempts).toBe(1);
+    expect(snapshot.confidenceIndicators.crossContextVerified).toBe(0);
+    expect(snapshot.confidenceIndicators.crossContextRate).toBeNull();
   });
 });
