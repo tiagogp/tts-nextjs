@@ -1,10 +1,13 @@
 # PhraseLoop Validation Log
 
-Use this table for the 8-12 learner validation run. Predefine the primary metric before the first session, then fill one row per participant.
+Use this table for the five-person instrumentation pilot. Confirmatory efficacy data belongs to
+[learning-efficacy-experiment.md](learning-efficacy-experiment.md); pilot participants must not
+be included in that analysis.
 
-Primary outcome for this run:
+Primary outcome for this run: every D7/D30/D60 production attempt captures a pre-reveal response,
+observed correctness, scaffold state, exact interval, task completion, and target pattern.
 
-Comparison condition: previous routine / wait-list week / simple alternative workflow
+Comparison condition: active recognition-card workflow with matched source material and time.
 
 | Participant | Profile | Baseline task scores | In-app tasks completed | D+1 return | D+7 unaided production | Near transfer | Cold transfer | Interview signal | Decision |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |

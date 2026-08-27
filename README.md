@@ -180,7 +180,7 @@ on first use and audio decoding uses in-process WebAssembly. YouTube import requ
 > Product direction, active priorities, and research-backed roadmap live in
 > [docs/product.md](docs/product.md). Architecture and shipped feature history live in
 > [docs/README.md](docs/README.md). Validation materials live in
-> [docs/validation-log.md](docs/validation-log.md) and [docs/learning-rubrics.md](docs/learning-rubrics.md).
+> [docs/validation-log.md](docs/validation-log.md) and [docs/learning-efficacy-experiment.md](docs/learning-efficacy-experiment.md).
 
 ## Advanced AI Providers
 

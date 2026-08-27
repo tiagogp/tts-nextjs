@@ -9,8 +9,8 @@ Use:
 - [docs/README.md](README.md) para arquitetura, implementacao, design e backlog tecnico.
 - [docs/adversarial-audit.md](adversarial-audit.md) para a critica hostil do metodo e da posicao
   comercial (2026-07-25), escrita antes de qualquer evidencia de usuario.
-- [docs/adversarial-audit-response.md](adversarial-audit-response.md) para o que foi implementado
-  em resposta a essa critica, o que ficou aberto e o que nao e problema de codigo.
+- [docs/learning-efficacy-experiment.md](learning-efficacy-experiment.md) para o protocolo do
+  estudo longitudinal que ainda precisa de participantes.
 - Este arquivo para todas as decisoes de produto e aprendizagem.
 
 ## Produto Em Uma Frase
