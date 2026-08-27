@@ -15,6 +15,7 @@
 import OpenAI from "openai";
 import type {
   CardGenerationProvider,
+  CorrectionResult,
   ConversationTurn,
   ConverseOptions,
   CorrectOptions,
@@ -27,7 +28,6 @@ import type {
   CardSource,
   Critique,
   DiscoveryRequest,
-  ErrorEvent,
   PhraseCandidate,
   TranscriptSegment,
 } from "../schema";
@@ -42,7 +42,7 @@ import {
   buildMineRequest,
   conversationMessages,
   normalizeAdvancedReview,
-  normalizeCorrected,
+  normalizeCorrection,
   normalizeCritique,
   normalizeGenerated,
   normalizeMined,
@@ -74,6 +74,10 @@ export class OpenRouterProvider implements CardGenerationProvider {
 
   private readonly client: OpenAI;
   private readonly model: string;
+  /** Public mirror of `model`, so a verdict can record which model produced it. */
+  get modelId(): string {
+    return this.model;
+  }
   private readonly learnerLang: string;
   private readonly targetLang: string;
   private readonly level?: string;
@@ -172,14 +176,14 @@ export class OpenRouterProvider implements CardGenerationProvider {
     text: string,
     opts: CorrectOptions = {},
     options?: GenerationRunOptions,
-  ): Promise<ErrorEvent[]> {
+  ): Promise<CorrectionResult> {
     const sourceLang = opts.sourceLang ?? this.learnerLang;
     const targetLang = opts.targetLang ?? "en";
     const raw = await this.json(
-      buildCorrectRequest(text, sourceLang, targetLang, opts.level),
+      buildCorrectRequest(text, sourceLang, targetLang, opts.level, opts.task),
       options,
     );
-    return normalizeCorrected(raw, sourceLang, targetLang, opts.context);
+    return normalizeCorrection(raw, sourceLang, targetLang, opts.context, opts.task);
   }
 
   async review(

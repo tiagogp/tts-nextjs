@@ -36,6 +36,27 @@ export interface CorrectOptions {
   level?: string;
   /** Situational context to stamp on every ErrorEvent found (already normalized). */
   context?: string;
+  /**
+   * Communicative task the learner was answering. This is evaluation context only:
+   * it must not be copied into a correction or stored as the error's situation tag.
+   */
+  task?: string;
+}
+
+/** Whether a response fulfilled the communicative task it was given. */
+export type TaskCompletionStatus = "met" | "partial" | "not_met";
+
+/** Separate task success from language corrections so an off-task answer cannot look correct. */
+export interface TaskAssessment {
+  status: TaskCompletionStatus;
+  /** One focused learner-facing explanation, in the rationale language. */
+  feedback: string;
+}
+
+/** Result of a correction pass; task evidence is optional outside guided tasks. */
+export interface CorrectionResult {
+  events: ErrorEvent[];
+  task?: TaskAssessment;
 }
 
 /** One exchanged message in a practice conversation. */
@@ -125,7 +146,7 @@ export interface CardGenerationProvider {
     text: string,
     opts?: CorrectOptions,
     options?: GenerationRunOptions,
-  ): Promise<ErrorEvent[]>;
+  ): Promise<CorrectionResult>;
 
   /**
    * Advanced production review. Returns real mistakes plus optional native-sounding
@@ -168,6 +189,12 @@ export interface CardGenerationProvider {
   embed?: Embedder;
   /** Stable provider/model namespace for the in-memory embeddings cache. */
   readonly embeddingCacheKey?: string;
+  /**
+   * The model this instance actually resolved to, for stamping verdict provenance. Not the
+   * model configured in settings — the one that produced the answer. See
+   * `src/lib/evaluation/judge.ts`: a metric that spans two models spans two instruments.
+   */
+  readonly modelId?: string;
 }
 
 /** Registry so the UI can list available providers and resolve the user's choice. */

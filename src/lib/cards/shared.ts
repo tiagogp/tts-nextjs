@@ -22,6 +22,7 @@ import type {
   RefinementEvent,
   TranscriptSegment,
 } from "./schema";
+import type { CorrectionResult, TaskAssessment, TaskCompletionStatus } from "./provider";
 import type { ConversationTurn, ConverseOptions } from "./provider";
 
 /** Default learner (L1) language for translation glosses when none is supplied. */
@@ -481,6 +482,13 @@ export interface CorrectedError {
 interface CorrectResult {
   /** Empty when the learner's text was already native-correct. */
   errors: CorrectedError[];
+  /** Present only when the caller supplied a communicative task to evaluate. */
+  task?: RawTaskAssessment | null;
+}
+
+interface RawTaskAssessment {
+  status: string;
+  feedback: string;
 }
 
 export interface RawRefinement {
@@ -512,11 +520,16 @@ export function buildCorrectRequest(
   learnerLang: string,
   targetLang: string,
   level?: string,
+  task?: string,
 ): JsonRequest<CorrectResult> {
   const rationaleLang = rationaleLanguage(learnerLang, targetLang, level);
+  const normalizedTask = task?.trim();
   const system = [
     `You are a meticulous ${targetLang} tutor for a learner whose first language is ${learnerLang}.`,
     `The learner gives you something they wrote or said in ${targetLang}. Find the highest-signal mistakes first: communication-blocking meaning, missing information, recurring grammar, word order, or vocabulary problems. Return at most 3 corrections; do not enumerate minor polish that does not affect understanding.`,
+    normalizedTask
+      ? `A communicative task is supplied. Assess task completion independently before judging language. A grammatical response that does not answer the task is not successful. Put that judgment in task, never fabricate a language correction or turn an off-task response into an ErrorEvent.`
+      : `No communicative task is supplied. Return task as null.`,
     `Isolate mistakes: if a sentence has a wrong preposition AND a wrong tense, that's two corrections, each scoped to the smallest fragment that carries the error — never the whole passage.`,
     `Only flag real errors (grammar, collocation, naturalness, register) — not style preferences. If the text is already natural and correct, return an empty list.`,
     `The corrected field must be written only in ${targetLang}; never translate it into ${learnerLang}.`,
@@ -524,6 +537,15 @@ export function buildCorrectRequest(
   ].join(" ");
 
   const user = [
+    ...(normalizedTask
+      ? [
+          `Communicative task:`,
+          `"""`,
+          normalizedTask,
+          `"""`,
+          ``,
+        ]
+      : []),
     `Learner's ${targetLang}:`,
     `"""`,
     text,
@@ -534,6 +556,9 @@ export function buildCorrectRequest(
     `- corrected: the native-correct ${targetLang} version of just that fragment; do not translate it into ${learnerLang}.`,
     `- errorTypes: one or more of: ${ERROR_TYPES.join(", ")}.`,
     `- rationale: one short line, in ${rationaleLang}, on why it was wrong / how to say it.`,
+    normalizedTask
+      ? `- task: { status: met | partial | not_met, feedback: one short explanation in ${rationaleLang} of whether the learner completed the task and, if not, what information is still needed }. Do not judge grammar in task; use errors for that.`
+      : `- task: null.`,
   ].join("\n");
 
   const schema = objectSchema(
@@ -553,8 +578,20 @@ export function buildCorrectRequest(
           ["original", "corrected", "errorTypes", "rationale"],
         ),
       },
+      task: {
+        anyOf: [
+          objectSchema(
+            {
+              status: { type: "string", enum: ["met", "partial", "not_met"] },
+              feedback: { type: "string" },
+            },
+            ["status", "feedback"],
+          ),
+          { type: "null" },
+        ],
+      },
     },
-    ["errors"],
+    ["errors", "task"],
   );
 
   return { system, user, schema };
@@ -827,6 +864,31 @@ export function normalizeCorrected(
     });
   }
   return out;
+}
+
+function normalizeTaskAssessment(
+  raw: RawTaskAssessment | null | undefined,
+  task?: string,
+): TaskAssessment | undefined {
+  if (!task?.trim() || !raw) return undefined;
+  const status = raw.status as TaskCompletionStatus;
+  const feedback = raw.feedback?.trim();
+  if (!(["met", "partial", "not_met"] as const).includes(status) || !feedback) return undefined;
+  return { status, feedback };
+}
+
+/** Normalize corrections and the independent task-completion judgment together. */
+export function normalizeCorrection(
+  raw: CorrectResult,
+  sourceLang: string,
+  targetLang: string,
+  context?: string,
+  task?: string,
+): CorrectionResult {
+  return {
+    events: normalizeCorrected(raw, sourceLang, targetLang, context),
+    task: normalizeTaskAssessment(raw.task, task),
+  };
 }
 
 export function normalizeAdvancedReview(

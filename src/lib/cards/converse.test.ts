@@ -115,6 +115,21 @@ describe("buildCorrectRequest", () => {
 
     expect(req.user).toContain("rationale: one short line, in en");
   });
+
+  it("separates communicative task completion from language corrections", () => {
+    const req = buildCorrectRequest(
+      "My weekend was good.",
+      "pt",
+      "en",
+      "B1",
+      "Explain your main strength and give one example.",
+    );
+
+    expect(req.system).toContain("Assess task completion independently before judging language");
+    expect(req.user).toContain("Communicative task:");
+    expect(req.user).toContain("Explain your main strength and give one example.");
+    expect(req.user).toContain("task: { status: met | partial | not_met");
+  });
 });
 
 describe("buildAdvancedReviewRequest", () => {

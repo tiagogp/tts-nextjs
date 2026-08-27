@@ -1,4 +1,5 @@
 import type { ErrorEvent, ErrorType } from "@/lib/cards/schema";
+import type { TaskAssessment } from "@/lib/cards/provider";
 import { applyTransferRules } from "./transferErrors";
 
 /**
@@ -28,6 +29,14 @@ export interface LocalCorrectionResult {
   issues: LocalCorrectionIssue[];
   /** Whether the lesson phrase was found (exactly or with small typos). */
   usedPhrase: boolean;
+  /**
+   * How far the check reached. `local` means only the built-in transfer patterns ran, so
+   * `corrected` fixes the mistakes we recognize and leaves anything else untouched —
+   * the surface must say so rather than present it as a full correction.
+   */
+  scope: "local" | "evaluated";
+  /** Present only when a configured evaluator received the lesson's communicative task. */
+  task?: TaskAssessment;
 }
 
 export const PHRASE_SPELLING_NOTE = "Check the spelling of the lesson phrase.";
@@ -190,7 +199,7 @@ export function correctSentenceLocally(
 ): LocalCorrectionResult {
   const issues: LocalCorrectionIssue[] = [];
   const sentence = input.trim().replace(/\s+/g, " ");
-  if (!sentence) return { corrected: "", issues: [], usedPhrase: false };
+  if (!sentence) return { corrected: "", issues: [], usedPhrase: false, scope: "local" };
 
   const phrase = targetPhrase.trim();
   const phraseTerminal = /[.!?]+$/.exec(phrase)?.[0] ?? "";
@@ -285,7 +294,7 @@ export function correctSentenceLocally(
     issues.push(feedbackIssue("other", "messageClarity", "blocking", OWN_DETAIL_NOTE));
   }
 
-  return { corrected, issues: uniqueSortedIssues(issues), usedPhrase };
+  return { corrected, issues: uniqueSortedIssues(issues), usedPhrase, scope: "local" };
 }
 
 /**
@@ -299,6 +308,7 @@ export function mergeEvaluatedCorrection(
   targetPhrase: string,
   targetPattern: string | undefined,
   events: ErrorEvent[],
+  task?: TaskAssessment,
 ): LocalCorrectionResult {
   const local = correctSentenceLocally(input, targetPhrase, targetPattern);
   let evaluated = input.trim().replace(/\s+/g, " ");
@@ -329,5 +339,7 @@ export function mergeEvaluatedCorrection(
     corrected: final.corrected,
     issues: uniqueSortedIssues([...modelIssues, ...local.issues, ...final.issues]),
     usedPhrase: final.usedPhrase,
+    scope: "evaluated",
+    task,
   };
 }

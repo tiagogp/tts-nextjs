@@ -1,7 +1,8 @@
 import type { AdvancedReview, Card, ErrorEvent } from "@/lib/cards/schema";
-import type { ProviderKind } from "@/lib/cards/provider";
+import type { ProviderKind, TaskAssessment } from "@/lib/cards/provider";
 import { getLearnerLangs } from "@/features/settings/learningProfile";
 import { watchModelNotReady } from "@/features/speech/modelStore";
+import { modelJudge, type JudgeStamp } from "@/lib/evaluation/judge";
 
 export interface DeckGenerationResult {
   cards?: Card[];
@@ -58,7 +59,14 @@ export async function generateCorrectionDeck(input: {
   return data;
 }
 
-export async function evaluateCorrectionText(input: {
+interface CorrectionResponse {
+  events: ErrorEvent[];
+  task?: TaskAssessment;
+  /** Which model and rubric produced this verdict. Stamped onto whatever the caller saves. */
+  judge?: JudgeStamp;
+}
+
+interface CorrectionInput {
   provider: ProviderKind;
   selectedModel?: string;
   text: string;
@@ -66,7 +74,11 @@ export async function evaluateCorrectionText(input: {
   context?: string;
   /** CEFR level; B2+ gets target-language rationales. */
   level?: string;
-}): Promise<ErrorEvent[]> {
+  /** Optional lesson task, evaluated independently from language correctness. */
+  task?: string;
+}
+
+async function requestCorrection(input: CorrectionInput): Promise<CorrectionResponse> {
   const { nativeLang, targetLang, level } = getLearnerLangs();
   const response = await fetch("/api/cards/correct", {
     method: "POST",
@@ -79,14 +91,33 @@ export async function evaluateCorrectionText(input: {
       targetLang,
       context: input.context || undefined,
       level: input.level || level || undefined,
+      task: input.task || undefined,
     }),
   });
   const data = (await response.json().catch(() => ({}))) as {
     events?: ErrorEvent[];
+    task?: TaskAssessment | null;
+    judge?: JudgeStamp;
     error?: string;
   };
   if (!response.ok) throw new Error(data.error ?? `Request failed (${response.status})`);
-  return data.events ?? [];
+  return {
+    events: data.events ?? [],
+    task: data.task ?? undefined,
+    // Fall back to a provider-only stamp: knowing a model judged, without knowing which,
+    // still separates this verdict from a deterministic one.
+    judge: data.judge ?? modelJudge({ provider: input.provider, model: input.selectedModel }),
+  };
+}
+
+/** Generic correction remains errors-only for free-text surfaces. */
+export async function evaluateCorrectionText(input: CorrectionInput): Promise<ErrorEvent[]> {
+  return (await requestCorrection(input)).events;
+}
+
+/** Guided lessons additionally need to know whether the learner answered the task itself. */
+export async function evaluateGuidedLessonResponse(input: CorrectionInput & { task: string }): Promise<CorrectionResponse> {
+  return requestCorrection(input);
 }
 
 export async function reviewAdvancedText(input: {
