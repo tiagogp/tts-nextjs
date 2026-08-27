@@ -27,6 +27,8 @@ export interface TomorrowPreview {
   mistakeCards: number;
   /** True when at least one mistake card's source error was made today. */
   fromToday: boolean;
+  /** Part of `due` that FSRS brings back within today's short learning steps. */
+  laterToday?: number;
 }
 
 /**
@@ -103,7 +105,22 @@ export function SessionSummary({
         </div>
       </div>
 
-      {tomorrow && <p className="text-xs text-ink-soft">{tomorrowLine(tomorrow, t)}</p>}
+      {tomorrow && (
+        <>
+          <p className="text-xs text-ink-soft">{tomorrowLine(tomorrow, t)}</p>
+          {/* Saying "tomorrow" while the first repetitions return in minutes would set the
+              wrong expectation for the rest of today. */}
+          {(tomorrow.laterToday ?? 0) > 0 && (
+            <p className="text-xs text-ink-muted">
+              {tomorrow.laterToday === 1
+                ? t("1 of them comes back later today — the first repetition is spaced in minutes.")
+                : t("{count} of them come back later today — the first repetitions are spaced in minutes.", {
+                    count: tomorrow.laterToday ?? 0,
+                  })}
+            </p>
+          )}
+        </>
+      )}
     </Card>
   );
 }

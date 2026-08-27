@@ -5,7 +5,7 @@ import type { SkillState } from "@/lib/srs/skillState";
 import type { PronunciationAttempt } from "@/lib/pronunciation/types";
 import type { ReviewRecord } from "@/lib/store/repository";
 import type { DueCard } from "./components/StudyCard";
-import { fatigueByCard, orderDueQueue } from "./bandQueue";
+import { fatigueByCard, interleaveDueQueue, orderDueQueue } from "./bandQueue";
 
 const NOW = new Date(Date.UTC(2026, 5, 28));
 const NOW_MS = NOW.getTime();
@@ -89,5 +89,16 @@ describe("fatigueByCard", () => {
     const card = { card: { id: "s" } as DueCard["card"], srs: srs("s") };
     const pron = [{ cardId: "s" } as PronunciationAttempt];
     expect(fatigueByCard(states, pron)(card)).toBe(0.5);
+  });
+});
+
+describe("interleaveDueQueue", () => {
+  it("separates siblings and repeated examples of the same pattern", () => {
+    const queue = [due("a1"), due("a2"), due("b"), due("a3")];
+    queue[0].card.patternId = "a";
+    queue[1].card.patternId = "a";
+    queue[2].card.patternId = "b";
+    queue[3].card.patternId = "a";
+    expect(interleaveDueQueue(queue).map((item) => item.card.id)).toEqual(["a1", "b", "a2", "a3"]);
   });
 });

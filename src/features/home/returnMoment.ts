@@ -44,6 +44,19 @@ export function endOfTomorrowLocal(now: number = Date.now()): number {
 }
 
 /**
+ * Epoch ms of the local end of today.
+ *
+ * The tomorrow horizon also catches the short learning steps FSRS schedules in minutes.
+ * Those are real reviews, but they land today — so the end-of-session preview separates
+ * them out instead of filing them under "tomorrow".
+ */
+export function endOfTodayLocal(now: number = Date.now()): number {
+  const d = new Date(now);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime() + DAY_MS - 1;
+}
+
+/**
  * Count due cards that came from the learner's own errors, and whether any of
  * their source errors were made on `matchDay` (yesterday for Hoje, today for the
  * end-of-session preview).

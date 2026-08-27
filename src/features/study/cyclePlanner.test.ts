@@ -98,7 +98,8 @@ describe("deriveCyclePlan", () => {
       lightAvailable: false,
     });
     const review = plan.options.find((o) => o.path === "review")!;
-    expect(review.load).toBe("~8 min focused");
+    expect(review.load).toBe("~{minutes} min focused");
+    expect(review.loadVars).toEqual({ minutes: 8 });
   });
 
   it("treats an all-zero (untouched) profile as calm — no false fatigue", () => {
