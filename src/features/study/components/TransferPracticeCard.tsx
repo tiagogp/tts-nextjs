@@ -3,20 +3,28 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { getCards, getConversations, getErrorEvents, getMethodProgression, saveAudioRecording, saveProductionAttempt } from "@/lib/store/repository";
+import { getCards, getConversations, getErrorEvents, getMethodProgression, saveAudioRecording, saveErrorEvents, saveProductionAttempt } from "@/lib/store/repository";
 import { emitActivity } from "@/lib/store/activityLog";
 import { buildTransferActivities, type TransferActivity } from "../transfer";
 import { useT } from "@/i18n/I18nProvider";
-import { supportForProgression, type MethodProgressionState } from "@/features/method/progression";
+import { interpolate } from "@/i18n/translate";
+import { READING_WRITING_STAGE_LABEL, supportForProgression, type MethodProgressionState } from "@/features/method/progression";
 import type { ProductionAttempt } from "@/lib/performance/types";
 import { useCorrectionAudio } from "@/features/correct/hooks/useCorrectionAudio";
+import { useProviderSelection } from "@/features/cards/hooks/useProviderSelection";
+import { evaluateGuidedLessonResponse } from "@/features/correct/api";
+import { correctSentenceLocally } from "@/features/learn/localCorrection";
+import { evaluateRecall } from "../responseEvaluation";
+import { checkOpenResponse } from "../openResponse";
+import { LOCAL_JUDGE, modelJudge, type JudgeStamp } from "@/lib/evaluation/judge";
+import { verifyTransfer } from "../transferVerification";
+import type { ErrorEvent } from "@/lib/cards/schema";
 
 /**
- * A small open-production surface for transfer review. It deliberately records
- * practice as unevaluated evidence: saying something new is useful, but it is
- * not the same claim as saying it was correct.
+ * A bounded transfer check. Fixed-pattern prompts have a conservative local evaluator;
+ * a configured evaluator additionally checks open task completion and general language.
  */
-export function TransferPracticeCard() {
+export function TransferPracticeCard({ onCompleted }: { onCompleted?: () => void } = {}) {
   const { t } = useT();
   const responseId = useId();
   const [activities, setActivities] = useState<TransferActivity[]>([]);
@@ -24,10 +32,19 @@ export function TransferPracticeCard() {
   const [value, setValue] = useState("");
   const [saved, setSaved] = useState(false);
   const [pendingAttempt, setPendingAttempt] = useState<ProductionAttempt | null>(null);
+  const [evaluation, setEvaluation] = useState<{
+    clear: boolean;
+    evaluated: boolean;
+    /** The device checked the form and found nothing, without judging the answer itself. */
+    formOnly?: boolean;
+    notes: string[];
+  } | null>(null);
+  const [checking, setChecking] = useState(false);
   const [recordingBlob, setRecordingBlob] = useState<Blob | null>(null);
   const [audioNote, setAudioNote] = useState<string | null>(null);
   const promptStartedAtRef = useRef(0);
   const [progression, setProgression] = useState<MethodProgressionState | undefined>();
+  const { provider, selectedModel, hasEvaluator } = useProviderSelection({ fallbackToEvaluator: true });
   const support = supportForProgression(progression);
   const audio = useCorrectionAudio({
     onNote: setAudioNote,
@@ -72,12 +89,156 @@ export function TransferPracticeCard() {
     setAudioNote(null);
     setSaved(false);
     setPendingAttempt(null);
+    setEvaluation(null);
     promptStartedAtRef.current = Date.now();
+  };
+
+  const evaluate = async (activity: TransferActivity, text: string): Promise<{
+    clear: boolean;
+    evaluated: boolean;
+    notes: string[];
+    errors: ErrorEvent[];
+    /**
+     * Undefined when nothing judged the task. An unjudged task must not be saved as a
+     * failed one — the same rule the D7/D30/D60 windows follow.
+     */
+    taskCompleted: boolean | undefined;
+    /** Notes that are actual findings, not the standing caveat about what was checked. */
+    issueCount?: number;
+    /** The form was checked and came back clean; the task itself went unjudged. */
+    formOnly?: boolean;
+    /** Who reached this verdict. Absent when nothing judged the attempt. */
+    judge?: JudgeStamp;
+    /** Whether the app could reach a transfer verdict at all. Undefined off the transfer path. */
+    transferVerified?: boolean;
+    /** Whether the pattern actually reached new content. Never true when unverified. */
+    transferred?: boolean;
+  }> => {
+    const task = `${interpolate(activity.prompt, activity.promptVars)} Use the target pattern: ${activity.expected ?? ""}`;
+    if (hasEvaluator) {
+      try {
+        const result = await evaluateGuidedLessonResponse({
+          provider,
+          selectedModel,
+          text,
+          context: `transfer:${activity.kind}`,
+          task,
+        });
+        const taskMet = result.task?.status === "met";
+        // Even with a provider, "did they leave the source sentence behind?" is checked
+        // locally: it is a deterministic property of the text, and asking a model to
+        // confirm the app's own claim is how the claim stops being checked.
+        const contextCheck = activity.newContextRequested
+          ? verifyTransfer({
+              response: text,
+              frame: activity.patternFrame,
+              sourceExample: activity.sourceExample ?? activity.expected,
+            })
+          : undefined;
+        return {
+          clear: result.events.length === 0 && taskMet && (contextCheck?.transferred ?? true),
+          transferVerified: contextCheck?.verified,
+          transferred: contextCheck?.transferred,
+          evaluated: true,
+          notes: [
+            ...result.events.map((event) => event.rationale || "Revise this language point before trying again."),
+            ...(taskMet ? [] : [result.task?.feedback || "Complete the communicative task more directly."]),
+          ],
+          errors: result.events,
+          taskCompleted: taskMet,
+          // The model judged the task; `verifyTransfer` judged the transfer, locally, as
+          // it always does. The stamp records the weaker of the two, because that is the
+          // one a reader would otherwise mistake for a deterministic result.
+          judge: result.judge ?? modelJudge({ provider }),
+        };
+      } catch {
+        // The deterministic path below keeps fixed-pattern transfer available offline.
+      }
+    }
+    if (!activity.expected) {
+      // Open task, no provider. The device cannot judge whether the answer does what the
+      // task asked, but it can still name a transfer error, a non-answer, or the prompt
+      // handed back — and it must not record an unjudged task as a failed one.
+      const open = checkOpenResponse({ response: text, prompt: interpolate(activity.prompt, activity.promptVars) });
+      const noteFor: Record<typeof open.verdict, string[]> = {
+        empty: ["Write something before checking."],
+        too_short: ["Answer the situation in a full sentence."],
+        echoed_prompt: ["This repeats the task back. Say what you would actually say in that situation."],
+        form_error: open.formIssues.map((issue) => issue.note),
+        form_clear: [],
+      };
+      const findings = noteFor[open.verdict];
+      return {
+        // Never `clear`: nothing here checked the answer against the task.
+        clear: false,
+        // A named error, a non-answer or an echo is an observation. Everything else is not.
+        evaluated: open.taskCompleted === false,
+        notes: [...findings, "Checked for known errors only — connect an evaluator to have the answer itself judged."],
+        issueCount: findings.length,
+        formOnly: open.verdict === "form_clear",
+        judge: open.taskCompleted === false ? LOCAL_JUDGE : undefined,
+        errors: [],
+        taskCompleted: open.taskCompleted,
+      };
+    }
+    if (activity.kind === "reading_to_meaning" || activity.kind === "listening_recognition") {
+      const recall = evaluateRecall(activity.expected, text);
+      return {
+        clear: recall.quality === "correct",
+        evaluated: true,
+        notes: recall.quality === "correct" ? [] : ["Restate the meaning more precisely, then try again."],
+        errors: [],
+        taskCompleted: recall.quality === "correct",
+        judge: LOCAL_JUDGE,
+      };
+    }
+    const local = correctSentenceLocally(text, activity.expected, activity.concept);
+    const blocking = local.issues.filter((issue) => issue.priority !== "polish");
+    if (!activity.newContextRequested) {
+      return {
+        clear: local.usedPhrase && blocking.length === 0,
+        evaluated: true,
+        notes: blocking.map((issue) => issue.note).concat(local.usedPhrase ? [] : ["Use the target pattern without copying the model answer."]),
+        errors: [],
+        taskCompleted: local.usedPhrase,
+        judge: LOCAL_JUDGE,
+      };
+    }
+    // The prompt asked for a *new* situation. Grading it with `usedPhrase` rewarded the
+    // learner for rebuilding the sentence they memorized — the prompt and the check were
+    // asking for opposite things. Verify the three conditions instead.
+    const check = verifyTransfer({
+      response: text,
+      frame: activity.patternFrame,
+      sourceExample: activity.sourceExample ?? activity.expected,
+    });
+    const noteFor = {
+      transferred: [],
+      reused: ["This is close to the sentence you studied. Say the same kind of thing about something else."],
+      off_pattern: ["Good English, but use the structure this card practises."],
+      form_error: check.formIssues.map((issue) => issue.note),
+      unverifiable: [],
+    }[check.verdict];
+    return {
+      clear: check.transferred && blocking.length === 0,
+      // An item with no authored pattern cannot be judged offline. Saying so is the point:
+      // an unverifiable attempt must not be recorded as a transfer.
+      evaluated: check.verified,
+      notes: [...noteFor, ...blocking.map((issue) => issue.note)],
+      errors: [],
+      taskCompleted: check.transferred,
+      transferVerified: check.verified,
+      transferred: check.transferred,
+      // `unverifiable` reached no verdict, so it gets no stamp.
+      judge: check.verified ? LOCAL_JUDGE : undefined,
+    };
   };
 
   const submit = async () => {
     const text = value.trim();
-    if (!activity || !text || pendingAttempt) return;
+    if (!activity || !text || pendingAttempt || checking) return;
+    setChecking(true);
+    try {
     const now = Date.now();
     const recordingId = recordingBlob ? crypto.randomUUID() : undefined;
     if (recordingId && recordingBlob) {
@@ -89,11 +250,13 @@ export function TransferPracticeCard() {
         createdAt: now,
       }).catch(() => undefined);
     }
+    const result = await evaluate(activity, text);
+    if (result.errors.length) await saveErrorEvents(result.errors);
     const attempt: ProductionAttempt = {
       id: crypto.randomUUID(),
       source: "study" as const,
       stage: "production" as const,
-      prompt: activity.prompt,
+      prompt: interpolate(activity.prompt, activity.promptVars),
       context: activity.kind,
       transferKind: activity.kind,
       transferSourceId: activity.sourceId,
@@ -103,14 +266,26 @@ export function TransferPracticeCard() {
       spoken: Boolean(recordingBlob),
       wordCount: text.split(/\s+/).filter(Boolean).length,
       finished: true,
-      issueCount: 0,
-      evaluated: false,
+      issueCount: result.issueCount ?? result.notes.length,
+      evaluated: result.evaluated,
+      // "needs_support" is a verdict. An attempt nothing could judge gets none, the same
+      // way an unmeasured metric is null rather than zero.
+      transferOutcome: result.evaluated ? (result.clear ? "clear" : "needs_support") : undefined,
+      avoidedErrorIds: result.clear ? activity.errorIds : undefined,
+      errorTypesFound: [...new Set(result.errors.flatMap((error) => error.errorTypes))],
+      taskCompleted: result.taskCompleted,
+      judge: result.judge,
+      targetPatternId: activity.patternId,
       durationMs: audio.recordingElapsedMs || undefined,
       fluency: recordingBlob && audio.recordingElapsedMs > 0
         ? { wordsPerMinute: Math.round((text.split(/\s+/).filter(Boolean).length / (audio.recordingElapsedMs / 60000)) * 10) / 10 }
         : undefined,
-      newContext: activity.newContext,
+      // Observed, not requested. `newContext` now means "the learner actually carried the
+      // pattern into new content", and is left undefined when the app could not tell.
+      newContext: result.transferVerified ? result.transferred : undefined,
+      transferVerified: result.transferVerified,
       listeningRecognition: activity.kind === "listening_recognition",
+      retold: activity.kind === "topic_retell" || activity.kind === "error_reconstruction",
       scaffoldUsed: activity.kind === "reading_to_meaning" || support.readingWriting.stage !== "independent_transfer",
       createdAt: now,
     };
@@ -132,15 +307,21 @@ export function TransferPracticeCard() {
       recordingId: attempt.recordingId,
       preparationMs: attempt.preparationMs,
       newContext: attempt.newContext,
+      transferVerified: attempt.transferVerified,
       listeningRecognition: attempt.listeningRecognition,
+      transferOutcome: attempt.transferOutcome,
+      avoidedErrorIds: attempt.avoidedErrorIds,
       durationMs: attempt.durationMs,
       fluency: attempt.fluency,
       createdAt: attempt.createdAt,
     });
     setPendingAttempt(attempt);
+    setEvaluation({ clear: result.clear, evaluated: result.evaluated, formOnly: result.formOnly, notes: result.notes });
     setSaved(true);
-    setValue("");
     setRecordingBlob(null);
+    } finally {
+      setChecking(false);
+    }
   };
 
   const skip = async () => {
@@ -150,7 +331,7 @@ export function TransferPracticeCard() {
       id: crypto.randomUUID(),
       source: "study",
       stage: "production",
-      prompt: activity.prompt,
+      prompt: interpolate(activity.prompt, activity.promptVars),
       context: activity.kind,
       transferKind: activity.kind,
       transferSourceId: activity.sourceId,
@@ -162,7 +343,8 @@ export function TransferPracticeCard() {
       evaluated: true,
       issueCount: 0,
       preparationMs: Math.max(0, createdAt - (promptStartedAtRef.current || createdAt)),
-      newContext: activity.newContext,
+      // A skipped prompt produced no text, so there is nothing to verify. Both fields stay
+      // undefined rather than recording a transfer that was never attempted.
       createdAt,
     };
     await saveProductionAttempt(attempt);
@@ -187,57 +369,6 @@ export function TransferPracticeCard() {
     advancePrompt();
   };
 
-  const evaluateTransfer = async (clear: boolean) => {
-    if (!pendingAttempt) return;
-    const evaluated: ProductionAttempt = {
-      ...pendingAttempt,
-      evaluated: true,
-      issueCount: clear ? 0 : 1,
-      transferOutcome: clear ? "clear" : "needs_support",
-      comprehensionScore: pendingAttempt.transferKind === "reading_to_meaning" || pendingAttempt.transferKind === "listening_recognition"
-        ? (clear ? 100 : 50)
-        : undefined,
-      writingScore: pendingAttempt.transferKind !== "reading_to_meaning" && pendingAttempt.transferKind !== "listening_recognition"
-        ? (clear ? 100 : 50)
-        : undefined,
-      retold: pendingAttempt.transferKind === "topic_retell" ? clear : undefined,
-      avoidedErrorIds: activity?.errorIds && clear ? activity.errorIds : undefined,
-    };
-    await saveProductionAttempt(evaluated);
-    await emitActivity("production_attempt", {
-      attemptId: evaluated.id,
-      source: evaluated.source,
-      stage: evaluated.stage,
-      prompt: evaluated.prompt,
-      text: evaluated.text,
-      spoken: evaluated.spoken,
-      wordCount: evaluated.wordCount,
-      finished: evaluated.finished,
-      issueCount: evaluated.issueCount,
-      evaluated: true,
-      scaffoldUsed: evaluated.scaffoldUsed,
-      transferKind: evaluated.transferKind,
-      transferSourceId: evaluated.transferSourceId,
-      recordingId: evaluated.recordingId,
-      transferOutcome: evaluated.transferOutcome,
-      newContext: evaluated.newContext,
-      retold: evaluated.retold,
-      listeningRecognition: evaluated.listeningRecognition,
-      avoidedErrorIds: evaluated.avoidedErrorIds,
-      comprehensionScore: evaluated.comprehensionScore,
-      writingScore: evaluated.writingScore,
-      createdAt: evaluated.createdAt,
-    });
-    await emitActivity("method_stage", {
-      stage: activity?.kind === "reading_to_meaning" ? "feedback" : "retry",
-      area: "readingWriting",
-      source: "study",
-      minutes: activity?.kind === "reading_to_meaning" ? 3 : 2,
-      subjectId: evaluated.transferSourceId,
-    });
-    setPendingAttempt(null);
-  };
-
   if (!activity) return null;
 
   return (
@@ -247,11 +378,11 @@ export function TransferPracticeCard() {
           <p className="text-xs uppercase tracking-[0.7px] text-accent">{t("Transfer practice")}</p>
           <p className="mt-1 text-sm font-semibold text-ink">{t("Use a saved idea in a new context")}</p>
           <p className="mt-1 max-w-2xl text-xs leading-relaxed text-ink-muted">
-            {t("Write or speak a short response, then decide whether the meaning was clear.")}
+            {t("Write or speak a short response. PhraseLoop checks it before the review is complete.")}
           </p>
         </div>
         <span className="rounded-full border border-line bg-surface px-2 py-1 text-[11px] text-ink-muted">
-          {t("Support · {stage}", { stage: support.readingWriting.stage.replaceAll("_", " ") })}
+          {t("Support · {stage}", { stage: t(READING_WRITING_STAGE_LABEL[support.readingWriting.stage]) })}
         </span>
       </div>
       <p className="text-xs leading-relaxed text-ink-muted">
@@ -269,7 +400,7 @@ export function TransferPracticeCard() {
             </span>
           )}
         </div>
-        <p className="text-sm leading-relaxed text-ink">{t(activity.prompt)}</p>
+        <p className="text-sm leading-relaxed text-ink">{t(activity.prompt, activity.promptVars)}</p>
         {activity.audioUrl && (
           <audio controls preload="metadata" className="w-full" src={activity.audioUrl} aria-label={t("Listening recognition audio")} />
         )}
@@ -314,8 +445,8 @@ export function TransferPracticeCard() {
       )}
       {audioNote && <p className="text-xs text-danger">{t(audioNote)}</p>}
       <div className="flex flex-wrap items-center gap-2">
-        <Button variant="primary" onClick={() => void submit()} disabled={!value.trim() || Boolean(pendingAttempt)}>
-          {t("Continue to self-check")}
+        <Button variant="primary" onClick={() => void submit()} disabled={!value.trim() || Boolean(pendingAttempt) || checking}>
+          {checking ? t("Checking…") : t("Check response")}
         </Button>
         <Button
           variant="ghost"
@@ -330,15 +461,32 @@ export function TransferPracticeCard() {
       </div>
       {pendingAttempt && (
         <div className="space-y-2 rounded border border-accent/30 bg-accent/5 p-3 text-xs">
-          <p className="font-medium text-ink">{t("Was the meaning clear?")}</p>
-          <p className="text-ink-soft">{t("Your answer records transfer evidence and helps adjust future support.")}</p>
+          <p className="font-medium text-ink">
+            {evaluation?.clear
+              ? t("Transfer confirmed")
+              : evaluation?.evaluated
+                ? t("Try once more")
+                : evaluation?.formOnly
+                  ? t("No known error found")
+                  : t("Evaluation unavailable")}
+          </p>
+          {evaluation?.notes.map((note) => <p key={note} className="text-ink-soft">{t(note)}</p>)}
           <div className="flex flex-wrap gap-2">
-            <Button variant="secondary" size="sm" onClick={() => void evaluateTransfer(true)}>
-              {t("Yes, it was clear")}
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => void evaluateTransfer(false)}>
-              {t("Needs more support")}
-            </Button>
+            {evaluation?.clear ? (
+              <Button variant="secondary" size="sm" onClick={() => { onCompleted?.(); advancePrompt(); }}>
+                {t("Finish transfer")}
+              </Button>
+            ) : (
+              <Button variant="secondary" size="sm" onClick={() => {
+                setPendingAttempt(null);
+                setEvaluation(null);
+                setSaved(false);
+                setValue("");
+                promptStartedAtRef.current = Date.now();
+              }}>
+                {t("Retry without seeing the answer")}
+              </Button>
+            )}
           </div>
         </div>
       )}

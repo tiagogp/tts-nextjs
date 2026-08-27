@@ -165,6 +165,7 @@ export interface ProductionAttemptPayload {
   transferSourceId?: string;
   transferOutcome?: "clear" | "needs_support";
   newContext?: boolean;
+  transferVerified?: boolean;
   retold?: boolean;
   listeningRecognition?: boolean;
   avoidedErrorIds?: string[];
