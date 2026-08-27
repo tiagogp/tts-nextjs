@@ -6,7 +6,7 @@
  * Again or Hard. Weakness = a concept (or error type) you keep struggling with.
  */
 
-import { Rating } from "@/lib/srs/fsrs";
+import { Rating, State, type SrsRecord } from "@/lib/srs/fsrs";
 import type { ErrorEvent } from "@/lib/cards/schema";
 import type { Conversation, ReviewRecord } from "@/lib/store/repository";
 
@@ -22,8 +22,6 @@ export interface PerformanceStats {
   /** Share of reviews graded Again (a real failure). */
   lapseRate: number;
   reviewsToday: number;
-  /** Consecutive days (ending today) with at least one review. */
-  streakDays: number;
   /** Reviews per day for the last 14 days, oldest first. */
   daily: { day: string; count: number }[];
   /** Reviews grouped by error type, worst accuracy first. */
@@ -43,13 +41,6 @@ export function computePerformance(
   const lapses = reviews.filter((r) => r.grade === Rating.Again).length;
   const todayKey = dayKey(now);
   const reviewsToday = reviews.filter((r) => dayKey(r.reviewedAt) === todayKey).length;
-
-  const byDay = new Set(reviews.map((r) => dayKey(r.reviewedAt)));
-  let streak = 0;
-  for (let i = 0; ; i++) {
-    if (byDay.has(dayKey(now - i * DAY_MS))) streak++;
-    else break;
-  }
 
   const daily: { day: string; count: number }[] = [];
   for (let i = 13; i >= 0; i--) {
@@ -81,9 +72,108 @@ export function computePerformance(
     accuracy: total ? passed / total : 0,
     lapseRate: total ? lapses / total : 0,
     reviewsToday,
-    streakDays: streak,
     daily,
     errorTypes,
+  };
+}
+
+/* ───────────────────── Due-review rhythm (honest engagement) ───────────────────── */
+
+export interface DueReviewRhythm {
+  /** Due reviews with schedule metadata that have been completed. */
+  resolvedReviews: number;
+  /** Completed on the same local-calendar day they became due. */
+  onTimeReviews: number;
+  /** Current non-new cards whose due day has already passed. */
+  overdueNow: number;
+  /** `onTimeReviews / (resolvedReviews + overdueNow)`, or null before tracking starts. */
+  onTimeRate: number | null;
+  /** Scheduled review days represented by tracked completions or a current overdue card. */
+  trackedDueDays: number;
+  /** Most recent consecutive scheduled review days completed on time. No-due days are neutral. */
+  currentRunDueDays: number;
+}
+
+interface DueDayStatus {
+  resolved: number;
+  onTime: number;
+  late: number;
+  overdue: number;
+}
+
+/** Local-calendar day index; unlike UTC strings, this follows the learner's wall clock. */
+function localDayIndex(ms: number): number {
+  const date = new Date(ms);
+  date.setHours(0, 0, 0, 0);
+  return Math.round(date.getTime() / DAY_MS);
+}
+
+/**
+ * Measures follow-through only when FSRS actually asked for a review.
+ *
+ * Early light/reinforcement practice and first exposure do not count. Calendar days with
+ * nothing due do not exist in the sequence, so rest can never "break" it. Current overdue
+ * cards are included to keep the rate honest instead of reporting only completed work.
+ */
+export function computeDueReviewRhythm(
+  reviews: ReviewRecord[],
+  currentSrs: SrsRecord[],
+  now: number = Date.now(),
+): DueReviewRhythm {
+  const today = localDayIndex(now);
+  const byDueDay = new Map<number, DueDayStatus>();
+  const statusFor = (day: number) => {
+    const existing = byDueDay.get(day);
+    if (existing) return existing;
+    const created: DueDayStatus = { resolved: 0, onTime: 0, late: 0, overdue: 0 };
+    byDueDay.set(day, created);
+    return created;
+  };
+
+  let resolvedReviews = 0;
+  let onTimeReviews = 0;
+  for (const review of reviews) {
+    if (review.dueAt === undefined || review.wasDue !== true) continue;
+    if (review.previousState === State.New) continue;
+    const dueDay = localDayIndex(review.dueAt);
+    const completedOnTime = localDayIndex(review.reviewedAt) <= dueDay;
+    const status = statusFor(dueDay);
+    status.resolved += 1;
+    resolvedReviews += 1;
+    if (completedOnTime) {
+      status.onTime += 1;
+      onTimeReviews += 1;
+    } else {
+      status.late += 1;
+    }
+  }
+
+  let overdueNow = 0;
+  for (const srs of currentSrs) {
+    if (srs.state === State.New) continue;
+    const dueDay = localDayIndex(srs.due);
+    if (dueDay >= today) continue;
+    statusFor(dueDay).overdue += 1;
+    overdueNow += 1;
+  }
+
+  const dueDays = [...byDueDay.entries()].sort(([a], [b]) => a - b);
+  let currentRunDueDays = 0;
+  for (let index = dueDays.length - 1; index >= 0; index -= 1) {
+    const [, status] = dueDays[index];
+    const kept = status.resolved > 0 && status.late === 0 && status.overdue === 0;
+    if (!kept) break;
+    currentRunDueDays += 1;
+  }
+
+  const measured = resolvedReviews + overdueNow;
+  return {
+    resolvedReviews,
+    onTimeReviews,
+    overdueNow,
+    onTimeRate: measured === 0 ? null : onTimeReviews / measured,
+    trackedDueDays: dueDays.length,
+    currentRunDueDays,
   };
 }
 

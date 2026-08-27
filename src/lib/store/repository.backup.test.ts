@@ -87,7 +87,7 @@ describe("local backup round-trip (W6)", () => {
     const backup = await exportLocalBackup();
     expect(backup.app).toBe("PhraseLoop");
     expect(backup.schemaVersion).toBe(1);
-    expect(backup.stores.cards).toHaveLength(2);
+    expect(backup.stores.cards).toHaveLength(4);
     expect(backup.stores.reviews).toHaveLength(1);
 
     // Simulate catastrophic local data loss / a reinstall on a new app version.
@@ -99,7 +99,9 @@ describe("local backup round-trip (W6)", () => {
     expect(result.ok).toBe(true);
 
     const restoredCards = await getCards();
-    expect(restoredCards.map((c) => c.id).sort()).toEqual(["card-1", "card-2"]);
+    expect(restoredCards.map((c) => c.id).sort()).toEqual([
+      "card-1", "card-1--production", "card-2", "card-2--production",
+    ]);
     expect(await getReviews()).toHaveLength(1);
     const restoredSrs = await getSrs("card-1");
     expect(restoredSrs?.cardId).toBe("card-1");
@@ -119,7 +121,9 @@ describe("local backup round-trip (W6)", () => {
 
     const cards = await getCards();
     // card-2 (newer than the backup) must NOT be deleted by a merge restore.
-    expect(cards.map((c) => c.id).sort()).toEqual(["card-1", "card-2"]);
+    expect(cards.map((c) => c.id).sort()).toEqual([
+      "card-1", "card-1--production", "card-2", "card-2--production",
+    ]);
     // card-1 is overwritten by the backup copy (merge-by-id).
     expect(cards.find((c) => c.id === "card-1")?.back).toBe("original");
   });
@@ -161,6 +165,7 @@ describe("local backup round-trip — weeks-scale zero-loss proof (Phase 4)", ()
     [STORES.retryOutcomes]: "id",
     [STORES.audioRecordings]: "id",
     [STORES.methodProgression]: "id",
+    [STORES.proofAttempts]: "id",
   };
 
   function buildSeed(): Record<StoreName, Record<string, unknown>[]> {
@@ -320,6 +325,19 @@ describe("local backup round-trip — weeks-scale zero-loss proof (Phase 4)", ()
         speakingSamples: 5,
         updatedAt: START + 20 * DAY,
       }],
+      // Queue C never reaches the scheduler, but it is still the learner's measured history
+      // and a backup that drops it loses the only unbiased retention record they have.
+      [STORES.proofAttempts]: Array.from({ length: 12 }, (_, i) => ({
+        id: `proof-${i}`,
+        cardId: `card-${i}`,
+        targetDays: [7, 30, 60][i % 3],
+        ageDays: [7, 30, 60][i % 3],
+        response: `answer ${i}`,
+        correct: i % 4 !== 0,
+        evaluatedBy: "local",
+        askedAt: START + i * DAY,
+        answeredAt: START + i * DAY + 60_000,
+      })),
     };
   }
 
@@ -394,7 +412,7 @@ describe("delete all local data (launch checklist item 8)", () => {
     });
 
     await saveCards([makeCard("card-1")]);
-    expect(await getCards()).toHaveLength(1);
+    expect(await getCards()).toHaveLength(2);
     expect(await getSrs("card-1")).toBeDefined();
 
     await wipeLocalData();

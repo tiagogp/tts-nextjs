@@ -12,7 +12,9 @@ import type {
   ErrorType,
   PhraseCandidate,
 } from "@/lib/cards/schema";
+import type { JudgeStamp } from "@/lib/evaluation/judge";
 import { orientCardsForTargetFront } from "@/lib/cards/orientation";
+import { buildProductiveCardPairs } from "@/lib/cards/pairs";
 import type { PronunciationAttempt } from "@/lib/pronunciation/types";
 import type { StoredProgressAssessment } from "@/features/progress/model";
 import type { C1Diagnosis } from "@/features/c1/types";
@@ -23,9 +25,11 @@ import type {
   AudioRecording,
   ListeningAttempt,
   ProductionAttempt,
+  ProofAttempt,
   RetryOutcome,
 } from "@/lib/performance/types";
 import type { MethodProgressionState } from "@/features/method/progression";
+import type { RecallQuality } from "@/features/study/responseEvaluation";
 import {
   STORES,
   clearAll,
@@ -50,6 +54,14 @@ export interface ReviewRecord {
   /** ts-fsrs Rating: 1 Again / 2 Hard / 3 Good / 4 Easy. */
   grade: Grade;
   reviewedAt: number;
+  /**
+   * When FSRS originally scheduled this review. Optional for records written before
+   * due-rhythm tracking existed. Keeping the original timestamp makes "on time"
+   * measurable without reconstructing overwritten SRS state.
+   */
+  dueAt?: number;
+  /** Whether the card was actually due when graded (focused/light practice can be early). */
+  wasDue?: boolean;
   /** Card state *before* this review — lets us distinguish lapses from first passes. */
   previousState: State;
   scheduledDays: number;
@@ -64,12 +76,23 @@ export interface ReviewRecord {
    * are all receptive and must not be counted as production attempts.
    */
   direction?: CardDirection;
-  /** ms from card-shown (flip) to grade. Overload/fatigue signal. */
+  /** ms from prompt presentation to the learner revealing an answer. */
   latencyMs?: number;
   /** true if any scaffold (hint/slow audio/modality) was used this review. */
   hintUsed?: boolean;
   /** 0 = none, 1 = hint, 2 = partial reveal, 3 = modality fallback. */
   scaffoldLevel?: number;
+  /** What the learner produced before the answer was revealed (production cards only). */
+  responseText?: string;
+  /** Conservative local comparison with the fixed expected phrase. */
+  responseQuality?: RecallQuality;
+  responseCorrect?: boolean;
+  /**
+   * Which checker produced `responseCorrect`. Always local today, and versioned anyway:
+   * `evaluateRecall` was rewritten the day the audit landed, so a D60 window can straddle
+   * two different instruments. See `src/lib/evaluation/judge.ts`.
+   */
+  judge?: JudgeStamp;
 }
 
 /** Per-review scaffolding/latency telemetry. All optional — captured now, analyzed later. */
@@ -77,6 +100,10 @@ export interface ReviewTelemetry {
   latencyMs?: number;
   hintUsed?: boolean;
   scaffoldLevel?: number;
+  responseText?: string;
+  responseQuality?: RecallQuality;
+  responseCorrect?: boolean;
+  judge?: JudgeStamp;
 }
 
 /* ──────────────────────────── sources ──────────────────────────── */
@@ -126,6 +153,21 @@ async function orientStoredCards(cards: Card[]): Promise<Card[]> {
   return orientCardsForTargetFront(cards, await getSourcesForCards(cards), "en");
 }
 
+/** One-time/idempotent upgrade for decks saved before explicit production siblings existed. */
+export async function ensureProductiveCardPairs(): Promise<{ added: number }> {
+  const raw = await getAll<Card>(STORES.cards);
+  if (raw.length === 0) return { added: 0 };
+  const sources = await getSourcesForCards(raw);
+  const oriented = orientCardsForTargetFront(raw, sources, "en");
+  const paired = buildProductiveCardPairs(oriented, sources);
+  const changed = paired.length !== raw.length || paired.some((card, index) =>
+    card.direction !== raw[index]?.direction ||
+    card.front !== raw[index]?.front ||
+    card.patternId !== raw[index]?.patternId,
+  );
+  return changed ? persistCardsWithSrs(paired) : { added: 0 };
+}
+
 export function getCards(): Promise<Card[]> {
   return getAll<Card>(STORES.cards).then(orientStoredCards);
 }
@@ -167,7 +209,10 @@ export async function saveGeneratedDeck(
   candidates: PhraseCandidate[] = [],
 ): Promise<{ added: number }> {
   if (candidates.length > 0) await savePhraseCandidates(candidates);
-  return persistCardsWithSrs(cards);
+  const sources: CardSource[] = candidates.map((candidate) => ({ kind: "phrase", candidate }));
+  return persistCardsWithSrs(
+    buildProductiveCardPairs(orientCardsForTargetFront(cards, sources, "en"), sources),
+  );
 }
 
 /**
@@ -181,7 +226,10 @@ export async function saveCorrectionDeck(
   events: ErrorEvent[] = [],
 ): Promise<{ added: number }> {
   if (events.length > 0) await saveErrorEvents(events);
-  return persistCardsWithSrs(cards);
+  const sources: CardSource[] = events.map((event) => ({ kind: "error", event }));
+  return persistCardsWithSrs(
+    buildProductiveCardPairs(orientCardsForTargetFront(cards, sources, "en"), sources),
+  );
 }
 
 /* ──────────────────────────── study session ──────────────────────────── */
@@ -252,6 +300,8 @@ export async function recordReview(
     cardId: card.id,
     grade,
     reviewedAt: now.getTime(),
+    dueAt: srs.due,
+    wasDue: srs.due <= now.getTime(),
     previousState,
     scheduledDays,
     concept: card.concept,
@@ -261,6 +311,9 @@ export async function recordReview(
     latencyMs: telemetry?.latencyMs,
     hintUsed: telemetry?.hintUsed,
     scaffoldLevel: telemetry?.scaffoldLevel,
+    responseText: telemetry?.responseText,
+    responseQuality: telemetry?.responseQuality,
+    responseCorrect: telemetry?.responseCorrect,
   };
   await put(STORES.reviews, review);
   return { next, review };
@@ -343,7 +396,7 @@ export async function getReinforcementSources(
 
 /** Persist freshly generated cards (e.g. reinforcement variants) with fresh SRS state. */
 export function saveCards(cards: Card[]): Promise<{ added: number }> {
-  return persistCardsWithSrs(cards);
+  return persistCardsWithSrs(buildProductiveCardPairs(cards));
 }
 
 /* ──────────────────────────── pronunciation attempts ──────────────────────────── */
@@ -425,6 +478,21 @@ export function getProductionAttempts(): Promise<ProductionAttempt[]> {
 
 export function getProductionAttemptsForLesson(lessonId: string): Promise<ProductionAttempt[]> {
   return getAllFromIndex<ProductionAttempt>(STORES.productionAttempts, "lessonId", lessonId);
+}
+
+/**
+ * Queue C writes land here and nowhere else. There is deliberately no path from a proof to
+ * `saveReview` or to SRS state: the whole value of the measurement is that answering it
+ * does not reschedule the card. If a caller ever needs a proof to also count as study, the
+ * answer is to add a separate review, not to widen this.
+ */
+export async function saveProofAttempt(attempt: ProofAttempt): Promise<void> {
+  await put(STORES.proofAttempts, attempt);
+  notifyPerformanceEvidenceSaved();
+}
+
+export function getProofAttempts(): Promise<ProofAttempt[]> {
+  return getAll<ProofAttempt>(STORES.proofAttempts);
 }
 
 export async function saveRetryOutcome(outcome: RetryOutcome): Promise<void> {

@@ -25,6 +25,7 @@ import type { Card, ErrorEvent } from "@/lib/cards/schema";
 import type { Grade, SrsRecord } from "@/lib/srs/fsrs";
 import type { PronunciationAttempt } from "@/lib/pronunciation/types";
 import {
+  computeDueReviewRhythm,
   computePerformance,
   computeReturnAfterMiss,
   computeWeeklyActivity,
@@ -41,8 +42,10 @@ import { useT } from "@/i18n/I18nProvider";
 import { getLearningProfile } from "@/features/settings/learningProfile";
 import { deriveMethodPlan } from "@/features/method/learningLoop";
 import type { DueCard, ScaffoldTelemetry } from "./components/StudyCard";
+import type { RecallQuality } from "./responseEvaluation";
 import type { SessionResult } from "./components/SessionSummary";
 import {
+  endOfTodayLocal,
   endOfTomorrowLocal,
   localDayIndex,
   mistakeCardStats,
@@ -80,8 +83,9 @@ export function useStudySession() {
   const [recentAnswers, setRecentAnswers] = useState<{ grade: Grade; latencyMs?: number }[]>([]);
   /** True once saturation fired this session and the cooldown prompt hasn't been dismissed. */
   const [cooldown, setCooldown] = useState(false);
-  /** Epoch ms a card was flipped (answer shown) — the start of the flip→grade latency. */
-  const flipAtRef = useRef<number | null>(null);
+  /** Epoch ms when the current prompt became available — retrieval ends before reveal. */
+  const promptAtRef = useRef<number>(0);
+  const observedRecallRef = useRef<{ responseText?: string; responseQuality?: RecallQuality; latencyMs: number } | null>(null);
   const gradingRef = useRef(false);
   /** P3 #7 — latest offline band-gate result; drives whether the queue is band-ordered. */
   const [bandGate, setBandGate] = useState<BandGateResult | null>(null);
@@ -98,6 +102,8 @@ export function useStudySession() {
     due: number;
     mistakeCards: number;
     fromToday: boolean;
+    /** Part of `due` that FSRS brings back within today's short learning steps. */
+    laterToday: number;
   } | null>(null);
 
   const refresh = useCallback(async () => {
@@ -169,7 +175,10 @@ export function useStudySession() {
     if (!sessionEnded) return;
     let cancelled = false;
     void (async () => {
-      const dueByTomorrow = await getDueCards(endOfTomorrowLocal());
+      const [dueByTomorrow, dueLaterToday] = await Promise.all([
+        getDueCards(endOfTomorrowLocal()),
+        getDueCards(endOfTodayLocal()),
+      ]);
       if (cancelled) return;
       const stats = mistakeCardStats(
         dueByTomorrow.map((item) => item.card),
@@ -180,6 +189,7 @@ export function useStudySession() {
         due: dueByTomorrow.length,
         mistakeCards: stats.mistakeCards,
         fromToday: stats.fromMatchDay,
+        laterToday: dueLaterToday.length,
       });
     })().catch(() => undefined);
     return () => {
@@ -189,9 +199,18 @@ export function useStudySession() {
 
   const current = queue[0];
 
-  /** Start of the flip→grade latency window; shows the answer. */
-  const flip = useCallback(() => {
-    flipAtRef.current = Date.now();
+  useEffect(() => {
+    promptAtRef.current = Date.now();
+    observedRecallRef.current = null;
+  }, [current?.card.id]);
+
+  /** Close the retrieval window before revealing the answer. */
+  const flip = useCallback((responseText?: string, responseQuality?: RecallQuality) => {
+    observedRecallRef.current = {
+      responseText,
+      responseQuality,
+      latencyMs: Math.max(0, Date.now() - promptAtRef.current),
+    };
     setFlipped(true);
   }, []);
 
@@ -201,12 +220,17 @@ export function useStudySession() {
       gradingRef.current = true;
       setGrading(true);
       try {
-        const latencyMs = flipAtRef.current != null ? Date.now() - flipAtRef.current : undefined;
-        flipAtRef.current = null;
+        const observed = observedRecallRef.current;
+        const latencyMs = observed?.latencyMs;
+        observedRecallRef.current = null;
         const { next, review } = await recordReview(current.card, current.srs, g, {
           latencyMs,
           hintUsed: scaffold.hintUsed,
           scaffoldLevel: scaffold.scaffoldLevel,
+          responseText: scaffold.responseText ?? observed?.responseText,
+          responseQuality: scaffold.responseQuality ?? observed?.responseQuality,
+          responseCorrect: scaffold.responseCorrect,
+          judge: scaffold.judge,
         });
         const activation = markFirstRunReviewCompleted();
         void emitActivity("cards_reviewed", {
@@ -374,6 +398,10 @@ export function useStudySession() {
   );
 
   const stats = useMemo(() => computePerformance(reviews), [reviews]);
+  const reviewRhythm = useMemo(
+    () => computeDueReviewRhythm(reviews, cardsWithSrs.map(({ srs }) => srs)),
+    [reviews, cardsWithSrs],
+  );
   const retention = useMemo(() => computeReturnAfterMiss(reviews), [reviews]);
   const activity = useMemo(
     () => computeWeeklyActivity(conversations, reviews),
@@ -433,6 +461,7 @@ export function useStudySession() {
     generatingKey,
     genError,
     stats,
+    reviewRhythm,
     retention,
     activity,
     weaknesses,

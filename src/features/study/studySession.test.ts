@@ -35,9 +35,9 @@ describe("loadStudySnapshot", () => {
   it("puts saved cards in the due queue and counts", async () => {
     await saveCards([makeCard("a"), makeCard("b")]);
     const snapshot = await loadStudySnapshot();
-    expect(snapshot.counts.cards).toBe(2);
-    expect(snapshot.counts.due).toBe(2);
-    expect(snapshot.queue.map((c) => c.card.id).sort()).toEqual(["a", "b"]);
+    expect(snapshot.counts.cards).toBe(4);
+    expect(snapshot.counts.due).toBe(4);
+    expect(snapshot.queue.map((c) => c.card.id).sort()).toEqual(["a", "a--production", "b", "b--production"]);
   });
 
   it("lists saved cards newest first", async () => {
@@ -46,7 +46,7 @@ describe("loadStudySnapshot", () => {
       makeCard("new", { createdAt: 1_700_000_000_500 }),
     ]);
     const snapshot = await loadStudySnapshot();
-    expect(snapshot.cards.map((c) => c.id)).toEqual(["new", "old"]);
+    expect(snapshot.cards.map((c) => c.id)).toEqual(["new", "new--production", "old", "old--production"]);
   });
 
   it("reflects a recorded review in reviews and counts", async () => {

@@ -1,4 +1,6 @@
 import type { LessonComprehensionKind } from "@/features/learn/lessonDeck";
+import type { ErrorType } from "@/lib/cards/schema";
+import type { JudgeStamp } from "@/lib/evaluation/judge";
 
 export type TransferAttemptKind =
   | "phrase_to_situation"
@@ -55,8 +57,21 @@ export interface ProductionAttempt {
   transferKind?: TransferAttemptKind;
   transferSourceId?: string;
   transferOutcome?: TransferOutcome;
-  /** True when the learner carried the language into a genuinely new situation. */
+  /** Evaluated error categories found in this response; denominator is the attempt. */
+  errorTypesFound?: ErrorType[];
+  /** Whether the communicative task itself was completed, separate from language form. */
+  taskCompleted?: boolean;
+  /** Pattern intentionally elicited, for opportunity-adjusted error reporting. */
+  targetPatternId?: string;
+  /**
+   * True when the learner **actually** carried the language into new content, as verified
+   * by `verifyTransfer` against what they wrote — not when the prompt merely asked for it.
+   * `undefined` when the item had no pattern to check against, which is the honest answer
+   * and must not be read as `false`.
+   */
   newContext?: boolean;
+  /** Whether a transfer verdict was reachable at all. The denominator for the transfer rate. */
+  transferVerified?: boolean;
   /** True when the learner retold or reconstructed meaning rather than copied it. */
   retold?: boolean;
   /** True when listening recognition was tested before revealing the text. */
@@ -82,7 +97,39 @@ export interface ProductionAttempt {
   issueCount: number;
   /** False for open-production transfer work that has not been evaluated. */
   evaluated?: boolean;
+  /**
+   * Who reached the verdict and with what. Absent means nothing judged this attempt —
+   * never "a local check passed it". See `src/lib/evaluation/judge.ts`.
+   */
+  judge?: JudgeStamp;
   createdAt: number;
+}
+
+/**
+ * One item from the proof queue (Queue C). Deliberately not a `ReviewRecord`: a proof must
+ * never reach FSRS, or measuring the learner changes what is measured. See `proofQueue.ts`.
+ */
+export interface ProofAttempt {
+  id: string;
+  cardId: string;
+  /** Which retention horizon this attempt tests. */
+  targetDays: 7 | 30 | 60;
+  /** Days since the learner first studied the item, at the moment of the proof. */
+  ageDays: number;
+  /** What the learner produced, with no hint, no reveal and no audio. */
+  response: string;
+  /**
+   * `undefined` when the local check could not judge — a response that may be a valid
+   * paraphrase the card never listed. Excluded from the rate rather than scored as a miss.
+   */
+  correct?: boolean;
+  /** Which check produced the verdict, so a provider-scored proof is distinguishable. */
+  evaluatedBy: "local" | "provider";
+  /** The same fact with the detail a longitudinal window needs: model and rubric version. */
+  judge?: JudgeStamp;
+  patternId?: string;
+  askedAt: number;
+  answeredAt: number;
 }
 
 /** Evidence that the learner acted on a specific feedback result. */

@@ -7,8 +7,8 @@
  */
 
 const DB_NAME = "tts-cards";
-// v11: persists the current listening/speaking support stages.
-const DB_VERSION = 11;
+// v12: adds the proof queue, whose attempts must never live in `reviews`.
+const DB_VERSION = 12;
 
 export const STORES = {
   errorEvents: "errorEvents",
@@ -29,6 +29,12 @@ export const STORES = {
   retryOutcomes: "retryOutcomes",
   audioRecordings: "audioRecordings",
   methodProgression: "methodProgression",
+  /**
+   * Queue C. Separate from `reviews` on purpose: a proof that lands in the review store
+   * would be picked up by the scheduler and by the review-derived metrics, which is exactly
+   * the contamination the queue exists to avoid.
+   */
+  proofAttempts: "proofAttempts",
 } as const;
 
 export type StoreName = (typeof STORES)[keyof typeof STORES];
@@ -118,6 +124,11 @@ export function openDb(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains(STORES.audioRecordings)) {
         const s = db.createObjectStore(STORES.audioRecordings, { keyPath: "id" });
         s.createIndex("createdAt", "createdAt");
+      }
+      if (!db.objectStoreNames.contains(STORES.proofAttempts)) {
+        const s = db.createObjectStore(STORES.proofAttempts, { keyPath: "id" });
+        s.createIndex("cardId", "cardId");
+        s.createIndex("answeredAt", "answeredAt");
       }
       if (!db.objectStoreNames.contains(STORES.methodProgression)) {
         const s = db.createObjectStore(STORES.methodProgression, { keyPath: "id" });
