@@ -3,6 +3,7 @@ import type {
   LessonComprehensionKind,
   LessonPhrase,
 } from "./lessonDeck";
+import { untaughtPhrases } from "./lessonDeck";
 
 const LEARN_PHRASE_COUNT = 5;
 const LISTENING_ROUND_COUNT = 2;
@@ -35,7 +36,7 @@ export interface ListeningChallenge {
   synthesized: boolean;
 }
 
-export interface ListeningChallengeOptions {
+export interface ListeningChallengeOptions extends LessonPartOptions {
   /**
    * Varies option order between attempts. Pass a value that changes per attempt (the default
    * is the clock); a fixed seed keeps an attempt reproducible for tests. A position derived
@@ -57,7 +58,8 @@ export interface ListeningChallengeResult {
   recommendation: "replay-details" | "review-main-idea" | "ready-to-notice" | "complete-attempt";
 }
 
-function stableNumber(value: string): number {
+/** Stable hash of a string, so a seeded choice is the same on every render. */
+export function stableNumber(value: string): number {
   let total = 0;
   for (let index = 0; index < value.length; index++) {
     total = (total * 31 + value.charCodeAt(index)) >>> 0;
@@ -69,15 +71,35 @@ function distinct(values: Iterable<string>, excluded: string): string[] {
   return [...new Set(values)].filter((value) => value !== excluded);
 }
 
-function placeAnswer(answer: string, distractors: string[], seed: number): string[] {
-  const choices = distinct(distractors, answer).slice(0, OPTION_COUNT - 1);
+/**
+ * Insert the correct answer at a seeded position among the distractors. Shared with the
+ * pattern drills: an answer that is always in slot one stops being read.
+ */
+export function placeAnswer(answer: string, distractors: string[], seed: number, limit = OPTION_COUNT): string[] {
+  const choices = distinct(distractors, answer).slice(0, limit - 1);
   choices.splice(seed % (choices.length + 1), 0, answer);
   return choices;
 }
 
-/** The small, explicit language set studied before the audio-only check. */
-export function learningPhrases(lesson: Lesson): LessonPhrase[] {
-  return lesson.phrases.slice(0, LEARN_PHRASE_COUNT);
+export interface LessonPartOptions {
+  /**
+   * Phrase keys the learner already has cards for, from `lessonProgressFromCardIds`.
+   * Omitted means a first pass, which is the whole lesson's worth of choices.
+   */
+  taught?: ReadonlySet<string>;
+}
+
+/**
+ * The small, explicit language set studied before the audio-only check.
+ *
+ * Five, not eight, because items encoded together compete; and the five are the ones the
+ * learner has not met yet, so a second visit to the lesson teaches its tail instead of
+ * re-presenting the same opening phrases. When everything has been taught the lesson still
+ * opens on its first five — a re-run is a review, not an empty screen.
+ */
+export function learningPhrases(lesson: Lesson, options: LessonPartOptions = {}): LessonPhrase[] {
+  const untaught = untaughtPhrases(lesson, options.taught);
+  return (untaught.length > 0 ? untaught : lesson.phrases).slice(0, LEARN_PHRASE_COUNT);
 }
 
 /**
@@ -117,14 +139,17 @@ export function buildListeningChallenge(
     };
   }
 
-  const learned = learningPhrases(lesson);
-  const firstPhraseIndex = stableNumber(lesson.id) % Math.max(1, learned.length);
-  const roundIndexes = Array.from(
+  // The check has to ask about the phrases this sitting actually taught, so it follows the
+  // part rather than the first five. Positions stay those of `lesson.phrases`, so the audio
+  // ids of a first pass are unchanged and earlier ListeningAttempts stay comparable.
+  const learned = learningPhrases(lesson, { taught: options.taught });
+  const first = stableNumber(lesson.id) % Math.max(1, learned.length);
+  const rounds = Array.from(
     { length: Math.min(LISTENING_ROUND_COUNT, learned.length) },
-    (_, offset) => (firstPhraseIndex + offset) % learned.length,
+    (_, offset) => lesson.phrases.indexOf(learned[(first + offset) % learned.length]),
   );
 
-  const audio = roundIndexes.map((phraseIndex, roundIndex) => {
+  const audio = rounds.map((phraseIndex, roundIndex) => {
     const phrase = lesson.phrases[phraseIndex] ?? lesson.phrases[0];
     return {
       id: `${lesson.id}-phrase-${phraseIndex}`,

@@ -8,7 +8,13 @@ import {
 } from "./lessonFlow";
 
 describe("lessonFlow", () => {
-  const legacyFallbackLesson = LESSONS.find((lesson) => !lesson.dialogue?.length && !lesson.comprehension?.length) ?? LESSONS[0];
+  // Every shipped lesson now carries authored dialogue and comprehension, so the synthesized
+  // fallback path can only be exercised with a constructed fixture. It still runs for lessons
+  // built from a learner's own imported source, which never have authored material.
+  const legacyFallbackLesson = (() => {
+    const { dialogue: _dialogue, comprehension: _comprehension, ...base } = LESSONS[0];
+    return base;
+  })();
 
   it("keeps Learn small and uses only learned language for the listening check", () => {
     const lesson = legacyFallbackLesson;

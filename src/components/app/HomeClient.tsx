@@ -20,7 +20,12 @@ import { HojeHome } from "@/features/home/components/HojeHome";
 import { GuidedSpeaking } from "@/features/pronunciation/components/GuidedSpeaking";
 import { useProviderSelection } from "@/features/cards/hooks/useProviderSelection";
 import { LessonView } from "@/features/learn/components/LessonView";
-import { completedLessonIdsFromCardIds, firstLesson, lessonById, nextLessonFor } from "@/features/learn/lessonDeck";
+import {
+  firstLesson,
+  lessonById,
+  lessonProgressFromCardIds,
+  nextLessonFor,
+} from "@/features/learn/lessonDeck";
 import SettingsScreen from "@/features/settings/components/SettingsScreen";
 import { getLearningProfile } from "@/features/settings/learningProfile";
 import OnboardingDialog from "@/features/settings/components/OnboardingDialog";
@@ -42,13 +47,14 @@ import { refreshMethodProgression } from "@/features/method/progressionPersisten
 
 async function recommendedLessonId(): Promise<string> {
   const profile = getLearningProfile();
-  if (!isStoreAvailable()) return nextLessonFor(profile, [])?.id ?? firstLesson().id;
+  const noProgress = lessonProgressFromCardIds([]);
+  if (!isStoreAvailable()) return nextLessonFor(profile, noProgress)?.id ?? firstLesson().id;
   try {
     const cards = await getCards();
-    const completed = completedLessonIdsFromCardIds(cards.map((card) => card.id));
-    return nextLessonFor(profile, completed)?.id ?? firstLesson().id;
+    const progress = lessonProgressFromCardIds(cards.map((card) => card.id));
+    return nextLessonFor(profile, progress)?.id ?? firstLesson().id;
   } catch {
-    return nextLessonFor(profile, [])?.id ?? firstLesson().id;
+    return nextLessonFor(profile, noProgress)?.id ?? firstLesson().id;
   }
 }
 

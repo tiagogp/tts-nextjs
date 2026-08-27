@@ -31,7 +31,7 @@ function snapshot(overrides: {
       detail: "",
     })),
     // Readiness never reads this; the fixture only has to satisfy the snapshot shape.
-    unaidedProduction: { windowDays: 30, minRestDays: 7, attempts: 0, correct: 0, rate: null, cards: 0 },
+    unaidedProduction: { windowDays: 30, minRestDays: 7, attempts: 0, correct: 0, rate: null, cards: 0, heldCardIds: [] },
     strengths: [],
     nextFocus: "",
     milestones: [],

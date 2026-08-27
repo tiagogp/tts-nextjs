@@ -1,4 +1,6 @@
 import type { Card, PhraseCandidate } from "@/lib/cards/schema";
+import type { LanguagePattern } from "@/lib/language/pattern";
+import { isDrillablePattern } from "@/lib/language/pattern";
 import type { EnglishLevel } from "@/features/discover/types";
 import { LEVEL_RANK } from "@/features/discover/levels";
 import type { LearningProfile } from "@/features/settings/learningProfile";
@@ -12,6 +14,33 @@ export interface LessonPhrase {
   concept: string;
   note: string;
   clip: string;
+  /**
+   * The reusable structure behind this phrase. Authoring it is what turns eight loose
+   * expressions into three patterns with variations, and it is the only thing that makes
+   * the variation drill and the transfer check possible offline.
+   *
+   * Optional because the 800 authored phrases are being migrated incrementally. Every
+   * pattern-dependent feature reads it through `isDrillablePattern` and simply does not
+   * offer the exercise when it is missing — an unauthored phrase yields no drill, never a
+   * fabricated one.
+   */
+  pattern?: LanguagePattern;
+  /** Other wordings that answer this prompt correctly. See `Card.acceptedAnswers`. */
+  accept?: string[];
+}
+
+/** Phrases in this lesson that carry a drillable pattern. */
+export function drillablePhrases(lesson: Lesson): LessonPhrase[] {
+  return lesson.phrases.filter((phrase) => isDrillablePattern(phrase.pattern));
+}
+
+/** Every distinct pattern family taught by a lesson. */
+export function lessonPatterns(lesson: Lesson): LanguagePattern[] {
+  const seen = new Map<string, LanguagePattern>();
+  for (const phrase of drillablePhrases(lesson)) {
+    if (phrase.pattern && !seen.has(phrase.pattern.id)) seen.set(phrase.pattern.id, phrase.pattern);
+  }
+  return [...seen.values()];
 }
 
 export interface LessonDialogueLine {
@@ -51,7 +80,31 @@ export interface Lesson extends LessonMaterial {
   phrases: LessonPhrase[];
 }
 
-export const LESSONS = lessonsData as Lesson[];
+export function hasCompleteGuidedMaterial(lesson: Lesson): boolean {
+  return Boolean(
+    lesson.objective?.trim() &&
+    lesson.pronunciationFocus?.trim() &&
+    lesson.dialogue && lesson.dialogue.length >= 2 &&
+    lesson.comprehension && lesson.comprehension.length >= 3 &&
+    lesson.productionPrompt?.trim() &&
+    lesson.retryHint?.trim(),
+  );
+}
+
+const ALL_LESSON_CONTENT = lessonsData as Lesson[];
+
+/**
+ * Earlier B1 phrase lists without a communicative objective, dialogue, comprehension, and
+ * retry contract remain in the source file for future authoring, but are not shipped as
+ * guided lessons. Serving a bare list as a lesson would reintroduce recognition-only study.
+ */
+export const LEGACY_PHRASE_BANK = ALL_LESSON_CONTENT.filter(
+  (lesson) => lesson.level === "B1" && !hasCompleteGuidedMaterial(lesson),
+);
+
+export const LESSONS = ALL_LESSON_CONTENT.filter(
+  (lesson) => lesson.level !== "B1" || hasCompleteGuidedMaterial(lesson),
+);
 
 /**
  * Card-id suffix of the PT→EN half of a phrase pair. The receptive half keeps the bare id
@@ -71,7 +124,7 @@ export function buildDeckFromPhrases(
 
   const candidates: PhraseCandidate[] = sorted.map((i) => {
     const phrase = phrases[i];
-    const phraseId = phrase.id ?? String(i);
+    const phraseId = phraseKey(phrase, i);
     return {
       id: `${sourceId}-${phraseId}`,
       sourceId,
@@ -91,9 +144,21 @@ export function buildDeckFromPhrases(
   // familiarity while FSRS records the non-event as a successful review.
   const cards: Card[] = sorted.flatMap((i) => {
     const phrase = phrases[i];
-    const phraseId = phrase.id ?? String(i);
+    const phraseId = phraseKey(phrase, i);
+    const pattern = isDrillablePattern(phrase.pattern) ? phrase.pattern : undefined;
     const shared = {
       concept: phrase.concept,
+      // An authored pattern id is shared across lessons on purpose: that is what lets
+      // interleaving mix two lessons' members of one family. Without one, fall back to a
+      // lesson-local id, which keeps recognition/production paired but has a family of one.
+      patternId: pattern?.id ?? `${sourceId}:${phrase.concept.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+      patternFrame: pattern?.frame,
+      patternSlot: pattern?.slot,
+      patternContrast: pattern?.contrast,
+      // `[phrase.en]` was a family of one — the shape of a pattern with none of the
+      // substance. Only authored examples make the family real.
+      examples: pattern?.examples ?? [phrase.en],
+      acceptedAnswers: phrase.accept,
       source: { kind: "phrase", id: `${sourceId}-${phraseId}` } as const,
       audioClipPath: phrase.clip,
       createdAt: now,
@@ -131,49 +196,109 @@ export function lessonById(id: string): Lesson | undefined {
  */
 export const OWN_SENTENCE_CARD_PREFIX = "own-sentence-";
 
+/**
+ * How a phrase is addressed inside a card id: its authored id, or its position for the
+ * original 36 lessons, which predate stable phrase ids. Card ids are the learner's SRS
+ * state, so this mapping is frozen — a phrase that moves to another lesson, or is
+ * renumbered, orphans everything the learner has built on it.
+ */
+export function phraseKey(phrase: LessonPhrase, index: number): string {
+  return phrase.id ?? String(index);
+}
+
 export function lessonCardIds(lesson: Lesson): string[] {
   return lesson.phrases.flatMap((phrase, i) => {
-    const base = `lesson-${lesson.id}-card-${phrase.id ?? i}`;
+    const base = `lesson-${lesson.id}-card-${phraseKey(phrase, i)}`;
     return [`${base}-${PRODUCTION_CARD_SUFFIX}`, base];
   });
 }
 
-export function completedLessonIdsFromCardIds(cardIds: Iterable<string>): Set<string> {
-  const completed = new Set<string>();
+/**
+ * A lesson ships eight phrases and a sitting teaches five (`learningPhrases`), because
+ * eight lexically neighbouring expressions encoded at once interfere with each other. That
+ * left the last three of every lesson — roughly 300 authored phrases — taught to nobody:
+ * reachable only by tapping them into the picker, never presented, never explained.
+ *
+ * The fix is a second pass, not a smaller lesson. Which phrases a learner has already been
+ * taught is not extra state to store — it is already written in their card ids, so this
+ * reads it back out. A lesson is *finished* when every authored phrase has a card, and
+ * `nextLessonFor` only returns to an unfinished one after the level's untouched lessons
+ * run out, which is what makes the re-encounter spaced rather than immediate.
+ */
+export interface LessonProgress {
+  /** lesson id → phrase keys the learner already has cards for. */
+  taught: Map<string, Set<string>>;
+}
+
+const LESSON_CARD_ID = new RegExp(`^lesson-(.+)-card-(.+?)(?:-${PRODUCTION_CARD_SUFFIX})?$`, "i");
+
+export function lessonProgressFromCardIds(cardIds: Iterable<string>): LessonProgress {
+  const taught = new Map<string, Set<string>>();
   for (const cardId of cardIds) {
-    const match = /^lesson-(.+)-card-[a-z0-9-]+$/i.exec(cardId);
+    const match = LESSON_CARD_ID.exec(cardId);
     if (!match) continue;
-    // Saving is the lesson's completion action. Learners deliberately curate
-    // the phrase set, so one or more saved cards prove completion; requiring
-    // every authored phrase would recommend a finished lesson again whenever
-    // even one phrase was deselected.
-    if (LESSONS.some((lesson) => lesson.id === match[1])) completed.add(match[1]);
+    const [, lessonId, key] = match;
+    if (!LESSONS.some((lesson) => lesson.id === lessonId)) continue;
+    const keys = taught.get(lessonId) ?? new Set<string>();
+    keys.add(key);
+    taught.set(lessonId, keys);
   }
-  return completed;
+  return { taught };
+}
+
+/** Progress for callers that only know whole lessons are done — tests, and legacy state. */
+export function lessonProgressFromFinishedIds(lessonIds: Iterable<string>): LessonProgress {
+  const taught = new Map<string, Set<string>>();
+  for (const id of lessonIds) {
+    const lesson = LESSONS.find((candidate) => candidate.id === id);
+    if (!lesson) continue;
+    taught.set(id, new Set(lesson.phrases.map((phrase, index) => phraseKey(phrase, index))));
+  }
+  return { taught };
+}
+
+/** Phrases of this lesson the learner has no card for yet, in authored order. */
+export function untaughtPhrases(lesson: Lesson, taught: ReadonlySet<string> | undefined): LessonPhrase[] {
+  if (!taught || taught.size === 0) return [...lesson.phrases];
+  return lesson.phrases.filter((phrase, index) => !taught.has(phraseKey(phrase, index)));
+}
+
+/** True once every authored phrase of the lesson has been taught at least once. */
+export function isLessonFinished(lesson: Lesson, progress: LessonProgress): boolean {
+  return untaughtPhrases(lesson, progress.taught.get(lesson.id)).length === 0;
 }
 
 export function nextLessonFor(
   profile: Pick<LearningProfile, "level">,
-  completedLessonIds: Iterable<string>,
+  progress: LessonProgress,
 ): Lesson | null {
-  const completed = new Set(completedLessonIds);
   const learnerRank = LEVEL_RANK[profile.level];
-  return (
-    LESSONS.find((lesson) => {
-      if (completed.has(lesson.id)) return false;
-      return lesson.level === profile.level;
-    }) ??
-    LESSONS.find((lesson) => {
-      if (completed.has(lesson.id)) return false;
-      return LEVEL_RANK[lesson.level] > learnerRank;
-    }) ??
-    LESSONS.find((lesson) => {
-      if (completed.has(lesson.id)) return false;
-      return LEVEL_RANK[lesson.level] < learnerRank;
-    }) ??
-    LESSONS.find((lesson) => !completed.has(lesson.id)) ??
-    null
-  );
+  const ordered = ["A2", "B1"].includes(profile.level)
+    ? [...LESSONS].sort((left, right) =>
+        Number(hasCompleteGuidedMaterial(right)) - Number(hasCompleteGuidedMaterial(left)),
+      )
+    : LESSONS;
+  const untouched = (lesson: Lesson) => !progress.taught.has(lesson.id);
+  const unfinished = (lesson: Lesson) => !isLessonFinished(lesson, progress);
+
+  // Within a tier, untouched lessons come first and only then the phrases a started lesson
+  // never taught. Two consequences, both wanted: the tail never lands in the same sitting
+  // as the opening five, which is what made eight neighbouring expressions interfere; and a
+  // level is exhausted before the learner moves up, so the built-in content lasts about
+  // twice as long as when three phrases of every lesson were taught to nobody.
+  const tiers: ((lesson: Lesson) => boolean)[] = [
+    (lesson) => lesson.level === profile.level,
+    (lesson) => LEVEL_RANK[lesson.level] > learnerRank,
+    (lesson) => LEVEL_RANK[lesson.level] < learnerRank,
+    () => true,
+  ];
+  for (const tier of tiers) {
+    const next =
+      ordered.find((lesson) => tier(lesson) && untouched(lesson)) ??
+      ordered.find((lesson) => tier(lesson) && unfinished(lesson));
+    if (next) return next;
+  }
+  return null;
 }
 
 export function firstLesson(): Lesson {
