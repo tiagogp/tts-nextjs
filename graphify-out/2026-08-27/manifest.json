@@ -635,8 +635,8 @@
     "semantic_hash": ""
   },
   "src/features/learn/lessons.json": {
-    "mtime": 1787852822.4853501,
-    "ast_hash": "a80919346fe39c4af1bd3cc5f598d6a8",
+    "mtime": 1787833999.1737282,
+    "ast_hash": "25878522177d4cb51e064b53b190145a",
     "semantic_hash": ""
   },
   "src/features/learn/localCorrection.test.ts": {
@@ -915,8 +915,8 @@
     "semantic_hash": "626e67d4231ecd1b4c46fd729cc021a4"
   },
   "src/i18n/messages.ts": {
-    "mtime": 1787852822.480176,
-    "ast_hash": "00048acafd91fef85bbaa375b0eae827",
+    "mtime": 1787850961.7448301,
+    "ast_hash": "d7ef5611fd24a2be270df5aaa6d46d12",
     "semantic_hash": ""
   },
   "src/i18n/translate.test.ts": {
@@ -1370,8 +1370,8 @@
     "semantic_hash": "82efb97a359f5c7290bf2513d14686be"
   },
   "README.md": {
-    "mtime": 1787851699.670323,
-    "ast_hash": "22537c8e445c08f339075ab993f8c0a4",
+    "mtime": 1786706575.1191554,
+    "ast_hash": "fa607e56e3724c5b10294421b9e5acca",
     "semantic_hash": ""
   },
   "apps/landing/README.md": {
@@ -1385,8 +1385,8 @@
     "semantic_hash": ""
   },
   "docs/product.md": {
-    "mtime": 1787851707.2396946,
-    "ast_hash": "8183df41c9276dd5790968fcdf885c24",
+    "mtime": 1785195684.7067537,
+    "ast_hash": "e19bb13d8fbace473f7fab332e6924fa",
     "semantic_hash": ""
   },
   "electron/loading.html": {
@@ -1765,8 +1765,8 @@
     "semantic_hash": ""
   },
   "src/features/learn/lessonFlow.test.ts": {
-    "mtime": 1787853033.70535,
-    "ast_hash": "4ace4cc7bf3011ee1627fdbcb8ab2491",
+    "mtime": 1785554092.385165,
+    "ast_hash": "64ceb77ef504fa53dc59e78a725484a3",
     "semantic_hash": ""
   },
   "src/features/learn/lessonFlow.ts": {
@@ -1830,8 +1830,8 @@
     "semantic_hash": ""
   },
   "src/features/pronunciation/speakingDrill.test.ts": {
-    "mtime": 1787853059.3885286,
-    "ast_hash": "138b62d0497c8d4dc1ca3374cd680fe5",
+    "mtime": 1785429943.3464105,
+    "ast_hash": "066672d9bc956ad10e3955272a69140f",
     "semantic_hash": ""
   },
   "src/features/pronunciation/speakingDrill.ts": {
@@ -2159,6 +2159,11 @@
     "ast_hash": "0fd3ee66cb1fb0c6c106ed7a25f29987",
     "semantic_hash": ""
   },
+  "docs/project-overview.md": {
+    "mtime": 1787073787.291036,
+    "ast_hash": "d7cd88ec948cdc7d9023cde7c17c9d97",
+    "semantic_hash": ""
+  },
   "src/features/study/responseEvaluation.test.ts": {
     "mtime": 1787834022.9873729,
     "ast_hash": "fe692da5faa414f39be034a0dc3181e2",
@@ -2177,6 +2182,11 @@
   "src/lib/cards/pairs.ts": {
     "mtime": 1787757409.498981,
     "ast_hash": "0a2627ee497c25c61a3829f0d7ee3e19",
+    "semantic_hash": ""
+  },
+  "docs/adversarial-audit-response.md": {
+    "mtime": 1787757359.6567373,
+    "ast_hash": "7a01dbb37524c7380f772d373f76ab98",
     "semantic_hash": ""
   },
   "docs/learning-efficacy-experiment.md": {
@@ -2284,6 +2294,11 @@
     "ast_hash": "ed7312dde47fcb22a5e8eea9e7a532e2",
     "semantic_hash": ""
   },
+  "docs/pedagogical-audit-response.md": {
+    "mtime": 1787835081.5551069,
+    "ast_hash": "4811170672c7845e621ffeaa6fb33aa2",
+    "semantic_hash": ""
+  },
   "src/features/listening/coldProbeBank.test.ts": {
     "mtime": 1787834753.2086437,
     "ast_hash": "ea1deb13abb8fd084c59cc45d6a7caeb",
@@ -2347,16 +2362,6 @@
   "src/lib/evaluation/judge.ts": {
     "mtime": 1787850379.814046,
     "ast_hash": "7e8c8047a154b70a80028ee64c94e5a8",
-    "semantic_hash": ""
-  },
-  "scripts/content/apply-guided-material.mjs": {
-    "mtime": 1787852149.8299298,
-    "ast_hash": "00241a864922ec882b94671477e59de1",
-    "semantic_hash": ""
-  },
-  "scripts/content/guided-material.json": {
-    "mtime": 1787852811.3231342,
-    "ast_hash": "6504b51769bc2d9232e7ea0b9023767a",
     "semantic_hash": ""
   }
 }
