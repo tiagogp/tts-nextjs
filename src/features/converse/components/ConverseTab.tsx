@@ -31,7 +31,13 @@ import {
   type Conversation,
 } from "@/lib/store/repository";
 import type { ProductionAttempt, RetryOutcome } from "@/lib/performance/types";
-import { selectFamiliarTopic, supportForProgression, type MethodProgressionState } from "@/features/method/progression";
+import {
+  SPEAKING_STAGE_LABEL,
+  selectFamiliarTopic,
+  stageLabel,
+  supportForProgression,
+  type MethodProgressionState,
+} from "@/features/method/progression";
 import { selectRecurringError } from "@/features/pronunciation/speakingDrill";
 import { emitActivity } from "@/lib/store/activityLog";
 import { useStageTimer } from "@/features/method/useStageTimer";
@@ -398,7 +404,7 @@ export default function ConverseTab({
       if (!trimmed || busy || !conversation) return;
       const learnerTurns = conversation.turns.filter((turn) => turn.role === "user").length;
       if (learnerTurns >= progressionSupport.conversation.maxTurns) {
-        setNote(t("This {stage} practice is complete. Finish it to review your output.", { stage: progressionSupport.speaking.stage.replaceAll("_", " ") }));
+        setNote(t("This {stage} practice is complete. Finish it to review your output.", { stage: t(SPEAKING_STAGE_LABEL[progressionSupport.speaking.stage]) }));
         return;
       }
       setBusy(true);
@@ -1170,9 +1176,9 @@ export default function ConverseTab({
           {!topicFirst && (
             <>
               <p className="text-sm font-medium text-ink">
-                {t("Speaking stage: {stage}", { stage: progressionSupport.speaking.stage.replaceAll("_", " ") })}
+                {t("Speaking stage: {stage}", { stage: t(SPEAKING_STAGE_LABEL[progressionSupport.speaking.stage]) })}
               </p>
-              <p className="text-xs text-ink-soft">{progressionSupport.speaking.guidance}</p>
+              <p className="text-xs text-ink-soft">{t(progressionSupport.speaking.guidance)}</p>
             </>
           )}
           <p className={cn("text-ink-muted", topicFirst ? "text-sm" : "text-xs")}>
@@ -1355,7 +1361,7 @@ export default function ConverseTab({
             {/* Same reason the stage notice is dropped above: "fixed phrases" is scaffolding
                 language that contradicts the advanced surface it would be sitting on. */}
             {!topicFirst && conversation.progressionStage && (
-              <span>{conversation.progressionStage.replaceAll("_", " ")}</span>
+              <span>{t(stageLabel(conversation.progressionStage))}</span>
             )}
             {freeTalk && <span className="text-accent">{t("Free talk")}</span>}
           </div>
