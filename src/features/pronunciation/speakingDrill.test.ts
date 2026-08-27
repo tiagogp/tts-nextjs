@@ -46,7 +46,7 @@ describe("buildSpeakingDrill", () => {
     const { productionPrompt: _productionPrompt, ...fallbackLesson } = lessonById("a2-shopping") ?? firstLesson();
     const steps = buildSpeakingDrill({ lesson: fallbackLesson });
 
-    expect(fallbackLesson.productionPrompt).toBeUndefined();
+    expect("productionPrompt" in fallbackLesson).toBe(false);
     expect(steps.at(-1)!.kind).toBe("speak");
     expect(steps.at(-1)!.prompt).toBeTruthy();
   });
