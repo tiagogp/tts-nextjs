@@ -1,0 +1,1100 @@
+{
+  "b1-opinions": {
+    "objective": {
+      "en": "Give an opinion, agree or disagree politely, and concede a point without dropping your position.",
+      "pt": "Dar uma opinião, concordar ou discordar com educação e ceder um ponto sem abrir mão da sua posição."
+    },
+    "pronunciationFocus": {
+      "en": "Weak forms in fixed phrases: 'in my o-PIN-ion', 'as far as I'm con-CERNED' — stress one syllable and swallow the rest.",
+      "pt": "Formas fracas em expressões fixas: 'in my o-PIN-ion', 'as far as I'm con-CERNED' — acentue uma sílaba e reduza o resto."
+    },
+    "dialogue": [
+      { "speaker": "Marco", "en": "In my opinion, we should let the team work from home three days a week.", "pt": "Na minha opinião, a gente devia deixar o time trabalhar de casa três dias por semana." },
+      { "speaker": "Lena", "en": "I see your point, but I'm not sure I agree. Some projects need us in the same room.", "pt": "Entendo seu ponto, mas não sei se concordo. Alguns projetos precisam da gente na mesma sala." },
+      { "speaker": "Marco", "en": "That's a fair point. It probably depends on the project.", "pt": "É um argumento justo. Provavelmente depende do projeto." },
+      { "speaker": "Lena", "en": "Exactly. As far as I'm concerned, the deadline matters more than the location.", "pt": "Exatamente. No que me diz respeito, o prazo importa mais do que o lugar." },
+      { "speaker": "Marco", "en": "You have a point there. Let's try two fixed office days and review it in a month.", "pt": "Você tem razão nisso. Vamos tentar dois dias fixos no escritório e revisar daqui a um mês." },
+      { "speaker": "Lena", "en": "Works for me. We can agree to disagree about the third day for now.", "pt": "Por mim tudo bem. A gente pode concordar em discordar sobre o terceiro dia por enquanto." }
+    ],
+    "comprehension": [
+      {
+        "kind": "mainIdea",
+        "prompt": { "en": "What are Marco and Lena discussing?", "pt": "Sobre o que Marco e Lena estão conversando?" },
+        "options": [
+          { "en": "How many days the team should work from home", "pt": "Quantos dias o time deve trabalhar de casa" },
+          { "en": "Which project to start next", "pt": "Qual projeto começar em seguida" },
+          { "en": "Where to hold the next office party", "pt": "Onde fazer a próxima festa do escritório" }
+        ]
+      },
+      {
+        "kind": "detail",
+        "prompt": { "en": "What does Lena say matters most?", "pt": "O que Lena diz que importa mais?" },
+        "options": [
+          { "en": "The deadline", "pt": "O prazo" },
+          { "en": "The location", "pt": "O local" },
+          { "en": "The size of the team", "pt": "O tamanho do time" }
+        ]
+      },
+      {
+        "kind": "detail",
+        "prompt": { "en": "What do they finally decide to try?", "pt": "O que eles decidem tentar no fim?" },
+        "options": [
+          { "en": "Two fixed office days, reviewed in a month", "pt": "Dois dias fixos no escritório, com revisão em um mês" },
+          { "en": "Full remote work starting immediately", "pt": "Trabalho totalmente remoto a partir de agora" },
+          { "en": "Five days a week in the office", "pt": "Cinco dias por semana no escritório" }
+        ]
+      }
+    ],
+    "productionPrompt": {
+      "en": "Give your opinion about working from home. Agree or disagree with one common view, then concede one point to the other side.",
+      "pt": "Dê sua opinião sobre trabalhar de casa. Concorde ou discorde de uma opinião comum e, depois, ceda um ponto para o outro lado."
+    },
+    "retryHint": {
+      "en": "Open with 'In my opinion' or 'As far as I'm concerned', and use one concession phrase such as 'You have a point' or 'That's a fair point'.",
+      "pt": "Comece com 'In my opinion' ou 'As far as I'm concerned' e use uma frase de concessão como 'You have a point' ou 'That's a fair point'."
+    }
+  },
+
+  "b1-experiences": {
+    "objective": {
+      "en": "Talk about life experiences with the present perfect, and switch to the past simple when you give a specific time.",
+      "pt": "Falar sobre experiências de vida com o present perfect e mudar para o past simple quando você diz um momento específico."
+    },
+    "pronunciationFocus": {
+      "en": "Contracted 'have': 'I've', 'she's', 'we've' — one quick sound before the verb, never a full 'I have' in speech.",
+      "pt": "'Have' contraído: 'I've', 'she's', 'we've' — um som rápido antes do verbo, nunca 'I have' completo na fala."
+    },
+    "dialogue": [
+      { "speaker": "Priya", "en": "Have you ever been to Japan?", "pt": "Você já foi ao Japão?" },
+      { "speaker": "Tom", "en": "No, I've never been abroad, actually. Have you?", "pt": "Não, na verdade eu nunca saí do país. E você?" },
+      { "speaker": "Priya", "en": "I went there last year for work. I'd already visited Thailand, but Japan felt different.", "pt": "Fui lá ano passado a trabalho. Eu já tinha visitado a Tailândia, mas o Japão pareceu diferente." },
+      { "speaker": "Tom", "en": "I've wanted to go for years. I just haven't saved enough yet.", "pt": "Eu quero ir há anos. Só ainda não juntei dinheiro suficiente." },
+      { "speaker": "Priya", "en": "Start small. I've known people who did it on a tight budget.", "pt": "Comece devagar. Eu já conheci gente que fez isso com pouco dinheiro." },
+      { "speaker": "Tom", "en": "Good point. I'll look at flights tonight.", "pt": "Boa ideia. Vou ver as passagens hoje à noite." }
+    ],
+    "comprehension": [
+      {
+        "kind": "mainIdea",
+        "prompt": { "en": "What is the conversation mainly about?", "pt": "Sobre o que é a conversa principalmente?" },
+        "options": [
+          { "en": "Travel experience and wanting to visit Japan", "pt": "Experiências de viagem e a vontade de conhecer o Japão" },
+          { "en": "A work problem Tom needs to solve", "pt": "Um problema de trabalho que Tom precisa resolver" },
+          { "en": "Planning a trip together next month", "pt": "Planejar uma viagem juntos no mês que vem" }
+        ]
+      },
+      {
+        "kind": "detail",
+        "prompt": { "en": "Why hasn't Tom traveled abroad?", "pt": "Por que Tom nunca viajou para fora?" },
+        "options": [
+          { "en": "He hasn't saved enough money", "pt": "Ele não juntou dinheiro suficiente" },
+          { "en": "He doesn't have a passport", "pt": "Ele não tem passaporte" },
+          { "en": "He doesn't like flying", "pt": "Ele não gosta de voar" }
+        ]
+      },
+      {
+        "kind": "sequence",
+        "prompt": { "en": "Which country did Priya visit before Japan?", "pt": "Qual país Priya visitou antes do Japão?" },
+        "options": [
+          { "en": "Thailand", "pt": "Tailândia" },
+          { "en": "China", "pt": "China" },
+          { "en": "She went to Japan first", "pt": "Ela foi ao Japão primeiro" }
+        ]
+      }
+    ],
+    "productionPrompt": {
+      "en": "Describe two things you have done in your life and one thing you have never done. Add a specific time for one of them.",
+      "pt": "Descreva duas coisas que você já fez na vida e uma que nunca fez. Acrescente um momento específico para uma delas."
+    },
+    "retryHint": {
+      "en": "Use 'I've' + past participle for the experiences, and switch to the past simple ('I went…', 'I tried…') when you name a time.",
+      "pt": "Use 'I've' + particípio para as experiências e mude para o past simple ('I went…', 'I tried…') quando disser quando foi."
+    }
+  },
+
+  "b1-future": {
+    "objective": {
+      "en": "Talk about plans, arrangements, and predictions, choosing between 'going to', 'will', 'might', and the present continuous.",
+      "pt": "Falar sobre planos, compromissos e previsões, escolhendo entre 'going to', 'will', 'might' e o present continuous."
+    },
+    "pronunciationFocus": {
+      "en": "'going to' becomes 'gonna' and 'want to' becomes 'wanna' in relaxed speech — reduce them, but keep 'will' and 'might' clear.",
+      "pt": "'going to' vira 'gonna' e 'want to' vira 'wanna' na fala relaxada — reduza essas, mas mantenha 'will' e 'might' claros."
+    },
+    "dialogue": [
+      { "speaker": "Sofia", "en": "What are you doing this weekend?", "pt": "O que você vai fazer neste fim de semana?" },
+      { "speaker": "Dan", "en": "Nothing fixed. I'll probably stay home. I might start looking for a new job.", "pt": "Nada certo. Provavelmente vou ficar em casa. Talvez eu comece a procurar um emprego novo." },
+      { "speaker": "Sofia", "en": "Really? I'm meeting a recruiter on Monday — I could introduce you.", "pt": "Sério? Vou me encontrar com uma recrutadora na segunda — posso te apresentar." },
+      { "speaker": "Dan", "en": "That would help. I'm planning to move into project management.", "pt": "Isso ajudaria. Estou pensando em migrar para gestão de projetos." },
+      { "speaker": "Sofia", "en": "As soon as I have her number, I'll send it to you.", "pt": "Assim que eu tiver o número dela, te mando." },
+      { "speaker": "Dan", "en": "Thanks. I doubt I'll find something fast, but it's a start.", "pt": "Valeu. Duvido que eu ache algo rápido, mas já é um começo." }
+    ],
+    "comprehension": [
+      {
+        "kind": "mainIdea",
+        "prompt": { "en": "What is Dan thinking about doing?", "pt": "O que Dan está pensando em fazer?" },
+        "options": [
+          { "en": "Looking for a new job", "pt": "Procurar um emprego novo" },
+          { "en": "Going on holiday this weekend", "pt": "Viajar de férias neste fim de semana" },
+          { "en": "Starting his own company", "pt": "Abrir a própria empresa" }
+        ]
+      },
+      {
+        "kind": "detail",
+        "prompt": { "en": "What will Sofia do on Monday?", "pt": "O que Sofia vai fazer na segunda?" },
+        "options": [
+          { "en": "Meet a recruiter", "pt": "Encontrar uma recrutadora" },
+          { "en": "Start a new job", "pt": "Começar um emprego novo" },
+          { "en": "Travel for work", "pt": "Viajar a trabalho" }
+        ]
+      },
+      {
+        "kind": "detail",
+        "prompt": { "en": "What does Sofia promise to send Dan?", "pt": "O que Sofia promete mandar para Dan?" },
+        "options": [
+          { "en": "The recruiter's number", "pt": "O número da recrutadora" },
+          { "en": "Her CV", "pt": "O currículo dela" },
+          { "en": "A job advert", "pt": "Um anúncio de vaga" }
+        ]
+      }
+    ],
+    "productionPrompt": {
+      "en": "Talk about next weekend. Say one thing that is arranged, one thing you will probably do, and one thing that might happen.",
+      "pt": "Fale sobre o próximo fim de semana. Diga uma coisa que já está marcada, uma que você provavelmente vai fazer e uma que talvez aconteça."
+    },
+    "retryHint": {
+      "en": "Use the present continuous for the arrangement ('I'm meeting…'), 'will probably' for the likely plan, and 'might' for the possibility.",
+      "pt": "Use o present continuous para o que está marcado ('I'm meeting…'), 'will probably' para o plano provável e 'might' para a possibilidade."
+    }
+  },
+
+  "b1-work": {
+    "objective": {
+      "en": "Handle everyday work exchanges: ask for help, manage timing, and hand tasks back and forth.",
+      "pt": "Lidar com trocas cotidianas no trabalho: pedir ajuda, administrar prazos e repassar tarefas."
+    },
+    "pronunciationFocus": {
+      "en": "Phrasal verbs link and reduce: 'ged-back-to-you', 'go-over', 'set-up' — the stress falls on the particle.",
+      "pt": "Phrasal verbs se ligam e se reduzem: 'ged-back-to-you', 'go-over', 'set-up' — o acento cai na partícula."
+    },
+    "dialogue": [
+      { "speaker": "Nadia", "en": "Could you give me a hand with the report? I'm running a bit behind schedule.", "pt": "Você me dá uma força com o relatório? Estou meio atrasada." },
+      { "speaker": "Chris", "en": "Sure. Do you want to go over the numbers now?", "pt": "Claro. Quer revisar os números agora?" },
+      { "speaker": "Nadia", "en": "Could we set up a quick call after lunch instead?", "pt": "A gente pode marcar uma call rápida depois do almoço em vez disso?" },
+      { "speaker": "Chris", "en": "Works for me. I'll get back to you with a time.", "pt": "Por mim tudo bem. Te aviso o horário." },
+      { "speaker": "Nadia", "en": "Thanks. The client keeps asking about delivery — can you deal with that?", "pt": "Valeu. O cliente vive perguntando sobre a entrega — você consegue resolver isso?" },
+      { "speaker": "Chris", "en": "That's really the account team's job, but I'll pass it on today.", "pt": "Na verdade isso é função do time de conta, mas eu repasso hoje." }
+    ],
+    "comprehension": [
+      {
+        "kind": "mainIdea",
+        "prompt": { "en": "What does Nadia need from Chris?", "pt": "O que Nadia precisa de Chris?" },
+        "options": [
+          { "en": "Help with a report she is behind on", "pt": "Ajuda com um relatório que está atrasado" },
+          { "en": "A reference for a new job", "pt": "Uma recomendação para um emprego novo" },
+          { "en": "Approval to take the day off", "pt": "Autorização para tirar o dia de folga" }
+        ]
+      },
+      {
+        "kind": "detail",
+        "prompt": { "en": "When do they agree to talk?", "pt": "Quando eles combinam de conversar?" },
+        "options": [
+          { "en": "After lunch", "pt": "Depois do almoço" },
+          { "en": "First thing in the morning", "pt": "Logo cedo" },
+          { "en": "At the end of the week", "pt": "No fim da semana" }
+        ]
+      },
+      {
+        "kind": "detail",
+        "prompt": { "en": "What does Chris say about the client's delivery question?", "pt": "O que Chris diz sobre a pergunta do cliente sobre a entrega?" },
+        "options": [
+          { "en": "It's really the account team's job, but he'll pass it on", "pt": "Na verdade é função do time de conta, mas ele vai repassar" },
+          { "en": "He'll answer the client right away", "pt": "Ele vai responder o cliente na hora" },
+          { "en": "Nadia should handle it herself", "pt": "A própria Nadia deve resolver" }
+        ]
+      }
+    ],
+    "productionPrompt": {
+      "en": "Ask a colleague for help with a task. Explain why, suggest a time to talk, and offer something in return.",
+      "pt": "Peça ajuda a um colega com uma tarefa. Explique o motivo, sugira um horário para conversar e ofereça algo em troca."
+    },
+    "retryHint": {
+      "en": "Start with 'Could you give me a hand with…', say you're 'running behind schedule', and offer to 'go over' it or 'get back to' them.",
+      "pt": "Comece com 'Could you give me a hand with…', diga que está 'running behind schedule' e ofereça-se para 'go over' o assunto ou 'get back to' a pessoa."
+    }
+  },
+
+  "b1-problems": {
+    "objective": {
+      "en": "Make a complaint politely, describe what went wrong, and push for a specific solution.",
+      "pt": "Fazer uma reclamação com educação, descrever o que deu errado e insistir em uma solução específica."
+    },
+    "pronunciationFocus": {
+      "en": "Rising-then-falling intonation keeps a complaint firm but civil: 'this isn't what I ↗ordered↘'.",
+      "pt": "Entonação que sobe e depois desce mantém a reclamação firme, mas educada: 'this isn't what I ↗ordered↘'."
+    },
+    "dialogue": [
+      { "speaker": "Bea", "en": "There seems to be a problem with my order. This isn't what I asked for.", "pt": "Parece que tem um problema com o meu pedido. Não foi isso que eu pedi." },
+      { "speaker": "Rui", "en": "I'm sorry about that. Let me check what went wrong.", "pt": "Sinto muito por isso. Deixa eu ver o que deu errado." },
+      { "speaker": "Bea", "en": "I ordered the blue one in medium and got a grey large.", "pt": "Pedi o azul tamanho médio e veio um cinza grande." },
+      { "speaker": "Rui", "en": "You're right, we sent the wrong item. I'd like to send a replacement today.", "pt": "É verdade, mandamos o item errado. Quero enviar uma reposição hoje." },
+      { "speaker": "Bea", "en": "Honestly, I'd appreciate a refund instead. Is there anything you can do?", "pt": "Sinceramente, eu preferia um reembolso. Tem alguma coisa que você possa fazer?" },
+      { "speaker": "Rui", "en": "Of course. I'll process the refund now, and sorry for the inconvenience.", "pt": "Claro. Vou processar o reembolso agora, e desculpe pelo transtorno." }
+    ],
+    "comprehension": [
+      {
+        "kind": "mainIdea",
+        "prompt": { "en": "Why is Bea contacting the company?", "pt": "Por que Bea está entrando em contato com a empresa?" },
+        "options": [
+          { "en": "She received the wrong item", "pt": "Ela recebeu o item errado" },
+          { "en": "She wants to change her address", "pt": "Ela quer mudar o endereço" },
+          { "en": "She never received any order", "pt": "Ela nunca recebeu nenhum pedido" }
+        ]
+      },
+      {
+        "kind": "detail",
+        "prompt": { "en": "What did Bea originally order?", "pt": "O que Bea pediu originalmente?" },
+        "options": [
+          { "en": "A blue one in medium", "pt": "Um azul, tamanho médio" },
+          { "en": "A grey one in large", "pt": "Um cinza, tamanho grande" },
+          { "en": "A black one in small", "pt": "Um preto, tamanho pequeno" }
+        ]
+      },
+      {
+        "kind": "detail",
+        "prompt": { "en": "What solution does Bea prefer?", "pt": "Qual solução Bea prefere?" },
+        "options": [
+          { "en": "A refund", "pt": "Um reembolso" },
+          { "en": "A replacement item", "pt": "Um item de reposição" },
+          { "en": "A store credit", "pt": "Um crédito na loja" }
+        ]
+      }
+    ],
+    "productionPrompt": {
+      "en": "Complain about something you bought that was wrong or broken. Say what happened and ask for the solution you want.",
+      "pt": "Reclame de algo que você comprou e veio errado ou quebrado. Diga o que aconteceu e peça a solução que você quer."
+    },
+    "retryHint": {
+      "en": "Open with 'There seems to be a problem with…', describe what you ordered versus what came, and end with 'I'd appreciate…' or 'Is there anything you can do?'.",
+      "pt": "Comece com 'There seems to be a problem with…', descreva o que você pediu e o que veio, e termine com 'I'd appreciate…' ou 'Is there anything you can do?'."
+    }
+  },
+
+  "b1-phone": {
+    "objective": {
+      "en": "Manage a routine phone call: say why you are calling, get transferred, or arrange a call back.",
+      "pt": "Conduzir uma ligação de rotina: dizer por que está ligando, ser transferido ou combinar um retorno."
+    },
+    "pronunciationFocus": {
+      "en": "Phone-call formulas run fast and flat: 'hold-on-a-moment', 'put-you-through' — say each as one unit.",
+      "pt": "Fórmulas de telefonema saem rápidas e planas: 'hold-on-a-moment', 'put-you-through' — diga cada uma como um bloco só."
+    },
+    "dialogue": [
+      { "speaker": "Val", "en": "Good morning, Dellman Clinic. How can I help?", "pt": "Bom dia, Clínica Dellman. Como posso ajudar?" },
+      { "speaker": "Hugo", "en": "Hi, I'm calling about my appointment on Thursday. Could you put me through to reception?", "pt": "Oi, estou ligando por causa da minha consulta na quinta. Você pode me transferir para a recepção?" },
+      { "speaker": "Val", "en": "This is reception. Could you hold on a moment while I find your file?", "pt": "Aqui é a recepção. Você pode aguardar um momento enquanto eu localizo sua ficha?" },
+      { "speaker": "Hugo", "en": "Sure, no problem.", "pt": "Claro, sem problema." },
+      { "speaker": "Val", "en": "Sorry, the doctor isn't in on Thursday now. Can I move you to Friday at ten?", "pt": "Desculpe, a médica não vai estar na quinta agora. Posso te passar para sexta às dez?" },
+      { "speaker": "Hugo", "en": "Friday's difficult. Could someone call me back later with other times?", "pt": "Sexta é complicado. Alguém pode me ligar depois com outros horários?" }
+    ],
+    "comprehension": [
+      {
+        "kind": "mainIdea",
+        "prompt": { "en": "Why is Hugo calling the clinic?", "pt": "Por que Hugo está ligando para a clínica?" },
+        "options": [
+          { "en": "About his appointment on Thursday", "pt": "Por causa da consulta dele na quinta" },
+          { "en": "To register as a new patient", "pt": "Para se cadastrar como paciente novo" },
+          { "en": "To complain about a doctor", "pt": "Para reclamar de uma médica" }
+        ]
+      },
+      {
+        "kind": "detail",
+        "prompt": { "en": "Why can't the appointment stay on Thursday?", "pt": "Por que a consulta não pode ficar na quinta?" },
+        "options": [
+          { "en": "The doctor won't be in", "pt": "A médica não vai estar" },
+          { "en": "The clinic will be closed", "pt": "A clínica vai estar fechada" },
+          { "en": "Hugo will be away", "pt": "Hugo vai estar viajando" }
+        ]
+      },
+      {
+        "kind": "detail",
+        "prompt": { "en": "What does Hugo ask for at the end?", "pt": "O que Hugo pede no fim?" },
+        "options": [
+          { "en": "A call back later with other times", "pt": "Uma ligação depois com outros horários" },
+          { "en": "A refund for the visit", "pt": "Um reembolso da consulta" },
+          { "en": "A different doctor", "pt": "Uma médica diferente" }
+        ]
+      }
+    ],
+    "productionPrompt": {
+      "en": "Role-play a phone call to reschedule an appointment. Say why you're calling, react to a problem, and ask for a call back.",
+      "pt": "Simule uma ligação para remarcar um compromisso. Diga por que está ligando, reaja a um problema e peça para ligarem de volta."
+    },
+    "retryHint": {
+      "en": "Start with 'I'm calling about…', use 'Could you hold on a moment?' or 'Could you put me through to…', and finish with 'Could you call me back later?'.",
+      "pt": "Comece com 'I'm calling about…', use 'Could you hold on a moment?' ou 'Could you put me through to…' e termine com 'Could you call me back later?'."
+    }
+  },
+
+  "b1-everyday-demo": {
+    "objective": {
+      "en": "Use common phrasal verbs and idioms to talk about plans that change and results over time.",
+      "pt": "Usar phrasal verbs e expressões idiomáticas comuns para falar sobre planos que mudam e resultados ao longo do tempo."
+    },
+    "pronunciationFocus": {
+      "en": "Idioms are memorized as chunks with fixed stress: 'by HEART', 'the back of my HAND', 'so far so GOOD'.",
+      "pt": "Expressões idiomáticas são memorizadas como blocos com acento fixo: 'by HEART', 'the back of my HAND', 'so far so GOOD'."
+    },
+    "dialogue": [
+      { "speaker": "Kayla", "en": "Did the training go ahead?", "pt": "O treinamento aconteceu?" },
+      { "speaker": "Marcus", "en": "They called it off. Not enough people signed up.", "pt": "Cancelaram. Não teve gente suficiente inscrita." },
+      { "speaker": "Kayla", "en": "Typical. How's the new project going?", "pt": "Típico. E o projeto novo, como vai?" },
+      { "speaker": "Marcus", "en": "So far, so good. Sales have picked up since we launched.", "pt": "Até agora, tudo bem. As vendas melhoraram desde o lançamento." },
+      { "speaker": "Kayla", "en": "Nice. If a term comes up that I don't know, I just look it up.", "pt": "Legal. Se aparece um termo que eu não conheço, eu simplesmente pesquiso." },
+      { "speaker": "Marcus", "en": "Same. Let's get in touch next week and go through the numbers.", "pt": "Igual. Vamos entrar em contato semana que vem e revisar os números." }
+    ],
+    "comprehension": [
+      {
+        "kind": "mainIdea",
+        "prompt": { "en": "What are Kayla and Marcus mainly talking about?", "pt": "Sobre o que Kayla e Marcus estão conversando principalmente?" },
+        "options": [
+          { "en": "Work updates: a cancelled training and a new project", "pt": "Novidades do trabalho: um treinamento cancelado e um projeto novo" },
+          { "en": "A holiday they are planning", "pt": "Uma viagem que estão planejando" },
+          { "en": "A problem with a supplier", "pt": "Um problema com um fornecedor" }
+        ]
+      },
+      {
+        "kind": "detail",
+        "prompt": { "en": "Why was the training called off?", "pt": "Por que o treinamento foi cancelado?" },
+        "options": [
+          { "en": "Not enough people signed up", "pt": "Não teve gente suficiente inscrita" },
+          { "en": "The trainer was sick", "pt": "O instrutor ficou doente" },
+          { "en": "The room was double-booked", "pt": "A sala estava reservada em duplicidade" }
+        ]
+      },
+      {
+        "kind": "detail",
+        "prompt": { "en": "What has happened to sales since the launch?", "pt": "O que aconteceu com as vendas desde o lançamento?" },
+        "options": [
+          { "en": "They have picked up", "pt": "Elas melhoraram" },
+          { "en": "They have run out", "pt": "Elas se esgotaram" },
+          { "en": "They have dropped sharply", "pt": "Elas caíram bastante" }
+        ]
+      }
+    ],
+    "productionPrompt": {
+      "en": "Tell a colleague about a plan that was cancelled and a project that is going well. Use at least three phrasal verbs.",
+      "pt": "Conte a um colega sobre um plano que foi cancelado e um projeto que vai bem. Use pelo menos três phrasal verbs."
+    },
+    "retryHint": {
+      "en": "Use 'call off' for the cancellation, 'pick up' or 'take off' for the good news, and 'get in touch' to arrange the next step.",
+      "pt": "Use 'call off' para o cancelamento, 'pick up' ou 'take off' para a boa notícia e 'get in touch' para combinar o próximo passo."
+    }
+  },
+
+  "b1-learning-habits": {
+    "objective": {
+      "en": "Describe your study habits, what helps you learn, and what you find hard, using conditionals and gerunds.",
+      "pt": "Descrever seus hábitos de estudo, o que te ajuda a aprender e o que você acha difícil, usando condicionais e gerúndios."
+    },
+    "pronunciationFocus": {
+      "en": "Gerund subjects keep the stress on the noun idea: 'WRITING things down', 'MAKING mistakes' — don't stress the '-ing'.",
+      "pt": "Sujeitos no gerúndio mantêm o acento na ideia principal: 'WRITING things down', 'MAKING mistakes' — não acentue o '-ing'."
+    },
+    "dialogue": [
+      { "speaker": "Ines", "en": "How's your study routine going?", "pt": "Como está indo sua rotina de estudo?" },
+      { "speaker": "Pavel", "en": "Better. I try to review a little every day instead of one long session.", "pt": "Melhor. Tento revisar um pouco todo dia em vez de uma sessão longa." },
+      { "speaker": "Ines", "en": "Good. What's still hard?", "pt": "Ótimo. O que ainda está difícil?" },
+      { "speaker": "Pavel", "en": "Using new words naturally. I know them, but they don't come out when I speak.", "pt": "Usar as palavras novas com naturalidade. Eu sei elas, mas não saem quando eu falo." },
+      { "speaker": "Ines", "en": "That's normal. Making mistakes out loud is how they become automatic.", "pt": "Isso é normal. Errar em voz alta é o jeito de elas ficarem automáticas." },
+      { "speaker": "Pavel", "en": "I've started listening without subtitles too. My goal is to hesitate less.", "pt": "Também comecei a ouvir sem legenda. Meu objetivo é hesitar menos." }
+    ],
+    "comprehension": [
+      {
+        "kind": "mainIdea",
+        "prompt": { "en": "What is the conversation about?", "pt": "Sobre o que é a conversa?" },
+        "options": [
+          { "en": "Pavel's language study habits and difficulties", "pt": "Os hábitos e as dificuldades de estudo de idioma do Pavel" },
+          { "en": "A test Pavel failed", "pt": "Uma prova em que Pavel foi mal" },
+          { "en": "Choosing a new course", "pt": "A escolha de um curso novo" }
+        ]
+      },
+      {
+        "kind": "detail",
+        "prompt": { "en": "How has Pavel changed his routine?", "pt": "Como Pavel mudou a rotina dele?" },
+        "options": [
+          { "en": "A little review every day instead of one long session", "pt": "Um pouco de revisão todo dia em vez de uma sessão longa" },
+          { "en": "Studying only on weekends", "pt": "Estudando só nos fins de semana" },
+          { "en": "Stopping review completely", "pt": "Parando de revisar completamente" }
+        ]
+      },
+      {
+        "kind": "detail",
+        "prompt": { "en": "What does Pavel find hardest?", "pt": "O que Pavel acha mais difícil?" },
+        "options": [
+          { "en": "Using new words naturally when speaking", "pt": "Usar palavras novas com naturalidade ao falar" },
+          { "en": "Understanding grammar rules", "pt": "Entender regras de gramática" },
+          { "en": "Remembering spelling", "pt": "Lembrar a ortografia" }
+        ]
+      }
+    ],
+    "productionPrompt": {
+      "en": "Describe your own study routine. Say what helps you learn, what makes you lose focus, and one goal.",
+      "pt": "Descreva sua própria rotina de estudo. Diga o que te ajuda a aprender, o que faz você perder o foco e um objetivo."
+    },
+    "retryHint": {
+      "en": "Use 'I learn faster when…', 'I lose focus if…', and 'My goal is to…'. Try one gerund subject such as 'Writing things down helps me'.",
+      "pt": "Use 'I learn faster when…', 'I lose focus if…' e 'My goal is to…'. Tente um sujeito no gerúndio como 'Writing things down helps me'."
+    }
+  },
+
+  "b2-arguments": {
+    "objective": {
+      "en": "Defend a position in a discussion: concede fairly, challenge weak reasoning, and steer back to what matters.",
+      "pt": "Defender uma posição em uma discussão: ceder com justiça, contestar raciocínios frágeis e voltar ao que importa."
+    },
+    "pronunciationFocus": {
+      "en": "Stress the pivot word that turns the sentence: 'the DATA suggests otherwise', 'that's beSIDE the point'.",
+      "pt": "Acentue a palavra-chave que vira a frase: 'the DATA suggests otherwise', 'that's beSIDE the point'."
+    },
+    "dialogue": [
+      { "speaker": "Iris", "en": "We should delay the launch until the reviews are perfect.", "pt": "A gente devia adiar o lançamento até as avaliações estarem perfeitas." },
+      { "speaker": "Omar", "en": "While I understand your concern, the data suggests otherwise. Early users forgive small bugs.", "pt": "Embora eu entenda sua preocupação, os dados indicam o contrário. Os primeiros usuários perdoam pequenos bugs." },
+      { "speaker": "Iris", "en": "There's no denying that a bad first impression sticks, though.", "pt": "Mas não dá para negar que uma primeira impressão ruim fica marcada." },
+      { "speaker": "Omar", "en": "To be fair, that's a real risk. Let me play devil's advocate: what does waiting actually buy us?", "pt": "Para ser justo, esse risco é real. Deixa eu fazer de advogado do diabo: o que esperar realmente nos dá?" },
+      { "speaker": "Iris", "en": "Time to fix the onboarding flow.", "pt": "Tempo para consertar o fluxo de integração." },
+      { "speaker": "Omar", "en": "That argument doesn't really hold up — we can ship that as an update. Ultimately it comes down to priorities.", "pt": "Esse argumento não se sustenta muito — dá para lançar isso como atualização. No fim, é uma questão de prioridades." }
+    ],
+    "comprehension": [
+      {
+        "kind": "mainIdea",
+        "prompt": { "en": "What are Iris and Omar disagreeing about?", "pt": "Sobre o que Iris e Omar estão discordando?" },
+        "options": [
+          { "en": "Whether to delay the product launch", "pt": "Se devem adiar o lançamento do produto" },
+          { "en": "Which reviewer to hire", "pt": "Qual avaliador contratar" },
+          { "en": "How much to charge for the product", "pt": "Quanto cobrar pelo produto" }
+        ]
+      },
+      {
+        "kind": "detail",
+        "prompt": { "en": "What does Omar say about early users?", "pt": "O que Omar diz sobre os primeiros usuários?" },
+        "options": [
+          { "en": "They forgive small bugs", "pt": "Eles perdoam pequenos bugs" },
+          { "en": "They never come back after a problem", "pt": "Eles nunca voltam depois de um problema" },
+          { "en": "They rarely leave reviews", "pt": "Eles raramente deixam avaliações" }
+        ]
+      },
+      {
+        "kind": "detail",
+        "prompt": { "en": "Why does Omar reject the idea of waiting?", "pt": "Por que Omar rejeita a ideia de esperar?" },
+        "options": [
+          { "en": "The onboarding fix can ship later as an update", "pt": "O ajuste na integração pode sair depois como atualização" },
+          { "en": "The reviews will never improve", "pt": "As avaliações nunca vão melhorar" },
+          { "en": "The team is too small to wait", "pt": "O time é pequeno demais para esperar" }
+        ]
+      }
+    ],
+    "productionPrompt": {
+      "en": "Argue for or against delaying a decision at work. Concede one point to the other side, then explain why your position still holds.",
+      "pt": "Defenda ou critique adiar uma decisão no trabalho. Ceda um ponto para o outro lado e depois explique por que sua posição ainda se sustenta."
+    },
+    "retryHint": {
+      "en": "Use 'While I understand…, the data suggests…', concede with 'To be fair…', and close with 'Ultimately, it comes down to…'.",
+      "pt": "Use 'While I understand…, the data suggests…', ceda com 'To be fair…' e conclua com 'Ultimately, it comes down to…'."
+    }
+  },
+
+  "b2-conditionals": {
+    "objective": {
+      "en": "Discuss unreal and hypothetical situations with second and third conditionals, 'unless', 'even if', and 'wish'.",
+      "pt": "Discutir situações irreais e hipotéticas com a segunda e a terceira condicionais, 'unless', 'even if' e 'wish'."
+    },
+    "pronunciationFocus": {
+      "en": "Contracted 'would' and 'had' almost disappear: 'I'd take it', 'had I known' — the vowel carries the meaning.",
+      "pt": "'Would' e 'had' contraídos quase somem: 'I'd take it', 'had I known' — a vogal carrega o sentido."
+    },
+    "dialogue": [
+      { "speaker": "Théo", "en": "They offered me the transfer to Lisbon, but I'd have to decide by Friday.", "pt": "Me ofereceram a transferência para Lisboa, mas eu teria que decidir até sexta." },
+      { "speaker": "Rania", "en": "If I were you, I'd take it. You've wanted this for years.", "pt": "Se eu fosse você, aceitaria. Você quer isso há anos." },
+      { "speaker": "Théo", "en": "I know. If only I'd asked about the salary earlier.", "pt": "Eu sei. Se eu tivesse perguntado sobre o salário antes." },
+      { "speaker": "Rania", "en": "Suppose the number is lower than you hoped — would that change things?", "pt": "Suponha que o valor seja menor do que você esperava — isso mudaria as coisas?" },
+      { "speaker": "Théo", "en": "Not really. Even if the pay is the same, the role is a step up.", "pt": "Não muito. Mesmo se o salário for igual, o cargo é um avanço." },
+      { "speaker": "Rania", "en": "Then call them today. Otherwise you'll spend the weekend second-guessing it.", "pt": "Então liga para eles hoje. Senão você vai passar o fim de semana em dúvida." }
+    ],
+    "comprehension": [
+      {
+        "kind": "mainIdea",
+        "prompt": { "en": "What decision is Théo facing?", "pt": "Que decisão Théo está enfrentando?" },
+        "options": [
+          { "en": "Whether to accept a job transfer to Lisbon", "pt": "Se aceita uma transferência de trabalho para Lisboa" },
+          { "en": "Whether to ask for a pay rise", "pt": "Se pede um aumento" },
+          { "en": "Whether to move in with Rania", "pt": "Se vai morar com Rania" }
+        ]
+      },
+      {
+        "kind": "detail",
+        "prompt": { "en": "What does Rania advise him to do?", "pt": "O que Rania aconselha ele a fazer?" },
+        "options": [
+          { "en": "Take the offer", "pt": "Aceitar a oferta" },
+          { "en": "Turn it down", "pt": "Recusar" },
+          { "en": "Wait a few months", "pt": "Esperar alguns meses" }
+        ]
+      },
+      {
+        "kind": "detail",
+        "prompt": { "en": "Why does Théo say the salary matters less?", "pt": "Por que Théo diz que o salário importa menos?" },
+        "options": [
+          { "en": "The role itself is a step up", "pt": "O cargo em si é um avanço" },
+          { "en": "He already has savings", "pt": "Ele já tem uma reserva" },
+          { "en": "Lisbon is cheaper", "pt": "Lisboa é mais barata" }
+        ]
+      }
+    ],
+    "productionPrompt": {
+      "en": "Describe a decision you once faced. Say what you would do differently now, and give one piece of advice using 'If I were you…'.",
+      "pt": "Descreva uma decisão que você já enfrentou. Diga o que faria diferente hoje e dê um conselho usando 'If I were you…'."
+    },
+    "retryHint": {
+      "en": "Use the third conditional for regret ('If only I had…', 'Had I known…') and the second conditional for advice ('If I were you, I'd…').",
+      "pt": "Use a terceira condicional para arrependimento ('If only I had…', 'Had I known…') e a segunda para conselho ('If I were you, I'd…')."
+    }
+  },
+
+  "b2-negotiation": {
+    "objective": {
+      "en": "Move a negotiation toward agreement: signal flexibility, refuse firmly where needed, and close the deal.",
+      "pt": "Levar uma negociação rumo a um acordo: sinalizar flexibilidade, recusar com firmeza quando preciso e fechar o negócio."
+    },
+    "pronunciationFocus": {
+      "en": "Soften a refusal with a falling, unhurried tone: 'I'm afraid that's out of the question' — no sharp stress.",
+      "pt": "Suavize uma recusa com tom descendente e sem pressa: 'I'm afraid that's out of the question' — sem acento forte."
+    },
+    "dialogue": [
+      { "speaker": "Sami", "en": "For a two-year contract, the best I can offer is a five percent discount.", "pt": "Para um contrato de dois anos, o melhor que posso oferecer é cinco por cento de desconto." },
+      { "speaker": "Nora", "en": "Would you be willing to meet halfway at eight?", "pt": "Você toparia um meio-termo em oito?" },
+      { "speaker": "Sami", "en": "Eight is out of the question, I'm afraid. But I'll see what I can do on delivery times.", "pt": "Oito está fora de cogitação, infelizmente. Mas vou ver o que consigo nos prazos de entrega." },
+      { "speaker": "Nora", "en": "Faster delivery would help. Let's not get ahead of ourselves, though — what about payment terms?", "pt": "Uma entrega mais rápida ajudaria. Mas vamos com calma — e as condições de pagamento?" },
+      { "speaker": "Sami", "en": "Sixty days instead of thirty, if we settle on six percent.", "pt": "Sessenta dias em vez de trinta, se fecharmos em seis por cento." },
+      { "speaker": "Nora", "en": "That works for me. Do we have a deal?", "pt": "Por mim está ótimo. Fechado?" }
+    ],
+    "comprehension": [
+      {
+        "kind": "mainIdea",
+        "prompt": { "en": "What are Sami and Nora negotiating?", "pt": "O que Sami e Nora estão negociando?" },
+        "options": [
+          { "en": "The terms of a supply contract", "pt": "As condições de um contrato de fornecimento" },
+          { "en": "A job salary", "pt": "O salário de um emprego" },
+          { "en": "The rent on an office", "pt": "O aluguel de um escritório" }
+        ]
+      },
+      {
+        "kind": "detail",
+        "prompt": { "en": "Which request does Sami firmly reject?", "pt": "Qual pedido Sami recusa com firmeza?" },
+        "options": [
+          { "en": "An eight percent discount", "pt": "Um desconto de oito por cento" },
+          { "en": "A two-year contract", "pt": "Um contrato de dois anos" },
+          { "en": "Sixty-day payment terms", "pt": "Prazo de pagamento de sessenta dias" }
+        ]
+      },
+      {
+        "kind": "detail",
+        "prompt": { "en": "What do they finally agree on?", "pt": "Com o que eles concordam no fim?" },
+        "options": [
+          { "en": "Six percent off with faster delivery and sixty-day terms", "pt": "Seis por cento de desconto com entrega mais rápida e prazo de sessenta dias" },
+          { "en": "Five percent off with no other changes", "pt": "Cinco por cento de desconto sem outras mudanças" },
+          { "en": "No deal at all", "pt": "Nenhum acordo" }
+        ]
+      }
+    ],
+    "productionPrompt": {
+      "en": "Role-play a negotiation over a price or deadline. Make one firm refusal, offer one trade, and close with a clear agreement.",
+      "pt": "Simule uma negociação sobre preço ou prazo. Faça uma recusa firme, ofereça uma troca e feche com um acordo claro."
+    },
+    "retryHint": {
+      "en": "Offer flexibility with 'Would you be willing to…' and 'meet halfway', refuse with 'I'm afraid that's out of the question', and close with 'Do we have a deal?'.",
+      "pt": "Ofereça flexibilidade com 'Would you be willing to…' e 'meet halfway', recuse com 'I'm afraid that's out of the question' e feche com 'Do we have a deal?'."
+    }
+  },
+
+  "b2-trends": {
+    "objective": {
+      "en": "Present figures and trends: describe rises, falls, and plateaus, and hedge a forecast appropriately.",
+      "pt": "Apresentar números e tendências: descrever altas, quedas e estabilizações e fazer previsões com as devidas ressalvas."
+    },
+    "pronunciationFocus": {
+      "en": "Gradable verbs carry the emotion: 'sales have SOARED', 'a SHARP decline' — lengthen the stressed vowel.",
+      "pt": "Verbos graduáveis carregam a emoção: 'sales have SOARED', 'a SHARP decline' — alongue a vogal acentuada."
+    },
+    "dialogue": [
+      { "speaker": "Priscila", "en": "Sales have soared over the past quarter, up nearly thirty percent.", "pt": "As vendas dispararam no último trimestre, quase trinta por cento a mais." },
+      { "speaker": "Gil", "en": "Across every region?", "pt": "Em todas as regiões?" },
+      { "speaker": "Priscila", "en": "No. Two regions drove it; in the north there's been a sharp decline in demand.", "pt": "Não. Duas regiões puxaram; no norte houve uma queda acentuada na demanda." },
+      { "speaker": "Gil", "en": "What's the forecast?", "pt": "Qual é a previsão?" },
+      { "speaker": "Priscila", "en": "Costs are expected to rise gradually, but overall the outlook is promising.", "pt": "Espera-se que os custos subam aos poucos, mas no geral a perspectiva é boa." },
+      { "speaker": "Gil", "en": "So the trend is likely to continue if we support the north.", "pt": "Então a tendência deve continuar se a gente reforçar o norte." }
+    ],
+    "comprehension": [
+      {
+        "kind": "mainIdea",
+        "prompt": { "en": "What is Priscila presenting?", "pt": "O que Priscila está apresentando?" },
+        "options": [
+          { "en": "Quarterly sales results and the forecast", "pt": "Os resultados de vendas do trimestre e a previsão" },
+          { "en": "A new pricing plan", "pt": "Um novo plano de preços" },
+          { "en": "A customer complaint report", "pt": "Um relatório de reclamações de clientes" }
+        ]
+      },
+      {
+        "kind": "detail",
+        "prompt": { "en": "What is happening to demand in the north?", "pt": "O que está acontecendo com a demanda no norte?" },
+        "options": [
+          { "en": "There has been a sharp decline", "pt": "Houve uma queda acentuada" },
+          { "en": "It has soared", "pt": "Ela disparou" },
+          { "en": "It has remained steady", "pt": "Ela ficou estável" }
+        ]
+      },
+      {
+        "kind": "detail",
+        "prompt": { "en": "What does Priscila expect costs to do?", "pt": "O que Priscila espera que os custos façam?" },
+        "options": [
+          { "en": "Rise gradually", "pt": "Subir aos poucos" },
+          { "en": "Fall sharply", "pt": "Cair bruscamente" },
+          { "en": "Stay exactly the same", "pt": "Ficar exatamente iguais" }
+        ]
+      }
+    ],
+    "productionPrompt": {
+      "en": "Describe how a number you know (spending, followers, sales) has changed over the last year, and give a hedged forecast.",
+      "pt": "Descreva como um número que você conhece (gastos, seguidores, vendas) mudou no último ano e faça uma previsão com ressalvas."
+    },
+    "retryHint": {
+      "en": "Use one movement verb ('soared', 'declined', 'plateaued'), one hedge ('is expected to', 'is likely to'), and 'overall' for the summary.",
+      "pt": "Use um verbo de movimento ('soared', 'declined', 'plateaued'), uma ressalva ('is expected to', 'is likely to') e 'overall' para o resumo."
+    }
+  },
+
+  "b2-decisions": {
+    "objective": {
+      "en": "Compare two options out loud: name the trade-off, weigh risks against benefits, and explain which way you lean.",
+      "pt": "Comparar duas opções em voz alta: nomear o trade-off, pesar riscos contra benefícios e explicar para que lado você se inclina."
+    },
+    "pronunciationFocus": {
+      "en": "Contrast pairs get matched stress: 'TIME versus QUALity', 'SHORT term / LONG term'.",
+      "pt": "Pares de contraste recebem acento equivalente: 'TIME versus QUALity', 'SHORT term / LONG term'."
+    },
+    "dialogue": [
+      { "speaker": "Aline", "en": "Do we hire a contractor now or wait and train someone internally?", "pt": "A gente contrata um freelancer agora ou espera e treina alguém de casa?" },
+      { "speaker": "Bruno", "en": "Both options have clear advantages. The main trade-off is speed versus cost.", "pt": "As duas opções têm vantagens claras. O trade-off principal é velocidade versus custo." },
+      { "speaker": "Aline", "en": "In the short term, the contractor makes sense — we're behind.", "pt": "No curto prazo, o freelancer faz sentido — a gente está atrasado." },
+      { "speaker": "Bruno", "en": "True, but that choice could create problems later on, when they leave.", "pt": "Verdade, mas essa escolha pode criar problemas mais para a frente, quando a pessoa sair." },
+      { "speaker": "Aline", "en": "So we weigh the risk of falling further behind against the cost of training.", "pt": "Então a gente pesa o risco de atrasar ainda mais contra o custo de treinar." },
+      { "speaker": "Bruno", "en": "On balance, I'm leaning toward hiring now and training in parallel.", "pt": "No conjunto, estou mais inclinado a contratar agora e treinar em paralelo." }
+    ],
+    "comprehension": [
+      {
+        "kind": "mainIdea",
+        "prompt": { "en": "What decision are Aline and Bruno weighing?", "pt": "Que decisão Aline e Bruno estão pesando?" },
+        "options": [
+          { "en": "Hiring a contractor now versus training someone internally", "pt": "Contratar um freelancer agora ou treinar alguém de casa" },
+          { "en": "Which office to rent", "pt": "Qual escritório alugar" },
+          { "en": "Whether to raise prices", "pt": "Se aumentam os preços" }
+        ]
+      },
+      {
+        "kind": "detail",
+        "prompt": { "en": "What is the main trade-off Bruno names?", "pt": "Qual é o trade-off principal que Bruno aponta?" },
+        "options": [
+          { "en": "Speed versus cost", "pt": "Velocidade versus custo" },
+          { "en": "Quality versus quantity", "pt": "Qualidade versus quantidade" },
+          { "en": "Risk versus reputation", "pt": "Risco versus reputação" }
+        ]
+      },
+      {
+        "kind": "detail",
+        "prompt": { "en": "Which way does Bruno lean in the end?", "pt": "Para que lado Bruno se inclina no fim?" },
+        "options": [
+          { "en": "Hire now and train in parallel", "pt": "Contratar agora e treinar em paralelo" },
+          { "en": "Wait and train only", "pt": "Esperar e só treinar" },
+          { "en": "Do nothing for now", "pt": "Não fazer nada por enquanto" }
+        ]
+      }
+    ],
+    "productionPrompt": {
+      "en": "Talk through a choice between two options you face. Name the trade-off, weigh one risk against one benefit, and say which way you lean.",
+      "pt": "Analise em voz alta uma escolha entre duas opções que você tem. Nomeie o trade-off, pese um risco contra um benefício e diga para que lado você se inclina."
+    },
+    "retryHint": {
+      "en": "Use 'The main trade-off is X versus Y', 'weigh the risks against the benefits', and 'On balance, I'm leaning toward…'.",
+      "pt": "Use 'The main trade-off is X versus Y', 'weigh the risks against the benefits' e 'On balance, I'm leaning toward…'."
+    }
+  },
+
+  "c1-nuance": {
+    "objective": {
+      "en": "Register a precise degree of agreement or doubt, mark distinctions, and qualify a judgement without hedging into vagueness.",
+      "pt": "Registrar um grau preciso de concordância ou dúvida, marcar distinções e qualificar um julgamento sem cair na vagueza."
+    },
+    "pronunciationFocus": {
+      "en": "Concessive discourse markers sit on their own tone unit: 'That said, —', 'I take your point, — but…'.",
+      "pt": "Marcadores concessivos ficam em unidade de entonação própria: 'That said, —', 'I take your point, — but…'."
+    },
+    "dialogue": [
+      { "speaker": "Halvor", "en": "So your assessment is that the pilot failed?", "pt": "Então sua avaliação é de que o piloto fracassou?" },
+      { "speaker": "Dela", "en": "I would hesitate to call it a failure. That said, it clearly missed its main target.", "pt": "Eu hesitaria em chamar de fracasso. Dito isso, ele claramente não atingiu o objetivo principal." },
+      { "speaker": "Halvor", "en": "The engagement numbers were strong, though.", "pt": "Mas os números de engajamento foram bons." },
+      { "speaker": "Dela", "en": "There's a subtle but important distinction between engagement and retention. The evidence points in a different direction on retention.", "pt": "Há uma distinção sutil, mas importante, entre engajamento e retenção. As evidências apontam para outra direção quanto à retenção." },
+      { "speaker": "Halvor", "en": "So you'd recommend against scaling it.", "pt": "Então você recomendaria não expandir." },
+      { "speaker": "Dela", "en": "I take your point about the early signs, but I remain unconvinced. The issue is more complex than it first appears.", "pt": "Entendo seu argumento sobre os primeiros sinais, mas continuo não convencida. A questão é mais complexa do que parece à primeira vista." }
+    ],
+    "comprehension": [
+      {
+        "kind": "mainIdea",
+        "prompt": { "en": "What is Dela's overall stance on the pilot?", "pt": "Qual é a posição geral de Dela sobre o piloto?" },
+        "options": [
+          { "en": "Cautiously negative — not a clear failure, but not ready to scale", "pt": "Cautelosamente negativa — não é um fracasso claro, mas não está pronto para expandir" },
+          { "en": "Strongly positive — it should be expanded now", "pt": "Fortemente positiva — deve ser expandido já" },
+          { "en": "Completely neutral — the data says nothing useful", "pt": "Totalmente neutra — os dados não dizem nada útil" }
+        ]
+      },
+      {
+        "kind": "detail",
+        "prompt": { "en": "Which distinction does Dela emphasize?", "pt": "Qual distinção Dela enfatiza?" },
+        "options": [
+          { "en": "Engagement versus retention", "pt": "Engajamento versus retenção" },
+          { "en": "Cost versus revenue", "pt": "Custo versus receita" },
+          { "en": "Short term versus long term", "pt": "Curto prazo versus longo prazo" }
+        ]
+      },
+      {
+        "kind": "detail",
+        "prompt": { "en": "How does Dela respond to Halvor's point about early signs?", "pt": "Como Dela responde ao argumento de Halvor sobre os primeiros sinais?" },
+        "options": [
+          { "en": "She acknowledges it but stays unconvinced", "pt": "Ela reconhece, mas continua não convencida" },
+          { "en": "She fully changes her mind", "pt": "Ela muda totalmente de ideia" },
+          { "en": "She dismisses it as irrelevant", "pt": "Ela descarta como irrelevante" }
+        ]
+      }
+    ],
+    "productionPrompt": {
+      "en": "Give a nuanced verdict on something you have mixed feelings about. Concede one real strength, then explain the reservation that still holds.",
+      "pt": "Dê um veredito matizado sobre algo em relação a que você tem sentimentos mistos. Reconheça uma qualidade real e depois explique a ressalva que permanece."
+    },
+    "retryHint": {
+      "en": "Qualify with 'I would hesitate to…', concede with 'That said…', and hold your line with 'I take your point, but I remain unconvinced'.",
+      "pt": "Faça ressalvas com 'I would hesitate to…', ceda com 'That said…' e mantenha a posição com 'I take your point, but I remain unconvinced'."
+    }
+  },
+
+  "c1-register": {
+    "objective": {
+      "en": "Raise a difficult point in a professional register: soften requests, acknowledge the other side's position, and invite correction.",
+      "pt": "Levantar um ponto difícil em registro profissional: suavizar pedidos, reconhecer a posição do outro lado e abrir espaço para correção."
+    },
+    "pronunciationFocus": {
+      "en": "Polite formulas stay level and unstressed until the content word: 'I wanted to follow up on our previous conVERSAtion'.",
+      "pt": "Fórmulas educadas ficam niveladas e sem acento até a palavra de conteúdo: 'I wanted to follow up on our previous conVERSAtion'."
+    },
+    "dialogue": [
+      { "speaker": "Mrs. Adeyemi", "en": "Your team said the report would be ready last week.", "pt": "Sua equipe disse que o relatório estaria pronto na semana passada." },
+      { "speaker": "Pieter", "en": "I wanted to follow up on that. From a practical standpoint, the timeline turned out to be tight.", "pt": "Eu queria retomar isso. Do ponto de vista prático, o prazo acabou ficando apertado." },
+      { "speaker": "Mrs. Adeyemi", "en": "Tight because of what, exactly?", "pt": "Apertado por causa de quê, exatamente?" },
+      { "speaker": "Pieter", "en": "Let me rephrase that more carefully. We received the final data three days late, which moved everything.", "pt": "Deixa eu reformular com mais cuidado. Recebemos os dados finais com três dias de atraso, o que deslocou tudo." },
+      { "speaker": "Mrs. Adeyemi", "en": "I appreciate that, but I need a firm date.", "pt": "Eu entendo, mas preciso de uma data firme." },
+      { "speaker": "Pieter", "en": "Thursday. I would not want to overstate our certainty, but Thursday is realistic. Please tell me if I've misunderstood the priority.", "pt": "Quinta-feira. Eu não gostaria de exagerar nossa certeza, mas quinta é realista. Por favor, me diga se entendi errado a prioridade." }
+    ],
+    "comprehension": [
+      {
+        "kind": "mainIdea",
+        "prompt": { "en": "What is the purpose of Pieter's message?", "pt": "Qual é o objetivo da fala de Pieter?" },
+        "options": [
+          { "en": "To explain a delayed report and commit to a new date", "pt": "Explicar um relatório atrasado e se comprometer com uma nova data" },
+          { "en": "To end the contract with the client", "pt": "Encerrar o contrato com a cliente" },
+          { "en": "To ask the client for more money", "pt": "Pedir mais dinheiro à cliente" }
+        ]
+      },
+      {
+        "kind": "detail",
+        "prompt": { "en": "What reason does Pieter give for the delay?", "pt": "Que motivo Pieter dá para o atraso?" },
+        "options": [
+          { "en": "The final data arrived three days late", "pt": "Os dados finais chegaram com três dias de atraso" },
+          { "en": "A team member resigned", "pt": "Um membro da equipe pediu demissão" },
+          { "en": "The client changed the scope", "pt": "A cliente mudou o escopo" }
+        ]
+      },
+      {
+        "kind": "detail",
+        "prompt": { "en": "How does Pieter present the new date?", "pt": "Como Pieter apresenta a nova data?" },
+        "options": [
+          { "en": "As realistic, without overstating his certainty", "pt": "Como realista, sem exagerar a certeza dele" },
+          { "en": "As a firm guarantee with no risk", "pt": "Como uma garantia firme sem risco" },
+          { "en": "As impossible to predict", "pt": "Como impossível de prever" }
+        ]
+      }
+    ],
+    "productionPrompt": {
+      "en": "Deliver bad news to a client or manager in a professional tone. Acknowledge their position, explain the cause, and commit to a next step.",
+      "pt": "Dê uma notícia ruim a um cliente ou gestor em tom profissional. Reconheça a posição da pessoa, explique a causa e assuma um próximo passo."
+    },
+    "retryHint": {
+      "en": "Open with 'I wanted to follow up on…', acknowledge with 'I appreciate the constraints you're working under', and hedge with 'I wouldn't want to overstate…'.",
+      "pt": "Comece com 'I wanted to follow up on…', reconheça com 'I appreciate the constraints you're working under' e faça ressalva com 'I wouldn't want to overstate…'."
+    }
+  },
+
+  "c1-leading-meetings": {
+    "objective": {
+      "en": "Chair a working discussion: frame the decision, surface disagreement deliberately, and close with a clear decision and owner.",
+      "pt": "Conduzir uma discussão de trabalho: enquadrar a decisão, trazer a discordância à tona de propósito e encerrar com uma decisão clara e um responsável."
+    },
+    "pronunciationFocus": {
+      "en": "Chairing moves start on a low, steady pitch to hold the floor: 'Before we move on, —', 'Unless there are objections, —'.",
+      "pt": "As falas de quem conduz começam em tom baixo e estável para segurar a palavra: 'Before we move on, —', 'Unless there are objections, —'."
+    },
+    "dialogue": [
+      { "speaker": "Renata", "en": "Let's clarify what we need to decide today: the launch date, nothing else.", "pt": "Vamos deixar claro o que precisamos decidir hoje: a data de lançamento, nada além disso." },
+      { "speaker": "Yusuf", "en": "The build will be stable by the fifteenth.", "pt": "A build vai estar estável até o dia quinze." },
+      { "speaker": "Renata", "en": "Before we move on, I'd like to hear the opposing view. Marina?", "pt": "Antes de seguir, eu gostaria de ouvir a visão contrária. Marina?" },
+      { "speaker": "Yusuf", "en": "Marina's worried support isn't trained yet, and she has a point.", "pt": "A Marina está preocupada que o suporte ainda não foi treinado, e ela tem razão." },
+      { "speaker": "Renata", "en": "So there's broad agreement on launching this month; the point of disagreement is the exact date.", "pt": "Então há um consenso amplo de lançar este mês; o ponto de discordância é a data exata." },
+      { "speaker": "Renata", "en": "Unless there are objections, we'll proceed with the twenty-second, and I'll summarize the actions.", "pt": "Se não houver objeções, seguimos com o dia vinte e dois, e eu resumo as ações." }
+    ],
+    "comprehension": [
+      {
+        "kind": "mainIdea",
+        "prompt": { "en": "What is the meeting trying to decide?", "pt": "O que a reunião está tentando decidir?" },
+        "options": [
+          { "en": "The launch date", "pt": "A data de lançamento" },
+          { "en": "Who to hire for support", "pt": "Quem contratar para o suporte" },
+          { "en": "The product's price", "pt": "O preço do produto" }
+        ]
+      },
+      {
+        "kind": "detail",
+        "prompt": { "en": "What concern does Marina raise?", "pt": "Que preocupação Marina levanta?" },
+        "options": [
+          { "en": "Support isn't trained yet", "pt": "O suporte ainda não foi treinado" },
+          { "en": "The build is unstable", "pt": "A build está instável" },
+          { "en": "The budget is gone", "pt": "O orçamento acabou" }
+        ]
+      },
+      {
+        "kind": "detail",
+        "prompt": { "en": "How does Renata close the discussion?", "pt": "Como Renata encerra a discussão?" },
+        "options": [
+          { "en": "Proceeding with the twenty-second unless anyone objects", "pt": "Seguindo com o dia vinte e dois, a menos que alguém se oponha" },
+          { "en": "Postponing the decision to next week", "pt": "Adiando a decisão para a semana que vem" },
+          { "en": "Letting each team decide separately", "pt": "Deixando cada time decidir por conta própria" }
+        ]
+      }
+    ],
+    "productionPrompt": {
+      "en": "Chair a two-minute segment of a meeting about a decision. Frame the question, invite one objection, and close with a decision and an owner.",
+      "pt": "Conduza um trecho de dois minutos de uma reunião sobre uma decisão. Enquadre a questão, convide uma objeção e encerre com uma decisão e um responsável."
+    },
+    "retryHint": {
+      "en": "Use 'Let's clarify what we need to decide', 'Before we move on, I'd like to hear the opposing view', and 'Unless there are objections, we'll proceed…'.",
+      "pt": "Use 'Let's clarify what we need to decide', 'Before we move on, I'd like to hear the opposing view' e 'Unless there are objections, we'll proceed…'."
+    }
+  },
+
+  "c2-precision": {
+    "objective": {
+      "en": "Make an exact claim: bound it with conditions, separate it from a near neighbour, and place emphasis deliberately rather than by volume.",
+      "pt": "Fazer uma afirmação exata: delimitá-la com condições, separá-la de uma ideia parecida e colocar a ênfase de propósito, não pelo volume."
+    },
+    "pronunciationFocus": {
+      "en": "Emphasis by contrast, not force: drop pitch on 'not incidental', lift it on 'it is CENtral' — the fall-rise carries the weight.",
+      "pt": "Ênfase por contraste, não por força: abaixe o tom em 'not incidental', suba em 'it is CENtral' — a curva descendente-ascendente carrega o peso."
+    },
+    "dialogue": [
+      { "speaker": "Anselm", "en": "Your draft treats the two studies as saying the same thing.", "pt": "Seu rascunho trata os dois estudos como se dissessem a mesma coisa." },
+      { "speaker": "Idil", "en": "That interpretation strikes me as overly reductive. This is less a contradiction than a shift in emphasis.", "pt": "Essa interpretação me parece redutora demais. Isso é menos uma contradição do que uma mudança de ênfase." },
+      { "speaker": "Anselm", "en": "Then say so explicitly. As written, the wording leaves room for considerable ambiguity.", "pt": "Então diga isso de forma explícita. Como está, a redação deixa margem para uma ambiguidade considerável." },
+      { "speaker": "Idil", "en": "Fair. I'd frame the problem somewhat differently in the revision.", "pt": "Justo. Eu formularia o problema de um jeito um pouco diferente na revisão." },
+      { "speaker": "Anselm", "en": "And the causal claim in paragraph four?", "pt": "E a afirmação causal no parágrafo quatro?" },
+      { "speaker": "Idil", "en": "It holds only under specific conditions. The conclusion follows, but only with several caveats, which I'll add.", "pt": "Ela se sustenta apenas sob condições específicas. A conclusão se segue, mas só com várias ressalvas, que eu vou acrescentar." }
+    ],
+    "comprehension": [
+      {
+        "kind": "mainIdea",
+        "prompt": { "en": "What is the editorial disagreement about?", "pt": "Sobre o que é a divergência editorial?" },
+        "options": [
+          { "en": "How precisely the draft states its claims", "pt": "Com que precisão o rascunho enuncia suas afirmações" },
+          { "en": "Whether to publish the article at all", "pt": "Se o artigo deve ser publicado" },
+          { "en": "Which study to cite first", "pt": "Qual estudo citar primeiro" }
+        ]
+      },
+      {
+        "kind": "detail",
+        "prompt": { "en": "How does Idil characterize the relationship between the two studies?", "pt": "Como Idil caracteriza a relação entre os dois estudos?" },
+        "options": [
+          { "en": "A shift in emphasis rather than a contradiction", "pt": "Uma mudança de ênfase, não uma contradição" },
+          { "en": "A direct contradiction", "pt": "Uma contradição direta" },
+          { "en": "Two identical findings", "pt": "Duas conclusões idênticas" }
+        ]
+      },
+      {
+        "kind": "detail",
+        "prompt": { "en": "What does Idil agree to do about the causal claim?", "pt": "O que Idil concorda em fazer com a afirmação causal?" },
+        "options": [
+          { "en": "Add the caveats and conditions it depends on", "pt": "Acrescentar as ressalvas e condições de que ela depende" },
+          { "en": "Remove it entirely", "pt": "Removê-la por completo" },
+          { "en": "Make it stronger", "pt": "Torná-la mais forte" }
+        ]
+      }
+    ],
+    "productionPrompt": {
+      "en": "State a claim you believe is often oversimplified. Bound it with the conditions under which it holds, and name the near neighbour it gets confused with.",
+      "pt": "Enuncie uma afirmação que você acha que costuma ser simplificada demais. Delimite-a com as condições sob as quais ela vale e nomeie a ideia parecida com que ela é confundida."
+    },
+    "retryHint": {
+      "en": "Use 'X is less a … than a …', 'it holds only under specific conditions', and 'the conclusion follows, but only with several caveats'.",
+      "pt": "Use 'X is less a … than a …', 'it holds only under specific conditions' e 'the conclusion follows, but only with several caveats'."
+    }
+  },
+
+  "c2-rhetoric": {
+    "objective": {
+      "en": "Control the shape of an argument in real time: redirect attention, rank objections by weight, and return the discussion to its core.",
+      "pt": "Controlar a forma de um argumento em tempo real: redirecionar a atenção, hierarquizar objeções por peso e devolver a discussão ao seu núcleo."
+    },
+    "pronunciationFocus": {
+      "en": "Structural signposts take a full pause on both sides: 'That may be true — but it does not settle the matter'.",
+      "pt": "Sinalizadores estruturais pedem pausa completa dos dois lados: 'That may be true — but it does not settle the matter'."
+    },
+    "dialogue": [
+      { "speaker": "Bório", "en": "You're spending too long on the funding figure. It's a rounding error.", "pt": "Você está demorando demais na cifra do financiamento. É um erro de arredondamento." },
+      { "speaker": "Wen", "en": "That may be true, but it does not settle the matter. The real issue lies elsewhere — in who controls the timeline.", "pt": "Isso pode ser verdade, mas não resolve a questão. O problema de fato está em outro lugar — em quem controla o cronograma." },
+      { "speaker": "Bório", "en": "The timeline objection has been raised before and dismissed.", "pt": "A objeção sobre o cronograma já foi levantada antes e descartada." },
+      { "speaker": "Wen", "en": "I don't think that objection is decisive. Viewed in the context of the last two delays, the argument gains force.", "pt": "Não acho que essa objeção seja decisiva. Vista no contexto dos dois últimos atrasos, a tese ganha força." },
+      { "speaker": "Bório", "en": "So what do you want the committee to take away?", "pt": "Então o que você quer que o comitê leve daqui?" },
+      { "speaker": "Wen", "en": "Let us not lose sight of the broader question. This brings us back to the central tension: speed against oversight.", "pt": "Não vamos perder de vista a questão mais ampla. Isso nos traz de volta à tensão central: velocidade contra supervisão." }
+    ],
+    "comprehension": [
+      {
+        "kind": "mainIdea",
+        "prompt": { "en": "What is Wen trying to do in this exchange?", "pt": "O que Wen está tentando fazer nesta troca?" },
+        "options": [
+          { "en": "Redirect the discussion to what she sees as the core issue", "pt": "Redirecionar a discussão para o que ela vê como a questão central" },
+          { "en": "Concede that the funding figure decides everything", "pt": "Admitir que a cifra do financiamento decide tudo" },
+          { "en": "End the meeting without a conclusion", "pt": "Encerrar a reunião sem conclusão" }
+        ]
+      },
+      {
+        "kind": "detail",
+        "prompt": { "en": "What does Wen say is the real issue?", "pt": "O que Wen diz ser o problema de fato?" },
+        "options": [
+          { "en": "Who controls the timeline", "pt": "Quem controla o cronograma" },
+          { "en": "The exact funding figure", "pt": "O valor exato do financiamento" },
+          { "en": "The size of the committee", "pt": "O tamanho do comitê" }
+        ]
+      },
+      {
+        "kind": "detail",
+        "prompt": { "en": "Why does Wen think the timeline objection now gains force?", "pt": "Por que Wen acha que a objeção sobre o cronograma ganha força agora?" },
+        "options": [
+          { "en": "Seen in the context of the last two delays", "pt": "Vista no contexto dos dois últimos atrasos" },
+          { "en": "Because the committee is new", "pt": "Porque o comitê é novo" },
+          { "en": "Because funding was cut", "pt": "Porque o financiamento foi cortado" }
+        ]
+      }
+    ],
+    "productionPrompt": {
+      "en": "Take a discussion that has drifted onto a minor point and steer it back. Concede the small point, name the real issue, and state the central tension.",
+      "pt": "Pegue uma discussão que derivou para um ponto menor e traga-a de volta. Ceda o ponto pequeno, nomeie o problema de fato e enuncie a tensão central."
+    },
+    "retryHint": {
+      "en": "Use 'That may be true, but it does not settle the matter', 'The real issue lies elsewhere', and 'This brings us back to the central tension'.",
+      "pt": "Use 'That may be true, but it does not settle the matter', 'The real issue lies elsewhere' e 'This brings us back to the central tension'."
+    }
+  },
+
+  "c2-critical-synthesis": {
+    "objective": {
+      "en": "Synthesize conflicting findings: locate each at its own level, state the narrowest claim the data supports, and resist single-cause explanations.",
+      "pt": "Sintetizar conclusões conflitantes: situar cada uma em seu próprio nível, enunciar a afirmação mais restrita que os dados sustentam e resistir a explicações de causa única."
+    },
+    "pronunciationFocus": {
+      "en": "List the levels with parallel intonation and equal weight: 'at the indiVIDual level — the other at the institUtional level'.",
+      "pt": "Liste os níveis com entonação paralela e peso igual: 'at the indiVIDual level — the other at the institUtional level'."
+    },
+    "dialogue": [
+      { "speaker": "Prof. Kaur", "en": "The two papers on your desk reach opposite conclusions. Which is right?", "pt": "Os dois artigos na sua mesa chegam a conclusões opostas. Qual está certo?" },
+      { "speaker": "Emre", "en": "The two accounts are not mutually exclusive. One operates at the individual level, the other at the institutional level.", "pt": "As duas explicações não são mutuamente excludentes. Uma opera no nível individual, a outra no nível institucional." },
+      { "speaker": "Prof. Kaur", "en": "So the contradiction is only apparent.", "pt": "Então a contradição é só aparente." },
+      { "speaker": "Emre", "en": "It dissolves once that distinction is made. But the strongest claim the data supports is considerably narrower than either paper states.", "pt": "Ela se desfaz quando essa distinção é feita. Mas a afirmação mais forte que os dados sustentam é bem mais restrita do que qualquer um dos artigos diz." },
+      { "speaker": "Prof. Kaur", "en": "And the sampling limitation in the second one?", "pt": "E a limitação de amostragem do segundo?" },
+      { "speaker": "Emre", "en": "That limitation doesn't invalidate the broader insight. I'd resist reducing the issue to a single cause.", "pt": "Essa limitação não invalida a percepção mais ampla. Eu evitaria reduzir a questão a uma única causa." }
+    ],
+    "comprehension": [
+      {
+        "kind": "mainIdea",
+        "prompt": { "en": "How does Emre reconcile the two papers?", "pt": "Como Emre concilia os dois artigos?" },
+        "options": [
+          { "en": "They describe different levels, so both can hold in a narrower form", "pt": "Eles descrevem níveis diferentes, então ambos podem valer de forma mais restrita" },
+          { "en": "One paper is simply wrong", "pt": "Um dos artigos está simplesmente errado" },
+          { "en": "The topic cannot be studied at all", "pt": "O tema não pode ser estudado de jeito nenhum" }
+        ]
+      },
+      {
+        "kind": "detail",
+        "prompt": { "en": "At which two levels do the explanations operate?", "pt": "Em quais dois níveis as explicações operam?" },
+        "options": [
+          { "en": "Individual and institutional", "pt": "Individual e institucional" },
+          { "en": "Local and global", "pt": "Local e global" },
+          { "en": "Short term and long term", "pt": "Curto prazo e longo prazo" }
+        ]
+      },
+      {
+        "kind": "detail",
+        "prompt": { "en": "What does Emre say about the second paper's sampling limitation?", "pt": "O que Emre diz sobre a limitação de amostragem do segundo artigo?" },
+        "options": [
+          { "en": "It doesn't invalidate the broader insight", "pt": "Ela não invalida a percepção mais ampla" },
+          { "en": "It makes the paper worthless", "pt": "Ela torna o artigo inútil" },
+          { "en": "It proves the first paper right", "pt": "Ela prova que o primeiro artigo está certo" }
+        ]
+      }
+    ],
+    "productionPrompt": {
+      "en": "Take two opposing claims you have read about one topic. Show how each could be partly right at a different level, and state the narrower conclusion that survives both.",
+      "pt": "Pegue duas afirmações opostas que você leu sobre um tema. Mostre como cada uma pode estar parcialmente certa em um nível diferente e enuncie a conclusão mais restrita que sobrevive às duas."
+    },
+    "retryHint": {
+      "en": "Use 'The two accounts are not mutually exclusive', 'one operates at the … level, the other at the … level', and 'the strongest claim the data supports is considerably narrower'.",
+      "pt": "Use 'The two accounts are not mutually exclusive', 'one operates at the … level, the other at the … level' e 'the strongest claim the data supports is considerably narrower'."
+    }
+  },
+
+  "c2-implicit-assumptions": {
+    "pronunciationFocus": {
+      "en": "Contrastive stress marks the pivot: 'only IF we treat demand as stable', 'the DIRECTION, not the magnitude'.",
+      "pt": "O acento contrastivo marca o ponto de virada: 'only IF we treat demand as stable', 'the DIRECTION, not the magnitude'."
+    }
+  },
+
+  "c2-analogy-metaphor": {
+    "pronunciationFocus": {
+      "en": "Balance the two halves of a contrast: 'FOREgrounds fragility and obSCURES adaptability' — equal weight on each verb.",
+      "pt": "Equilibre as duas metades de um contraste: 'FOREgrounds fragility and obSCURES adaptability' — peso igual em cada verbo."
+    }
+  },
+
+  "c2-high-stakes-negotiation": {
+    "pronunciationFocus": {
+      "en": "Deliver hedged commitments flat and unhurried: 'this is NOT yet an offer' — drop the pitch, don't rush the line.",
+      "pt": "Diga compromissos com ressalva de forma plana e sem pressa: 'this is NOT yet an offer' — abaixe o tom, não acelere a fala."
+    }
+  },
+
+  "c2-editorial-argument": {
+    "pronunciationFocus": {
+      "en": "End-weight on the reversal: 'narrower — and STRONGer — than advocates suggest', with a pause before the dash.",
+      "pt": "Peso no fim, na reviravolta: 'narrower — and STRONGer — than advocates suggest', com uma pausa antes do travessão."
+    }
+  },
+
+  "c2-debate-synthesis": {
+    "pronunciationFocus": {
+      "en": "Group a list with level tone and short pauses: 'claims — evidence — values — uncertainties'.",
+      "pt": "Agrupe uma lista com tom nivelado e pausas curtas: 'claims — evidence — values — uncertainties'."
+    }
+  }
+}
