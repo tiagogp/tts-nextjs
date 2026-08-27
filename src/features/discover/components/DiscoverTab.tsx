@@ -21,6 +21,7 @@ import { ProviderPicker } from "@/features/cards/components/ProviderPicker";
 import { DeckPreview } from "@/features/cards/components/DeckPreview";
 import { SourcePicker } from "@/features/discover/components/SourcePicker";
 import { TranscriptReview } from "@/features/discover/components/TranscriptReview";
+import { ImportedListeningProbe } from "@/features/listening/components/ImportedListeningProbe";
 import { ENGLISH_LEVELS, GENERATION_TIMEOUT_MS } from "@/features/discover/constants";
 import type { DiscoverResult, DiscoverSourceKind, EnglishLevel, TranscriptSegment } from "@/features/discover/types";
 import { curateDiscoverSegments, extractDiscoverSource, generateDiscoverDeck, isAuthoredSourceError } from "@/features/discover/api";
@@ -105,6 +106,9 @@ export default function DiscoverTab({
   } | null>(null);
   const [productionPrompt, setProductionPrompt] = useState<string | null>(null);
   const [kept, setKept] = useState<Set<number>>(new Set());
+  // Per-import, and never remembered: the probe is offered once for this result, and a
+  // learner who skips it is not asked again for the same source.
+  const [probeDone, setProbeDone] = useState(false);
   const [playing, setPlaying] = useState<number | null>(null);
   const selection = useProviderSelection();
   const { provider, providerReady, selectedModel } = selection;
@@ -338,6 +342,7 @@ export default function DiscoverTab({
     setLoading(true);
     setError(null);
     setResult(null);
+    setProbeDone(false);
     setKept(new Set());
     setPlaying(null);
     setCurationNote(null);
@@ -488,8 +493,8 @@ export default function DiscoverTab({
       }));
       const saved = await saveGeneratedDeck(cards, candidates);
       const activation = markFirstRunPhrasesSaved({ sourceId: result.sourceId });
-      void emitActivity("cards_created", { count: cards.length, source: "discover", activation });
-      void emitActivity("own_source_completed", { cardsCreated: cards.length });
+      void emitActivity("cards_created", { count: saved.added, source: "discover", activation });
+      void emitActivity("own_source_completed", { cardsCreated: saved.added });
       // Keeping phrases is the end of the listening pass that produced them.
       commitListen(result.sourceId);
       void emitActivity("method_stage", {
@@ -707,6 +712,14 @@ export default function DiscoverTab({
         )}
 
       </Card>}
+
+      {/* Offered above the transcript and before it, because that ordering is the
+          measurement: after the text is on screen the voice is no longer unfamiliar.
+          It renders nothing when the source has no usable audio, no provider is
+          configured, or this source was already heard. */}
+      {result && !probeDone && (
+        <ImportedListeningProbe result={result} onDone={() => setProbeDone(true)} />
+      )}
 
       {result && (
         <TranscriptReview

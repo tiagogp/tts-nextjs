@@ -1,0 +1,4 @@
+{
+  "$comment": "Cold-listening probe bank. Measurement only: these clips are never card material, never synthesized, and never studied. Adding one is content work, not code — see native-audio/README.md. An empty bank is the honest default: with no authentic recording, coldListening() reports null with unmeasuredReason 'no_unfamiliar_audio' rather than a rate that means something else.",
+  "probes": []
+}
