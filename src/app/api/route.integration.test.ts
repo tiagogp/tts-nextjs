@@ -140,18 +140,19 @@ describe("API route integration", () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data.cards).toHaveLength(1);
+    expect(data.cards).toHaveLength(2);
+    expect(data.cards.map((item: Card) => item.direction)).toEqual(["recognition", "production"]);
     expect(data.apkg).toBe(Buffer.from("apkg").toString("base64"));
     expect(generateDeck).toHaveBeenCalledOnce();
     expect(localJson).toHaveBeenCalledWith(
       "/cards/apkg",
       expect.objectContaining({
-        cards: [
+        cards: expect.arrayContaining([
           expect.objectContaining({
             front: "Front?",
             back: "Back",
           }),
-        ],
+        ]),
       }),
       expect.any(Object),
     );
@@ -194,13 +195,18 @@ describe("API route integration", () => {
     expect(localJson).toHaveBeenCalledWith(
       "/cards/apkg",
       expect.objectContaining({
-        cards: [
+        cards: expect.arrayContaining([
           expect.objectContaining({
             front: "I have to get going",
             back: "Tenho que ir",
             audioText: "I have to get going",
           }),
-        ],
+          expect.objectContaining({
+            front: "Tenho que ir",
+            back: "I have to get going",
+            audioText: "I have to get going",
+          }),
+        ]),
       }),
       expect.any(Object),
     );

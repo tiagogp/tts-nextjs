@@ -16,6 +16,7 @@ import { contentDispositionAttachment } from "@/server/anki";
 import { localJson } from "@/server/localRuntime";
 import { generateDeck } from "@/lib/cards/provider";
 import { orientCardsForTargetFront, targetTextOfCard } from "@/lib/cards/orientation";
+import { buildProductiveCardPairs } from "@/lib/cards/pairs";
 import { isProviderAvailable, resolveProvider } from "@/lib/cards/registry";
 import type { ProviderKind } from "@/lib/cards/provider";
 import type { CardSource, ErrorEvent, PhraseCandidate } from "@/lib/cards/schema";
@@ -136,7 +137,10 @@ export async function POST(req: NextRequest) {
         timeoutMs: PROVIDER_CALL_TIMEOUT_MS,
         debug: (event, details = {}) => writeApkgDebug(debugId, event, details),
       });
-      const cards = orientCardsForTargetFront(generatedCards, sources, targetLang);
+      const cards = buildProductiveCardPairs(
+        orientCardsForTargetFront(generatedCards, sources, targetLang),
+        sources,
+      );
       writeApkgDebug(debugId, "cards-api-provider-finished", {
         cards: cards.length,
         failures,

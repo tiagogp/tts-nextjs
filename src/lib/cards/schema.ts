@@ -203,6 +203,35 @@ export interface Card {
    * alone, and Study uses it to decide audio placement and what the pronunciation target is.
    */
   direction?: CardDirection;
+  /** Stable family id shared by recognition/production variants of one language pattern. */
+  patternId?: string;
+  /**
+   * The invariant part of the pattern with `___` marking the slot: "I ended up ___".
+   *
+   * This is the field that separates "I remember this sentence" from "I can use this
+   * structure". Without it the app can only ask the learner to reproduce the sentence it
+   * taught, every transfer claim is unverifiable, and interleaving by `patternId` has
+   * nothing to interleave. See `src/lib/language/pattern.ts`.
+   */
+  patternFrame?: string;
+  /** What fills the slot, in learner-facing words: "-ing verb phrase". */
+  patternSlot?: string;
+  /** A near neighbour that is wrong, for minimal-pair discrimination. */
+  patternContrast?: string;
+  /**
+   * Other grounded examples of the same pattern, used for interleaving, variation drills
+   * and the novelty check on a learner's own filling. A family of one is not a pattern:
+   * anything that drills variation requires at least two.
+   */
+  examples?: string[];
+  /**
+   * Wordings that are also correct for this prompt. A production card whose author wrote
+   * one long sentence must not fail a learner who produced a shorter correct one — that is
+   * how an app trains recitation while reporting production.
+   */
+  acceptedAnswers?: string[];
+  /** Situations in which this pattern has already appeared. */
+  contexts?: string[];
   /** The single concept this card isolates, e.g. "preposition after a motion verb". */
   concept: string;
   /** Set for correction-path cards; undefined for discovery-path cards. */

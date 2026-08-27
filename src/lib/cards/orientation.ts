@@ -9,6 +9,11 @@ export function targetTextOfCard(card: Pick<Card, "front" | "back" | "direction"
   return card.direction === "production" ? card.back : card.front;
 }
 
+/** The learner-language meaning/cue, whichever side it is on. */
+export function meaningTextOfCard(card: Pick<Card, "front" | "back" | "direction">): string {
+  return card.direction === "production" ? card.front : card.back;
+}
+
 const ENGLISH_MARKERS = new Set([
   "a",
   "an",
@@ -122,6 +127,10 @@ function isLikelyPortuguese(value: string): boolean {
   const en = scoreEnglish(value);
   const pt = scorePortuguese(value);
   return pt >= 2 && pt > en;
+}
+
+export function isLikelyPortugueseText(value: string): boolean {
+  return isLikelyPortuguese(value);
 }
 
 function sourceTargetText(source: CardSource | undefined): string {
