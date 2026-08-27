@@ -58,12 +58,16 @@ export function RetryStep({
       <ul className="space-y-1.5">
         {focused.map(({ event: correction }) => (
           <li key={correction.id} className="text-sm">
-            <span className="text-ink-muted line-through">{correction.original}</span>
-            <span className="mx-2 text-ink-muted">→</span>
-            <span className="font-medium text-ink">{correction.corrected}</span>
+            <span className="font-medium text-ink">{t(correction.errorTypes.join(" · "))}</span>
+            {correction.rationale && <span className="ml-2 text-ink-muted">{t(correction.rationale)}</span>}
           </li>
         ))}
       </ul>
+      {!clear && (
+        <p className="text-xs text-ink-muted">
+          {t("The model answer stays hidden until you submit the retry.")}
+        </p>
+      )}
       {corrections.length > focused.length && (
         <p className="text-xs text-ink-muted">
           {t("{count} minor issue(s) are not blocking this retry.", { count: corrections.length - focused.length })}

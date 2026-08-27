@@ -12,6 +12,7 @@ import {
   buildDeckFromPhrases,
   firstLesson,
   lessonById,
+  lessonProgressFromCardIds,
   type Lesson,
   type LessonPhrase,
 } from "@/features/learn/lessonDeck";
@@ -25,8 +26,16 @@ import { MistakeStep } from "@/features/learn/components/MistakeStep";
 import { PronunciationCoach } from "@/features/pronunciation/components/PronunciationCoach";
 import { buildSpeakingDrill } from "@/features/pronunciation/speakingDrill";
 import { useStageTimer } from "@/features/method/useStageTimer";
-import { deriveProgressionState, supportForProgression, type MethodProgressionState } from "@/features/method/progression";
 import {
+  LISTENING_STAGE_LABEL,
+  SPEAKER_FAMILIARITY_LABEL,
+  TRANSCRIPT_CONDITION_LABEL,
+  deriveProgressionState,
+  supportForProgression,
+  type MethodProgressionState,
+} from "@/features/method/progression";
+import {
+  getCards,
   getListeningAttempts,
   getMethodProgression,
   getProductionAttempts,
@@ -100,15 +109,33 @@ function LessonViewContent({
 }) {
   const { t } = useT();
   const result = useMemo(() => resultForLesson(lesson), [lesson]);
-  const learnSet = useMemo(() => learningPhrases(lesson), [lesson]);
+  // Phrase keys this learner already has cards for. Undefined until the store answers, so
+  // the first render is a first pass and the effect below corrects it if it is not.
+  const [taught, setTaught] = useState<ReadonlySet<string>>();
+  const learnSet = useMemo(() => learningPhrases(lesson, { taught }), [lesson, taught]);
   // Bumped on every failed attempt so the options are re-placed: a fixed answer position is
   // memorizable and a second attempt would then test nothing.
   const [listeningAttempt, setListeningAttempt] = useState(0);
   const listeningChallenge = useMemo(
-    () => buildListeningChallenge(lesson, LESSONS, { seed: listeningAttempt }),
-    [lesson, listeningAttempt],
+    () => buildListeningChallenge(lesson, LESSONS, { seed: listeningAttempt, taught }),
+    [lesson, listeningAttempt, taught],
   );
-  const [kept, setKept] = useState<Set<number>>(() => new Set(lesson.phrases.map((_, i) => i)));
+  // Default to the phrases this sitting actually taught, not to every phrase in the file.
+  //
+  // Two problems with keeping all eight. The lesson only presents `learningPhrases` (five),
+  // so the other three became review cards for language the learner was never shown. And
+  // eight lexically neighbouring expressions encoded in one sitting interfere with each
+  // other — "I'm not sure I agree" and "You have a point there" compete for the same slot —
+  // so fewer items per session are retained better, not worse. The rest are not lost: they
+  // are what a later visit to this lesson teaches, and they stay one tap away in the picker.
+  const [kept, setKept] = useState<Set<number>>(
+    () => new Set(learningPhrases(lesson).map((phrase) => lesson.phrases.indexOf(phrase))),
+  );
+  // Only until the learner touches the picker — after that the selection is theirs, and
+  // re-deriving it from the store would undo their edit.
+  const keptTouchedRef = useRef(false);
+  // A second visit, teaching what the first pass left over rather than repeating it.
+  const returningPass = Boolean(taught?.size);
   const [learnComplete, setLearnComplete] = useState(false);
   const [challengePlays, setChallengePlays] = useState<number[]>(() =>
     listeningChallenge.audio.map(() => 0),
@@ -139,6 +166,32 @@ function LessonViewContent({
     [lesson, repeatPhrases],
   );
   const support = useMemo(() => supportForProgression(progression), [progression]);
+
+  // Which phrases of this lesson the learner already met, read back out of their card ids
+  // rather than stored separately. A second visit then teaches the tail the first pass left
+  // untaught instead of re-presenting the same five.
+  useEffect(() => {
+    let cancelled = false;
+    void getCards()
+      .then((cards) => {
+        if (cancelled) return;
+        const keys = lessonProgressFromCardIds(cards.map((card) => card.id)).taught.get(lesson.id);
+        if (!keys?.size) return;
+        setTaught(keys);
+        if (keptTouchedRef.current) return;
+        setKept(
+          new Set(
+            learningPhrases(lesson, { taught: keys }).map((phrase) => lesson.phrases.indexOf(phrase)),
+          ),
+        );
+      })
+      .catch(() => {
+        // No store, no history: the lesson opens on its first five, which is correct.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [lesson]);
 
   useEffect(() => {
     let cancelled = false;
@@ -297,7 +350,9 @@ function LessonViewContent({
       durationMs: listeningStartedAtRef.current ? Date.now() - listeningStartedAtRef.current : undefined,
       finished: true,
       playbackRates: [audioRef.current?.playbackRate ?? 1],
-      speakerFamiliarity: support.listening.speakerFamiliarity,
+      // Built-in clips use known synthetic lesson voices. Do not label them "unfamiliar"
+      // merely because the progression policy wants harder input.
+      speakerFamiliarity: listeningChallenge.synthesized ? "familiar" : "mixed",
       subtitleUsed: false,
       scaffoldUsed: support.listening.stage !== "natural_comprehension",
       startedAt: listeningStartedAtRef.current ?? Date.now(),
@@ -368,6 +423,7 @@ function LessonViewContent({
   };
 
   const toggleKeep = (index: number) => {
+    keptTouchedRef.current = true;
     setKept((prev) => {
       const next = new Set(prev);
       if (next.has(index)) next.delete(index);
@@ -470,10 +526,14 @@ function LessonViewContent({
           <div>
             <p className="text-xs uppercase tracking-[0.7px] text-accent">{t("1 · Learn")}</p>
             <h3 className="mt-1 text-lg font-semibold tracking-[-0.01em] text-ink">
-              {t("Learn five useful phrases")}
+              {t("Learn {count} useful phrases", { count: learnSet.length })}
             </h3>
             <p className="mt-1 text-sm text-ink-soft">
-              {t("Study the meaning, pattern, and situation. You will hear this language next.")}
+              {returningPass
+                ? t(
+                    "You already studied the first phrases of this lesson. These are the ones it had left.",
+                  )
+                : t("Study the meaning, pattern, and situation. You will hear this language next.")}
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -512,15 +572,15 @@ function LessonViewContent({
             </p>
             <p className="mt-2 text-xs text-ink-muted">
               {t("Support: {stage} · {guidance}", {
-                stage: support.listening.stage.replaceAll("_", " "),
-                guidance: support.listening.guidance,
+                stage: t(LISTENING_STAGE_LABEL[support.listening.stage]),
+                guidance: t(support.listening.guidance),
               })}{" "}
               {t("Playback {rate}%", { rate: Math.round(support.listening.playbackRate * 100) })}
             </p>
             <p className="mt-1 text-xs text-ink-muted">
               {t("Input profile: {speaker} speakers · transcript {transcript} · connected speech {connected}", {
-                speaker: support.listening.speakerFamiliarity,
-                transcript: support.listening.subtitles,
+                speaker: t(SPEAKER_FAMILIARITY_LABEL[listeningChallenge.synthesized ? "familiar" : "mixed"]),
+                transcript: t(TRANSCRIPT_CONDITION_LABEL[support.listening.subtitles]),
                 connected: support.listening.connectedSpeech ? t("on") : t("off"),
               })}
             </p>
@@ -673,7 +733,13 @@ function LessonViewContent({
             renderAudio={false}
             kept={kept}
             playing={playing}
-            curationNote={t("All phrases are selected by default.")}
+            curationNote={
+              returningPass
+                ? t(
+                    "The phrases you just studied are selected. The ones you already saved are not — they are already in your reviews.",
+                  )
+                : t("The phrases this lesson taught are selected. Add more only if you want them.")
+            }
             generating={saving}
             genError={error}
             genDone={done}

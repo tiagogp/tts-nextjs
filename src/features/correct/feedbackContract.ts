@@ -12,6 +12,26 @@ export type FeedbackCategory =
 
 export type FeedbackPriority = "blocking" | "important" | "polish";
 
+/**
+ * Reader-facing names for the contract's enums. The identifiers are for code; a learner
+ * should never be shown `messageClarity`, and a camelCase value has no translation.
+ */
+export const FEEDBACK_CATEGORY_LABEL: Record<FeedbackCategory, string> = {
+  messageClarity: "message clarity",
+  grammar: "grammar",
+  vocabulary: "vocabulary",
+  wordOrder: "word order",
+  pronunciation: "pronunciation",
+  naturalness: "naturalness",
+  missingInformation: "missing information",
+};
+
+export const FEEDBACK_PRIORITY_LABEL: Record<FeedbackPriority, string> = {
+  blocking: "blocking",
+  important: "important",
+  polish: "polish",
+};
+
 export interface FeedbackPriorityOptions {
   /** Counts from the current response plus prior learner errors. */
   recurrenceCounts?: Map<string, number>;

@@ -10,12 +10,17 @@ import {
   type LocalCorrectionIssue,
   type LocalCorrectionResult,
 } from "@/features/learn/localCorrection";
-import { evaluateCorrectionText } from "@/features/correct/api";
+import { evaluateCorrectionText, evaluateGuidedLessonResponse } from "@/features/correct/api";
 import { useCorrectionAudio } from "@/features/correct/hooks/useCorrectionAudio";
 import { useProviderSelection } from "@/features/cards/hooks/useProviderSelection";
 import { useStageTimer } from "@/features/method/useStageTimer";
-import type { SpeakingStage } from "@/features/method/progression";
-import { countPolishFeedback, focusFeedback, prioritizeLocalFeedback } from "@/features/correct/feedbackContract";
+import { SPEAKING_STAGE_LABEL, type SpeakingStage } from "@/features/method/progression";
+import {
+  FEEDBACK_CATEGORY_LABEL,
+  countPolishFeedback,
+  focusFeedback,
+  prioritizeLocalFeedback,
+} from "@/features/correct/feedbackContract";
 import { OWN_SENTENCE_CARD_PREFIX, type LessonPhrase } from "@/features/learn/lessonDeck";
 import type { Card, ErrorEvent, ErrorType, PhraseCandidate } from "@/lib/cards/schema";
 import {
@@ -28,6 +33,21 @@ import {
 import type { ProductionAttempt, RetryOutcome } from "@/lib/performance/types";
 import { emitActivity } from "@/lib/store/activityLog";
 import { useT } from "@/i18n/I18nProvider";
+
+const TASK_STATUS_LABEL = {
+  met: "Task completed",
+  partial: "Task partly completed",
+  not_met: "Task not completed",
+} as const;
+
+/** A guided response is successful only when its language and communicative task both pass. */
+function taskPassed(result: LocalCorrectionResult): boolean {
+  return result.task === undefined || result.task.status === "met";
+}
+
+function resultIssueCount(result: LocalCorrectionResult): number {
+  return result.issues.length + (taskPassed(result) ? 0 : 1);
+}
 
 /**
  * The production → feedback → retry half of the guided loop. It always has a
@@ -142,12 +162,17 @@ export function MistakeStep({
     const local = correctSentenceLocally(text, phrase.en, phrase.concept);
     if (!hasEvaluator) return local;
     try {
-      const events = await evaluateCorrectionText({
-        provider,
-        selectedModel,
-        text,
-        context: "guided-lesson",
-      });
+      if (productionPrompt?.trim()) {
+        const evaluation = await evaluateGuidedLessonResponse({
+          provider,
+          selectedModel,
+          text,
+          context: "guided-lesson",
+          task: productionPrompt,
+        });
+        return mergeEvaluatedCorrection(text, phrase.en, phrase.concept, evaluation.events, evaluation.task);
+      }
+      const events = await evaluateCorrectionText({ provider, selectedModel, text, context: "guided-lesson" });
       return mergeEvaluatedCorrection(text, phrase.en, phrase.concept, events);
     } catch {
       // Deep feedback is additive. A provider outage must not break the
@@ -200,7 +225,7 @@ export function MistakeStep({
         spoken: spokenRef.current,
         wordCount: trimmed.split(/\s+/).length,
         finished: true,
-        issueCount: evaluated.issues.length,
+        issueCount: resultIssueCount(evaluated),
         scaffoldUsed: speakingStage !== "real_world_production",
         recordingId,
         createdAt,
@@ -253,7 +278,7 @@ export function MistakeStep({
         spoken: retrySpokenRef.current,
         wordCount: trimmed.split(/\s+/).length,
         finished: true,
-        issueCount: next.issues.length,
+        issueCount: resultIssueCount(next),
         recordingId,
         durationMs: Math.max(0, Date.now() - retryStartedAtRef.current),
         createdAt,
@@ -288,9 +313,9 @@ export function MistakeStep({
         spoken: retrySpokenRef.current,
         wordCount: trimmed.split(/\s+/).length,
         durationMs: Math.max(0, Date.now() - retryStartedAtRef.current),
-        resolved: next.issues.length === 0,
-        resolution: next.issues.length === 0 ? "completed" : undefined,
-        issueCount: next.issues.length,
+        resolved: next.issues.length === 0 && taskPassed(next),
+        resolution: next.issues.length === 0 && taskPassed(next) ? "completed" : undefined,
+        issueCount: resultIssueCount(next),
         scaffoldUsed: speakingStage !== "real_world_production",
         createdAt,
       };
@@ -311,7 +336,7 @@ export function MistakeStep({
         scaffoldUsed: retryOutcome.scaffoldUsed,
         createdAt: retryOutcome.createdAt,
       }).catch(() => {});
-      if (next.issues.length === 0 && !retryLoggedRef.current) {
+      if (next.issues.length === 0 && taskPassed(next) && !retryLoggedRef.current) {
         retryLoggedRef.current = true;
         void emitActivity("method_stage", {
           stage: "retry",
@@ -329,7 +354,7 @@ export function MistakeStep({
   const changedSinceCheck = result !== null && sentence.trim() !== checkedSentence;
   const retryChangedSinceCheck = retryResult !== null && retrySentence.trim() !== checkedRetry;
   const acceptedRetry =
-    retryResult && !retryChangedSinceCheck && retryResult.issues.length === 0
+    retryResult && !retryChangedSinceCheck && retryResult.issues.length === 0 && taskPassed(retryResult)
       ? retryResult
       : null;
 
@@ -396,7 +421,7 @@ export function MistakeStep({
         <p className="mt-1 text-sm text-ink-soft">{t(productionPrompt ?? productionInstruction ?? "Use the lesson language in your own idea.")}</p>
         <p className="mt-1 text-xs text-ink-muted">
           {t("Speaking stage: {stage} · aim for {seconds} seconds", {
-            stage: speakingStage.replaceAll("_", " "),
+            stage: t(SPEAKING_STAGE_LABEL[speakingStage]),
             seconds: targetDurationSeconds,
           })}
         </p>
@@ -450,7 +475,11 @@ export function MistakeStep({
 
       {result && !changedSinceCheck && (
         <div className="space-y-4">
-          <FeedbackPanel result={result} original={checkedSentence} />
+          <FeedbackPanel
+            result={result}
+            original={checkedSentence}
+            hideModelAnswer={!acceptedRetry}
+          />
 
           <div className="space-y-3 rounded border border-accent/30 bg-accent/5 p-4">
             <div>
@@ -568,13 +597,21 @@ function VoiceButton({
 function FeedbackPanel({
   result,
   original,
+  hideModelAnswer = false,
 }: {
   result: LocalCorrectionResult;
   original: string;
+  hideModelAnswer?: boolean;
 }) {
   const { t } = useT();
-  if (result.issues.length === 0) {
-    return <Notice tone="success">{t("Your message is clear and uses the lesson language.")}</Notice>;
+  if (result.issues.length === 0 && !result.task) {
+    return (
+      <Notice tone="success">
+        {result.scope === "local"
+          ? t("No known mistake found, and you used the lesson language.")
+          : t("Your message is clear and uses the lesson language.")}
+      </Notice>
+    );
   }
 
   return (
@@ -584,13 +621,39 @@ function FeedbackPanel({
         <p className="text-[11px] uppercase tracking-[0.5px] text-ink-muted">{t("You wrote")}</p>
         <p className="mt-0.5 text-sm text-ink-soft">{original}</p>
       </div>
-      {result.corrected !== original && (
+      {result.task && (
+        <div className="rounded border border-accent/30 bg-accent/5 px-3 py-2">
+          <p className="text-[11px] uppercase tracking-[0.5px] text-accent">{t("Task completion")}</p>
+          <p className="mt-0.5 text-xs font-medium text-ink">{t(TASK_STATUS_LABEL[result.task.status])}</p>
+          <p className="mt-1 text-xs text-ink-soft">{result.task.feedback}</p>
+        </div>
+      )}
+      {result.corrected !== original && !hideModelAnswer && (
         <div>
-          <p className="text-[11px] uppercase tracking-[0.5px] text-accent">{t("Corrected version")}</p>
+          <p className="text-[11px] uppercase tracking-[0.5px] text-accent">
+            {result.scope === "local" ? t("Fixes we could check") : t("Corrected version")}
+          </p>
           <p className="mt-0.5 text-sm font-medium text-ink">{result.corrected}</p>
         </div>
       )}
-      <FeedbackIssues issues={result.issues} />
+      {result.corrected !== original && hideModelAnswer && (
+        <p className="text-xs text-ink-muted">
+          {t("The corrected model stays hidden until your second attempt is clear.")}
+        </p>
+      )}
+      {result.issues.length > 0 ? (
+        <FeedbackIssues issues={result.issues} />
+      ) : (
+        <p className="text-xs text-success">{t("No language correction needed.")}</p>
+      )}
+      {/* The offline check only knows a fixed set of transfer patterns. The caveat belongs to
+          the whole panel, not to the corrected line: a sentence it could not fix at all is
+          exactly the case where naming one issue reads as the complete diagnosis. */}
+      {result.scope === "local" && (
+        <p className="text-[11px] text-ink-muted">
+          {t("This offline check only knows common Portuguese-to-English mistakes, so other errors can remain. Connect an AI in Settings for a full check.")}
+        </p>
+      )}
     </div>
   );
 }
@@ -603,13 +666,13 @@ function FeedbackIssues({ issues }: { issues: LocalCorrectionIssue[] }) {
   return (
     <div className="space-y-2">
       <p className="text-xs font-medium text-ink">
-        {t("Focus first: {category}", { category: t(focused[0].category) })}
+        {t("Focus first: {category}", { category: t(FEEDBACK_CATEGORY_LABEL[focused[0].category]) })}
       </p>
       <ul className="space-y-2">
         {focused.map((issue) => (
           <li key={issue.id} className="flex items-start gap-2 text-xs text-ink-muted">
             <span className="mt-0.5 rounded border border-line px-1.5 py-0.5 text-[10px] uppercase tracking-[0.4px] text-ink-soft">
-              {t(issue.category)}
+              {t(FEEDBACK_CATEGORY_LABEL[issue.category])}
             </span>
             <span className="pt-0.5">{t(issue.evidence)}</span>
             <span className="pt-0.5 text-ink-muted">· {t(issue.suggestedRetrySupport)}</span>

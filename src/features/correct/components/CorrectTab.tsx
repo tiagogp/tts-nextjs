@@ -539,8 +539,8 @@ export default function CorrectTab({
       setRetryResolution("pending");
       setRetryNote(
         review.errors.length === 1
-          ? t("Still one thing to fix: {correction}", { correction: review.errors[0].corrected })
-          : t("Still {count} things to fix. Compare with the corrections above.", {
+          ? t("There is still one language point to fix. Try again without the model answer.")
+          : t("There are still {count} language points to fix. Try again without the model answer.", {
               count: review.errors.length,
             }),
       );
@@ -767,7 +767,9 @@ export default function CorrectTab({
         />
       )}
 
-      {events.length > 0 && (
+      {events.length > 0 &&
+        (!retryOf || retryClear || retryResolution !== "pending") &&
+        (!manualRetryOf || manualRetryClear || manualRetryResolution !== "pending") && (
         <CorrectionList
           events={events}
           generating={generating}

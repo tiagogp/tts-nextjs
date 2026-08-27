@@ -25,7 +25,7 @@ import {
 } from "@/features/method/learningLoop";
 import { useT } from "@/i18n/I18nProvider";
 import {
-  completedLessonIdsFromCardIds,
+  lessonProgressFromCardIds,
   firstLesson,
   nextLessonFor,
   type Lesson,
@@ -60,6 +60,7 @@ interface NextAction {
 
 interface WeeklyTransferSuggestion {
   prompt: string;
+  promptVars?: Record<string, string>;
 }
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
@@ -95,7 +96,7 @@ export function HojeHome({
     errors: 0,
   });
   const [nextLesson, setNextLesson] = useState<Lesson>(
-    () => nextLessonFor(getLearningProfile(), []) ?? firstLesson(),
+    () => nextLessonFor(getLearningProfile(), lessonProgressFromCardIds([])) ?? firstLesson(),
   );
   const [returnMoment, setReturnMoment] = useState<ReturnMoment | null>(null);
   const [methodPlan, setMethodPlan] = useState<MethodPlan | null>(null);
@@ -147,7 +148,7 @@ export function HojeHome({
       setNextLesson(
         nextLessonFor(
           getLearningProfile(),
-          completedLessonIdsFromCardIds(cards.map((card) => card.id)),
+          lessonProgressFromCardIds(cards.map((card) => card.id)),
         ) ?? firstLesson(),
       );
       setWeeklyTransfer(
@@ -275,7 +276,7 @@ function weeklyTransferSuggestion(
     return Boolean(event.payload.transferKind);
   });
   if (hasRecentTransfer) return null;
-  return { prompt: activity.prompt };
+  return { prompt: activity.prompt, promptVars: activity.promptVars };
 }
 
 function WeeklyTransferCard({
@@ -297,7 +298,7 @@ function WeeklyTransferCard({
             {t("Use one saved phrase somewhere new")}
           </p>
           <p className="mt-1 max-w-xl text-sm leading-relaxed text-ink-soft">
-            {t(suggestion.prompt)}
+            {t(suggestion.prompt, suggestion.promptVars)}
           </p>
         </div>
         <Button variant="secondary" size="sm" onClick={onStart}>
