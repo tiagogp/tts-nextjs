@@ -8,6 +8,7 @@ import {
   DEFAULT_LEARNING_PROFILE,
   getLearningProfile,
   saveLearningProfile,
+  subscribeToProfile,
 } from "@/features/settings/learningProfile";
 import { useAiSettings } from "@/features/settings/context/AiSettingsContext";
 import type { ProviderKind } from "@/lib/cards/provider";
@@ -74,12 +75,6 @@ function recordCloudConsent(): void {
   } catch {
     // best-effort only; worst case the confirmation is shown again next time
   }
-}
-
-function subscribeToProfile(onChange: () => void): () => void {
-  if (typeof window === "undefined") return () => {};
-  window.addEventListener("phraseloop:profile-updated", onChange);
-  return () => window.removeEventListener("phraseloop:profile-updated", onChange);
 }
 
 export default function SettingsScreen({

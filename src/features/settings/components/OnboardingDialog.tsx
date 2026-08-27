@@ -16,13 +16,18 @@ import {
   type MethodObjective,
 } from "@/features/settings/learningProfile";
 import { useAiSettings } from "@/features/settings/context/AiSettingsContext";
+import { useT } from "@/i18n/I18nProvider";
 import { nextLevelOf } from "@/features/levelup/model";
 import { LevelTestFlow } from "@/features/levelup/components/LevelTestFlow";
 import { LocalPlacementCheck } from "@/features/levelup/components/LocalPlacementCheck";
 
 const subscribe = () => () => {};
-type Step = "level" | "welcome" | "profile";
-const STEPS: Step[] = ["level", "welcome", "profile"];
+type Step = "level" | "welcome" | "profile" | "ai";
+/**
+ * The AI step is last so that "Connect an AI" can save the profile and hand the learner
+ * straight to Settings, and so the choice is made after they know what the app is for.
+ */
+const STEPS: Step[] = ["level", "welcome", "profile", "ai"];
 
 /** `objective` drives the method's study distribution; `label` is display/prompt text
  * only. Keep them separate — a translated label must never change the distribution. */
@@ -34,8 +39,8 @@ const GOAL_OPTIONS: readonly { objective: MethodObjective; label: string }[] = [
   { objective: "media", label: "Movies & podcasts" },
 ];
 
-export default function OnboardingDialog({ onOpenSettings: _onOpenSettings }: Readonly<{ onOpenSettings: () => void }>) {
-  void _onOpenSettings;
+export default function OnboardingDialog({ onOpenSettings }: Readonly<{ onOpenSettings: () => void }>) {
+  const { t } = useT();
   const [dismissed, setDismissed] = useState(false);
   const [step, setStep] = useState<Step>("level");
   const [levelCheckOpen, setLevelCheckOpen] = useState<"local" | "ai" | null>(null);
@@ -45,6 +50,9 @@ export default function OnboardingDialog({ onOpenSettings: _onOpenSettings }: Re
   const [objective, setObjective] = useState<MethodObjective>(profile.objective);
   const { settings } = useAiSettings();
   const defaultProvider = settings.providers.find((provider) => provider.kind === settings.defaultProvider);
+  // Any usable provider, not just the default one: the question here is whether the method
+  // can run whole, not which model happens to be preferred.
+  const aiReady = settings.providers.some((provider) => provider.available);
   const levelCheckTarget = nextLevelOf(level);
   const firstVisit = useSyncExternalStore(
     subscribe,
@@ -53,12 +61,6 @@ export default function OnboardingDialog({ onOpenSettings: _onOpenSettings }: Re
   );
   const open = firstVisit && !dismissed;
 
-  const t = (en: string, vars?: Record<string, string | number>) => {
-    if (!vars) return en;
-    return en.replace(/\{(\w+)\}/g, (match, key: string) =>
-      key in vars ? String(vars[key]) : match,
-    );
-  };
   const languageOptions = NATIVE_LANGUAGES.map((l) => ({ value: l.code, label: t(l.label) }));
 
   const finish = async () => {
@@ -221,6 +223,39 @@ export default function OnboardingDialog({ onOpenSettings: _onOpenSettings }: Re
         </div>
       )}
 
+      {step === "ai" && (
+        <div className="space-y-4">
+          <div>
+            <p className="text-xs uppercase tracking-widest text-accent">{t("AI")}</p>
+            <h2 id="welcome-title" className="mt-1 text-xl font-semibold text-ink">
+              {aiReady ? t("An AI is connected") : t("Connect an AI to get the whole method")}
+            </h2>
+            <p className="mt-2 text-sm text-ink-soft">
+              {aiReady
+                ? t("PhraseLoop will use it to judge open answers, build listening checks from what you import, and give focused feedback.")
+                : t("PhraseLoop was built to work with an AI, not around one. It is what judges an open answer, writes a listening check from a video you import, and tells you which two mistakes matter.")}
+            </p>
+          </div>
+
+          {/* Naming what still works without AI is the honest half of asking for one — and
+              naming what does not is the other half. Neither list is marketing. */}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <MethodTile
+              title={t("Works without AI")}
+              text={t("Guided lessons, spaced review, pattern drills, transfer checks and the retention proof all run on your device.")}
+            />
+            <MethodTile
+              title={t("Needs an AI")}
+              text={t("Open answers judged for meaning, free conversation, mining phrases from your own content, and listening checks on unfamiliar voices.")}
+            />
+          </div>
+
+          <p className="text-xs leading-relaxed text-ink-muted">
+            {t("A cloud AI receives the practice content you send it — phrases, mistakes, conversations. A local AI (Ollama) keeps everything on this machine. You choose which, and you can change it later.")}
+          </p>
+        </div>
+      )}
+
       <div className="mt-6 flex flex-wrap items-center justify-between gap-2">
         <Button
           variant="ghost"
@@ -236,8 +271,19 @@ export default function OnboardingDialog({ onOpenSettings: _onOpenSettings }: Re
             </Button>
           ) : (
             <>
+              {!aiReady && (
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    void finish();
+                    onOpenSettings();
+                  }}
+                >
+                  {t("Connect an AI")}
+                </Button>
+              )}
               <Button variant="primary" onClick={() => void finish()}>
-                {t("Start first lesson")}
+                {aiReady ? t("Start first lesson") : t("Start without AI for now")}
               </Button>
             </>
           )}

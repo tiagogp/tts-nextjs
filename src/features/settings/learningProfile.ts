@@ -196,3 +196,13 @@ export function completeOnboarding(profile: Partial<LearningProfile>): LearningP
     createdAt: profile.createdAt ?? Date.now(),
   });
 }
+
+/**
+ * Subscribe to profile changes, for `useSyncExternalStore`. Lives here rather than in a
+ * component so every reader of the profile shares one subscription contract.
+ */
+export function subscribeToProfile(onChange: () => void): () => void {
+  if (typeof window === "undefined") return () => {};
+  window.addEventListener("phraseloop:profile-updated", onChange);
+  return () => window.removeEventListener("phraseloop:profile-updated", onChange);
+}
